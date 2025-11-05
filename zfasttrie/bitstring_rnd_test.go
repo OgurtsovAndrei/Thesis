@@ -79,3 +79,111 @@ func TestTrie_HeavyRandom_BitString(t *testing.T) {
 		}
 	}
 }
+
+func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
+	for test_id := range 100 {
+		fmt.Println("TestTrie_HeavyRandom_BitString_Get iteration:", test_id)
+		seed := time.Now().UnixNano()
+		r := rand.New(rand.NewSource(seed))
+
+		emptyValue := -1
+		tree := NewZFastTrie[int](emptyValue)
+		groundTruth := make(map[string]int)
+
+		numOperations := 100_000
+
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("Test panicked (Seed: %d): %v", seed, r)
+			}
+		}()
+
+		for i := 0; i < numOperations; i++ {
+			op := r.Intn(100)
+
+			if op < 50 {
+				k := r.Uint64()
+				s := NewFromUint64(k).data
+				v := r.Intn(1000000)
+
+				if _, exists := groundTruth[s]; !exists {
+					groundTruth[s] = v
+					tree.Insert(s, v)
+				}
+			} else {
+				k := r.Uint64()
+				s := NewFromUint64(k).data
+
+				expected, ok := groundTruth[s]
+				if !ok {
+					expected = emptyValue
+				}
+
+				actual := tree.GetBitString(NewBitString(s))
+
+				if actual != expected {
+					t.Fatalf("Seed %d: GetBitString mismatch for key (uint64: %d). Expected: %v, Got: %v", seed, k, expected, actual)
+				}
+			}
+		}
+
+		for key, expectedValue := range groundTruth {
+			actualValue := tree.GetBitString(NewBitString(key))
+			if actualValue != expectedValue {
+				t.Fatalf("Seed %d: Final check GetBitString mismatch for key %q. Expected: %v, Got: %v", seed, key, expectedValue, actualValue)
+			}
+		}
+	}
+}
+
+func TestTrie_BitString_Exhaustive8Bit(t *testing.T) {
+	numIterations := 1000
+	for iter := 0; iter < numIterations; iter++ {
+		fmt.Println("TestTrie_BitString_Exhaustive8Bit iteration:", iter)
+		seed := time.Now().UnixNano()
+		r := rand.New(rand.NewSource(seed))
+		tree := NewZFastTrie[int](-1)
+
+		allKeys := make([]string, 256)
+		for i := 0; i < 256; i++ {
+			allKeys[i] = string([]byte{byte(i)})
+		}
+
+		r.Shuffle(len(allKeys), func(i, j int) { allKeys[i], allKeys[j] = allKeys[j], allKeys[i] })
+
+		keysToInsert := make(map[string]bool)
+		for i := 0; i < 128; i++ {
+			keysToInsert[allKeys[i]] = true
+		}
+
+		insertedSoFar := make(map[string]int)
+		for _, key := range allKeys {
+			insertedSoFar[key] = -1
+		}
+
+		for opNum, key := range allKeys {
+			shouldInsert := keysToInsert[key]
+
+			if shouldInsert {
+				value := int(key[0])
+				tree.Insert(key, value)
+				insertedSoFar[key] = value
+			}
+
+			for _, checkKey := range allKeys {
+				shouldBePresent := insertedSoFar[checkKey]
+				actual := tree.GetBitString(NewBitString(checkKey))
+
+				if actual != shouldBePresent {
+					t.Fatalf("Seed %d, Iter %d, Op %d (Key %v): Mismatch for checkKey %v. Expected: %v, Got: %v",
+						seed, iter, opNum, []byte(key), []byte(checkKey), shouldBePresent, actual)
+				}
+			}
+		}
+
+		if int(tree.size) != len(keysToInsert) {
+			t.Fatalf("Seed %d, Iter %d: Final size mismatch. Expected: %d, Got: %d",
+				seed, iter, len(keysToInsert), tree.size)
+		}
+	}
+}

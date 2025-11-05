@@ -207,6 +207,18 @@ func (zt *ZFastTrie[V]) ContainsBitString(pattern BitString) bool {
 	return exitNode.extent.Equal(pattern) && exitNode.value != zt.emptyValue
 }
 
+func (zt *ZFastTrie[V]) GetBitString(pattern BitString) (value V) {
+	exitNode := zt.getExitNode(pattern)
+
+	if exitNode == nil {
+		return zt.emptyValue
+	}
+	if exitNode.extent.Equal(pattern) {
+		return exitNode.value
+	}
+	return zt.emptyValue
+}
+
 func swapChildren[V comparable](a, b *znode[V]) {
 	a.leftChild, b.leftChild = b.leftChild, a.leftChild
 	a.rightChild, b.rightChild = b.rightChild, a.rightChild

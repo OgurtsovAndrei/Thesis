@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const debug = true
+const debug = false
 
 func First(errs ...error) error {
 	for _, e := range errs {
