@@ -215,7 +215,7 @@ func swapChildren[V comparable](a, b *znode[V]) {
 func (zt *ZFastTrie[V]) checkTrie() {
 	if debug {
 		cnt := zt.checkTrieRec(zt.root)
-		BugOn(cnt != len(zt.handle2NodeMap), "%s", zt.String())
+		BugOn(cnt != len(zt.handle2NodeMap), "%s", zt)
 	}
 }
 
@@ -228,8 +228,8 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 		f := int32(fFast)
 		handle := NewBitStringPrefix(node.extent, uint32(f))
 		handleNode, ok := zt.handle2NodeMap[handle]
-		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle.String(), zt.size, f, node.String(), handleNode.String(), zt.String())
-		BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node.String(), handleNode.String(), zt.String())
+		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node, handleNode, zt)
+		BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node, handleNode, zt)
 		notEmptyNodesInTrie = 1
 	}
 	return notEmptyNodesInTrie + zt.checkTrieRec(node.leftChild) + zt.checkTrieRec(node.rightChild)
