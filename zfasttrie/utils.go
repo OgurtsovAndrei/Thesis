@@ -12,14 +12,13 @@ func MostSignificantBit(x uint64) int {
 	return 63 - bits.LeadingZeros64(x)
 }
 
-// TwoFattest returns the result of the "two fattest" bit operation on [a, b]
-// fixme: not working for [10, 11], should be (9, 11], todo: change
+// TwoFattest returns the result of the "two fattest" bit operation on (a, b]
 // Ported from Fast::twoFattest
 func TwoFattest(a uint64, b uint64) uint64 {
-	if a == b+1 {
-		return 0 // case [x, x) == [x+1, x]
+	if a == b {
+		return 0 // case (x, x]
 	}
-	BugOn(a > b+1, "illegal arguments")
+	BugOn(a > b, "illegal arguments")
 	msb := MostSignificantBit(a ^ b)
 	if msb == -1 {
 		return a

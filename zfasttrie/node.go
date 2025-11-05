@@ -46,10 +46,10 @@ func (n *znode[V]) extentLength() uint32 {
 
 func (n *znode[V]) handleLength() uint32 {
 	// C++: Fast::twoFattest(nameLength_ - 1, extentLength());
-	aFast := uint64(n.nameLength + 1)
+	aFast := uint64(n.nameLength)
 	bFast := uint64(n.extentLength())
 
-	return uint32(findTwoFattestMath(aFast, bFast))
+	return uint32(TwoFattest(aFast, bFast))
 }
 
 func (n *znode[V]) handle() BitString {

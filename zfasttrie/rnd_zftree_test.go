@@ -84,15 +84,16 @@ func generateString(r *rand.Rand, existingKeys []string, prefixBias float64, max
 }
 
 func TestTrie_HeavyRandom_InsertDeleteContains(t *testing.T) {
-	for range 100 {
+	for test_id := range 100 {
+		fmt.Println(test_id)
 		seed := time.Now().UnixNano()
 		r := rand.New(rand.NewSource(seed))
 		tree := NewZFastTrie[bool](false)
 		groundTruth := make(map[string]bool)
 		insertedKeys := make([]string, 0)
 
-		numOperations := 10000
-		maxStrLength := 3
+		numOperations := 10_000
+		maxStrLength := 32
 		prefixBias := 0.3
 
 		history := make([]testOperation, 0, numOperations)

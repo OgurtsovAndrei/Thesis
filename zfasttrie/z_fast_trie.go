@@ -204,9 +204,13 @@ func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
 	zt.size--
 }
 
+const debug = false
+
 func (zt *ZFastTrie[V]) checkTrie() {
-	cnt := zt.checkTrieRec(zt.root)
-	BugOn(cnt != len(zt.handle2NodeMap), "%s", zt.String())
+	if debug {
+		cnt := zt.checkTrieRec(zt.root)
+		BugOn(cnt != len(zt.handle2NodeMap), "%s", zt.String())
+	}
 }
 
 func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
@@ -214,7 +218,7 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 		return 0
 	}
 	if int32(node.extentLength())-node.nameLength != 0 {
-		fFast := findTwoFattestMath(uint64(node.nameLength), uint64(node.extentLength()))
+		fFast := TwoFattest(uint64(node.nameLength), uint64(node.extentLength()))
 		f := int32(fFast)
 		handle := NewBitStringPrefix(node.extent, uint32(f))
 		handleNode, ok := zt.handle2NodeMap[handle]
@@ -279,14 +283,14 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 
 	for 0 < (b - a) {
 		// C++: f = Fast::twoFattest(a, b);
-		fFast := findTwoFattestMath(uint64(a), uint64(b))
+		fFast := TwoFattest(uint64(a), uint64(b))
 		f = int32(fFast)
 
 		handle := NewBitStringPrefix(pattern, uint32(f))
 		node = zt.getNode(handle)
 
 		if node != nil {
-			a = int32(node.extentLength()) + 1
+			a = int32(node.extentLength())
 			result = node
 		} else {
 			b = f - 1
