@@ -15,7 +15,7 @@ func newNode[V comparable](value V, extent BitString) *znode[V] {
 	return &znode[V]{
 		value:      value,
 		extent:     extent,
-		nameLength: 1,
+		nameLength: 0,
 	}
 }
 
@@ -46,12 +46,7 @@ func (n *znode[V]) extentLength() uint32 {
 
 func (n *znode[V]) handleLength() uint32 {
 	// C++: Fast::twoFattest(nameLength_ - 1, extentLength());
-	var aFast uint64
-	if n.nameLength == 0 {
-		aFast = ^uint64(0) // -1
-	} else {
-		aFast = uint64(n.nameLength - 1)
-	}
+	aFast := uint64(n.nameLength + 1)
 	bFast := uint64(n.extentLength())
 
 	return uint32(TwoFattest(aFast, bFast))
@@ -109,6 +104,9 @@ func (n *znode[V]) getChild() *znode[V] {
 }
 
 func (n *znode[V]) String() string {
-	return fmt.Sprintf("Node{value: %v, extent: \"%v\", nameLength: %d, leftChild: %t, rightChild: %t}",
-		n.value, n.extent, n.nameLength, n.leftChild != nil, n.rightChild != nil)
+	if n == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("Node{value: %v, extent: \"%v\", nameLength: %d, extentLen: %d,  leftChild: %t, rightChild: %t}",
+		n.value, n.extent, n.nameLength, n.extentLength(), n.leftChild != nil, n.rightChild != nil)
 }

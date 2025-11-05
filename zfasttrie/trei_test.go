@@ -1,6 +1,7 @@
 package zfasttrie
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -90,6 +91,8 @@ func testTrie(t *testing.T, texts []string, isInverse bool) {
 		}
 	}
 
+	fmt.Println(tree.String())
+
 	for i := 0; i < len(texts); i++ {
 		index := i
 		if isInverse {
@@ -97,6 +100,8 @@ func testTrie(t *testing.T, texts []string, isInverse bool) {
 		}
 		tree.Erase(texts[index])
 		if tree.Contains(texts[index]) {
+			fmt.Println(tree.String())
+			fmt.Println(tree.Contains(texts[index]))
 			t.Fatalf("Found erased text: %s", texts[index])
 		}
 	}

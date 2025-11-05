@@ -2,6 +2,7 @@ package zfasttrie
 
 import (
 	"math/bits"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +15,50 @@ func NewBitString(text string) BitString {
 	return BitString{
 		data:     text,
 		sizeBits: uint32(len(text)) * 8,
+	}
+}
+
+func NewFromUint64(value uint64) BitString {
+	buf := make([]byte, 8)
+	buf[0] = byte(value)
+	buf[1] = byte(value >> 8)
+	buf[2] = byte(value >> 16)
+	buf[3] = byte(value >> 24)
+	buf[4] = byte(value >> 32)
+	buf[5] = byte(value >> 40)
+	buf[6] = byte(value >> 48)
+	buf[7] = byte(value >> 56)
+
+	return BitString{
+		data:     string(buf),
+		sizeBits: 64,
+	}
+}
+
+func NewFromBinary(text string) BitString {
+	for _, r := range text {
+		BugOn(r != '0' && r != '1', "invalid string format, %q", text)
+	}
+
+	size := len(text)
+	if size == 0 {
+		return BitString{}
+	}
+
+	numBytes := (size + 7) / 8
+	dataBytes := make([]byte, numBytes)
+
+	for i, r := range text {
+		if r == '1' {
+			byteIndex := i / 8
+			bitIndex := i % 8 // Corresponds to the position within the byte, 0 for LSB, 7 for MSB
+			dataBytes[byteIndex] |= 1 << bitIndex
+		}
+	}
+
+	return BitString{
+		data:     string(dataBytes),
+		sizeBits: uint32(size),
 	}
 }
 
@@ -139,6 +184,9 @@ func (bs BitString) String() string {
 			sb.WriteByte('0')
 		}
 	}
+	sb.WriteString(": (")
+	sb.WriteString(strconv.Itoa(int(bs.sizeBits)))
+	sb.WriteString(" bits)")
 
 	return sb.String()
 }

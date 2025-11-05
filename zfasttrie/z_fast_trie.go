@@ -33,8 +33,10 @@ func swapChildren[V comparable](a, b *znode[V]) {
 
 // Insert adds a new string and value to the trie.
 func (zt *ZFastTrie[V]) Insert(newText string, value V) {
+	zt.checkTrie()
 	zt.insertBitString(NewBitString(newText), value)
-	BugOn(int(zt.size) != len(zt.handle2NodeMap), "%d != %d, %s", zt.size, len(zt.handle2NodeMap), zt.String())
+	//BugOn(int(zt.size) != len(zt.handle2NodeMap), "on %q, %d != %d\n%s", newText, zt.size, len(zt.handle2NodeMap), zt.String())
+	zt.checkTrie()
 }
 
 func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
@@ -89,15 +91,16 @@ func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
 
 			exitNode.insertChild(newNode, lcpLength)
 
-			if !newNode.isLeaf() {
-				zt.insertHandle2NodeMap(newNode)
-			}
+			//if !newNode.isLeaf() {
+			zt.insertHandle2NodeMap(newNode)
+			//}
 
 			if lcpLength < newText.Size() {
 				// make new leaf znode
 				newTextNode := newNodeWithNameLength(value, newText, int32(lcpLength+1))
 				exitNode.value = zt.emptyValue
 				exitNode.insertChild(newTextNode, lcpLength)
+				zt.insertHandle2NodeMap(newTextNode)
 			} else {
 				exitNode.value = value
 			}
@@ -125,7 +128,10 @@ func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
 
 // Erase removes a string from the trie.
 func (zt *ZFastTrie[V]) Erase(targetText string) {
+	zt.checkTrie()
 	zt.eraseBitString(NewBitString(targetText))
+	//BugOn(int(zt.size) != len(zt.handle2NodeMap), "on %q, %d != %d, %s", targetText, zt.size, len(zt.handle2NodeMap), zt.String())
+	zt.checkTrie()
 }
 
 func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
@@ -157,13 +163,12 @@ func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
 				if parentNode == nil {
 					panic("internal error: parentNode not found during erase")
 				}
+				BugOn(parentNode.leftChild != targetNode && parentNode.rightChild != targetNode, "wrong parent:\n%s\n%s\n%s", parentNode.String(), targetNode.String(), zt.String())
 
 				parentNode.eraseChild(targetNode.key())
 				zt.eraseHandle2NodeMap(targetNode.handle())
 
-				if parentNode.isLeaf() {
-					zt.eraseHandle2NodeMap(parentNode.handle())
-				} else if parentNode.sizeChildren() == 1 && parentNode.value == zt.emptyValue {
+				if parentNode.sizeChildren() == 1 && parentNode.value == zt.emptyValue {
 					// swap parent and child znode
 					zt.eraseHandle2NodeMap(parentNode.handle())
 					childNode := parentNode.getChild()
@@ -173,10 +178,9 @@ func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
 
 					parentNode.set(childNode.value, childNode.extent, parentNode.nameLength)
 
-					if !parentNode.isLeaf() {
-						zt.eraseHandle2NodeMap(childNode.handle())
-						zt.insertHandle2NodeMap(parentNode)
-					}
+					zt.eraseHandle2NodeMap(childNode.handle())
+					zt.insertHandle2NodeMap(parentNode)
+
 				}
 			}
 		} else if targetNode.sizeChildren() == 1 {
@@ -184,19 +188,39 @@ func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
 			childNode := targetNode.getChild()
 			targetNode.eraseChild(childNode.key())
 			zt.eraseHandle2NodeMap(targetNode.handle())
+			//zt.eraseHandle2NodeMap(childNode.handle())
 
 			targetNode.set(childNode.value, childNode.extent, targetNode.nameLength)
 			swapChildren(targetNode, childNode)
 
-			if !targetNode.isLeaf() {
-				zt.eraseHandle2NodeMap(childNode.handle())
-				zt.insertHandle2NodeMap(targetNode)
-			}
+			zt.eraseHandle2NodeMap(childNode.handle())
+			zt.insertHandle2NodeMap(targetNode)
 		} else {
 			targetNode.value = zt.emptyValue
 		}
 	}
 	zt.size--
+}
+
+func (zt *ZFastTrie[V]) checkTrie() {
+	cnt := zt.checkTrieRec(zt.root)
+	BugOn(cnt != len(zt.handle2NodeMap), "%s", zt.String())
+}
+
+func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
+	if node == nil {
+		return 0
+	}
+	if int32(node.extentLength())-node.nameLength != 0 {
+		fFast := TwoFattest(uint64(node.nameLength), uint64(node.extentLength()))
+		f := int32(fFast)
+		handle := NewBitStringPrefix(node.extent, uint32(f))
+		handleNode, ok := zt.handle2NodeMap[handle]
+		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node.String(), handleNode.String(), zt.String())
+		BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node.String(), handleNode.String(), zt.String())
+		notEmptyNodesInTrie = 1
+	}
+	return notEmptyNodesInTrie + zt.checkTrieRec(node.leftChild) + zt.checkTrieRec(node.rightChild)
 }
 
 func (zt *ZFastTrie[V]) insertHandle2NodeMap(n *znode[V]) {
@@ -308,6 +332,9 @@ func (zt *ZFastTrie[V]) String() string {
 		sb.WriteString(": ")
 		sb.WriteString(z.String())
 		sb.WriteString("\n")
+	}
+	if len(zt.handle2NodeMap) == 0 {
+		sb.WriteString("<empty handle>")
 	}
 	sb.WriteString("\n")
 
