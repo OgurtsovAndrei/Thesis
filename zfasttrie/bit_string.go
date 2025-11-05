@@ -186,7 +186,9 @@ func (bs BitString) String() string {
 	}
 	sb.WriteString(": (")
 	sb.WriteString(strconv.Itoa(int(bs.sizeBits)))
-	sb.WriteString(" bits)")
+	sb.WriteString(" bits) [")
+	sb.WriteString(bs.data)
+	sb.WriteString("]")
 
 	return sb.String()
 }

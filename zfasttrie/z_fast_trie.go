@@ -57,6 +57,7 @@ func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
 
 		if lcpLength < exitNode.extentLength() {
 			exitNodeExtent := exitNode.extent
+			oldExitValue := exitNode.value
 
 			newExtent := BitString{}
 			if lcpLength > 0 {
@@ -64,7 +65,9 @@ func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
 			}
 
 			if exitNode.isLeaf() {
+				zt.eraseHandle2NodeMap(exitNodeExtent)
 				exitNode.setExtent(newExtent)
+				exitNode.value = zt.emptyValue
 				zt.insertHandle2NodeMap(exitNode)
 			} else {
 				// C++: const uint &newHandleLength = Fast::twoFattest(lcpLength, newExtent.size());
@@ -79,29 +82,28 @@ func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
 				if isChangeHandle {
 					zt.eraseHandle2NodeMap(oldHandle)
 					exitNode.setExtent(newExtent)
+					exitNode.value = zt.emptyValue
 					zt.insertHandle2NodeMap(exitNode)
 				} else {
 					exitNode.setExtent(newExtent)
 				}
 			}
 
-			// make new internal znode
-			newNode := newNodeWithNameLength(exitNode.value, exitNodeExtent, int32(lcpLength+1))
+			// make new internal znode (with previous exit node value)
+			newNode := newNodeWithNameLength(oldExitValue, exitNodeExtent, int32(lcpLength+1))
 			swapChildren(exitNode, newNode)
-
 			exitNode.insertChild(newNode, lcpLength)
-
-			//if !newNode.isLeaf() {
 			zt.insertHandle2NodeMap(newNode)
-			//}
 
+			// finally add node with newText
 			if lcpLength < newText.Size() {
 				// make new leaf znode
 				newTextNode := newNodeWithNameLength(value, newText, int32(lcpLength+1))
-				exitNode.value = zt.emptyValue
+				BugOn(exitNode.value != zt.emptyValue, "value already exists, but how?")
 				exitNode.insertChild(newTextNode, lcpLength)
 				zt.insertHandle2NodeMap(newTextNode)
 			} else {
+				BugOn(exitNode.value != zt.emptyValue, "value already exists, but how?")
 				exitNode.value = value
 			}
 
@@ -212,11 +214,11 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 		return 0
 	}
 	if int32(node.extentLength())-node.nameLength != 0 {
-		fFast := TwoFattest(uint64(node.nameLength), uint64(node.extentLength()))
+		fFast := findTwoFattestMath(uint64(node.nameLength), uint64(node.extentLength()))
 		f := int32(fFast)
 		handle := NewBitStringPrefix(node.extent, uint32(f))
 		handleNode, ok := zt.handle2NodeMap[handle]
-		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node.String(), handleNode.String(), zt.String())
+		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle.String(), zt.size, f, node.String(), handleNode.String(), zt.String())
 		BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node.String(), handleNode.String(), zt.String())
 		notEmptyNodesInTrie = 1
 	}
@@ -277,14 +279,14 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 
 	for 0 < (b - a) {
 		// C++: f = Fast::twoFattest(a, b);
-		fFast := TwoFattest(uint64(a), uint64(b))
+		fFast := findTwoFattestMath(uint64(a), uint64(b))
 		f = int32(fFast)
 
 		handle := NewBitStringPrefix(pattern, uint32(f))
 		node = zt.getNode(handle)
 
 		if node != nil {
-			a = int32(node.extentLength())
+			a = int32(node.extentLength()) + 1
 			result = node
 		} else {
 			b = f - 1
@@ -293,7 +295,7 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 
 	if result != nil {
 		lcpLength := GetLCPLength(result.extent, pattern)
-		if lcpLength == result.extentLength() && lcpLength < pattern.Size() {
+		for lcpLength == result.extentLength() && lcpLength < pattern.Size() {
 			var next *znode[V]
 			if pattern.At(lcpLength) {
 				next = result.rightChild
@@ -302,6 +304,9 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 			}
 			if next != nil {
 				result = next
+				lcpLength = GetLCPLength(result.extent, pattern)
+			} else {
+				break
 			}
 		}
 	}

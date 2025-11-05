@@ -49,7 +49,7 @@ func (n *znode[V]) handleLength() uint32 {
 	aFast := uint64(n.nameLength + 1)
 	bFast := uint64(n.extentLength())
 
-	return uint32(TwoFattest(aFast, bFast))
+	return uint32(findTwoFattestMath(aFast, bFast))
 }
 
 func (n *znode[V]) handle() BitString {
