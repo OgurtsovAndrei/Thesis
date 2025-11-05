@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+const debug = false
+
 func First(errs ...error) error {
 	for _, e := range errs {
 		if e != nil {
@@ -21,11 +23,13 @@ func FatalIf(err error) {
 }
 
 func Bug(format string, msg ...any) {
-	panic(fmt.Sprintf(format, msg...))
+	if debug {
+		panic(fmt.Sprintf(format, msg...))
+	}
 }
 
 func BugOn(cond bool, format string, msg ...any) {
-	if cond {
+	if debug && cond {
 		Bug(format, msg...)
 	}
 }

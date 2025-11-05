@@ -156,7 +156,7 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText BitString) {
 				if parentNode == nil {
 					panic("internal error: parentNode not found during erase")
 				}
-				BugOn(parentNode.leftChild != targetNode && parentNode.rightChild != targetNode, "wrong parent:\n%s\n%s\n%s", parentNode.String(), targetNode.String(), zt.String())
+				BugOn(parentNode.leftChild != targetNode && parentNode.rightChild != targetNode, "wrong parent:\n%s\n%s", parentNode, targetNode)
 
 				parentNode.eraseChild(targetNode.key())
 				zt.eraseHandle2NodeMap(targetNode.handle())
@@ -206,8 +206,6 @@ func (zt *ZFastTrie[V]) ContainsBitString(pattern BitString) bool {
 	}
 	return exitNode.extent.Equal(pattern) && exitNode.value != zt.emptyValue
 }
-
-const debug = false
 
 func swapChildren[V comparable](a, b *znode[V]) {
 	a.leftChild, b.leftChild = b.leftChild, a.leftChild
