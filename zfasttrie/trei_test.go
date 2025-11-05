@@ -46,9 +46,12 @@ func TestFast(t *testing.T) {
 	if TwoFattest(9, 11) != 10 {
 		t.Fatal("TwoFattest(9, 11] failed")
 	}
-	//if TwoFattest(^uint64(0), 8) != 0 {
-	//	t.Fatal("TwoFattest(-1, 8) failed")
-	//}
+	if TwoFattest(^uint64(0), 0) != 0 {
+		t.Fatal("TwoFattest(-1, 0] failed")
+	}
+	if TwoFattest(^uint64(0), 8) != 0 {
+		t.Fatal("TwoFattest(-1, 8) failed")
+	}
 	if TwoFattest(7, 8) != 8 {
 		t.Fatal("TwoFattest(7, 8] failed")
 	}

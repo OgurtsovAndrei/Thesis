@@ -215,7 +215,7 @@ func swapChildren[V comparable](a, b *znode[V]) {
 func (zt *ZFastTrie[V]) checkTrie() {
 	if debug {
 		cnt := zt.checkTrieRec(zt.root)
-		BugOn(cnt != len(zt.handle2NodeMap), "%s", zt)
+		BugOn(cnt != len(zt.handle2NodeMap), "%d != %d\n%s", cnt, len(zt.handle2NodeMap), zt)
 	}
 }
 
@@ -223,15 +223,20 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 	if node == nil {
 		return 0
 	}
-	if int32(node.extentLength())-node.nameLength != 0 {
-		fFast := TwoFattest(uint64(node.nameLength), uint64(node.extentLength()))
+
+	if node.nameLength != 0 {
+		fFast := node.handleLength()
 		f := int32(fFast)
 		handle := NewBitStringPrefix(node.extent, uint32(f))
 		handleNode, ok := zt.handle2NodeMap[handle]
 		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node, handleNode, zt)
 		BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node, handleNode, zt)
+	}
+
+	if !node.extent.IsEmpty() {
 		notEmptyNodesInTrie = 1
 	}
+
 	return notEmptyNodesInTrie + zt.checkTrieRec(node.leftChild) + zt.checkTrieRec(node.rightChild)
 }
 
@@ -292,7 +297,7 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 
 	if result != nil {
 		lcpLength := GetLCPLength(result.extent, pattern)
-		for lcpLength == result.extentLength() && lcpLength < pattern.Size() {
+		if lcpLength == result.extentLength() && lcpLength < pattern.Size() {
 			var next *znode[V]
 			if pattern.At(lcpLength) {
 				next = result.rightChild
@@ -301,9 +306,6 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 			}
 			if next != nil {
 				result = next
-				lcpLength = GetLCPLength(result.extent, pattern)
-			} else {
-				break
 			}
 		}
 	}

@@ -18,7 +18,7 @@ func TwoFattest(a uint64, b uint64) uint64 {
 	if a == b {
 		return 0 // case (x, x]
 	}
-	BugOn(a > b, "illegal arguments")
+	//BugOn(a > b, "illegal arguments")
 	msb := MostSignificantBit(a ^ b)
 	if msb == -1 {
 		return a

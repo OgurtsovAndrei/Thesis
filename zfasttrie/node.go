@@ -46,7 +46,10 @@ func (n *znode[V]) extentLength() uint32 {
 
 func (n *znode[V]) handleLength() uint32 {
 	// C++: Fast::twoFattest(nameLength_ - 1, extentLength());
-	aFast := uint64(n.nameLength)
+	aFast := uint64(n.nameLength - 1)
+	if aFast == ^uint64(0) {
+		aFast = 0
+	}
 	bFast := uint64(n.extentLength())
 
 	return uint32(TwoFattest(aFast, bFast))
