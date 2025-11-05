@@ -26,20 +26,19 @@ func NewZFastTrie[V comparable](emptyValue V) *ZFastTrie[V] {
 	}
 }
 
-func swapChildren[V comparable](a, b *znode[V]) {
-	a.leftChild, b.leftChild = b.leftChild, a.leftChild
-	a.rightChild, b.rightChild = b.rightChild, a.rightChild
-}
-
-// Insert adds a new string and value to the trie.
 func (zt *ZFastTrie[V]) Insert(newText string, value V) {
 	zt.checkTrie()
-	zt.insertBitString(NewBitString(newText), value)
-	//BugOn(int(zt.size) != len(zt.handle2NodeMap), "on %q, %d != %d\n%s", newText, zt.size, len(zt.handle2NodeMap), zt.String())
+	zt.InsertBitString(NewBitString(newText), value)
 	zt.checkTrie()
 }
 
-func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
+func (zt *ZFastTrie[V]) Erase(targetText string) {
+	zt.checkTrie()
+	zt.EraseBitString(NewBitString(targetText))
+	zt.checkTrie()
+}
+
+func (zt *ZFastTrie[V]) InsertBitString(newText BitString, value V) {
 	if value == zt.emptyValue {
 		panic("cannot insert empty value")
 	}
@@ -128,15 +127,7 @@ func (zt *ZFastTrie[V]) insertBitString(newText BitString, value V) {
 	zt.size++
 }
 
-// Erase removes a string from the trie.
-func (zt *ZFastTrie[V]) Erase(targetText string) {
-	zt.checkTrie()
-	zt.eraseBitString(NewBitString(targetText))
-	//BugOn(int(zt.size) != len(zt.handle2NodeMap), "on %q, %d != %d, %s", targetText, zt.size, len(zt.handle2NodeMap), zt.String())
-	zt.checkTrie()
-}
-
-func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
+func (zt *ZFastTrie[V]) EraseBitString(targetText BitString) {
 	targetNode := zt.getExitNode(targetText)
 	if targetNode == nil || !targetNode.extent.Equal(targetText) || targetNode.value == zt.emptyValue {
 		log.Println("Warning: trying to erase non-existent key")
@@ -204,7 +195,24 @@ func (zt *ZFastTrie[V]) eraseBitString(targetText BitString) {
 	zt.size--
 }
 
+func (zt *ZFastTrie[V]) Contains(pattern string) bool {
+	return zt.ContainsBitString(NewBitString(pattern))
+}
+
+func (zt *ZFastTrie[V]) ContainsBitString(pattern BitString) bool {
+	exitNode := zt.getExitNode(pattern)
+	if exitNode == nil {
+		return false
+	}
+	return exitNode.extent.Equal(pattern) && exitNode.value != zt.emptyValue
+}
+
 const debug = false
+
+func swapChildren[V comparable](a, b *znode[V]) {
+	a.leftChild, b.leftChild = b.leftChild, a.leftChild
+	a.rightChild, b.rightChild = b.rightChild, a.rightChild
+}
 
 func (zt *ZFastTrie[V]) checkTrie() {
 	if debug {
@@ -245,19 +253,6 @@ func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle BitString) {
 		return
 	}
 	delete(zt.handle2NodeMap, handle)
-}
-
-// Contains checks if the exact string exists in the trie.
-func (zt *ZFastTrie[V]) Contains(pattern string) bool {
-	return zt.containsBitString(NewBitString(pattern))
-}
-
-func (zt *ZFastTrie[V]) containsBitString(pattern BitString) bool {
-	exitNode := zt.getExitNode(pattern)
-	if exitNode == nil {
-		return false
-	}
-	return exitNode.extent.Equal(pattern) && exitNode.value != zt.emptyValue
 }
 
 // ContainsPrefix checks if the string is a prefix of any entry in the trie.
@@ -322,6 +317,7 @@ func (zt *ZFastTrie[V]) getNode(handle BitString) *znode[V] {
 	node, _ := zt.handle2NodeMap[handle]
 	return node
 }
+
 func (zt *ZFastTrie[V]) String() string {
 	var sb strings.Builder
 	sb.WriteString("ZFastTrie:\n")
