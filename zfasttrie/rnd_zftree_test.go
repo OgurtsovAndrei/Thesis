@@ -1,6 +1,7 @@
 package zfasttrie
 
 import (
+	"Thesis/bits"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -9,13 +10,12 @@ import (
 	"time"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
-
 type testOperation struct {
 	Op       string `json:"op"`
 	Key      string `json:"key"`
-	Value    bool   `json:"value,omitempty"`
-	Expected bool   `json:"expected,omitempty"`
+	Size     uint32 `json:"size"`
+	Value    any    `json:"value,omitempty"`
+	Expected any    `json:"expected,omitempty"`
 }
 
 type testHistory struct {
@@ -23,10 +23,26 @@ type testHistory struct {
 	Operations []testOperation `json:"operations"`
 }
 
+type mapKey struct {
+	data string
+	size uint32
+}
+
+func toMapKey(bs bits.BitString) mapKey {
+	return mapKey{
+		data: string(bs.Data()),
+		size: bs.Size(),
+	}
+}
+
 func saveHistoryAndFail(t *testing.T, seed int64, history []testOperation, format string, args ...interface{}) {
 	t.Helper()
 
-	fileName := fmt.Sprintf("fail_history_%d.json", seed)
+	if err := os.MkdirAll("out", 0755); err != nil {
+		t.Logf("!!! Failed to create out directory: %v", err)
+	}
+
+	fileName := fmt.Sprintf("out/fail_history_%d.json", seed)
 	historyData := testHistory{
 		Seed:       seed,
 		Operations: history,
@@ -46,55 +62,20 @@ func saveHistoryAndFail(t *testing.T, seed int64, history []testOperation, forma
 	t.Fatalf(format, args...)
 }
 
-func randString(r *rand.Rand, maxLength int) string {
-	if maxLength <= 0 {
-		maxLength = 1
-	}
-
-	var length int
-	if maxLength == 1 {
-		length = 1
-	} else {
-		length = r.Intn(maxLength-1) + 1
-	}
-
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[r.Intn(len(charset))]
-	}
-	return string(b)
-}
-
-func generateString(r *rand.Rand, existingKeys []string, prefixBias float64, maxLength int) string {
-	if len(existingKeys) > 0 && r.Float64() < prefixBias {
-		baseKey := existingKeys[r.Intn(len(existingKeys))]
-		if len(baseKey) <= 1 {
-			return randString(r, maxLength)
-		}
-
-		prefixLen := r.Intn(len(baseKey)-1) + 1
-		prefix := baseKey[:prefixLen]
-
-		suffixLen := r.Intn(maxLength/2) + 1
-		suffix := randString(r, suffixLen)
-
-		return prefix + suffix
-	}
-	return randString(r, maxLength)
-}
-
-func TestTrie_HeavyRandom_InsertDeleteContains(t *testing.T) {
+func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 	for test_id := range 100 {
-		fmt.Println(test_id)
+		fmt.Println("TestTrie_HeavyRandom_BitString_Ops iteration:", test_id)
 		seed := time.Now().UnixNano()
 		r := rand.New(rand.NewSource(seed))
+
 		tree := NewZFastTrie[bool](false)
-		groundTruth := make(map[string]bool)
-		insertedKeys := make([]string, 0)
+
+		// Ground truth uses the composite key (Data + Size)
+		groundTruth := make(map[mapKey]bool)
+		insertedKeys := make([]bits.BitString, 0)
 
 		numOperations := 10_000
-		maxStrLength := 32
-		prefixBias := 0.3
+		maxBitLen := 128
 
 		history := make([]testOperation, 0, numOperations)
 
@@ -106,57 +87,62 @@ func TestTrie_HeavyRandom_InsertDeleteContains(t *testing.T) {
 
 		for i := 0; i < numOperations; i++ {
 			op := r.Intn(100)
+			genLen := r.Intn(maxBitLen) + 1
 
 			if op < 45 {
-				s := generateString(r, insertedKeys, prefixBias, maxStrLength)
-				history = append(history, testOperation{Op: "Insert", Key: s, Value: true})
+				s := generateBitString(genLen, r)
+				mk := toMapKey(s)
 
-				if _, exists := groundTruth[s]; !exists {
-					groundTruth[s] = true
+				history = append(history, testOperation{Op: "InsertBitString", Key: s.String(), Size: s.Size(), Value: true})
+
+				if _, exists := groundTruth[mk]; !exists {
+					groundTruth[mk] = true
 					insertedKeys = append(insertedKeys, s)
-					tree.Insert(s, true)
+					tree.InsertBitString(s, true)
 
-					if !tree.Contains(s) {
-						fmt.Println(tree.String())
-						fmt.Println(NewBitString(s))
-						fmt.Println(!tree.Contains(s))
-						saveHistoryAndFail(t, seed, history, "Failed to find just-inserted key: %q", s)
+					if !tree.ContainsBitString(s) {
+						saveHistoryAndFail(t, seed, history, "Failed to find just-inserted key: %s", s.String())
 					}
 				}
 			} else if op < 80 {
 				if len(insertedKeys) == 0 {
-					history = append(history, testOperation{Op: "Erase", Key: "SKIPPED"})
+					history = append(history, testOperation{Op: "EraseBitString", Key: "SKIPPED_EMPTY"})
 					continue
 				}
 				idx := r.Intn(len(insertedKeys))
 				s := insertedKeys[idx]
-				history = append(history, testOperation{Op: "Erase", Key: s})
+				mk := toMapKey(s)
 
-				delete(groundTruth, s)
+				history = append(history, testOperation{Op: "EraseBitString", Key: s.String(), Size: s.Size()})
+
+				delete(groundTruth, mk)
+
 				insertedKeys[idx] = insertedKeys[len(insertedKeys)-1]
 				insertedKeys = insertedKeys[:len(insertedKeys)-1]
 
-				tree.Erase(s)
+				tree.EraseBitString(s)
 
-				if tree.Contains(s) {
-					saveHistoryAndFail(t, seed, history, "Found just-deleted key: %q", s)
+				if tree.ContainsBitString(s) {
+					saveHistoryAndFail(t, seed, history, "Found just-deleted key: %s", s.String())
 				}
 			} else {
-				s := generateString(r, insertedKeys, prefixBias, maxStrLength)
-				expected, _ := groundTruth[s]
-				history = append(history, testOperation{Op: "Contains", Key: s, Expected: expected})
+				s := generateBitString(genLen, r)
+				mk := toMapKey(s)
+				expected, _ := groundTruth[mk]
 
-				actual := tree.Contains(s)
+				history = append(history, testOperation{Op: "ContainsBitString", Key: s.String(), Size: s.Size(), Expected: expected})
+
+				actual := tree.ContainsBitString(s)
 
 				if actual != expected {
-					saveHistoryAndFail(t, seed, history, "Contains mismatch for key %q. Expected: %v, Got: %v", s, expected, actual)
+					saveHistoryAndFail(t, seed, history, "ContainsBitString mismatch for key %s. Expected: %v, Got: %v", s.String(), expected, actual)
 				}
 			}
 		}
 
-		for key := range groundTruth {
-			if !tree.Contains(key) {
-				saveHistoryAndFail(t, seed, history, "Final check failed: key %q in ground truth but not in trie", key)
+		for _, key := range insertedKeys {
+			if !tree.ContainsBitString(key) {
+				saveHistoryAndFail(t, seed, history, "Final check failed: key %s in ground truth but not in trie", key.String())
 			}
 		}
 
@@ -166,60 +152,76 @@ func TestTrie_HeavyRandom_InsertDeleteContains(t *testing.T) {
 	}
 }
 
-func TestTrie_HeavyRandom_Prefixes(t *testing.T) {
-	seed := time.Now().UnixNano()
-	r := rand.New(rand.NewSource(seed))
-	tree := NewZFastTrie[bool](false)
-	groundTruth := make(map[string]bool)
-	prefixGroundTruth := make(map[string]bool)
-	insertedKeys := make([]string, 0)
+func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
+	for test_id := range 100 {
+		fmt.Println("TestTrie_HeavyRandom_BitString_Get iteration:", test_id)
+		seed := time.Now().UnixNano()
+		r := rand.New(rand.NewSource(seed))
 
-	numOperations := 1000
-	maxStrLength := 3
-	prefixBias := 0.3
+		emptyValue := -1
+		tree := NewZFastTrie[int](emptyValue)
 
-	history := make([]testOperation, 0, numOperations)
+		groundTruth := make(map[mapKey]int)
+		insertedKeys := make([]bits.BitString, 0)
 
-	defer func() {
-		if r := recover(); r != nil {
-			saveHistoryAndFail(t, seed, history, "Test panicked: %v", r)
+		numOperations := 100_000
+		maxBitLen := 128
+
+		history := make([]testOperation, 0, numOperations)
+
+		defer func() {
+			if r := recover(); r != nil {
+				saveHistoryAndFail(t, seed, history, "Test panicked: %v", r)
+			}
+		}()
+
+		for i := 0; i < numOperations; i++ {
+			op := r.Intn(100)
+			genLen := r.Intn(maxBitLen) + 1
+
+			if op < 50 {
+				s := generateBitString(genLen, r)
+				mk := toMapKey(s)
+				v := r.Intn(1000000)
+
+				history = append(history, testOperation{Op: "InsertBitString", Key: s.String(), Size: s.Size(), Value: v})
+
+				if _, exists := groundTruth[mk]; !exists {
+					insertedKeys = append(insertedKeys, s)
+				}
+				groundTruth[mk] = v
+				tree.InsertBitString(s, v)
+			} else {
+				var s bits.BitString
+				if len(insertedKeys) > 0 && r.Float64() < 0.7 {
+					s = insertedKeys[r.Intn(len(insertedKeys))]
+				} else {
+					s = generateBitString(genLen, r)
+				}
+				mk := toMapKey(s)
+
+				expected, ok := groundTruth[mk]
+				if !ok {
+					expected = emptyValue
+				}
+
+				history = append(history, testOperation{Op: "GetBitString", Key: s.String(), Size: s.Size(), Expected: expected})
+
+				actual := tree.GetBitString(s)
+
+				if actual != expected {
+					saveHistoryAndFail(t, seed, history, "GetBitString mismatch for key %s. Expected: %v, Got: %v", s.String(), expected, actual)
+				}
+			}
 		}
-	}()
 
-	for i := 0; i < numOperations; i++ {
-		s := generateString(r, insertedKeys, prefixBias, maxStrLength)
-		if _, exists := groundTruth[s]; exists {
-			history = append(history, testOperation{Op: "Insert", Key: s, Value: false})
-			continue
-		}
-
-		history = append(history, testOperation{Op: "Insert", Key: s, Value: true})
-		groundTruth[s] = true
-		insertedKeys = append(insertedKeys, s)
-		tree.Insert(s, true)
-
-		for j := 0; j <= len(s); j++ {
-			prefixGroundTruth[s[:j]] = true
-		}
-	}
-
-	for prefix := range prefixGroundTruth {
-		history = append(history, testOperation{Op: "ContainsPrefix", Key: prefix, Expected: true})
-		if !tree.ContainsPrefix(prefix) {
-			saveHistoryAndFail(t, seed, history, "Prefix check failed: %q should be a prefix but was not found", prefix)
-		}
-	}
-
-	for i := 0; i < numOperations/10; i++ {
-		s := randString(r, maxStrLength)
-		if _, isPrefix := prefixGroundTruth[s]; isPrefix {
-			history = append(history, testOperation{Op: "ContainsPrefix", Key: s, Expected: true})
-			continue
-		}
-
-		history = append(history, testOperation{Op: "ContainsPrefix", Key: s, Expected: false})
-		if tree.ContainsPrefix(s) {
-			saveHistoryAndFail(t, seed, history, "Negative prefix check failed: %q should NOT be a prefix but was found", s)
+		for _, bs := range insertedKeys {
+			mk := toMapKey(bs)
+			expectedValue := groundTruth[mk]
+			actualValue := tree.GetBitString(bs)
+			if actualValue != expectedValue {
+				saveHistoryAndFail(t, seed, history, "Final check GetBitString mismatch for key %s. Expected: %v, Got: %v", bs.String(), expectedValue, actualValue)
+			}
 		}
 	}
 }

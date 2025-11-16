@@ -1,18 +1,41 @@
 package zfasttrie
 
 import (
+	"Thesis/bits"
+	"Thesis/errutil"
 	"fmt"
 	"log"
 	"strings"
 )
+
+import (
+	"os"
+)
+
+var debug bool
+
+func init() {
+	if os.Getenv("DEBUG") == "1" {
+		debug = true
+	} else {
+		debug = false
+	}
+}
+
+type statistics struct {
+	getExitNodeCnt          int
+	getExitNodeInnerLoopCnt int
+}
 
 // ZFastTrie implementation in Go.
 // Ported from ZFastTrie.hpp
 type ZFastTrie[V comparable] struct {
 	size           int32
 	root           *znode[V]
-	handle2NodeMap map[BitString]*znode[V]
+	handle2NodeMap map[bits.BitString]*znode[V]
 	emptyValue     V
+
+	stat statistics
 }
 
 // NewZFastTrie creates a new ZFastTrie.
@@ -21,24 +44,24 @@ func NewZFastTrie[V comparable](emptyValue V) *ZFastTrie[V] {
 	return &ZFastTrie[V]{
 		size:           0,
 		root:           nil,
-		handle2NodeMap: make(map[BitString]*znode[V]),
+		handle2NodeMap: make(map[bits.BitString]*znode[V]),
 		emptyValue:     emptyValue,
 	}
 }
 
 func (zt *ZFastTrie[V]) Insert(newText string, value V) {
 	zt.checkTrie()
-	zt.InsertBitString(NewBitString(newText), value)
+	zt.InsertBitString(bits.NewBitString(newText), value)
 	zt.checkTrie()
 }
 
 func (zt *ZFastTrie[V]) Erase(targetText string) {
 	zt.checkTrie()
-	zt.EraseBitString(NewBitString(targetText))
+	zt.EraseBitString(bits.NewBitString(targetText))
 	zt.checkTrie()
 }
 
-func (zt *ZFastTrie[V]) InsertBitString(newText BitString, value V) {
+func (zt *ZFastTrie[V]) InsertBitString(newText bits.BitString, value V) {
 	if value == zt.emptyValue {
 		panic("cannot insert empty value")
 	}
@@ -52,15 +75,15 @@ func (zt *ZFastTrie[V]) InsertBitString(newText BitString, value V) {
 			panic("internal error: exitNode is nil")
 		}
 
-		lcpLength := GetLCPLength(exitNode.extent, newText)
+		lcpLength := exitNode.extent.GetLCPLength(newText)
 
 		if lcpLength < exitNode.extentLength() {
 			exitNodeExtent := exitNode.extent
 			oldExitValue := exitNode.value
 
-			newExtent := BitString{}
+			var newExtent bits.BitString = bits.NewBitString("")
 			if lcpLength > 0 {
-				newExtent = NewBitStringPrefix(exitNode.extent, lcpLength)
+				newExtent = bits.NewBitStringPrefix(exitNode.extent, lcpLength)
 			}
 
 			if exitNode.isLeaf() {
@@ -98,11 +121,11 @@ func (zt *ZFastTrie[V]) InsertBitString(newText BitString, value V) {
 			if lcpLength < newText.Size() {
 				// make new leaf znode
 				newTextNode := newNodeWithNameLength(value, newText, int32(lcpLength+1))
-				BugOn(exitNode.value != zt.emptyValue, "value already exists, but how?")
+				errutil.BugOn(exitNode.value != zt.emptyValue, "value already exists, but how?")
 				exitNode.insertChild(newTextNode, lcpLength)
 				zt.insertHandle2NodeMap(newTextNode)
 			} else {
-				BugOn(exitNode.value != zt.emptyValue, "value already exists, but how?")
+				errutil.BugOn(exitNode.value != zt.emptyValue, "value already exists, but how?")
 				exitNode.value = value
 			}
 
@@ -111,7 +134,10 @@ func (zt *ZFastTrie[V]) InsertBitString(newText BitString, value V) {
 				if exitNode.value == zt.emptyValue {
 					exitNode.value = value
 				} else {
-					log.Println("Warning: new text already exist.")
+					if debug {
+						log.Println("Warning: new text already exist.")
+					}
+					exitNode.value = value
 				}
 			} else { // lcpLength == exitNode.extentLength() < newText.Size()
 				if exitNode.isLeaf() {
@@ -127,10 +153,12 @@ func (zt *ZFastTrie[V]) InsertBitString(newText BitString, value V) {
 	zt.size++
 }
 
-func (zt *ZFastTrie[V]) EraseBitString(targetText BitString) {
+func (zt *ZFastTrie[V]) EraseBitString(targetText bits.BitString) {
 	targetNode := zt.getExitNode(targetText)
 	if targetNode == nil || !targetNode.extent.Equal(targetText) || targetNode.value == zt.emptyValue {
-		log.Println("Warning: trying to erase non-existent key")
+		if debug {
+			log.Println("Warning: trying to erase non-existent key")
+		}
 		return
 	}
 
@@ -149,14 +177,14 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText BitString) {
 				if targetNode.nameLength <= 1 {
 					parentNode = zt.root
 				} else {
-					parentPrefix := NewBitStringPrefix(targetNode.extent, uint32(targetNode.nameLength-1))
+					parentPrefix := bits.NewBitStringPrefix(targetNode.extent, uint32(targetNode.nameLength-1))
 					parentNode = zt.getExitNode(parentPrefix)
 				}
 
 				if parentNode == nil {
 					panic("internal error: parentNode not found during erase")
 				}
-				BugOn(parentNode.leftChild != targetNode && parentNode.rightChild != targetNode, "wrong parent:\n%s\n%s", parentNode, targetNode)
+				errutil.BugOn(parentNode.leftChild != targetNode && parentNode.rightChild != targetNode, "wrong parent:\n%s\n%s", parentNode, targetNode)
 
 				parentNode.eraseChild(targetNode.key())
 				zt.eraseHandle2NodeMap(targetNode.handle())
@@ -196,10 +224,10 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText BitString) {
 }
 
 func (zt *ZFastTrie[V]) Contains(pattern string) bool {
-	return zt.ContainsBitString(NewBitString(pattern))
+	return zt.ContainsBitString(bits.NewBitString(pattern))
 }
 
-func (zt *ZFastTrie[V]) ContainsBitString(pattern BitString) bool {
+func (zt *ZFastTrie[V]) ContainsBitString(pattern bits.BitString) bool {
 	exitNode := zt.getExitNode(pattern)
 	if exitNode == nil {
 		return false
@@ -207,7 +235,7 @@ func (zt *ZFastTrie[V]) ContainsBitString(pattern BitString) bool {
 	return exitNode.extent.Equal(pattern) && exitNode.value != zt.emptyValue
 }
 
-func (zt *ZFastTrie[V]) GetBitString(pattern BitString) (value V) {
+func (zt *ZFastTrie[V]) GetBitString(pattern bits.BitString) (value V) {
 	exitNode := zt.getExitNode(pattern)
 
 	if exitNode == nil {
@@ -227,7 +255,7 @@ func swapChildren[V comparable](a, b *znode[V]) {
 func (zt *ZFastTrie[V]) checkTrie() {
 	if debug {
 		cnt := zt.checkTrieRec(zt.root)
-		BugOn(cnt != len(zt.handle2NodeMap), "%d != %d\n%s", cnt, len(zt.handle2NodeMap), zt)
+		errutil.BugOn(cnt != len(zt.handle2NodeMap), "%d != %d\n%s", cnt, len(zt.handle2NodeMap), zt)
 	}
 }
 
@@ -239,10 +267,10 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 	if node.nameLength != 0 {
 		fFast := node.handleLength()
 		f := int32(fFast)
-		handle := NewBitStringPrefix(node.extent, uint32(f))
+		handle := bits.NewBitStringPrefix(node.extent, uint32(f))
 		handleNode, ok := zt.handle2NodeMap[handle]
-		BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node, handleNode, zt)
-		BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node, handleNode, zt)
+		errutil.BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node, handleNode, zt)
+		errutil.BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node, handleNode, zt)
 	}
 
 	if !node.extent.IsEmpty() {
@@ -263,7 +291,7 @@ func (zt *ZFastTrie[V]) insertHandle2NodeMap(n *znode[V]) {
 	zt.handle2NodeMap[handle] = n
 }
 
-func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle BitString) {
+func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle bits.BitString) {
 	if handle.IsEmpty() {
 		return
 	}
@@ -272,43 +300,43 @@ func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle BitString) {
 
 // ContainsPrefix checks if the string is a prefix of any entry in the trie.
 func (zt *ZFastTrie[V]) ContainsPrefix(pattern string) bool {
-	return zt.containsPrefixBitString(NewBitString(pattern))
+	return zt.containsPrefixBitString(bits.NewBitString(pattern))
 }
 
-func (zt *ZFastTrie[V]) containsPrefixBitString(pattern BitString) bool {
+func (zt *ZFastTrie[V]) containsPrefixBitString(pattern bits.BitString) bool {
 	node := zt.getExitNode(pattern)
 	if node == nil {
 		return false
 	}
-	return IsPrefix(node.extent, pattern)
+	return node.extent.HasPrefix(pattern)
 }
 
-func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
+func (zt *ZFastTrie[V]) getExitNode(pattern bits.BitString) *znode[V] {
+	zt.stat.getExitNodeCnt++
 	patternLength := int32(pattern.Size())
 	a := int32(0)
 	b := patternLength
-	var f int32
 	var node *znode[V]
 	result := zt.root
 
 	for 0 < (b - a) {
+		zt.stat.getExitNodeInnerLoopCnt++
 		// C++: f = Fast::twoFattest(a, b);
-		fFast := TwoFattest(uint64(a), uint64(b))
-		f = int32(fFast)
+		fFast := bits.TwoFattest(uint64(a), uint64(b))
 
-		handle := NewBitStringPrefix(pattern, uint32(f))
+		handle := pattern.Prefix(int(fFast))
 		node = zt.getNode(handle)
 
 		if node != nil {
 			a = int32(node.extentLength())
 			result = node
 		} else {
-			b = f - 1
+			b = int32(fFast) - 1
 		}
 	}
 
 	if result != nil {
-		lcpLength := GetLCPLength(result.extent, pattern)
+		lcpLength := result.extent.GetLCPLength(pattern)
 		if lcpLength == result.extentLength() && lcpLength < pattern.Size() {
 			var next *znode[V]
 			if pattern.At(lcpLength) {
@@ -325,7 +353,7 @@ func (zt *ZFastTrie[V]) getExitNode(pattern BitString) *znode[V] {
 	return result
 }
 
-func (zt *ZFastTrie[V]) getNode(handle BitString) *znode[V] {
+func (zt *ZFastTrie[V]) getNode(handle bits.BitString) *znode[V] {
 	node, _ := zt.handle2NodeMap[handle]
 	return node
 }

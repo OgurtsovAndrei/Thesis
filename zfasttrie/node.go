@@ -1,17 +1,20 @@
 package zfasttrie
 
-import "fmt"
+import (
+	"Thesis/bits"
+	"fmt"
+)
 
 // znode represents a Node in the ZFastTrie.
 type znode[V comparable] struct {
 	value      V
-	extent     BitString
+	extent     bits.BitString
 	nameLength int32
 	leftChild  *znode[V]
 	rightChild *znode[V]
 }
 
-func newNode[V comparable](value V, extent BitString) *znode[V] {
+func newNode[V comparable](value V, extent bits.BitString) *znode[V] {
 	return &znode[V]{
 		value:      value,
 		extent:     extent,
@@ -19,7 +22,7 @@ func newNode[V comparable](value V, extent BitString) *znode[V] {
 	}
 }
 
-func newNodeWithNameLength[V comparable](value V, extent BitString, nameLength int32) *znode[V] {
+func newNodeWithNameLength[V comparable](value V, extent bits.BitString, nameLength int32) *znode[V] {
 	return &znode[V]{
 		value:      value,
 		extent:     extent,
@@ -27,13 +30,13 @@ func newNodeWithNameLength[V comparable](value V, extent BitString, nameLength i
 	}
 }
 
-func (n *znode[V]) set(value V, extent BitString, nameLength int32) {
+func (n *znode[V]) set(value V, extent bits.BitString, nameLength int32) {
 	n.value = value
 	n.extent = extent
 	n.nameLength = nameLength
 }
 
-func (n *znode[V]) setExtent(extent BitString) {
+func (n *znode[V]) setExtent(extent bits.BitString) {
 	if extent.IsEmpty() {
 		n.nameLength = 0
 	}
@@ -52,14 +55,14 @@ func (n *znode[V]) handleLength() uint32 {
 	}
 	bFast := uint64(n.extentLength())
 
-	return uint32(TwoFattest(aFast, bFast))
+	return uint32(bits.TwoFattest(aFast, bFast))
 }
 
-func (n *znode[V]) handle() BitString {
+func (n *znode[V]) handle() bits.BitString {
 	if n.extentLength() <= 0 {
-		return BitString{}
+		return bits.NewBitString("")
 	}
-	return NewBitStringPrefix(n.extent, n.handleLength())
+	return bits.NewBitStringPrefix(n.extent, n.handleLength())
 }
 
 func (n *znode[V]) isLeaf() bool {

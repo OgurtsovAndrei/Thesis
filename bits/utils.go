@@ -1,4 +1,4 @@
-package zfasttrie
+package bits
 
 import "math/bits"
 

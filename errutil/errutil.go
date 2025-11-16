@@ -1,10 +1,8 @@
-package zfasttrie
+package errutil
 
 import (
 	"fmt"
 )
-
-const debug = false
 
 func First(errs ...error) error {
 	for _, e := range errs {
@@ -23,13 +21,11 @@ func FatalIf(err error) {
 }
 
 func Bug(format string, msg ...any) {
-	if debug {
-		panic(fmt.Sprintf(format, msg...))
-	}
+	panic(fmt.Sprintf(format, msg...))
 }
 
 func BugOn(cond bool, format string, msg ...any) {
-	if debug && cond {
+	if cond {
 		Bug(format, msg...)
 	}
 }
