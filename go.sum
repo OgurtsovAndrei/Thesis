@@ -4,3 +4,9 @@ github.com/hashicorp/go-uuid v1.0.0 h1:RS8zrF7PhGwyNPOtxSClXXj9HA8feRnJzgnI1RJCS
 github.com/hashicorp/go-uuid v1.0.0/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/golang-lru v0.5.0 h1:CL2msUPvZTLb5O648aiLNJw3hnBxN2+1Jq8rCOH9wdo=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
+github.com/hillbig/rsdic v0.0.0-20150805052524-6158e7a2d824 h1:t71y5fcBE2nktZDXhTmPdZXrdFGBFAiHcOTTk0/+1to=
+github.com/hillbig/rsdic v0.0.0-20150805052524-6158e7a2d824/go.mod h1:ivdNV4DsR3UB9xzoIPzw0OipHZf+I7VklGmx0jLkgwo=
+github.com/siongui/go-succinct-data-structure-trie v0.0.0-20210926213055-1e96df0b792f h1:TywJ0HXb+GH70Uy9A67ls9Y1vGPxUrGLz/6TGvUGa+Y=
+github.com/siongui/go-succinct-data-structure-trie v0.0.0-20210926213055-1e96df0b792f/go.mod h1:wvL7jTvTEq+YDI1Csf/nEUMoidzZhtmYaLCbQl2rQ6Q=
+github.com/ugorji/go/codec v1.3.1 h1:waO7eEiFDwidsBN6agj1vJQ4AG7lh2yqXyOXqhgQuyY=
+github.com/ugorji/go/codec v1.3.1/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=

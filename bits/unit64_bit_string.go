@@ -2,10 +2,13 @@ package bits
 
 import (
 	"Thesis/errutil"
+	"log"
 	"math/bits"
 	"strconv"
 	"strings"
 )
+
+const unsafe = false
 
 var _ BitString = Uint64BitString{}
 
@@ -40,7 +43,7 @@ func NewUint64FromBinaryText(text string) Uint64BitString {
 	}
 
 	if size > 64 {
-		size = 64
+		log.Panicf("length too big: %d", size)
 	}
 
 	var val uint64
@@ -69,8 +72,10 @@ func NewUint64BitStringPrefix(bs BitString, size uint32) BitString {
 }
 
 func NewUint64BitString(value uint64, length int8) Uint64BitString {
-	if length < 0 || length > 64 {
-		panic("length must be between 0 and 64")
+	if !unsafe {
+		if length < 0 || length > 64 {
+			panic("length must be between 0 and 64")
+		}
 	}
 
 	mask := ^uint64(0)
@@ -85,8 +90,10 @@ func NewUint64BitString(value uint64, length int8) Uint64BitString {
 }
 
 func NewUint64BitStringFromDataAndSize(data []byte, size uint32) Uint64BitString {
-	if size > 64 {
-		panic("size cannot exceed 64 for Uint64BitString")
+	if !unsafe {
+		if size > 64 {
+			panic("size cannot exceed 64 for Uint64BitString")
+		}
 	}
 	if size == 0 {
 		return Uint64BitString{}
@@ -122,8 +129,10 @@ func (bs Uint64BitString) IsEmpty() bool {
 }
 
 func (bs Uint64BitString) At(index uint32) bool {
-	if index >= uint32(bs.len) {
-		panic("index out of bounds")
+	if !unsafe {
+		if index >= uint32(bs.len) {
+			log.Panicf("index out of bounds index: %d >= len: %d", index, bs.len)
+		}
 	}
 	return (bs.value & (uint64(1) << index)) != 0
 }
@@ -137,7 +146,7 @@ func (bs Uint64BitString) Equal(a BitString) bool {
 	}
 
 	if otherBs, ok := a.(Uint64BitString); ok {
-		return bs.value == otherBs.value
+		return bs.value == otherBs.value && bs.len == otherBs.len
 	}
 
 	return bs.GetLCPLength(a) == bs.Size()
