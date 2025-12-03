@@ -48,11 +48,13 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 #### Два варианта реализации
 
 **Вариант A: Time-optimized**
-- Query: O(1), Space: O(n log w) 
+
+- Query: O(1), Space: O(n log w)
 - Техника: Bucketing with LCP
 - Применение: Range Locator
 
-**Вариант B: Space-optimized**  
+**Вариант B: Space-optimized**
+
 - Query: O(log w), Space: O(n log log w)
 - Техника: Relative ranking + probabilistic trie
 - Применение: Memory-constrained environments
@@ -66,15 +68,20 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 
 #### That is the main article
 
+- [Fast prefix search in little space, with applications](https://arxiv.org/abs/1804.04720)
+    - Hollow ZFast Trie - data structure descriptions
 - [Approximate Range Emptiness in Constant Time and Optimal Space](https://arxiv.org/pdf/1407.2907)
+    - Proof of Range Emptiness lower bound
+    - ApproximateRangeEmptiness structure
+- [ZFastTrie & MonotoneMinimalPerfectHashing](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf)
+  - see also [Learned Monotone Minimal Perfect Hashing](https://arxiv.org/pdf/2304.11012) 
 
 #### Related works
 
+- [Learned Monotone Minimal Perfect Hashing](https://arxiv.org/pdf/2304.11012)
 - [EXACT AND APPROXIMATE MEMBERSHIP TESTERS](http://aturing.umcs.maine.edu/~markov/Membership.pdf)
 - [An Optimal Bloom Filter Replacement](https://arxiv.org/pdf/0804.1845)
 - [Succincter](https://sci-hub.se/https://ieeexplore.ieee.org/abstract/document/4690964)
-- [Fast prefix search in little space, with applications](https://arxiv.org/abs/1804.04720)
-- [ZFastTrie & MonotoneMinimalPerfectHashing](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf)
 - [Succinct Range Filters](https://db.cs.cmu.edu/papers/2019/20_srf-zhang.pdf)
 - [How to approximate a set](https://arxiv.org/abs/1304.1188)
 - [Storing a Sparse Table with O(1) Worst Case Access Time](https://sci-hub.se/10.1145/828.1884)
