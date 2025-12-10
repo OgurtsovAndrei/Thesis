@@ -64,6 +64,12 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - `Build(sorted_keys []string)` - построение за O(n log w)
 - `Rank(key string) -> int` - получение ранга ключа
 
+## TODO:
+
+Check:
+- https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributor.html
+- https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributorMonotoneMinimalPerfectHashFunction.html
+
 ## Literature
 
 #### That is the main article
@@ -85,3 +91,9 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - [Succinct Range Filters](https://db.cs.cmu.edu/papers/2019/20_srf-zhang.pdf)
 - [How to approximate a set](https://arxiv.org/abs/1304.1188)
 - [Storing a Sparse Table with O(1) Worst Case Access Time](https://sci-hub.se/10.1145/828.1884)
+- [SuRF: Practical Range Query Filtering with Fast Succinct Tries](https://db.cs.cmu.edu/papers/2018/mod601-zhangA-hm.pdf)
+- [Rosetta: A Robust Space-Time Optimized Range Filter for Key-Value Stores](https://chatterjeesubarna.github.io/files/rosetta.pdf)
+- [Memento Filter: A Fast, Dynamic, and Robust Range Filter](https://arxiv.org/abs/2408.05625)
+- [SNARF: A Learning-Enhanced Range Filter](https://www.vldb.org/pvldb/vol15/p1632-vaidya.pdf)
+- [Oasis: An Optimal Disjoint Segmented Learned Range Filter](https://www.vldb.org/pvldb/vol17/p1911-luo.pdf)
+- [Proteus: A Self-Designing Range Filter](https://arxiv.org/abs/2207.01503)
