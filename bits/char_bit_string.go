@@ -2,6 +2,7 @@ package bits
 
 import (
 	"fmt"
+	"hash/fnv"
 	"math/bits"
 	"strconv"
 	"strings"
@@ -231,4 +232,88 @@ func (bs CharBitString) String() string {
 	sb.WriteString("]")
 
 	return sb.String()
+}
+
+func (bs CharBitString) Hash() uint64 {
+	h := fnv.New64a()
+	data := []byte(bs.data)
+	numBytes := (bs.sizeBits + 7) / 8
+
+	if numBytes > 0 && uint32(len(data)) >= numBytes {
+		h.Write(data[:numBytes])
+	}
+
+	return h.Sum64()
+}
+
+func (bs CharBitString) Eq(other BitString) bool {
+	return bs.Equal(other)
+}
+
+func (bs CharBitString) Compare(other BitString) int {
+	aSize := bs.Size()
+	bSize := other.Size()
+
+	if aSize == 0 && bSize == 0 {
+		return 0
+	}
+	if aSize == 0 {
+		return -1
+	}
+	if bSize == 0 {
+		return 1
+	}
+
+	minSize := aSize
+	if bSize < minSize {
+		minSize = bSize
+	}
+
+	if otherBs, ok := other.(CharBitString); ok {
+		aData := []byte(bs.data)
+		bData := []byte(otherBs.data)
+		minBytes := (minSize + 7) / 8
+
+		for i := uint32(0); i < minBytes; i++ {
+			aByte := byte(0)
+			bByte := byte(0)
+
+			if i < uint32(len(aData)) {
+				aByte = aData[i]
+			}
+			if i < uint32(len(bData)) {
+				bByte = bData[i]
+			}
+
+			if aByte != bByte {
+				xor := aByte ^ bByte
+				firstDiffBit := i*8 + uint32(bits.TrailingZeros8(xor))
+				if firstDiffBit < minSize {
+					if (aByte & (1 << (firstDiffBit % 8))) != 0 {
+						return 1
+					}
+					return -1
+				}
+			}
+		}
+	} else {
+		for i := uint32(0); i < minSize; i++ {
+			aBit := bs.At(i)
+			bBit := other.At(i)
+			if !aBit && bBit {
+				return -1
+			}
+			if aBit && !bBit {
+				return 1
+			}
+		}
+	}
+
+	if aSize < bSize {
+		return -1
+	}
+	if aSize > bSize {
+		return 1
+	}
+	return 0
 }

@@ -260,3 +260,63 @@ func (bs Uint64BitString) Prefix(size int) BitString {
 		len:   int8(size),
 	}
 }
+
+func (bs Uint64BitString) Hash() uint64 {
+	return bs.value
+}
+
+func (bs Uint64BitString) Eq(other BitString) bool {
+	return bs.Equal(other)
+}
+
+func (bs Uint64BitString) Compare(other BitString) int {
+	aSize := bs.Size()
+	bSize := other.Size()
+
+	if aSize == 0 && bSize == 0 {
+		return 0
+	}
+	if aSize == 0 {
+		return -1
+	}
+	if bSize == 0 {
+		return 1
+	}
+
+	minSize := aSize
+	if bSize < minSize {
+		minSize = bSize
+	}
+
+	if otherBs, ok := other.(Uint64BitString); ok {
+		xor := bs.value ^ otherBs.value
+		if xor != 0 {
+			firstDiffBit := uint32(bits.TrailingZeros64(xor))
+			if firstDiffBit < minSize {
+				if (bs.value & (uint64(1) << firstDiffBit)) != 0 {
+					return 1
+				}
+				return -1
+			}
+		}
+	} else {
+		for i := uint32(0); i < minSize; i++ {
+			aBit := bs.At(i)
+			bBit := other.At(i)
+			if !aBit && bBit {
+				return -1
+			}
+			if aBit && !bBit {
+				return 1
+			}
+		}
+	}
+
+	if aSize < bSize {
+		return -1
+	}
+	if aSize > bSize {
+		return 1
+	}
+	return 0
+}
