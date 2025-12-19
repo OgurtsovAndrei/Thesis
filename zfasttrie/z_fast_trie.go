@@ -312,6 +312,27 @@ func (zt *ZFastTrie[V]) containsPrefixBitString(pattern bits.BitString) bool {
 }
 
 func (zt *ZFastTrie[V]) getExitNode(pattern bits.BitString) *znode[V] {
+	result := zt.getExistingPrefix(pattern)
+
+	if result != nil {
+		lcpLength := result.extent.GetLCPLength(pattern)
+		if lcpLength == result.extentLength() && lcpLength < pattern.Size() {
+			var next *znode[V]
+			if pattern.At(lcpLength) {
+				next = result.rightChild
+			} else {
+				next = result.leftChild
+			}
+			if next != nil {
+				result = next
+			}
+		}
+	}
+
+	return result
+}
+
+func (zt *ZFastTrie[V]) getExistingPrefix(pattern bits.BitString) *znode[V] {
 	zt.stat.getExitNodeCnt++
 	patternLength := int32(pattern.Size())
 	a := int32(0)
@@ -334,22 +355,6 @@ func (zt *ZFastTrie[V]) getExitNode(pattern bits.BitString) *znode[V] {
 			b = int32(fFast) - 1
 		}
 	}
-
-	if result != nil {
-		lcpLength := result.extent.GetLCPLength(pattern)
-		if lcpLength == result.extentLength() && lcpLength < pattern.Size() {
-			var next *znode[V]
-			if pattern.At(lcpLength) {
-				next = result.rightChild
-			} else {
-				next = result.leftChild
-			}
-			if next != nil {
-				result = next
-			}
-		}
-	}
-
 	return result
 }
 
