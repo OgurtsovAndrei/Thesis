@@ -262,7 +262,13 @@ func (bs Uint64BitString) Prefix(size int) BitString {
 }
 
 func (bs Uint64BitString) Hash() uint64 {
-	return bs.value
+	// Combine value with length to avoid collisions
+	return bs.value ^ (uint64(bs.len) << 56)
+}
+
+func (bs Uint64BitString) HashWithSeed(seed uint64) uint64 {
+	// Combine value with length and seed to avoid collisions
+	return bs.value ^ (uint64(bs.len) << 56) ^ seed
 }
 
 func (bs Uint64BitString) Eq(other BitString) bool {

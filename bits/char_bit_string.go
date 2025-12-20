@@ -1,11 +1,14 @@
 package bits
 
 import (
+	"encoding/binary"
 	"fmt"
 	"hash/fnv"
 	"math/bits"
 	"strconv"
 	"strings"
+
+	"github.com/zeebo/xxh3"
 )
 
 var _ BitString = CharBitString{}
@@ -236,6 +239,38 @@ func (bs CharBitString) String() string {
 
 func (bs CharBitString) Hash() uint64 {
 	h := fnv.New64a()
+
+	// Write sizeBits first to avoid collisions
+	sizeBytes := make([]byte, 4)
+	sizeBytes[0] = byte(bs.sizeBits)
+	sizeBytes[1] = byte(bs.sizeBits >> 8)
+	sizeBytes[2] = byte(bs.sizeBits >> 16)
+	sizeBytes[3] = byte(bs.sizeBits >> 24)
+	h.Write(sizeBytes)
+
+	data := []byte(bs.data)
+	numBytes := (bs.sizeBits + 7) / 8
+
+	if numBytes > 0 && uint32(len(data)) >= numBytes {
+		h.Write(data[:numBytes])
+	}
+
+	return h.Sum64()
+}
+
+func (bs CharBitString) HashWithSeed(seed uint64) uint64 {
+	h := xxh3.New()
+
+	// Write seed as bytes
+	seedBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(seedBuf, seed)
+	h.Write(seedBuf)
+
+	// Write sizeBits first to avoid collisions
+	sizeBuf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(sizeBuf, bs.sizeBits)
+	h.Write(sizeBuf)
+
 	data := []byte(bs.data)
 	numBytes := (bs.sizeBits + 7) / 8
 
