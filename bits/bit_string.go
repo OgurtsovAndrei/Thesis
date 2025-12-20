@@ -16,12 +16,13 @@ type BitString interface {
 	Prefix(size int) BitString
 	Data() []byte
 	Hash() uint64
+	HashWithSeed(seed uint64) uint64
 	Compare(other BitString) int
 }
 
 type BitStringImpl int
 
-const SelectedImpl = Uint64ArrayString
+const SelectedImpl = CharString
 
 const (
 	CharString BitStringImpl = iota

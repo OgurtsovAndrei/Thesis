@@ -7,6 +7,8 @@ import (
 	"math/bits"
 	"strconv"
 	"strings"
+
+	"github.com/zeebo/xxh3"
 )
 
 var _ BitString = Uint64ArrayBitString{}
@@ -316,8 +318,36 @@ func (bs Uint64ArrayBitString) Prefix(size int) BitString {
 
 func (bs Uint64ArrayBitString) Hash() uint64 {
 	h := fnv.New64a()
-	numWords := (bs.sizeBits + 63) / 64
 
+	// Write sizeBits first to avoid collisions
+	sizeBuf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(sizeBuf, bs.sizeBits)
+	h.Write(sizeBuf)
+
+	numWords := (bs.sizeBits + 63) / 64
+	buf := make([]byte, 8)
+	for i := uint32(0); i < numWords && i < uint32(len(bs.data)); i++ {
+		binary.LittleEndian.PutUint64(buf, bs.data[i])
+		h.Write(buf)
+	}
+
+	return h.Sum64()
+}
+
+func (bs Uint64ArrayBitString) HashWithSeed(seed uint64) uint64 {
+	h := xxh3.New()
+
+	// Write seed as bytes
+	seedBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(seedBuf, seed)
+	h.Write(seedBuf)
+
+	// Write sizeBits first to avoid collisions
+	sizeBuf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(sizeBuf, bs.sizeBits)
+	h.Write(sizeBuf)
+
+	numWords := (bs.sizeBits + 63) / 64
 	buf := make([]byte, 8)
 	for i := uint32(0); i < numWords && i < uint32(len(bs.data)); i++ {
 		binary.LittleEndian.PutUint64(buf, bs.data[i])
