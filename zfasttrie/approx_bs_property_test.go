@@ -27,7 +27,7 @@ func TestApproxZFastTrie_Properties(t *testing.T) {
 
 		keys := generateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8](keys)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err, "failed to build trie")
 
 		referenceTrie := Build(keys)
@@ -75,7 +75,7 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 
 		keys := generateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8](keys)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err)
 
 		referenceTrie := azft.trie
