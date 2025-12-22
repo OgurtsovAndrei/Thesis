@@ -13,19 +13,20 @@ type UNumber interface {
 }
 
 // NodeData contains the packed data for a trie node.
-type NodeData[E UNumber, S UNumber] struct {
+type NodeData[E UNumber, S UNumber, I UNumber] struct {
 	extentLen E // Length of the extent (prefix) represented by this node,  should be (log w)
 	// should be at ((log log n) + (log log w) - (log eps)) bits
 	PSig         S // Hash signature for path verification in the probabilistic structure.
+	maxChild     I
 	originalNode *znode[bool]
 }
 
 // ApproxZFastTrie is a compact probabilistic implementation of a Z-Fast Trie,
 // utilizing Minimal Perfect Hashing (MPH) instead of explicit pointers.
-type ApproxZFastTrie[E UNumber, S UNumber] struct {
-	mph  *boomphf.H       // Minimal Perfect Hash function mapping prefixes to indices.
-	data []NodeData[E, S] // Flat array of node data, indexed via the MPH.
-	seed uint64           // Seed used for computing PSig signatures.
+type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
+	mph  *boomphf.H          // Minimal Perfect Hash function mapping prefixes to indices.
+	data []NodeData[E, S, I] // Flat array of node data, indexed via the MPH.
+	seed uint64              // Seed used for computing PSig signatures.
 
 	trie *ZFastTrie[bool]
 }
@@ -42,54 +43,60 @@ func Build(keys []bits.BitString) *ZFastTrie[bool] {
 
 // NewApproxZFastTrie initializes a compact trie.
 // The process involves building a standard trie, generating an MPH, and packing NodeData.
-func NewApproxZFastTrie[E UNumber, S UNumber](keys []bits.BitString) (*ApproxZFastTrie[E, S], error) {
+func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString) (*ApproxZFastTrie[E, S, I], error) {
 	trie := Build(keys)
 	if trie == nil || trie.root == nil {
-		return &ApproxZFastTrie[E, S]{seed: rand.Uint64()}, nil
+		return &ApproxZFastTrie[E, S, I]{seed: rand.Uint64()}, nil
 	}
 
-	type pair struct {
-		key bits.BitString
-		val NodeData[E, S]
+	keysForMPH := make([]bits.BitString, 0, len(trie.handle2NodeMap))
+	for handle := range trie.handle2NodeMap {
+		keysForMPH = append(keysForMPH, handle)
 	}
 
-	seed := rand.Uint64()
-	pairs := make([]pair, 0, len(trie.handle2NodeMap))
-
-	for handleBitString, node := range trie.handle2NodeMap {
-		sig := S(hashBitString(node.extent, seed))
-		extentLength := E(node.extentLength())
-		errutil.BugOn(uint32(extentLength) != node.extentLength(), "Data loss")
-		pairs = append(pairs, pair{
-			key: handleBitString,
-			val: NodeData[E, S]{
-				extentLen:    extentLength,
-				PSig:         sig,
-				originalNode: node,
-			},
-		})
-	}
-
-	if len(pairs) == 0 {
-		return &ApproxZFastTrie[E, S]{seed: seed}, nil
-	}
-
-	keysForMPH := make([]bits.BitString, len(pairs))
-	for i, p := range pairs {
-		keysForMPH[i] = p.key
+	if len(keysForMPH) == 0 {
+		return &ApproxZFastTrie[E, S, I]{seed: rand.Uint64()}, nil
 	}
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
-	data := make([]NodeData[E, S], len(pairs))
-	for _, p := range pairs {
-		idx := mph.Query(p.key) - 1 // Query return values from 1 to n, 0 used for no Entry
-		if idx < uint64(len(data)) {
-			data[idx] = p.val
+	data := make([]NodeData[E, S, I], len(keysForMPH))
+	seed := rand.Uint64()
+
+	for handle, node := range trie.handle2NodeMap {
+		idx := mph.Query(handle) - 1
+		if idx >= uint64(len(data)) {
+			continue
+		}
+
+		curr := node
+		// todo: optimize perf, can be done in O(n) instead of O(n log n)
+		for curr.rightChild != nil || curr.leftChild != nil {
+			if curr.rightChild != nil {
+				curr = curr.rightChild
+			} else {
+				curr = curr.leftChild
+			}
+		}
+
+		maxChildHandle := curr.handle()
+		maxChildIdx := mph.Query(maxChildHandle) - 1 // Query return values from 1 to n, 0 used for no Entry
+		maxChild := I(maxChildIdx)
+		errutil.BugOn(uint64(maxChild) != maxChildIdx, "Data loss on maxChild index")
+
+		sig := S(hashBitString(node.extent, seed))
+		extentLength := E(node.extentLength())
+		errutil.BugOn(uint32(extentLength) != node.extentLength(), "Data loss")
+
+		data[idx] = NodeData[E, S, I]{
+			extentLen:    extentLength,
+			PSig:         sig,
+			maxChild:     maxChild,
+			originalNode: node,
 		}
 	}
 
-	return &ApproxZFastTrie[E, S]{
+	return &ApproxZFastTrie[E, S, I]{
 		mph:  mph,
 		data: data,
 		seed: seed,
@@ -99,7 +106,7 @@ func NewApproxZFastTrie[E UNumber, S UNumber](keys []bits.BitString) (*ApproxZFa
 
 // GetExistingPrefix finds node the longest existing extent, which is a prefix for a given pattern.
 // It implements the "Fat Binary Search" algorithm using 2-fattest numbers.
-func (azft *ApproxZFastTrie[E, S]) GetExistingPrefix(pattern bits.BitString) *NodeData[E, S] {
+func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) *NodeData[E, S, I] {
 	if len(azft.data) == 0 {
 		return nil
 	}
@@ -107,7 +114,7 @@ func (azft *ApproxZFastTrie[E, S]) GetExistingPrefix(pattern bits.BitString) *No
 	patternLength := int32(pattern.Size())
 	a := int32(0)
 	b := patternLength
-	var result *NodeData[E, S]
+	var result *NodeData[E, S, I]
 
 	for 0 < (b - a) { // is <= ok?
 		//todo: azft.stat.getExitNodeInnerLoopCnt++
@@ -135,8 +142,8 @@ func (azft *ApproxZFastTrie[E, S]) GetExistingPrefix(pattern bits.BitString) *No
 					fmt.Printf("Undetectable (in prod) collision")
 				}
 				if node.originalNode.extent.Prefix(int(fFast)) != handle {
-					fmt.Println(azft.trie.getExitNode(pattern))
-					fmt.Println("FN Collision detected", node.originalNode.extent.String())
+					//fmt.Println(azft.trie.getExitNode(pattern))
+					//fmt.Println("FN Collision detected", node.originalNode.extent.String())
 				}
 				a = int32(node.extentLen)
 				result = node
@@ -149,7 +156,18 @@ func (azft *ApproxZFastTrie[E, S]) GetExistingPrefix(pattern bits.BitString) *No
 	return result
 }
 
-func (azft *ApproxZFastTrie[E, S]) getNodeData(bitString bits.BitString) *NodeData[E, S] {
+func (azft *ApproxZFastTrie[E, S, I]) GetMaxChild(node *NodeData[E, S, I]) *NodeData[E, S, I] {
+	if node == nil {
+		return nil
+	}
+	idx := uint64(node.maxChild)
+	if idx >= uint64(len(azft.data)) {
+		return nil
+	}
+	return &azft.data[idx]
+}
+
+func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *NodeData[E, S, I] {
 	query := azft.mph.Query(bitString)
 	// Query return values from 1 to n, 0 used for no Entry
 	if query == 0 {
