@@ -16,8 +16,12 @@ type UNumber interface {
 type NodeData[E UNumber, S UNumber, I UNumber] struct {
 	extentLen E // Length of the extent (prefix) represented by this node,  should be (log w)
 	// should be at ((log log n) + (log log w) - (log eps)) bits
-	PSig         S // Hash signature for path verification in the probabilistic structure.
-	maxChild     I
+	PSig            S // Hash signature for path verification in the probabilistic structure.
+	parent          I // Index of the first ancestor where this node is in the left subtree
+	minChild        I
+	minGreaterChild I
+
+	// todo: remove after testing
 	originalNode *znode[bool]
 }
 
@@ -28,6 +32,7 @@ type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
 	data []NodeData[E, S, I] // Flat array of node data, indexed via the MPH.
 	seed uint64              // Seed used for computing PSig signatures.
 
+	// will be removed, used ONLY for verification
 	trie *ZFastTrie[bool]
 }
 
@@ -44,6 +49,7 @@ func Build(keys []bits.BitString) *ZFastTrie[bool] {
 // NewApproxZFastTrie initializes a compact trie.
 // The process involves building a standard trie, generating an MPH, and packing NodeData.
 func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString) (*ApproxZFastTrie[E, S, I], error) {
+	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
 	trie := Build(keys)
 	if trie == nil || trie.root == nil {
 		return &ApproxZFastTrie[E, S, I]{seed: rand.Uint64()}, nil
@@ -59,40 +65,86 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString) 
 	}
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
+	//fmt.Println("Root node from handle:", trie.handle2NodeMap[trie.root.handle()])
 
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 	seed := rand.Uint64()
 
 	for handle, node := range trie.handle2NodeMap {
 		idx := mph.Query(handle) - 1
-		if idx >= uint64(len(data)) {
-			continue
-		}
+		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
 
-		curr := node
+		mostLeft := node
 		// todo: optimize perf, can be done in O(n) instead of O(n log n)
-		for curr.rightChild != nil || curr.leftChild != nil {
-			if curr.rightChild != nil {
-				curr = curr.rightChild
-			} else {
-				curr = curr.leftChild
-			}
+		for mostLeft.rightChild != nil && mostLeft.leftChild != nil {
+			errutil.BugOn(mostLeft.leftChild == nil, "Branch with only one child")
+			mostLeft = mostLeft.leftChild
 		}
+		errutil.BugOn(!mostLeft.value || mostLeft.leftChild != nil || mostLeft.rightChild != nil, "mostLeft is not a leaf")
+		minChildHandle := mostLeft.handle()
+		minChildIdx := mph.Query(minChildHandle) - 1 // Query return values from 1 to n, 0 used for no Entry
+		errutil.BugOn(minChildIdx >= uint64(len(data)), "Out of bounds")
+		minChild := I(minChildIdx)
+		errutil.BugOn(uint64(minChild) != minChildIdx, "Data loss on minChild index")
 
-		maxChildHandle := curr.handle()
-		maxChildIdx := mph.Query(maxChildHandle) - 1 // Query return values from 1 to n, 0 used for no Entry
-		maxChild := I(maxChildIdx)
-		errutil.BugOn(uint64(maxChild) != maxChildIdx, "Data loss on maxChild index")
+		var minGreaterChild = I(idx)
+		errutil.BugOn(uint64(minGreaterChild) != idx, "Data loss on minChild index")
+		if node.rightChild != nil {
+			mostLeft := node.rightChild
+			for mostLeft.rightChild != nil && mostLeft.leftChild != nil {
+				errutil.BugOn(mostLeft.leftChild == nil, "LeftChild")
+				mostLeft = mostLeft.leftChild
+			}
+			errutil.BugOn(!mostLeft.value || mostLeft.leftChild != nil || mostLeft.rightChild != nil, "mostLeft is not a leaf")
+			lmcHandle := mostLeft.handle()
+			lmcIdx := mph.Query(lmcHandle) - 1
+			errutil.BugOn(lmcIdx >= uint64(len(data)), "Out of bounds")
+			minGreaterChild = I(lmcIdx)
+			errutil.BugOn(uint64(minGreaterChild) != lmcIdx, "Data loss on minGreaterChild index")
+		}
 
 		sig := S(hashBitString(node.extent, seed))
 		extentLength := E(node.extentLength())
 		errutil.BugOn(uint32(extentLength) != node.extentLength(), "Data loss")
 
 		data[idx] = NodeData[E, S, I]{
-			extentLen:    extentLength,
-			PSig:         sig,
-			maxChild:     maxChild,
-			originalNode: node,
+			extentLen:       extentLength,
+			PSig:            sig,
+			parent:          I(idx), // will be set correctly in the next loop
+			minChild:        minChild,
+			minGreaterChild: minGreaterChild,
+			originalNode:    node,
+		}
+	}
+
+	// Set up parent relationships - find first ancestor where node is in left subtree
+	var setParentRecursive func(*znode[bool], I)
+	setParentRecursive = func(node *znode[bool], leftAncestor I) {
+		if node == nil {
+			return
+		}
+
+		nodeHandle := node.handle()
+		nodeIdx := mph.Query(nodeHandle) - 1
+		if nodeIdx < uint64(len(data)) {
+			data[nodeIdx].parent = leftAncestor
+		}
+
+		// For left child, current node becomes the leftAncestor
+		// For right child, leftAncestor stays the same
+		setParentRecursive(node.leftChild, I(nodeIdx))
+		setParentRecursive(node.rightChild, leftAncestor)
+	}
+
+	// Start from root with itself as the left ancestor
+	if trie.root != nil {
+		rootHandle := trie.root.handle()
+		rootQuery := mph.Query(rootHandle)
+		if rootQuery == 0 {
+			errutil.Bug("Root is empty")
+		} else {
+			rootIdx := I(rootQuery - 1)
+			setParentRecursive(trie.root, rootIdx)
 		}
 	}
 
@@ -114,7 +166,7 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 	patternLength := int32(pattern.Size())
 	a := int32(0)
 	b := patternLength
-	var result *NodeData[E, S, I]
+	var result *NodeData[E, S, I] = azft.getNodeData(bits.NewBitString(""))
 
 	for 0 < (b - a) { // is <= ok?
 		//todo: azft.stat.getExitNodeInnerLoopCnt++
@@ -156,15 +208,15 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 	return result
 }
 
-func (azft *ApproxZFastTrie[E, S, I]) GetMaxChild(node *NodeData[E, S, I]) *NodeData[E, S, I] {
+// LowerBound returns candidates for being lower-bound
+func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
+	node := azft.GetExistingPrefix(pattern)
 	if node == nil {
-		return nil
+		return nil, nil, nil
 	}
-	idx := uint64(node.maxChild)
-	if idx >= uint64(len(azft.data)) {
-		return nil
-	}
-	return &azft.data[idx]
+	parentId := node.parent
+	parentNode := &azft.data[parentId]
+	return &azft.data[node.minChild], &azft.data[node.minGreaterChild], &azft.data[parentNode.minGreaterChild]
 }
 
 func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *NodeData[E, S, I] {
@@ -179,4 +231,13 @@ func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *Nod
 
 func hashBitString(bs bits.BitString, seed uint64) uint64 {
 	return bs.HashWithSeed(seed)
+}
+
+func areSorted(keys []bits.BitString) bool {
+	for i := 1; i < len(keys); i++ {
+		if keys[i-1].Compare(keys[i]) > 0 {
+			return false
+		}
+	}
+	return true
 }

@@ -4,6 +4,7 @@ import (
 	"Thesis/bits"
 	"fmt"
 	"math/rand"
+	"sort"
 	"testing"
 )
 
@@ -25,6 +26,9 @@ func generateRandomBitStrings(n, bitLen int, r *rand.Rand) []bits.BitString {
 	for i := 0; i < n; i++ {
 		keys[i] = generateBitString(bitLen, r)
 	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Compare(keys[j]) < 0
+	})
 	return keys
 }
 

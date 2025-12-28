@@ -1,6 +1,7 @@
 package zfasttrie
 
 import (
+	"Thesis/bits"
 	"Thesis/errutil"
 	"math/rand"
 	"testing"
@@ -14,7 +15,7 @@ const (
 	n          = 32
 	bitLen     = 16
 	iterations = 10_000
-	testRuns   = 1000
+	testRuns   = 1_000
 )
 
 func TestApproxZFastTrie_Properties(t *testing.T) {
@@ -30,7 +31,7 @@ func TestApproxZFastTrie_Properties(t *testing.T) {
 		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err, "failed to build trie")
 
-		referenceTrie := Build(keys)
+		referenceTrie := azft.trie
 
 		for _, key := range keys {
 			node := azft.GetExistingPrefix(key)
@@ -87,7 +88,10 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 			validPrefix := randomKey.Prefix(prefixLen)
 
 			node := azft.GetExistingPrefix(validPrefix)
-			require.NotNil(t, node, "False Negative: expected node for prefix of existing key (seed: %d)", seed)
+			if node == nil {
+				node := azft.GetExistingPrefix(validPrefix)
+				require.NotNil(t, node, "False Negative: expected node for prefix of existing key (seed: %d), prefix: %s\n\ntree dump:\n%s\n", seed, validPrefix.String(), azft.trie.String())
+			}
 			resultPrefix := validPrefix.Prefix(int(node.extentLen))
 
 			expectedNode := referenceTrie.getExistingPrefix(resultPrefix)
@@ -108,4 +112,100 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 	}
 	t.Logf("Tested %d random patterns. False Negatives found: %d (Rate: %.7f)",
 		iterations*testRuns, fnCount, float64(fnCount)/float64(iterations*testRuns))
+}
+
+func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
+	fpCount := 0
+	bar := progressbar.Default(testRuns)
+	for run := 0; run < testRuns; run++ {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		keys := generateRandomBitStrings(n, bitLen, r)
+
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
+		require.NoError(t, err)
+
+		for i := 0; i < iterations; i++ {
+			pattern := generateBitString(bitLen, r)
+
+			var expectedKey bits.BitString
+			found := false
+			for _, k := range keys {
+				if k.Compare(pattern) >= 0 {
+					expectedKey = k
+					found = true
+					break
+				}
+			}
+			if !found {
+				// struct always predict keys, even if lower bound does not exist
+				continue
+			}
+
+			c1, c2, c3 := azft.LowerBound(pattern)
+
+			if c1 == nil || c2 == nil || c3 == nil ||
+				(!c1.originalNode.extent.Equal(expectedKey) && !c2.originalNode.extent.Equal(expectedKey) && !c3.originalNode.extent.Equal(expectedKey)) {
+				c1, c2, c3 = azft.LowerBound(pattern)
+				fpCount++
+			}
+		}
+		_ = bar.Add(1)
+	}
+	t.Logf("LowerBound False Positives found: %d (Rate: %.7f)",
+		fpCount, float64(fpCount)/float64(iterations*testRuns))
+}
+
+func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
+	errCount := 0
+	totalChecks := 0
+
+	runsWithErrors := 0
+
+	bar := progressbar.Default(testRuns)
+	for run := 0; run < testRuns; run++ {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		keys := generateRandomBitStrings(n, bitLen, r)
+
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
+		require.NoError(t, err)
+
+		errRun := 0
+		for _, key := range keys {
+			for length := 1; length <= int(key.Size()); length++ {
+				prefix := key.Prefix(length)
+
+				var expectedKey bits.BitString
+				found := false
+				for _, k := range keys {
+					if k.Compare(prefix) >= 0 {
+						expectedKey = k
+						found = true
+						break
+					}
+				}
+
+				totalChecks++
+				c1, c2, c3 := azft.LowerBound(prefix)
+
+				if !found {
+					if c1 != nil || c2 != nil || c3 != nil {
+						errCount++
+						errRun = 1
+					}
+					continue
+				}
+
+				if (c1 == nil || !c1.originalNode.extent.Equal(expectedKey)) &&
+					(c2 == nil || !c2.originalNode.extent.Equal(expectedKey)) &&
+					(c3 == nil || !c3.originalNode.extent.Equal(expectedKey)) {
+					errCount++
+					errRun = 1
+				}
+			}
+		}
+		runsWithErrors += errRun
+		_ = bar.Add(1)
+	}
+	t.Logf("LowerBound False Negatives/Errors on prefixes found: %d (Rate: %.7f)", errCount, float64(errCount)/float64(totalChecks))
+	t.Logf("LowerBound False Negatives runs: %d (Rate: %.7f)", runsWithErrors, float64(runsWithErrors)/float64(testRuns))
 }

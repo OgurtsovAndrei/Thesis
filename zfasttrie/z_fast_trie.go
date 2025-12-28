@@ -281,20 +281,21 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 }
 
 func (zt *ZFastTrie[V]) insertHandle2NodeMap(n *znode[V]) {
-	if n.extentLength() == 0 {
-		return
-	}
+	//if n.extentLength() == 0 {
+	//	return
+	//}
 	handle := n.handle()
 	if handle.IsEmpty() {
-		return
+		errutil.BugOn(zt.handle2NodeMap[handle] != nil, "root already in handle2NodeMap")
+		//return
 	}
 	zt.handle2NodeMap[handle] = n
 }
 
 func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle bits.BitString) {
-	if handle.IsEmpty() {
-		return
-	}
+	//if handle.IsEmpty() {
+	//	return
+	//}
 	delete(zt.handle2NodeMap, handle)
 }
 
