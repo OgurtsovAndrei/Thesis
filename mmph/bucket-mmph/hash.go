@@ -217,3 +217,8 @@ func (mh *MonotoneHash) Size() int {
 	}
 	return size
 }
+
+// ByteSize returns the total size of the structure in bytes (same as Size for consistency).
+func (mh *MonotoneHash) ByteSize() int {
+	return mh.Size()
+}

@@ -134,6 +134,11 @@ func (h *H) Size() int {
 	return size
 }
 
+// ByteSize returns the size in bytes (same as Size for consistency)
+func (h *H) ByteSize() int {
+	return h.Size()
+}
+
 func rotl(v uint32, r uint32) uint32 {
 	return (v << r) | (v >> (32 - r))
 }
