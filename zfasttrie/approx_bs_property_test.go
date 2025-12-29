@@ -13,7 +13,7 @@ import (
 
 const (
 	n          = 32
-	bitLen     = 16
+	bitLen     = 64
 	iterations = 10_000
 	testRuns   = 1_000
 )
@@ -28,7 +28,7 @@ func TestApproxZFastTrie_Properties(t *testing.T) {
 
 		keys := generateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
 		require.NoError(t, err, "failed to build trie")
 
 		referenceTrie := azft.trie
@@ -76,7 +76,7 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 
 		keys := generateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
 		require.NoError(t, err)
 
 		referenceTrie := azft.trie
@@ -90,7 +90,7 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 			node := azft.GetExistingPrefix(validPrefix)
 			if node == nil {
 				node := azft.GetExistingPrefix(validPrefix)
-				require.NotNil(t, node, "False Negative: expected node for prefix of existing key (seed: %d), prefix: %s\n\ntree dump:\n%s\n", seed, validPrefix.String(), azft.trie.String())
+				require.NotNil(t, node, "False Negative: expected node for prefix of existing key (seed: %d), prefix: %s\n\ntree dump:\n%s\n", seed, validPrefix.String(), referenceTrie.String())
 			}
 			resultPrefix := validPrefix.Prefix(int(node.extentLen))
 
@@ -121,7 +121,7 @@ func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		keys := generateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
 		require.NoError(t, err)
 
 		for i := 0; i < iterations; i++ {
@@ -166,7 +166,7 @@ func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		keys := generateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
 		require.NoError(t, err)
 
 		errRun := 0
