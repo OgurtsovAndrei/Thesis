@@ -70,7 +70,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		if len(bucketKeys) > 0 {
 			bucketHashes := make([]uint64, len(bucketKeys))
 			for j, k := range bucketKeys {
-				bucketHashes[j] = bitStringToHash(k)
+				bucketHashes[j] = k.Hash()
 			}
 
 			gamma := 2.0
@@ -89,7 +89,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 
 			mh.bucketRanks[i] = make([]uint8, len(bucketKeys))
 			for localRank, k := range bucketKeys {
-				phfIdx := mh.buckets[i].Query(bitStringToHash(k)) - 1
+				phfIdx := mh.buckets[i].Query(k.Hash()) - 1
 				mh.bucketRanks[i][phfIdx] = uint8(localRank)
 				mh.bucketsDebugMap[i][k] = uint8(localRank)
 			}
@@ -120,13 +120,13 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 	if len(allKeys) > 0 {
 		allKeyHashes := make([]uint64, len(allKeys))
 		for i, k := range allKeys {
-			allKeyHashes[i] = bitStringToHash(k)
+			allKeyHashes[i] = k.Hash()
 		}
 		mh.d0Table = boomphf.New(2.0, allKeyHashes)
 
 		mh.d0Lengths = make([]uint16, len(allKeys))
 		for _, k := range allKeys {
-			phfIdx := mh.d0Table.Query(bitStringToHash(k)) - 1
+			phfIdx := mh.d0Table.Query(k.Hash()) - 1
 			if phfIdx+1 == 0 {
 				panic("boomphf construction failure: Query returned 0 for known key in d0Table")
 			}
@@ -138,13 +138,13 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 	if len(allLcps) > 0 {
 		lcpHashes := make([]uint64, len(allLcps))
 		for i, p := range allLcps {
-			lcpHashes[i] = bitStringToHash(p)
+			lcpHashes[i] = p.Hash()
 		}
 		mh.d1Table = boomphf.New(2.0, lcpHashes)
 
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {
-			phfIdx := mh.d1Table.Query(bitStringToHash(p)) - 1
+			phfIdx := mh.d1Table.Query(p.Hash()) - 1
 			mh.d1Indices[phfIdx] = int32(prefixToBucketIdx[p])
 		}
 	}
@@ -152,17 +152,17 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 	fmt.Println("=== DEBUG: Constructed DebugMonotoneHash Maps ===")
 	fmt.Println("--- D0 (Key -> LCP Length) ---")
 	for k, v := range mh.d0DebugMap {
-		fmt.Printf("Key: %s, Hash: %x, LCP Len: %d\n", k.String(), bitStringToHash(k), v)
+		fmt.Printf("Key: %s, Hash: %x, LCP Len: %d\n", k.String(), k.Hash(), v)
 	}
 	fmt.Println("--- D1 (Prefix -> Bucket Index) ---")
 	for k, v := range mh.d1DebugMap {
-		fmt.Printf("Prefix: %s, Hash: %x, Bucket: %d\n", k.String(), bitStringToHash(k), v)
+		fmt.Printf("Prefix: %s, Hash: %x, Bucket: %d\n", k.String(), k.Hash(), v)
 	}
 	fmt.Println("--- Buckets (Key -> Local Rank) ---")
 	for i, m := range mh.bucketsDebugMap {
 		fmt.Printf("Bucket %d:\n", i)
 		for k, v := range m {
-			fmt.Printf("  Key: %s, Hash: %x, Rank: %d\n", k.String(), bitStringToHash(k), v)
+			fmt.Printf("  Key: %s, Hash: %x, Rank: %d\n", k.String(), k.Hash(), v)
 		}
 	}
 	fmt.Println("============================================")
@@ -171,13 +171,13 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 }
 
 func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
-	fmt.Printf("\n--- GetRank for %s (Hash: %x) ---\n", key.String(), bitStringToHash(key))
+	fmt.Printf("\n--- GetRank for %s (Hash: %x) ---\n", key.String(), key.Hash())
 
 	if mh.d0Table == nil {
 		return -1
 	}
 
-	keyHash := bitStringToHash(key)
+	keyHash := key.Hash()
 
 	d0PhfIdx := mh.d0Table.Query(keyHash)
 	lcpLen := -1
@@ -203,7 +203,7 @@ func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
 	}
 
 	prefix := key.Prefix(lcpLen)
-	prefixHash := bitStringToHash(prefix)
+	prefixHash := prefix.Hash()
 
 	d1PhfIdx := mh.d1Table.Query(prefixHash)
 	bucketIdx := -1

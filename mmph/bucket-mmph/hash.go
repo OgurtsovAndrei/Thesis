@@ -2,9 +2,7 @@ package bucket
 
 import (
 	"Thesis/errutil"
-	"encoding/binary"
 	"fmt"
-	"hash/fnv"
 	"math"
 
 	"Thesis/bits"
@@ -66,7 +64,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 		if len(bucketKeys) > 0 {
 			bucketHashes := make([]uint64, len(bucketKeys))
 			for j, k := range bucketKeys {
-				bucketHashes[j] = bitStringToHash(k)
+				bucketHashes[j] = k.Hash()
 			}
 
 			mh.buckets[i] = boomphf.New(2.0, bucketHashes)
@@ -79,7 +77,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 
 			mh.bucketRanks[i] = make([]uint8, len(bucketKeys))
 			for localRank, k := range bucketKeys {
-				phfIdx := mh.buckets[i].Query(bitStringToHash(k)) - 1
+				phfIdx := mh.buckets[i].Query(k.Hash()) - 1
 				mh.bucketRanks[i][phfIdx] = uint8(localRank)
 			}
 
@@ -105,13 +103,13 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 	if len(allKeys) > 0 {
 		allKeyHashes := make([]uint64, len(allKeys))
 		for i, k := range allKeys {
-			allKeyHashes[i] = bitStringToHash(k)
+			allKeyHashes[i] = k.Hash()
 		}
 		mh.d0Table = boomphf.New(2.0, allKeyHashes)
 
 		mh.d0Lengths = make([]uint16, len(allKeys))
 		for _, k := range allKeys {
-			phfIdx := mh.d0Table.Query(bitStringToHash(k)) - 1
+			phfIdx := mh.d0Table.Query(k.Hash()) - 1
 			if phfIdx+1 == 0 {
 				panic("boomphf construction failure: Query returned 0 for known key in d0Table")
 			}
@@ -122,13 +120,13 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 	if len(allLcps) > 0 {
 		lcpHashes := make([]uint64, len(allLcps))
 		for i, p := range allLcps {
-			lcpHashes[i] = bitStringToHash(p)
+			lcpHashes[i] = p.Hash()
 		}
 		mh.d1Table = boomphf.New(2.0, lcpHashes)
 
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {
-			phfIdx := mh.d1Table.Query(bitStringToHash(p)) - 1
+			phfIdx := mh.d1Table.Query(p.Hash()) - 1
 			mh.d1Indices[phfIdx] = int32(prefixToBucketIdx[p])
 		}
 	}
@@ -136,23 +134,12 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 	return mh
 }
 
-// todo: remove, rewrite go-boomphf to use BitString's
-func bitStringToHash(bs bits.BitString) uint64 {
-	h := fnv.New64a()
-	_, err := h.Write(bs.Data())
-	errutil.FatalIf(err)
-
-	err = binary.Write(h, binary.LittleEndian, bs.Size())
-	errutil.FatalIf(err)
-	return h.Sum64()
-}
-
 func (mh *MonotoneHash) GetRank(key bits.BitString) int {
 	if mh.d0Table == nil {
 		return -1
 	}
 
-	keyHash := bitStringToHash(key)
+	keyHash := key.Hash()
 
 	d0PhfIdx := mh.d0Table.Query(keyHash)
 	if d0PhfIdx == 0 || int(d0PhfIdx) > len(mh.d0Lengths) {
@@ -165,7 +152,7 @@ func (mh *MonotoneHash) GetRank(key bits.BitString) int {
 	}
 
 	prefix := key.Prefix(lcpLen)
-	prefixHash := bitStringToHash(prefix)
+	prefixHash := prefix.Hash()
 
 	d1PhfIdx := mh.d1Table.Query(prefixHash)
 	if d1PhfIdx == 0 || int(d1PhfIdx) > len(mh.d1Indices) {
