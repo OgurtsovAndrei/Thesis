@@ -2,6 +2,8 @@ package bits
 
 import (
 	"Thesis/errutil"
+	"encoding/binary"
+	"hash/fnv"
 	"log"
 	"math/bits"
 	"strconv"
@@ -262,13 +264,39 @@ func (bs Uint64BitString) Prefix(size int) BitString {
 }
 
 func (bs Uint64BitString) Hash() uint64 {
-	// Combine value with length to avoid collisions
-	return bs.value ^ (uint64(bs.len) << 56)
+	h := fnv.New64a()
+
+	// Write length first to avoid collisions between different lengths
+	lengthBytes := make([]byte, 1)
+	lengthBytes[0] = byte(bs.len)
+	_, err := h.Write(lengthBytes)
+	errutil.FatalIf(err)
+
+	data := make([]byte, 8)
+	binary.LittleEndian.PutUint64(data, bs.value)
+	_, err = h.Write(data[:((bs.len + 7) / 8)])
+	errutil.FatalIf(err)
+	return h.Sum64()
 }
 
 func (bs Uint64BitString) HashWithSeed(seed uint64) uint64 {
-	// Combine value with length and seed to avoid collisions
-	return bs.value ^ (uint64(bs.len) << 56) ^ seed
+	h := fnv.New64a()
+	seedBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(seedBytes, seed)
+	_, err := h.Write(seedBytes)
+	errutil.FatalIf(err)
+
+	// Write length first to avoid collisions between different lengths
+	lengthBytes := make([]byte, 1)
+	lengthBytes[0] = byte(bs.len)
+	_, err = h.Write(lengthBytes)
+	errutil.FatalIf(err)
+
+	data := make([]byte, 8)
+	binary.LittleEndian.PutUint64(data, bs.value)
+	_, err = h.Write(data[:((bs.len + 7) / 8)])
+	errutil.FatalIf(err)
+	return h.Sum64()
 }
 
 func (bs Uint64BitString) Eq(other BitString) bool {
