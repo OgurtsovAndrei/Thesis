@@ -38,16 +38,6 @@ type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
 	trie *ZFastTrie[bool]
 }
 
-// Build creates a standard Z-Fast Trie from a set of bit strings.
-// It serves as an intermediate step during the construction of the compact version.
-func Build(keys []bits.BitString) *ZFastTrie[bool] {
-	trie := NewZFastTrie[bool](false)
-	for i := 0; i < len(keys); i++ {
-		trie.InsertBitString(keys[i], true)
-	}
-	return trie
-}
-
 // NewApproxZFastTrie initializes a compact trie with delimiter index information.
 // This is used for bucketing where we need to map trie nodes to bucket indices.
 // saveOriginalTrie controls whether to keep debug information (original trie and node references).

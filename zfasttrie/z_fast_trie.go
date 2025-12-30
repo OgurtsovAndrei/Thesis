@@ -411,3 +411,13 @@ func (zt *ZFastTrie[V]) stringNode(node *znode[V], prefix string) string {
 
 	return sb.String()
 }
+
+// Build creates a standard Z-Fast Trie from a set of bit strings.
+// It serves as an intermediate step during the construction of the compact version.
+func Build(keys []bits.BitString) *ZFastTrie[bool] {
+	trie := NewZFastTrie[bool](false)
+	for i := 0; i < len(keys); i++ {
+		trie.InsertBitString(keys[i], true)
+	}
+	return trie
+}
