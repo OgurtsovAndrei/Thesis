@@ -4,6 +4,8 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
+	"fmt"
+	"strings"
 )
 
 // see https://arxiv.org/abs/1804.04720
@@ -36,6 +38,7 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 	kv := make(map[bits.BitString]HNodeData[E], 0)
 
 	for handle, node := range trie.handle2NodeMap {
+		errutil.BugOn(node.handle() != handle, "handle")
 		a := uint64(node.nameLength - 1)
 		if a == ^uint64(0) {
 			a = 0
@@ -43,16 +46,19 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 		b := uint64(node.extentLength())
 
 		original := bits.TwoFattest(a, b)
-		b = original - 1
 		errutil.BugOn(original != uint64(handle.Size()), "broken handle")
 
 		extentLen := E(node.extentLength())
 		errutil.BugOn(uint64(extentLen) != uint64(node.extentLength()), "Data loss on extent length")
+		errutil.BugOn(node.extent.Prefix(int(original)) != handle, "handle")
 		kv[node.extent.Prefix(int(original))] = HNodeData[E]{
 			extentLen:    extentLen,
 			originalNode: node,
 		}
-
+		if original == 0 {
+			continue
+		}
+		b = original - 1
 		for a < b {
 			ftst := bits.TwoFattest(a, b)
 			kv[node.extent.Prefix(int(ftst))] = HNodeData[E]{
@@ -61,13 +67,16 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 			}
 			b = ftst - 1
 		}
-
 	}
 
 	keysForMPH := make([]bits.BitString, 0, len(kv))
 	for handle := range kv {
 		keysForMPH = append(keysForMPH, handle)
 	}
+	//for _, handle := range keysForMPH {
+	//	fmt.Println(handle)
+	//}
+
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
 	data := make([]HNodeData[E], len(keysForMPH))
@@ -98,26 +107,25 @@ func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) *HNodeData[
 	if len(hzft.data) == 0 {
 		return nil
 	}
-	//todo: hzft.stat.getExitNodeCnt++
+
 	patternLength := int32(pattern.Size())
 	a := int32(0)
 	b := patternLength
-	var result = &hzft.data[hzft.rootId]
+	result := &hzft.data[hzft.rootId]
 
-	for 0 < (b - a) { // is <= ok?
-		//todo: hzft.stat.getExitNodeInnerLoopCnt++
+	for 0 < (b - a) {
 		fFast := bits.TwoFattest(uint64(a), uint64(b))
 
 		handle := pattern.Prefix(int(fFast))
 		node := hzft.getNodeData(handle)
 
-		if node != nil && pattern.Size() >= uint32(node.extentLen) {
+		if node != nil /*&& pattern.Size() >= uint32(node.extentLen)*/ {
 			if uint64(node.extentLen) < fFast {
 				//collision
 				//b = int32(fFast) - 1
 				errutil.Bug("Extent length is too small")
 			}
-			if uint32(node.extentLen) > pattern.Size() {
+			if node.extentLen == ^E(0) /*> pattern.Size()*/ {
 				b = int32(fFast) - 1
 			} else {
 				a = int32(node.extentLen)
@@ -131,6 +139,23 @@ func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) *HNodeData[
 	return result
 }
 
+// queryT implements the function T from the paper
+// Maps descriptors to extent lengths, pseudo-descriptors to infinity
+func (hzft *HZFastTrie[E]) queryT(prefix bits.BitString) uint32 {
+	nodeData := hzft.getNodeData(prefix)
+	if nodeData == nil {
+		return ^uint32(0) // infinity - not found
+	}
+	if uint64(nodeData.extentLen) == uint64(^E(0)) {
+		return ^uint32(0) // infinity - pseudo-descriptor
+	}
+	return uint32(nodeData.extentLen)
+}
+
+//func (hzft *HZFastTrie[E]) WeakPrefix(pattern bits.BitString) (i uint32, j uint32) /*[i, j)*/ {
+//
+//}
+
 func (hzft *HZFastTrie[E]) getNodeData(bitString bits.BitString) *HNodeData[E] {
 	query := hzft.mph.Query(bitString)
 	// Query return values from 1 to n, 0 used for no Entry
@@ -139,4 +164,30 @@ func (hzft *HZFastTrie[E]) getNodeData(bitString bits.BitString) *HNodeData[E] {
 	}
 	id := query - 1
 	return &hzft.data[id]
+}
+
+func (hzft *HZFastTrie[E]) String() string {
+	var sb strings.Builder
+	sb.WriteString("HZFastTrie:\n")
+	sb.WriteString(fmt.Sprintf("| rootId: %d\n", hzft.rootId))
+	sb.WriteString(fmt.Sprintf("| data length: %d\n", len(hzft.data)))
+
+	sb.WriteString("| MPH mappings:\n")
+	for i, nodeData := range hzft.data {
+		sb.WriteString(fmt.Sprintf("  [%d] extentLen=%d", i, nodeData.extentLen))
+		if nodeData.originalNode != nil {
+			sb.WriteString(fmt.Sprintf(" extent=%q", nodeData.originalNode.extent.String()))
+		}
+		if uint64(nodeData.extentLen) == uint64(^E(0)) {
+			sb.WriteString(" (pseudo-descriptor)")
+		}
+		sb.WriteString("\n")
+	}
+
+	if hzft.trie != nil {
+		sb.WriteString("| Original trie:\n")
+		sb.WriteString(strings.ReplaceAll(hzft.trie.String(), "\n", "\n  "))
+	}
+
+	return sb.String()
 }
