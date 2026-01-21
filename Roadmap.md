@@ -1,12 +1,12 @@
 ## Plan
 
-- [ ] `SuccinctBitVector` Лаконичные Битовые Векторы
+- [x] `SuccinctBitVector` Лаконичные Битовые Векторы
 - [ ] `LocalExactRangeStructure`
-    - [ ] Weak Prefix Search `Hollow Z Fast Trie`
+    - [ ] [*in progress*] Weak Prefix Search `Hollow Z Fast Trie` 
         - [x] Deterministic Z Fast Trie
-        - [ ] Probabilistic Z Fast Trie
-        - [ ] MMPH (Монтонное Минимальное Совершенное Хеширование)
-        - [ ] Encoded Handles table T (handles -> len(e_alpha))
+        - [x] Probabilistic Z Fast Trie
+        - [x] MMPH (Монтонное Минимальное Совершенное Хеширование)
+        - [x] Encoded Handles table T (handles -> len(e_alpha))
             - [ ] ...
     - [ ] Range Locator
 - [ ] `ExactRangeEmptiness`
