@@ -4,11 +4,8 @@ import (
 	"Thesis/bits"
 	"fmt"
 	"math/rand"
-	"sort"
 	"testing"
 )
-
-const benchmarkCharset = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 func skipTestLTooBig(len int, b *testing.B) {
 	if bits.SelectedImpl == bits.Uint64String && len > 64 {
@@ -17,46 +14,6 @@ func skipTestLTooBig(len int, b *testing.B) {
 }
 
 var lengths = []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384}
-
-func generateRandomBitStrings(n, bitLen int, r *rand.Rand) []bits.BitString {
-	if bitLen <= 0 {
-		bitLen = 1
-	}
-	keys := make([]bits.BitString, n)
-	for i := 0; i < n; i++ {
-		keys[i] = generateBitString(bitLen, r)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].Compare(keys[j]) < 0
-	})
-	return keys
-}
-
-func generateBitString(bitLen int, r *rand.Rand) bits.BitString {
-	if bitLen <= 64 {
-		k := r.Uint64()
-		s := bits.NewFromUint64(k)
-		if uint32(bitLen) < s.Size() {
-			s = bits.NewBitStringPrefix(s, uint32(bitLen))
-		}
-		return s
-	} else {
-		byteLen := bitLen / 8
-		if bitLen%8 != 0 {
-			byteLen++
-		}
-		b := make([]byte, byteLen)
-		for j := range b {
-			b[j] = benchmarkCharset[r.Intn(len(benchmarkCharset))]
-		}
-		s := bits.NewBitString(string(b))
-		if uint32(bitLen) < s.Size() {
-			s = bits.NewBitStringPrefix(s, uint32(bitLen))
-		}
-		return s
-	}
-	return nil
-}
 
 func BenchmarkTrie_ByStrLen_Insert(b *testing.B) {
 	r := rand.New(rand.NewSource(42))
