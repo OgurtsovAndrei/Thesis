@@ -69,6 +69,7 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 Check:
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributor.html
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributorMonotoneMinimalPerfectHashFunction.html
+- Incremental Prefix hash for BitStrings (to have constant handle lookup in zft)
 
 ## Literature
 
