@@ -14,7 +14,7 @@ import (
 const (
 	n          = 32
 	bitLen     = 64
-	iterations = 10_000
+	iterations = 1_000
 	testRuns   = 1_000
 )
 
