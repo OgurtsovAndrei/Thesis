@@ -45,7 +45,7 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 		}
 		b := uint64(node.extentLength())
 
-		original := bits.TwoFattest(a, b)
+		original := bits.TwoFattest(a, b) // TwoFattest on (a, b]
 		errutil.BugOn(original != uint64(handle.Size()), "broken handle")
 
 		extentLen := E(node.extentLength())
@@ -109,23 +109,24 @@ func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) *HNodeData[
 	}
 
 	patternLength := int32(pattern.Size())
-	a := int32(0)
-	b := patternLength
+	a := int32(0)      // existing node handle size
+	b := patternLength // unchecked, (b + 1 does not exit or out of scope)
 	result := &hzft.data[hzft.rootId]
 
 	for 0 < (b - a) {
-		fFast := bits.TwoFattest(uint64(a), uint64(b))
+		fFast := bits.TwoFattest(uint64(a), uint64(b)) // on (a, b], a already exists
 
 		handle := pattern.Prefix(int(fFast))
 		node := hzft.getNodeData(handle)
 
 		if node != nil /*&& pattern.Size() >= uint32(node.extentLen)*/ {
 			if uint64(node.extentLen) < fFast {
-				//collision
+				//collision, pattern is not a prefix in the trie
 				//b = int32(fFast) - 1
-				errutil.Bug("Extent length is too small")
+				//errutil.Bug("Extent length is too small")
+				return nil
 			}
-			if node.extentLen == ^E(0) /*> pattern.Size()*/ {
+			if node.extentLen == ^E(0) /* node.extentLen > pattern.Size() */ {
 				b = int32(fFast) - 1
 			} else {
 				a = int32(node.extentLen)
@@ -157,8 +158,8 @@ func (hzft *HZFastTrie[E]) queryT(prefix bits.BitString) uint32 {
 //}
 
 func (hzft *HZFastTrie[E]) getNodeData(bitString bits.BitString) *HNodeData[E] {
-	query := hzft.mph.Query(bitString)
 	// Query return values from 1 to n, 0 used for no Entry
+	query := hzft.mph.Query(bitString)
 	if query == 0 {
 		return nil
 	}
