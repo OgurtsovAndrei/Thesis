@@ -126,7 +126,7 @@ func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) *HNodeData[
 				//errutil.Bug("Extent length is too small")
 				return nil
 			}
-			if node.extentLen == ^E(0) /* node.extentLen > pattern.Size() */ {
+			if /*node.extentLen == ^E(0) */ uint32(node.extentLen) > pattern.Size() {
 				b = int32(fFast) - 1
 			} else {
 				a = int32(node.extentLen)
