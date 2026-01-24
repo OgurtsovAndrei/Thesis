@@ -45,7 +45,7 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 		}
 		b := uint64(node.extentLength())
 
-		original := bits.TwoFattest(a, b)
+		original := bits.TwoFattest(a, b) // TwoFattest on (a, b]
 		errutil.BugOn(original != uint64(handle.Size()), "broken handle")
 
 		extentLen := E(node.extentLength())
@@ -73,9 +73,6 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 	for handle := range kv {
 		keysForMPH = append(keysForMPH, handle)
 	}
-	//for _, handle := range keysForMPH {
-	//	fmt.Println(handle)
-	//}
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
@@ -103,40 +100,71 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 	}
 }
 
-func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) *HNodeData[E] {
-	if len(hzft.data) == 0 {
-		return nil
+/*
+Algorithm 1
+Input: a prefix p of some string in S.
+
+i ← floor(log|p|)
+l,r ← 0, |p|
+while r - l > 1 do
+
+	if exists b such that 2^i * b in (l..r) then
+	    // 2^i * b is 2-fattest number in (l..r)
+	    g ← T(p[0..2^i * b))
+	    if g >= |p| then
+	        r ← 2^i * b
+	    else
+	        l ← g
+	    end if
+	end if
+	i ← i - 1
+
+end while
+if l = 0 then
+
+	return ε
+
+else
+
+	return p[0..l+1)
+
+end if
+*/
+
+func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) int64 {
+	if len(hzft.data) == 0 || pattern.IsEmpty() {
+		return 0
 	}
 
-	patternLength := int32(pattern.Size())
-	a := int32(0)
-	b := patternLength
-	result := &hzft.data[hzft.rootId]
+	patternLength := uint32(pattern.Size())
+	rootData := hzft.data[hzft.rootId]
+	rootExtentLen := uint32(rootData.extentLen)
 
-	for 0 < (b - a) {
-		fFast := bits.TwoFattest(uint64(a), uint64(b))
+	if rootExtentLen >= patternLength {
+		return 0
+	}
 
-		handle := pattern.Prefix(int(fFast))
-		node := hzft.getNodeData(handle)
+	l := uint64(rootExtentLen)
+	r := uint64(patternLength)
+	maxI := bits.MostSignificantBit(uint64(patternLength))
 
-		if node != nil /*&& pattern.Size() >= uint32(node.extentLen)*/ {
-			if uint64(node.extentLen) < fFast {
-				//collision
-				//b = int32(fFast) - 1
-				errutil.Bug("Extent length is too small")
-			}
-			if node.extentLen == ^E(0) /*> pattern.Size()*/ {
-				b = int32(fFast) - 1
+	for i := maxI; i >= 0; i-- {
+		if r-l <= 1 {
+			break
+		}
+		f := uint64((r-1)>>uint(i)) << uint(i)
+
+		if f > l && f < r {
+			g := hzft.queryT(pattern.Prefix(int(f)))
+			if g >= patternLength {
+				r = f
 			} else {
-				a = int32(node.extentLen)
-				result = node
+				l = uint64(g)
 			}
-		} else {
-			b = int32(fFast) - 1
 		}
 	}
 
-	return result
+	return int64(l + 1)
 }
 
 // queryT implements the function T from the paper
@@ -152,13 +180,9 @@ func (hzft *HZFastTrie[E]) queryT(prefix bits.BitString) uint32 {
 	return uint32(nodeData.extentLen)
 }
 
-//func (hzft *HZFastTrie[E]) WeakPrefix(pattern bits.BitString) (i uint32, j uint32) /*[i, j)*/ {
-//
-//}
-
 func (hzft *HZFastTrie[E]) getNodeData(bitString bits.BitString) *HNodeData[E] {
-	query := hzft.mph.Query(bitString)
 	// Query return values from 1 to n, 0 used for no Entry
+	query := hzft.mph.Query(bitString)
 	if query == 0 {
 		return nil
 	}
