@@ -27,7 +27,7 @@ type BitString interface {
 
 type BitStringImpl int
 
-const SelectedImpl = Uint64ArrayString
+const SelectedImpl = Uint64String
 
 const (
 	CharString BitStringImpl = iota

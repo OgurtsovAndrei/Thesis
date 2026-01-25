@@ -61,14 +61,14 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 					start, end, err := lerl.WeakPrefixSearch(prefix)
 					if err != nil {
 						t.Fatalf("WeakPrefixSearch failed for prefix %s of key %s (seed: %d): %v",
-							toBinary(prefix), toBinary(key), seed, err)
+							prefix.String(), key.String(), seed, err)
 					}
 
 					expectedStart, expectedEnd := findRange(keys, prefix)
 
 					if start != expectedStart || end != expectedEnd {
 						t.Errorf("Mismatch for prefix %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
-							toBinary(prefix), seed, start, end, expectedStart, expectedEnd)
+							prefix.String(), seed, start, end, expectedStart, expectedEnd)
 						t.FailNow()
 					}
 				}
