@@ -21,7 +21,7 @@ func BenchmarkInit_Uint64BitString(b *testing.B) {
 	value := randomUint64() // Generate once outside the loop
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = NewUint64BitString(value, 64)
+		_ = NewUint64FromUint64(value, 64)
 	}
 }
 
@@ -29,7 +29,7 @@ func BenchmarkInit_CharBitString(b *testing.B) {
 	textInput := randomTextString(8) // 8 chars = 64 bits
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = NewCharBitString(textInput)
+		_ = NewCharFromText(textInput)
 	}
 }
 
@@ -75,7 +75,7 @@ func BenchmarkInit_Uint64ArrayFromData(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = NewUint64ArrayFromDataAndSize(data, 64)
+		_ = NewUint64ArrFromDataAndSize(data, 64)
 	}
 }
 
@@ -116,14 +116,14 @@ func benchmarkInitBySize(b *testing.B, size int) {
 		value := randomUint64() // Generate once outside the loop
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = NewUint64BitString(value, int8(size))
+			_ = NewUint64FromUint64(value, int8(size))
 		}
 	})
 
 	b.Run("Char", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = NewCharBitString(textInput)
+			_ = NewCharFromText(textInput)
 		}
 	})
 
@@ -182,7 +182,7 @@ func BenchmarkInit_FactoryNewBitString(b *testing.B) {
 	textInput := "test"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = NewBitString(textInput) // Uses current SelectedImpl (Uint64ArrayString)
+		_ = NewFromText(textInput) // Uses current SelectedImpl (Uint64ArrayString)
 	}
 }
 

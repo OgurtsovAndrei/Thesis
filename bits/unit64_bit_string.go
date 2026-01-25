@@ -19,7 +19,7 @@ type Uint64BitString struct {
 	len   int8
 }
 
-func NewUint64StringFromText(text string) Uint64BitString {
+func NewUint64FromText(text string) Uint64BitString {
 	var val uint64
 	l := len(text)
 	errutil.BugOn(l > 8, "Illegal length: %q", text)
@@ -73,7 +73,7 @@ func NewUint64BitStringPrefix(bs BitString, size uint32) BitString {
 	return otherBs.Prefix(int(size))
 }
 
-func NewUint64BitString(value uint64, length int8) Uint64BitString {
+func NewUint64FromUint64(value uint64, length int8) Uint64BitString {
 	if !unsafe {
 		if length < 0 || length > 64 {
 			panic("length must be between 0 and 64")

@@ -60,7 +60,7 @@ func (n *znode[V]) handleLength() uint32 {
 
 func (n *znode[V]) handle() bits.BitString {
 	if n.extentLength() <= 0 {
-		return bits.NewBitString("")
+		return bits.NewFromText("")
 	}
 	return bits.NewBitStringPrefix(n.extent, n.handleLength())
 }

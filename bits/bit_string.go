@@ -35,17 +35,17 @@ const (
 	Uint64ArrayString
 )
 
-func NewBitString(text string) BitString {
+func NewFromText(text string) BitString {
 	switch SelectedImpl {
 	case CharString:
-		return NewCharBitString(text)
+		return NewCharFromText(text)
 	case Uint64String:
-		return NewUint64StringFromText(text)
+		return NewUint64FromText(text)
 	case Uint64ArrayString:
 		// Convert text to binary representation for array implementation
 		size := uint32(len(text)) * 8
 		data := []byte(text)
-		return NewUint64ArrayFromDataAndSize(data, size)
+		return NewUint64ArrFromDataAndSize(data, size)
 	default:
 		errutil.Bug("Unexpected Impl selected")
 	}
@@ -57,9 +57,9 @@ func NewFromUint64(value uint64) BitString {
 	case CharString:
 		return NewCharFromUint64(value)
 	case Uint64String:
-		return NewUint64BitString(value, 64)
+		return NewUint64FromUint64(value, 64)
 	case Uint64ArrayString:
-		bs := NewUint64ArrayBitString(64)
+		bs := NewUint64ArrFromUint64(64)
 		bs.data[0] = value
 		return bs
 	default:
@@ -103,7 +103,7 @@ func NewBitStringFormDataAndSize(data []byte, size uint32) BitString {
 	case Uint64String:
 		return NewUint64BitStringFromDataAndSize(data, size)
 	case Uint64ArrayString:
-		return NewUint64ArrayFromDataAndSize(data, size)
+		return NewUint64ArrFromDataAndSize(data, size)
 	default:
 		errutil.Bug("Unexpected Impl selected")
 	}

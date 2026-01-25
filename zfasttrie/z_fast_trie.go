@@ -51,13 +51,13 @@ func NewZFastTrie[V comparable](emptyValue V) *ZFastTrie[V] {
 
 func (zt *ZFastTrie[V]) Insert(newText string, value V) {
 	zt.checkTrie()
-	zt.InsertBitString(bits.NewBitString(newText), value)
+	zt.InsertBitString(bits.NewFromText(newText), value)
 	zt.checkTrie()
 }
 
 func (zt *ZFastTrie[V]) Erase(targetText string) {
 	zt.checkTrie()
-	zt.EraseBitString(bits.NewBitString(targetText))
+	zt.EraseBitString(bits.NewFromText(targetText))
 	zt.checkTrie()
 }
 
@@ -81,7 +81,7 @@ func (zt *ZFastTrie[V]) InsertBitString(newText bits.BitString, value V) {
 			exitNodeExtent := exitNode.extent
 			oldExitValue := exitNode.value
 
-			var newExtent bits.BitString = bits.NewBitString("")
+			var newExtent bits.BitString = bits.NewFromText("")
 			if lcpLength > 0 {
 				newExtent = bits.NewBitStringPrefix(exitNode.extent, lcpLength)
 			}
@@ -224,7 +224,7 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText bits.BitString) {
 }
 
 func (zt *ZFastTrie[V]) Contains(pattern string) bool {
-	return zt.ContainsBitString(bits.NewBitString(pattern))
+	return zt.ContainsBitString(bits.NewFromText(pattern))
 }
 
 func (zt *ZFastTrie[V]) ContainsBitString(pattern bits.BitString) bool {
@@ -301,7 +301,7 @@ func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle bits.BitString) {
 
 // ContainsPrefix checks if the string is a prefix of any entry in the trie.
 func (zt *ZFastTrie[V]) ContainsPrefix(pattern string) bool {
-	return zt.containsPrefixBitString(bits.NewBitString(pattern))
+	return zt.containsPrefixBitString(bits.NewFromText(pattern))
 }
 
 func (zt *ZFastTrie[V]) containsPrefixBitString(pattern bits.BitString) bool {

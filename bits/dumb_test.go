@@ -3,9 +3,9 @@ package bits
 import "testing"
 
 func TestBitStringHash(t *testing.T) {
-	bs1 := NewBitString("A")
-	bs2 := NewBitString("A")
-	bs3 := NewBitString("B")
+	bs1 := NewFromText("A")
+	bs2 := NewFromText("A")
+	bs3 := NewFromText("B")
 
 	hash1 := bs1.Hash()
 	hash2 := bs2.Hash()
@@ -38,9 +38,9 @@ func TestBitStringHash(t *testing.T) {
 }
 
 func TestBitStringEq(t *testing.T) {
-	bs1 := NewBitString("test")
-	bs2 := NewBitString("test")
-	bs3 := NewBitString("different")
+	bs1 := NewFromText("test")
+	bs2 := NewFromText("test")
+	bs3 := NewFromText("different")
 
 	if !bs1.Eq(bs2) {
 		t.Error("Equal bitstrings should return true for Eq")
@@ -106,9 +106,9 @@ func TestBitStringCompare(t *testing.T) {
 	// Note: ASCII 'A'=65=01000001 becomes 10000010 in bit order
 	//       ASCII 'B'=66=01000010 becomes 01000010 in bit order
 	//       So in bit-wise lexicographic order: 'A' > 'B' (first bit: 1 > 0)
-	bsA := NewBitString("A")
-	bsB := NewBitString("B")
-	bsAA := NewBitString("AA")
+	bsA := NewFromText("A")
+	bsB := NewFromText("B")
+	bsAA := NewFromText("AA")
 
 	if bsA.Compare(bsB) <= 0 {
 		t.Error("'A' should be > 'B' in bit-wise lexicographic order")

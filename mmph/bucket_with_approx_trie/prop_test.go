@@ -55,7 +55,7 @@ func TestMonotoneHashWithTrie_Randomized(t *testing.T) {
 
 		bitKeys := make([]bits.BitString, size)
 		for i, s := range keys {
-			bitKeys[i] = bits.NewBitString(s)
+			bitKeys[i] = bits.NewFromText(s)
 		}
 
 		sort.Sort(bitStringSorter(bitKeys))
@@ -91,7 +91,7 @@ func TestMonotoneHashWithTrie_TrieRebuildTracking(t *testing.T) {
 
 		bitKeys := make([]bits.BitString, keySize)
 		for i, s := range keys {
-			bitKeys[i] = bits.NewBitString(s)
+			bitKeys[i] = bits.NewFromText(s)
 		}
 
 		sort.Sort(bitStringSorter(bitKeys))
@@ -134,14 +134,14 @@ func TestMonotoneHashWithTrie_EmptyInput(t *testing.T) {
 	}
 
 	// Should handle empty case gracefully
-	rank := mh.GetRank(bits.NewBitString("test"))
+	rank := mh.GetRank(bits.NewFromText("test"))
 	if rank != -1 {
 		t.Errorf("Expected -1 for empty structure, got %d", rank)
 	}
 }
 
 func TestMonotoneHashWithTrie_SingleKey(t *testing.T) {
-	key := bits.NewBitString("key")
+	key := bits.NewFromText("key")
 	mh, err := NewMonotoneHashWithTrie[uint8, uint16, uint16]([]bits.BitString{key})
 	if err != nil {
 		t.Fatalf("Failed to create MonotoneHashWithTrie with single key: %v", err)
@@ -153,7 +153,7 @@ func TestMonotoneHashWithTrie_SingleKey(t *testing.T) {
 	}
 
 	// Test non-existent key
-	nonExistent := bits.NewBitString("non_existent")
+	nonExistent := bits.NewFromText("non_existent")
 	rank = mh.GetRank(nonExistent)
 	if rank != -1 {
 		t.Errorf("Expected -1 for non-existent key, got %d", rank)
@@ -169,7 +169,7 @@ func TestMonotoneHashWithTrie_CompareWithSimple(t *testing.T) {
 
 		bitKeys := make([]bits.BitString, size)
 		for i, s := range keys {
-			bitKeys[i] = bits.NewBitString(s)
+			bitKeys[i] = bits.NewFromText(s)
 		}
 
 		sort.Sort(bitStringSorter(bitKeys))
@@ -199,7 +199,7 @@ func TestMonotoneHashWithTrie_NonExistentKeys(t *testing.T) {
 
 	bitKeys := make([]bits.BitString, len(keys))
 	for i, s := range keys {
-		bitKeys[i] = bits.NewBitString(s)
+		bitKeys[i] = bits.NewFromText(s)
 	}
 
 	sort.Sort(bitStringSorter(bitKeys))
@@ -212,7 +212,7 @@ func TestMonotoneHashWithTrie_NonExistentKeys(t *testing.T) {
 	// Test some random non-existent keys
 	for i := 0; i < 10; i++ {
 		nonExistentKeys := buildUniqueStrKeys(1)
-		nonExistentKey := bits.NewBitString(nonExistentKeys[0])
+		nonExistentKey := bits.NewFromText(nonExistentKeys[0])
 
 		rank := mh.GetRank(nonExistentKey)
 		// Should return -1 for non-existent keys
