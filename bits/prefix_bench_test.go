@@ -21,10 +21,13 @@ func BenchmarkHasPrefix_Uint64(b *testing.B) {
 	bs1 := NewUint64FromBinaryText(s1)
 	bsPrefix := NewUint64FromBinaryText(sPrefix)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.HasPrefix(bsPrefix)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.HasPrefix(bsPrefix)
+		}
+	})
 }
 
 func BenchmarkHasPrefix_Char(b *testing.B) {
@@ -34,10 +37,13 @@ func BenchmarkHasPrefix_Char(b *testing.B) {
 	bs1 := NewCharFromBinary(s1)
 	bsPrefix := NewCharFromBinary(sPrefix)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.HasPrefix(bsPrefix)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.HasPrefix(bsPrefix)
+		}
+	})
 }
 
 func BenchmarkHasPrefix_Uint64Array(b *testing.B) {
@@ -47,10 +53,13 @@ func BenchmarkHasPrefix_Uint64Array(b *testing.B) {
 	bs1 := NewUint64ArrayFromBinaryText(s1)
 	bsPrefix := NewUint64ArrayFromBinaryText(sPrefix)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.HasPrefix(bsPrefix)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.HasPrefix(bsPrefix)
+		}
+	})
 }
 
 // --- HasPrefix Same Type vs Cross Type ---
@@ -61,10 +70,13 @@ func BenchmarkHasPrefix_Uint64Array_SameType(b *testing.B) {
 	bs1 := NewUint64ArrayFromBinaryText(s1)
 	bsPrefix := NewUint64ArrayFromBinaryText(sPrefix)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.HasPrefix(bsPrefix)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.HasPrefix(bsPrefix)
+		}
+	})
 }
 
 func BenchmarkHasPrefix_Uint64Array_CrossType(b *testing.B) {
@@ -73,10 +85,13 @@ func BenchmarkHasPrefix_Uint64Array_CrossType(b *testing.B) {
 	bs1 := NewUint64ArrayFromBinaryText(s1)
 	bsPrefix := NewCharFromBinary(sPrefix) // Different type
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.HasPrefix(bsPrefix)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.HasPrefix(bsPrefix)
+		}
+	})
 }
 
 // --- HasPrefix with different prefix sizes ---

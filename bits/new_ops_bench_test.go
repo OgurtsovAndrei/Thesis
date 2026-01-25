@@ -31,10 +31,13 @@ func BenchmarkTrimTrailingZeros_Uint64(b *testing.B) {
 			}
 			bs := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.TrimTrailingZeros()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.TrimTrailingZeros()
+				}
+			})
 		})
 	}
 }
@@ -48,10 +51,13 @@ func BenchmarkTrimTrailingZeros_Char(b *testing.B) {
 			}
 			bs := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.TrimTrailingZeros()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.TrimTrailingZeros()
+				}
+			})
 		})
 	}
 }
@@ -65,10 +71,13 @@ func BenchmarkTrimTrailingZeros_Uint64Array(b *testing.B) {
 			}
 			bs := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.TrimTrailingZeros()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.TrimTrailingZeros()
+				}
+			})
 		})
 	}
 }
@@ -84,10 +93,13 @@ func BenchmarkAppendBit_Uint64(b *testing.B) {
 			s := randomBinaryString(size)
 			bs := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.AppendBit(true)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.AppendBit(true)
+				}
+			})
 		})
 	}
 }
@@ -98,10 +110,13 @@ func BenchmarkAppendBit_Char(b *testing.B) {
 			s := randomBinaryString(size)
 			bs := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.AppendBit(true)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.AppendBit(true)
+				}
+			})
 		})
 	}
 }
@@ -112,10 +127,13 @@ func BenchmarkAppendBit_Uint64Array(b *testing.B) {
 			s := randomBinaryString(size)
 			bs := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.AppendBit(true)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.AppendBit(true)
+				}
+			})
 		})
 	}
 }
@@ -135,10 +153,13 @@ func BenchmarkIsAllOnes_Uint64(b *testing.B) {
 			}
 			bs := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.IsAllOnes()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.IsAllOnes()
+				}
+			})
 		})
 	}
 }
@@ -152,10 +173,13 @@ func BenchmarkIsAllOnes_Char(b *testing.B) {
 			}
 			bs := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.IsAllOnes()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.IsAllOnes()
+				}
+			})
 		})
 	}
 }
@@ -169,10 +193,13 @@ func BenchmarkIsAllOnes_Uint64Array(b *testing.B) {
 			}
 			bs := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.IsAllOnes()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.IsAllOnes()
+				}
+			})
 		})
 	}
 }
@@ -192,10 +219,13 @@ func BenchmarkSuccessor_Uint64(b *testing.B) {
 			}
 			bs := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.Successor()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.Successor()
+				}
+			})
 		})
 	}
 }
@@ -212,10 +242,13 @@ func BenchmarkSuccessor_Char(b *testing.B) {
 			}
 			bs := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.Successor()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.Successor()
+				}
+			})
 		})
 	}
 }
@@ -238,10 +271,13 @@ func BenchmarkSuccessor_Uint64Array(b *testing.B) {
 			}
 			bs := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.Successor()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.Successor()
+				}
+			})
 		})
 	}
 }
@@ -286,17 +322,23 @@ func benchmarkNewOpsBySize(b *testing.B, size int) {
 				})
 			}
 			b.Run("IsAllOnes", func(b *testing.B) {
+				b.SetParallelism(benchmarkParallelism)
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
-					_ = bsUint64.IsAllOnes()
-				}
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						_ = bsUint64.IsAllOnes()
+					}
+				})
 			})
 			if size <= 63 {
 				b.Run("Successor", func(b *testing.B) {
+					b.SetParallelism(benchmarkParallelism)
 					b.ResetTimer()
-					for i := 0; i < b.N; i++ {
-						_ = bsUint64.Successor()
-					}
+					b.RunParallel(func(pb *testing.PB) {
+						for pb.Next() {
+							_ = bsUint64.Successor()
+						}
+					})
 				})
 			}
 		})
@@ -304,51 +346,72 @@ func benchmarkNewOpsBySize(b *testing.B, size int) {
 
 	b.Run("Char", func(b *testing.B) {
 		b.Run("TrimTrailingZeros", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bsChar.TrimTrailingZeros()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bsChar.TrimTrailingZeros()
+				}
+			})
 		})
 		b.Run("AppendBit", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bsChar.AppendBit(true)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bsChar.AppendBit(true)
+				}
+			})
 		})
 		b.Run("IsAllOnes", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bsChar.IsAllOnes()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bsChar.IsAllOnes()
+				}
+			})
 		})
 		if size <= 63 {
 			b.Run("Successor", func(b *testing.B) {
+				b.SetParallelism(benchmarkParallelism)
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
-					_ = bsChar.Successor()
-				}
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						_ = bsChar.Successor()
+					}
+				})
 			})
 		}
 	})
 
 	b.Run("Uint64Array", func(b *testing.B) {
 		b.Run("TrimTrailingZeros", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bsUint64Array.TrimTrailingZeros()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bsUint64Array.TrimTrailingZeros()
+				}
+			})
 		})
 		b.Run("AppendBit", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bsUint64Array.AppendBit(true)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bsUint64Array.AppendBit(true)
+				}
+			})
 		})
 		b.Run("IsAllOnes", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bsUint64Array.IsAllOnes()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bsUint64Array.IsAllOnes()
+				}
+			})
 		})
 		if size > 64 {
 			b.Run("Successor", func(b *testing.B) {
@@ -374,40 +437,55 @@ func BenchmarkNewOps_Size1024(b *testing.B) { benchmarkNewOpsBySize(b, 1024) }
 
 func BenchmarkTrimTrailingZeros_AllZeros_Uint64(b *testing.B) {
 	bs := NewUint64FromBinaryText("000000000000000000000000000000000000000000000000000000000000000")
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.TrimTrailingZeros()
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = bs.TrimTrailingZeros()
+		}
+	})
 }
 
 func BenchmarkTrimTrailingZeros_NoTrailingZeros_Uint64(b *testing.B) {
 	bs := NewUint64FromBinaryText("1111111111111111111111111111111111111111111111111111111111111111")
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.TrimTrailingZeros()
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = bs.TrimTrailingZeros()
+		}
+	})
 }
 
 func BenchmarkSuccessor_EmptyString(b *testing.B) {
 	bs := NewUint64FromBinaryText("")
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.Successor()
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = bs.Successor()
+		}
+	})
 }
 
 func BenchmarkIsAllOnes_EmptyString(b *testing.B) {
 	bs := NewUint64FromBinaryText("")
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.IsAllOnes()
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = bs.IsAllOnes()
+		}
+	})
 }
 
 func BenchmarkAppendBit_EmptyString(b *testing.B) {
 	bs := NewUint64FromBinaryText("")
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.AppendBit(true)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = bs.AppendBit(true)
+		}
+	})
 }

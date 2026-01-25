@@ -19,53 +19,72 @@ import (
 
 func BenchmarkInit_Uint64BitString(b *testing.B) {
 	value := randomUint64() // Generate once outside the loop
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64FromUint64(value, 64)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64FromUint64(value, 64)
+		}
+	})
 }
 
 func BenchmarkInit_CharBitString(b *testing.B) {
 	textInput := randomTextString(8) // 8 chars = 64 bits
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewCharFromText(textInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewCharFromText(textInput)
+		}
+	})
 }
 
 func BenchmarkInit_Uint64ArrayBitString(b *testing.B) {
 	binaryInput := randomBinaryString(64)
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64ArrayFromBinaryText(binaryInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64ArrayFromBinaryText(binaryInput)
+		}
+	})
 }
 
 func BenchmarkInit_TrieBitString(b *testing.B) {
 	base64Input := randomBase64String(16) // 16 base64 chars = ~96 bits
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs := &trie.BitString{}
-		bs.Init(base64Input)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs := &trie.BitString{}
+			bs.Init(base64Input)
+		}
+	})
 }
 
 // --- Different construction methods ---
 
 func BenchmarkInit_Uint64FromBinary(b *testing.B) {
 	binaryInput := randomBinaryString(64)
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64FromBinaryText(binaryInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64FromBinaryText(binaryInput)
+		}
+	})
 }
 
 func BenchmarkInit_CharFromBinary(b *testing.B) {
 	binaryInput := randomBinaryString(64)
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewCharFromBinary(binaryInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewCharFromBinary(binaryInput)
+
+		}
+	})
 }
 
 func BenchmarkInit_Uint64ArrayFromData(b *testing.B) {
@@ -73,10 +92,13 @@ func BenchmarkInit_Uint64ArrayFromData(b *testing.B) {
 	for i := range data {
 		data[i] = byte(i * 33) // Some pattern
 	}
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64ArrFromDataAndSize(data, 64)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64ArrFromDataAndSize(data, 64)
+		}
+	})
 }
 
 func BenchmarkInit_CharFromData(b *testing.B) {
@@ -84,10 +106,13 @@ func BenchmarkInit_CharFromData(b *testing.B) {
 	for i := range data {
 		data[i] = byte(i * 33) // Some pattern
 	}
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewCharBitStringFromDataAndSize(data, 64)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewCharBitStringFromDataAndSize(data, 64)
+		}
+	})
 }
 
 func BenchmarkInit_Uint64FromData(b *testing.B) {
@@ -95,10 +120,13 @@ func BenchmarkInit_Uint64FromData(b *testing.B) {
 	for i := range data {
 		data[i] = byte(i * 33) // Some pattern
 	}
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64BitStringFromDataAndSize(data, 64)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64BitStringFromDataAndSize(data, 64)
+		}
+	})
 }
 
 // --- Size-based Initialization benchmarks ---
@@ -154,50 +182,68 @@ func BenchmarkInit_Size1024(b *testing.B) { benchmarkInitBySize(b, 1024) }
 
 func BenchmarkInit_Uint64Array_SmallAlloc(b *testing.B) {
 	binaryInput := randomBinaryString(64) // Single word
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64ArrayFromBinaryText(binaryInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64ArrayFromBinaryText(binaryInput)
+		}
+	})
 }
 
 func BenchmarkInit_Uint64Array_MediumAlloc(b *testing.B) {
 	binaryInput := randomBinaryString(256) // 4 words
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64ArrayFromBinaryText(binaryInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64ArrayFromBinaryText(binaryInput)
+		}
+	})
 }
 
 func BenchmarkInit_Uint64Array_LargeAlloc(b *testing.B) {
 	binaryInput := randomBinaryString(1024) // 16 words
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewUint64ArrayFromBinaryText(binaryInput)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewUint64ArrayFromBinaryText(binaryInput)
+		}
+	})
 }
 
 // --- Factory method benchmarks ---
 
 func BenchmarkInit_FactoryNewBitString(b *testing.B) {
 	textInput := "test"
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewFromText(textInput) // Uses current SelectedImpl (Uint64ArrayString)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewFromText(textInput) // Uses current SelectedImpl (Uint64ArrayString)
+		}
+	})
 }
 
 func BenchmarkInit_FactoryNewFromUint64(b *testing.B) {
 	value := randomUint64()
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewFromUint64(value) // Uses current SelectedImpl (Uint64ArrayString)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewFromUint64(value) // Uses current SelectedImpl (Uint64ArrayString)
+		}
+	})
 }
 
 func BenchmarkInit_FactoryNewFromBinary(b *testing.B) {
 	binaryInput := randomBinaryString(64)
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = NewFromBinary(binaryInput) // Uses current SelectedImpl (Uint64ArrayString)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = NewFromBinary(binaryInput) // Uses current SelectedImpl (Uint64ArrayString)
+		}
+	})
 }

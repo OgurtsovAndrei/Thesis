@@ -25,10 +25,13 @@ func BenchmarkHash_Uint64(b *testing.B) {
 			s := randomBinaryString(size)
 			bs := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.Hash()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.Hash()
+				}
+			})
 		})
 	}
 }
@@ -39,10 +42,13 @@ func BenchmarkHash_Char(b *testing.B) {
 			s := randomBinaryString(size)
 			bs := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.Hash()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.Hash()
+				}
+			})
 		})
 	}
 }
@@ -53,10 +59,13 @@ func BenchmarkHash_Uint64Array(b *testing.B) {
 			s := randomBinaryString(size)
 			bs := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs.Hash()
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs.Hash()
+				}
+			})
 		})
 	}
 }
