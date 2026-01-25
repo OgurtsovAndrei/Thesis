@@ -354,3 +354,110 @@ func (bs Uint64BitString) Compare(other BitString) int {
 	}
 	return 0
 }
+
+func (bs Uint64BitString) TrimTrailingZeros() BitString {
+	if bs.len == 0 {
+		return bs
+	}
+
+	// Find rightmost 1 bit (highest bit position since bit 0 is LSB)
+	newLen := int8(0)
+	for i := int8(bs.len - 1); i >= 0; i-- {
+		if (bs.value & (uint64(1) << i)) != 0 {
+			newLen = i + 1
+			break
+		}
+	}
+
+	if newLen == 0 {
+		// All bits are zero
+		return Uint64BitString{}
+	}
+
+	// Create mask for the new length
+	var mask uint64
+	if newLen == 64 {
+		mask = ^uint64(0)
+	} else {
+		mask = (uint64(1) << newLen) - 1
+	}
+
+	return Uint64BitString{
+		value: bs.value & mask,
+		len:   newLen,
+	}
+}
+
+func (bs Uint64BitString) AppendBit(bit bool) BitString {
+	if bs.len >= 64 {
+		log.Panicf("Cannot append bit: Uint64BitString is already at maximum size")
+	}
+
+	newValue := bs.value
+	if bit {
+		newValue |= uint64(1) << bs.len
+	}
+
+	return Uint64BitString{
+		value: newValue,
+		len:   bs.len + 1,
+	}
+}
+
+func (bs Uint64BitString) IsAllOnes() bool {
+	if bs.len == 0 {
+		return false
+	}
+
+	mask := ^uint64(0)
+	if bs.len < 64 {
+		mask = (uint64(1) << bs.len) - 1
+	}
+
+	return bs.value == mask
+}
+
+func (bs Uint64BitString) Successor() BitString {
+	// Convert LSB-first bit representation to standard MSB-first number
+	// Do arithmetic, then convert back to LSB-first
+
+	if bs.len == 0 {
+		// Empty string successor is "1"
+		return Uint64BitString{value: 1, len: 1}
+	}
+
+	// Convert LSB-first to MSB-first number
+	msbValue := uint64(0)
+	for i := int8(0); i < bs.len; i++ {
+		if (bs.value & (uint64(1) << i)) != 0 {
+			msbValue |= uint64(1) << (bs.len - 1 - i)
+		}
+	}
+
+	// Add 1 to MSB-first number
+	msbValue += 1
+
+	// Determine result bit length
+	var resultLen int8
+	if msbValue < (uint64(1) << bs.len) {
+		resultLen = bs.len
+	} else {
+		resultLen = bs.len + 1
+		if resultLen > 64 {
+			log.Panicf("Cannot compute successor: would exceed 64 bits")
+		}
+	}
+
+	// Convert back to LSB-first representation
+	lsbValue := uint64(0)
+	for i := int8(0); i < resultLen; i++ {
+		if (msbValue & (uint64(1) << (resultLen - 1 - i))) != 0 {
+			lsbValue |= uint64(1) << i
+		}
+	}
+
+	return Uint64BitString{
+		value: lsbValue,
+		len:   resultLen,
+	}
+}

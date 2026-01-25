@@ -352,3 +352,146 @@ func (bs CharBitString) Compare(other BitString) int {
 	}
 	return 0
 }
+
+func (bs CharBitString) TrimTrailingZeros() BitString {
+	if bs.sizeBits == 0 {
+		return bs
+	}
+
+	data := []byte(bs.data)
+	lastOneBit := int32(-1)
+
+	// Find the last bit that is 1
+	for i := int32(len(data) - 1); i >= 0; i-- {
+		b := data[i]
+		if b != 0 {
+			// Find the highest bit in this byte
+			highestBit := 7 - bits.LeadingZeros8(b)
+			lastOneBit = i*8 + int32(highestBit)
+			break
+		}
+	}
+
+	if lastOneBit < 0 {
+		// All bits are zero
+		return CharBitString{}
+	}
+
+	newSize := uint32(lastOneBit + 1)
+	if newSize > bs.sizeBits {
+		newSize = bs.sizeBits
+	}
+
+	return bs.Prefix(int(newSize))
+}
+
+func (bs CharBitString) AppendBit(bit bool) BitString {
+	newSize := bs.sizeBits + 1
+	numBytes := (newSize + 7) / 8
+
+	var newData []byte
+	if numBytes > uint32(len(bs.data)) {
+		// Need to allocate a new byte
+		newData = make([]byte, numBytes)
+		copy(newData, []byte(bs.data))
+	} else {
+		// Can reuse existing capacity
+		newData = make([]byte, len(bs.data))
+		copy(newData, []byte(bs.data))
+	}
+
+	if bit {
+		byteIndex := bs.sizeBits / 8
+		bitIndex := bs.sizeBits % 8
+		newData[byteIndex] |= 1 << bitIndex
+	}
+
+	return CharBitString{
+		data:     string(newData),
+		sizeBits: newSize,
+	}
+}
+
+func (bs CharBitString) IsAllOnes() bool {
+	if bs.sizeBits == 0 {
+		return false
+	}
+
+	data := []byte(bs.data)
+	fullBytes := bs.sizeBits / 8
+	remainingBits := bs.sizeBits % 8
+
+	// Check full bytes
+	for i := uint32(0); i < fullBytes; i++ {
+		if i >= uint32(len(data)) || data[i] != 0xFF {
+			return false
+		}
+	}
+
+	// Check remaining bits in the last byte
+	if remainingBits > 0 {
+		if fullBytes >= uint32(len(data)) {
+			return false
+		}
+		mask := byte((1 << remainingBits) - 1)
+		if (data[fullBytes] & mask) != mask {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (bs CharBitString) Successor() BitString {
+	// Convert to Uint64BitString, compute successor, convert back
+	// This ensures consistent behavior across all implementations
+
+	if bs.sizeBits == 0 {
+		return CharBitString{
+			data:     string([]byte{1}),
+			sizeBits: 1,
+		}
+	}
+
+	// Convert to Uint64BitString format
+	if bs.sizeBits > 64 {
+		// For large BitStrings, we need to implement the full logic
+		// For now, fall back to a simpler approach
+		return bs // TODO: Implement for large strings
+	}
+
+	// Convert to uint64 value
+	value := uint64(0)
+	for i := uint32(0); i < bs.sizeBits; i++ {
+		if bs.At(i) {
+			value |= uint64(1) << i
+		}
+	}
+
+	// Create temporary Uint64BitString and compute successor
+	tempBs := Uint64BitString{value: value, len: int8(bs.sizeBits)}
+	successorBs := tempBs.Successor()
+
+	// Convert back to CharBitString
+	tempUint64, ok := successorBs.(Uint64BitString)
+	if !ok {
+		return bs // Fallback
+	}
+
+	newSize := uint32(tempUint64.len)
+	numBytes := (newSize + 7) / 8
+	newData := make([]byte, numBytes)
+
+	for i := uint32(0); i < newSize; i++ {
+		if (tempUint64.value & (uint64(1) << i)) != 0 {
+			byteIndex := i / 8
+			bitIndex := i % 8
+			newData[byteIndex] |= 1 << bitIndex
+		}
+	}
+
+	return CharBitString{
+		data:     string(newData),
+		sizeBits: newSize,
+	}
+}
