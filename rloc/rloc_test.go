@@ -43,7 +43,7 @@ func TestRangeLocator_Correctness(t *testing.T) {
 
 				if start != expectedStart || end != expectedEnd {
 					t.Errorf("Mismatch for node %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
-						node.Extent.String(), seed, start, end, expectedStart, expectedEnd)
+						node.Extent.PrettyString(), seed, start, end, expectedStart, expectedEnd)
 					t.FailNow()
 				}
 			}

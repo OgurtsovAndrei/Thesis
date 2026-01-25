@@ -218,7 +218,7 @@ func TestMonotoneHashWithTrie_NonExistentKeys(t *testing.T) {
 		// Should return -1 for non-existent keys
 		if rank != -1 {
 			t.Logf("Non-existent key %s got rank %d (might be a false positive due to hash collision)",
-				nonExistentKey.String(), rank)
+				nonExistentKey.PrettyString(), rank)
 		}
 	}
 }

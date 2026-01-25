@@ -200,7 +200,7 @@ func (hzft *HZFastTrie[E]) String() string {
 	for i, nodeData := range hzft.data {
 		sb.WriteString(fmt.Sprintf("  [%d] extentLen=%d", i, nodeData.extentLen))
 		if nodeData.originalNode != nil {
-			sb.WriteString(fmt.Sprintf(" extent=%q", nodeData.originalNode.extent.String()))
+			sb.WriteString(fmt.Sprintf(" extent=%q", nodeData.originalNode.extent.PrettyString()))
 		}
 		if uint64(nodeData.extentLen) == uint64(^E(0)) {
 			sb.WriteString(" (pseudo-descriptor)")

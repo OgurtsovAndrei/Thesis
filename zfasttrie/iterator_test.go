@@ -56,7 +56,7 @@ func TestIterator(t *testing.T) {
 	for it.Next() {
 		node := it.Node()
 		if node != nil && !node.Extent.IsEmpty() {
-			visited = append(visited, node.Extent.String())
+			visited = append(visited, node.Extent.PrettyString())
 		}
 	}
 
@@ -85,7 +85,7 @@ func TestIteratorRandomSortedOrder(t *testing.T) {
 			for len(insertedKeys) < numKeys {
 				bitLen := r.Intn(maxBitLen) + 1
 				key := generateIteratorBitString(bitLen, r)
-				keyStr := key.String()
+				keyStr := key.PrettyString()
 
 				if !keySet[keyStr] {
 					keySet[keyStr] = true
@@ -106,7 +106,7 @@ func TestIteratorRandomSortedOrder(t *testing.T) {
 				node := it.Node()
 				if node != nil && !node.Extent.IsEmpty() && trie.ContainsBitString(node.Extent) {
 					iteratedBitStrings = append(iteratedBitStrings, node.Extent)
-					iteratedKeys = append(iteratedKeys, node.Extent.String())
+					iteratedKeys = append(iteratedKeys, node.Extent.PrettyString())
 					if node.IsLeaf {
 						leafCount++
 					}
@@ -115,7 +115,7 @@ func TestIteratorRandomSortedOrder(t *testing.T) {
 
 			var expectedKeys []string
 			for _, key := range insertedKeys {
-				expectedKeys = append(expectedKeys, key.String())
+				expectedKeys = append(expectedKeys, key.PrettyString())
 			}
 			if len(iteratedKeys) != int(trie.size) {
 				t.Errorf("Total keys count mismatch: expected %d, got %d (leafCount: %d)", trie.size, len(iteratedKeys), leafCount)
@@ -135,7 +135,7 @@ func TestIteratorRandomSortedOrder(t *testing.T) {
 			for i := 0; i < len(iteratedBitStrings)-1; i++ {
 				if !bitStringLess(iteratedBitStrings[i], iteratedBitStrings[i+1]) {
 					t.Errorf("Iterator returned keys not in sorted order: %s vs %s",
-						iteratedBitStrings[i].String(), iteratedBitStrings[i+1].String())
+						iteratedBitStrings[i].PrettyString(), iteratedBitStrings[i+1].PrettyString())
 					t.Logf("First 10 keys: %v", iteratedKeys[:min(10, len(iteratedKeys))])
 					break
 				}
