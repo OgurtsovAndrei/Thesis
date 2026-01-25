@@ -20,11 +20,14 @@ import (
 func BenchmarkTrieBitString_Init(b *testing.B) {
 	data := randomBase64String(16) // 16 base64 chars = ~96 bits
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs := &trie.BitString{}
-		bs.Init(data)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs := &trie.BitString{}
+			bs.Init(data)
+		}
+	})
 }
 
 func BenchmarkTrieBitString_Get(b *testing.B) {
@@ -32,12 +35,17 @@ func BenchmarkTrieBitString_Get(b *testing.B) {
 	bs := &trie.BitString{}
 	bs.Init(data)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		// Get 1 bit at random position
-		pos := uint(i % 96)
-		bs.Get(pos, 1)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			// Get 1 bit at random position
+			pos := uint(counter % 96)
+			bs.Get(pos, 1)
+			counter++
+		}
+	})
 }
 
 func BenchmarkTrieBitString_Count(b *testing.B) {
@@ -45,11 +53,14 @@ func BenchmarkTrieBitString_Count(b *testing.B) {
 	bs := &trie.BitString{}
 	bs.Init(data)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		// Count bits in range [0, 32)
-		bs.Count(0, 32)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			// Count bits in range [0, 32)
+			bs.Count(0, 32)
+		}
+	})
 }
 
 func BenchmarkTrieBitString_Rank(b *testing.B) {
@@ -57,12 +68,17 @@ func BenchmarkTrieBitString_Rank(b *testing.B) {
 	bs := &trie.BitString{}
 	bs.Init(data)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		// Rank up to position
-		pos := uint(i % 96)
-		bs.Rank(pos)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			// Rank up to position
+			pos := uint(counter % 96)
+			bs.Rank(pos)
+			counter++
+		}
+	})
 }
 
 // --- Comparative benchmarks: Count/Rank operation ---
@@ -72,11 +88,14 @@ func BenchmarkCompare_Count_TrieBitString(b *testing.B) {
 	bs := &trie.BitString{}
 	bs.Init(input)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		// Count bits in first half
-		bs.Count(0, 48)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			// Count bits in first half
+			bs.Count(0, 48)
+		}
+	})
 }
 
 // Note: Your BitString implementations don't have direct Count/Rank equivalents

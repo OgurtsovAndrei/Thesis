@@ -22,10 +22,15 @@ func BenchmarkAt_Uint64(b *testing.B) {
 	bs := NewUint64FromBinaryText(input)
 	limit := uint32(64)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.At(uint32(i) % limit)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			_ = bs.At(uint32(counter) % limit)
+			counter++
+		}
+	})
 }
 
 func BenchmarkAt_Char(b *testing.B) {
@@ -33,10 +38,15 @@ func BenchmarkAt_Char(b *testing.B) {
 	bs := NewCharFromBinary(input)
 	limit := uint32(64)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.At(uint32(i) % limit)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			_ = bs.At(uint32(counter) % limit)
+			counter++
+		}
+	})
 }
 
 func BenchmarkAt_Uint64Array(b *testing.B) {
@@ -44,10 +54,15 @@ func BenchmarkAt_Uint64Array(b *testing.B) {
 	bs := NewUint64ArrayFromBinaryText(input)
 	limit := uint32(128)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.At(uint32(i) % limit)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			_ = bs.At(uint32(counter) % limit)
+			counter++
+		}
+	})
 }
 
 // --- Comparative Access Benchmarks ---
@@ -57,10 +72,15 @@ func BenchmarkAccess_Uint64(b *testing.B) {
 	bs := NewUint64FromUint64(value, 64) // 64-bit uint64
 	limit := uint32(64)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.At(uint32(i) % limit)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			_ = bs.At(uint32(counter) % limit)
+			counter++
+		}
+	})
 }
 
 func BenchmarkAccess_Char(b *testing.B) {
@@ -68,10 +88,15 @@ func BenchmarkAccess_Char(b *testing.B) {
 	bs := NewCharFromText(input)
 	limit := uint32(64)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.At(uint32(i) % limit)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			_ = bs.At(uint32(counter) % limit)
+			counter++
+		}
+	})
 }
 
 func BenchmarkAccess_Uint64Array(b *testing.B) {
@@ -79,10 +104,15 @@ func BenchmarkAccess_Uint64Array(b *testing.B) {
 	bs := NewUint64ArrayFromBinaryText(input)
 	limit := uint32(128)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.At(uint32(i) % limit)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		counter := 0
+		for pb.Next() {
+			_ = bs.At(uint32(counter) % limit)
+			counter++
+		}
+	})
 }
 
 func BenchmarkAccess_TrieBitString(b *testing.B) {

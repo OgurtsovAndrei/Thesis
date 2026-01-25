@@ -3,6 +3,7 @@ package bits
 import "testing"
 
 func TestBitStringLCP(t *testing.T) {
+	t.Parallel()
 	// C++: assert(BitString::getLCPLength(BitString("1"), BitString("9")) == 3);
 	bs1 := NewFromText("1") // "1" = 00110001
 	bs9 := NewFromText("9") // "9" = 00111001

@@ -25,6 +25,8 @@ type BitString interface {
 	Successor() BitString
 }
 
+const benchmarkParallelism = 4
+
 type BitStringImpl int
 
 const SelectedImpl = CharString

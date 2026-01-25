@@ -3,6 +3,7 @@ package bits
 import "testing"
 
 func TestBitStringHash(t *testing.T) {
+	t.Parallel()
 	bs1 := NewFromText("A")
 	bs2 := NewFromText("A")
 	bs3 := NewFromText("B")
@@ -38,6 +39,7 @@ func TestBitStringHash(t *testing.T) {
 }
 
 func TestBitStringEq(t *testing.T) {
+	t.Parallel()
 	bs1 := NewFromText("test")
 	bs2 := NewFromText("test")
 	bs3 := NewFromText("different")
@@ -70,6 +72,7 @@ func TestBitStringEq(t *testing.T) {
 }
 
 func TestBitStringCompare(t *testing.T) {
+	t.Parallel()
 	// Test with binary strings for precise control
 	bs1 := NewFromBinary("1010")
 	bs2 := NewFromBinary("1010")
@@ -141,6 +144,7 @@ func TestBitStringCompare(t *testing.T) {
 }
 
 func TestBitStringLongCompare(t *testing.T) {
+	t.Parallel()
 	// Test with longer bitstrings that span multiple uint64 words
 	long1 := NewFromBinary("1010101010101010101010101010101010101010101010101010101010101010" +
 		"1100110011001100110011001100110011001100110011001100110011001100")

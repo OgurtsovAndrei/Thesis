@@ -27,10 +27,13 @@ func BenchmarkCompare_Uint64(b *testing.B) {
 			bs1 := NewUint64FromBinaryText(s1)
 			bs2 := NewUint64FromBinaryText(s2)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs1.Compare(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs1.Compare(bs2)
+				}
+			})
 		})
 	}
 }
@@ -43,10 +46,13 @@ func BenchmarkCompare_Char(b *testing.B) {
 			bs1 := NewCharFromBinary(s1)
 			bs2 := NewCharFromBinary(s2)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs1.Compare(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs1.Compare(bs2)
+				}
+			})
 		})
 	}
 }
@@ -59,10 +65,13 @@ func BenchmarkCompare_Uint64Array(b *testing.B) {
 			bs1 := NewUint64ArrayFromBinaryText(s1)
 			bs2 := NewUint64ArrayFromBinaryText(s2)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs1.Compare(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs1.Compare(bs2)
+				}
+			})
 		})
 	}
 }

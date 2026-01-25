@@ -27,10 +27,13 @@ func BenchmarkLCP_Uint64(b *testing.B) {
 	bs1 := NewUint64FromBinaryText(s1)
 	bs2 := NewUint64FromBinaryText(s2)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.GetLCPLength(bs2)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.GetLCPLength(bs2)
+		}
+	})
 }
 
 func BenchmarkLCP_Char(b *testing.B) {
@@ -45,10 +48,13 @@ func BenchmarkLCP_Char(b *testing.B) {
 	bs1 := NewCharFromBinary(s1)
 	bs2 := NewCharFromBinary(s2)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.GetLCPLength(bs2)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.GetLCPLength(bs2)
+		}
+	})
 }
 
 func BenchmarkLCP_Uint64Array(b *testing.B) {
@@ -63,10 +69,13 @@ func BenchmarkLCP_Uint64Array(b *testing.B) {
 	bs1 := NewUint64ArrayFromBinaryText(s1)
 	bs2 := NewUint64ArrayFromBinaryText(s2)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.GetLCPLength(bs2)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.GetLCPLength(bs2)
+		}
+	})
 }
 
 // --- LCP Same Type vs Cross Type ---
@@ -77,10 +86,13 @@ func BenchmarkLCP_Uint64Array_SameType(b *testing.B) {
 	bs1 := NewUint64ArrayFromBinaryText(s1)
 	bs2 := NewUint64ArrayFromBinaryText(s2)
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.GetLCPLength(bs2)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.GetLCPLength(bs2)
+		}
+	})
 }
 
 func BenchmarkLCP_Uint64Array_CrossType(b *testing.B) {
@@ -89,10 +101,13 @@ func BenchmarkLCP_Uint64Array_CrossType(b *testing.B) {
 	bs1 := NewUint64ArrayFromBinaryText(s1)
 	bs2 := NewCharFromBinary(s2) // Different type
 
+	b.SetParallelism(benchmarkParallelism)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bs1.GetLCPLength(bs2)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			bs1.GetLCPLength(bs2)
+		}
+	})
 }
 
 // --- Size-based LCP benchmarks ---
@@ -122,25 +137,34 @@ func benchmarkLCPBySize(b *testing.B, size int) {
 
 	if size <= 64 {
 		b.Run("Uint64", func(b *testing.B) {
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				bs1Uint64.GetLCPLength(bs2Uint64)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					bs1Uint64.GetLCPLength(bs2Uint64)
+				}
+			})
 		})
 	}
 
 	b.Run("Char", func(b *testing.B) {
+		b.SetParallelism(benchmarkParallelism)
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			bs1Char.GetLCPLength(bs2Char)
-		}
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				bs1Char.GetLCPLength(bs2Char)
+			}
+		})
 	})
 
 	b.Run("Uint64Array", func(b *testing.B) {
+		b.SetParallelism(benchmarkParallelism)
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			bs1Uint64Array.GetLCPLength(bs2Uint64Array)
-		}
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				bs1Uint64Array.GetLCPLength(bs2Uint64Array)
+			}
+		})
 	})
 }
 

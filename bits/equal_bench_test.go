@@ -27,10 +27,13 @@ func BenchmarkEqual_Uint64(b *testing.B) {
 			bs1 := NewUint64FromBinaryText(s)
 			bs2 := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				bs1.Equal(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					bs1.Equal(bs2)
+				}
+			})
 		})
 	}
 }
@@ -42,10 +45,13 @@ func BenchmarkEqual_Char(b *testing.B) {
 			bs1 := NewCharFromBinary(s)
 			bs2 := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				bs1.Equal(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					bs1.Equal(bs2)
+				}
+			})
 		})
 	}
 }
@@ -57,10 +63,13 @@ func BenchmarkEqual_Uint64Array(b *testing.B) {
 			bs1 := NewUint64ArrayFromBinaryText(s)
 			bs2 := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				bs1.Equal(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					bs1.Equal(bs2)
+				}
+			})
 		})
 	}
 }
@@ -77,10 +86,13 @@ func BenchmarkEq_Uint64(b *testing.B) {
 			bs1 := NewUint64FromBinaryText(s)
 			bs2 := NewUint64FromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs1.Eq(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs1.Eq(bs2)
+				}
+			})
 		})
 	}
 }
@@ -92,10 +104,13 @@ func BenchmarkEq_Char(b *testing.B) {
 			bs1 := NewCharFromBinary(s)
 			bs2 := NewCharFromBinary(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs1.Eq(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs1.Eq(bs2)
+				}
+			})
 		})
 	}
 }
@@ -107,10 +122,13 @@ func BenchmarkEq_Uint64Array(b *testing.B) {
 			bs1 := NewUint64ArrayFromBinaryText(s)
 			bs2 := NewUint64ArrayFromBinaryText(s)
 
+			b.SetParallelism(benchmarkParallelism)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				_ = bs1.Eq(bs2)
-			}
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					_ = bs1.Eq(bs2)
+				}
+			})
 		})
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 // Test TrimTrailingZeros for all implementations
 func TestTrimTrailingZeros(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name     string
 		input    string
@@ -69,6 +70,7 @@ func TestTrimTrailingZeros(t *testing.T) {
 
 // Test AppendBit for all implementations
 func TestAppendBit(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name     string
 		input    string
@@ -123,6 +125,7 @@ func TestAppendBit(t *testing.T) {
 
 // Test IsAllOnes for all implementations
 func TestIsAllOnes(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name     string
 		input    string
@@ -167,6 +170,7 @@ func TestIsAllOnes(t *testing.T) {
 
 // Test Successor for all implementations
 func TestSuccessor(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name     string
 		input    string
@@ -225,9 +229,13 @@ func BenchmarkTrimTrailingZeros(b *testing.B) {
 	bs := NewUint64FromBinaryText("1010000000")
 
 	b.Run("NewMethod", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bs.TrimTrailingZeros()
-		}
+		b.SetParallelism(benchmarkParallelism)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_ = bs.TrimTrailingZeros()
+			}
+		})
 	})
 }
 
@@ -235,9 +243,13 @@ func BenchmarkAppendBit(b *testing.B) {
 	bs := NewUint64FromBinaryText("101010")
 
 	b.Run("NewMethod", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bs.AppendBit(true)
-		}
+		b.SetParallelism(benchmarkParallelism)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_ = bs.AppendBit(true)
+			}
+		})
 	})
 }
 
@@ -245,9 +257,13 @@ func BenchmarkIsAllOnes(b *testing.B) {
 	bs := NewUint64FromBinaryText("111111111111111111111111111111")
 
 	b.Run("NewMethod", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bs.IsAllOnes()
-		}
+		b.SetParallelism(benchmarkParallelism)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_ = bs.IsAllOnes()
+			}
+		})
 	})
 }
 
@@ -255,8 +271,12 @@ func BenchmarkSuccessor(b *testing.B) {
 	bs := NewUint64FromBinaryText("1010101010")
 
 	b.Run("NewMethod", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bs.Successor()
-		}
+		b.SetParallelism(benchmarkParallelism)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_ = bs.Successor()
+			}
+		})
 	})
 }

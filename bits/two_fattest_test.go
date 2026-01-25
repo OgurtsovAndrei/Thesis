@@ -3,6 +3,7 @@ package bits
 import "testing"
 
 func TestFast(t *testing.T) {
+	t.Parallel()
 	if MostSignificantBit(0) != -1 {
 		t.Fatal("MostSignificantBit(0) failed")
 	}
