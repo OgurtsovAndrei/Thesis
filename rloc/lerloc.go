@@ -41,3 +41,24 @@ func (lerl *LocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitString) (int
 
 	return lerl.rl.Query(exitNode)
 }
+
+// ByteSize returns the total size of the structure in bytes.
+func (lerl *LocalExactRangeLocator) ByteSize() int {
+	if lerl == nil {
+		return 0
+	}
+
+	size := 0
+
+	// Size of the HZFastTrie
+	if lerl.hzft != nil {
+		size += lerl.hzft.ByteSize()
+	}
+
+	// Size of the RangeLocator
+	if lerl.rl != nil {
+		size += lerl.rl.ByteSize()
+	}
+
+	return size
+}
