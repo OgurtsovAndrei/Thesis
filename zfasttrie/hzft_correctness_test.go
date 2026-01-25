@@ -15,6 +15,7 @@ const (
 )
 
 func TestHZFastTrie_Correctness_AllPrefixes(t *testing.T) {
+	t.Parallel()
 
 	errorCount := 0
 	totalChecks := 0
