@@ -4,6 +4,7 @@ import (
 	"Thesis/bits"
 	"Thesis/zfasttrie"
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
@@ -12,68 +13,76 @@ import (
 
 const (
 	testRuns  = 100
-	maxKeys   = 200
+	maxKeys   = 20000
 	maxBitLen = 63
 )
 
 func TestRangeLocator_Correctness(t *testing.T) {
 	for run := 0; run < testRuns; run++ {
-		fmt.Println("Iteration", run)
-		seed := time.Now().UnixNano()
-		r := rand.New(rand.NewSource(seed))
+		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
+			t.Parallel()
+			seed := time.Now().UnixNano()
+			keys := genUniqueBitStrings(seed)
 
-		numKeys := r.Intn(maxKeys) + 1
-		bitLen := r.Intn(maxBitLen) + 1
+			zt := zfasttrie.Build(keys)
+			rl := NewRangeLocator(zt)
 
-		uniqueUints := make(map[uint64]bool)
-		mask := uint64(0)
-		if bitLen == 64 {
-			mask = 0xFFFFFFFFFFFFFFFF
-		} else {
-			mask = (uint64(1) << uint(bitLen)) - 1
-		}
+			it := zfasttrie.NewIterator(zt)
+			for it.Next() {
+				node := it.Node()
+				if node == nil {
+					continue
+				}
 
-		for len(uniqueUints) < numKeys {
-			uniqueUints[r.Uint64()&mask] = true
-		}
+				start, end, err := rl.Query(node.Extent)
+				if err != nil {
+					t.Fatalf("Query failed for existing node (seed: %d): %v", seed, err)
+				}
 
-		keys := make([]bits.BitString, 0, len(uniqueUints))
-		for val := range uniqueUints {
-			bs := bits.NewFromUint64(val)
-			if uint32(bitLen) < bs.Size() {
-				bs = bits.NewBitStringPrefix(bs, uint32(bitLen))
+				expectedStart, expectedEnd := findRange(keys, node.Extent)
+
+				if start != expectedStart || end != expectedEnd {
+					t.Errorf("Mismatch for node %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
+						toBinary(node.Extent), seed, start, end, expectedStart, expectedEnd)
+					t.FailNow()
+				}
 			}
-			keys = append(keys, bs)
-		}
-
-		sort.Slice(keys, func(i, j int) bool {
-			return keys[i].Compare(keys[j]) < 0
 		})
-
-		zt := zfasttrie.Build(keys)
-		rl := NewRangeLocator(zt)
-
-		it := zfasttrie.NewIterator(zt)
-		for it.Next() {
-			node := it.Node()
-			if node == nil {
-				continue
-			}
-
-			start, end, err := rl.Query(node.Extent)
-			if err != nil {
-				t.Fatalf("Query failed for existing node (seed: %d): %v", seed, err)
-			}
-
-			expectedStart, expectedEnd := findRange(keys, node.Extent)
-
-			if start != expectedStart || end != expectedEnd {
-				t.Errorf("Mismatch for node %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
-					toBinary(node.Extent), seed, start, end, expectedStart, expectedEnd)
-				t.FailNow()
-			}
-		}
 	}
+}
+
+func genUniqueBitStrings(seed int64) []bits.BitString {
+	r := rand.New(rand.NewSource(seed))
+
+	numKeys := r.Intn(maxKeys) + 1
+	minSize := int(math.Log2(maxKeys)) + 1
+	bitLen := minSize + r.Intn(maxBitLen-minSize)
+
+	uniqueUints := make(map[uint64]bool)
+	mask := uint64(0)
+	if bitLen == 64 {
+		mask = 0xFFFFFFFFFFFFFFFF
+	} else {
+		mask = (uint64(1) << uint(bitLen)) - 1
+	}
+
+	for len(uniqueUints) < numKeys {
+		uniqueUints[r.Uint64()&mask] = true
+	}
+
+	keys := make([]bits.BitString, 0, len(uniqueUints))
+	for val := range uniqueUints {
+		bs := bits.NewFromUint64(val)
+		if uint32(bitLen) < bs.Size() {
+			bs = bits.NewBitStringPrefix(bs, uint32(bitLen))
+		}
+		keys = append(keys, bs)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Compare(keys[j]) < 0
+	})
+	return keys
 }
 
 func findRange(keys []bits.BitString, prefix bits.BitString) (int, int) {
