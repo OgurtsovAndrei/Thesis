@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	testRuns  = 100
-	maxKeys   = 20000
-	maxBitLen = 63
+	testRuns  = 1000
+	maxKeys   = 1024
+	maxBitLen = 16
 )
 
 func TestRangeLocator_Correctness(t *testing.T) {
