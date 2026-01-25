@@ -71,10 +71,10 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 	seed := rand.Uint64()
 
-	// Create mapping from keys to their delimiter indices
-	keyToDelimiterIdx := make(map[string]int)
+	// Create mapping from keys to their delimiter indices using hash for efficiency
+	keyToDelimiterIdx := make(map[bits.BitString]int)
 	for i, key := range keys {
-		keyToDelimiterIdx[key.String()] = i
+		keyToDelimiterIdx[key] = i
 	}
 
 	maxDelimiterIndex := I(^I(0)) // Maximum value for I type (means "not a delimiter")
@@ -117,7 +117,7 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 
 		// Determine delimiter index for this node
 		delimiterIdx := maxDelimiterIndex
-		if delimIdx, exists := keyToDelimiterIdx[node.extent.String()]; exists {
+		if delimIdx, exists := keyToDelimiterIdx[node.extent]; exists {
 			delimiterIdx = I(delimIdx)
 		}
 
