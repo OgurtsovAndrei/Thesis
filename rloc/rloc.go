@@ -27,28 +27,19 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 		return &RangeLocator{totalLeaves: 0}
 	}
 
-	// Use BitString hash as key for better performance
-	pMap := make(map[uint64]struct {
-		bs     bits.BitString
-		isLeaf bool
-	})
+	// Use BitString directly as map key
+	pMap := make(map[bits.BitString]bool)
 
 	addToMap := func(bs bits.BitString, isLeaf bool) {
-		hash := bs.Hash()
-		if val, exists := pMap[hash]; exists {
+		if existingIsLeaf, exists := pMap[bs]; exists {
+			// Prioritize leaf status
 			if isLeaf {
-				pMap[hash] = struct {
-					bs     bits.BitString
-					isLeaf bool
-				}{bs: bs, isLeaf: true}
+				pMap[bs] = true
 			} else {
-				pMap[hash] = val
+				pMap[bs] = existingIsLeaf
 			}
 		} else {
-			pMap[hash] = struct {
-				bs     bits.BitString
-				isLeaf bool
-			}{bs: bs, isLeaf: isLeaf}
+			pMap[bs] = isLeaf
 		}
 	}
 
@@ -77,30 +68,32 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 		}
 	}
 
-	sortedP := make([]pItem, 0, len(pMap))
-	for _, item := range pMap {
-		sortedP = append(sortedP, pItem{
-			bs:     item.bs,
-			isLeaf: item.isLeaf,
+	// Convert to sorted slice
+	sortedItems := make([]pItem, 0, len(pMap))
+	for bs, isLeaf := range pMap {
+		sortedItems = append(sortedItems, pItem{
+			bs:     bs,
+			isLeaf: isLeaf,
 		})
 	}
 
-	sort.Slice(sortedP, func(i, j int) bool {
-		return sortedP[i].bs.Compare(sortedP[j].bs) < 0
+	sort.Slice(sortedItems, func(i, j int) bool {
+		return sortedItems[i].bs.Compare(sortedItems[j].bs) < 0
 	})
 
+	// Build structures
 	bv := rsdic.New()
-	keysForMPH := make([]bits.BitString, len(sortedP))
+	keysForMPH := make([]bits.BitString, len(sortedItems))
 
-	for i, item := range sortedP {
+	for i, item := range sortedItems {
 		bv.PushBack(item.isLeaf)
 		keysForMPH[i] = item.bs
 	}
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
-	perm := make([]uint32, len(sortedP))
-	for rank, item := range sortedP {
+	perm := make([]uint32, len(sortedItems))
+	for rank, item := range sortedItems {
 		idx := mph.Query(item.bs) - 1
 		perm[idx] = uint32(rank)
 	}
