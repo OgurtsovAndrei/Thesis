@@ -5,9 +5,7 @@ import (
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/zfasttrie"
 	"fmt"
-	"math/big"
 	"sort"
-	"strings"
 
 	"github.com/hillbig/rsdic"
 )
@@ -20,21 +18,8 @@ type RangeLocator struct {
 }
 
 type pItem struct {
-	s      string
 	bs     bits.BitString
 	isLeaf bool
-}
-
-func toBinary(bs bits.BitString) string {
-	var sb strings.Builder
-	for i := uint32(0); i < bs.Size(); i++ {
-		if bs.At(i) {
-			sb.WriteByte('1')
-		} else {
-			sb.WriteByte('0')
-		}
-	}
-	return sb.String()
 }
 
 func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
@@ -42,17 +27,28 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 		return &RangeLocator{totalLeaves: 0}
 	}
 
-	pMap := make(map[string]bool)
+	// Use BitString hash as key for better performance
+	pMap := make(map[uint64]struct {
+		bs     bits.BitString
+		isLeaf bool
+	})
 
-	addToMap := func(s string, isLeaf bool) {
-		if val, exists := pMap[s]; exists {
+	addToMap := func(bs bits.BitString, isLeaf bool) {
+		hash := bs.Hash()
+		if val, exists := pMap[hash]; exists {
 			if isLeaf {
-				pMap[s] = true
+				pMap[hash] = struct {
+					bs     bits.BitString
+					isLeaf bool
+				}{bs: bs, isLeaf: true}
 			} else {
-				pMap[s] = val
+				pMap[hash] = val
 			}
 		} else {
-			pMap[s] = isLeaf
+			pMap[hash] = struct {
+				bs     bits.BitString
+				isLeaf bool
+			}{bs: bs, isLeaf: isLeaf}
 		}
 	}
 
@@ -64,32 +60,33 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 		}
 
 		extent := node.Extent
-		binExtent := toBinary(extent)
 
-		eArrow := strings.TrimRight(binExtent, "0")
-		addToMap(eArrow, node.IsLeaf)
+		// Use TrimTrailingZeros instead of string conversion and trimming
+		eArrowBs := extent.TrimTrailingZeros()
+		addToMap(eArrowBs, node.IsLeaf)
 
-		e1 := binExtent + "1"
-		addToMap(e1, false)
+		// Use AppendBit instead of string concatenation
+		e1Bs := extent.AppendBit(true)
+		addToMap(e1Bs, false)
 
 		if !isAllOnes(extent) {
 			successor := calcSuccessor(extent)
-			succArrow := strings.TrimRight(toBinary(successor), "0")
-			addToMap(succArrow, false)
+			// Use TrimTrailingZeros instead of string conversion and trimming
+			succArrowBs := successor.TrimTrailingZeros()
+			addToMap(succArrowBs, false)
 		}
 	}
 
 	sortedP := make([]pItem, 0, len(pMap))
-	for s, isLeaf := range pMap {
+	for _, item := range pMap {
 		sortedP = append(sortedP, pItem{
-			s:      s,
-			bs:     bits.NewFromBinary(s),
-			isLeaf: isLeaf,
+			bs:     item.bs,
+			isLeaf: item.isLeaf,
 		})
 	}
 
 	sort.Slice(sortedP, func(i, j int) bool {
-		return sortedP[i].s < sortedP[j].s
+		return sortedP[i].bs.Compare(sortedP[j].bs) < 0
 	})
 
 	bv := rsdic.New()
@@ -126,9 +123,9 @@ func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 		return 0, rl.totalLeaves, nil
 	}
 
-	binX := toBinary(nodeName)
-	xArrow := strings.TrimRight(binX, "0")
-	idxLeft := rl.mph.Query(bits.NewFromBinary(xArrow))
+	// Use TrimTrailingZeros instead of string conversion and trimming
+	xArrowBs := nodeName.TrimTrailingZeros()
+	idxLeft := rl.mph.Query(xArrowBs)
 
 	if idxLeft == 0 {
 		return 0, 0, fmt.Errorf("key not found in structure")
@@ -143,9 +140,10 @@ func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 		j = rl.totalLeaves
 	} else {
 		xSucc := calcSuccessor(nodeName)
-		xSuccArrow := strings.TrimRight(toBinary(xSucc), "0")
+		// Use TrimTrailingZeros instead of string conversion and trimming
+		xSuccArrowBs := xSucc.TrimTrailingZeros()
 
-		idxRight := rl.mph.Query(bits.NewFromBinary(xSuccArrow))
+		idxRight := rl.mph.Query(xSuccArrowBs)
 		if idxRight == 0 {
 			return i, i, nil
 		}
@@ -158,27 +156,10 @@ func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 }
 
 func isAllOnes(bs bits.BitString) bool {
-	sz := bs.Size()
-	for k := uint32(0); k < sz; k++ {
-		if !bs.At(k) {
-			return false
-		}
-	}
-	return true
+	return bs.IsAllOnes()
 }
 
 func calcSuccessor(bs bits.BitString) bits.BitString {
-	s := toBinary(bs) + "1"
-	i := new(big.Int)
-	i.SetString(s, 2)
-	i.Add(i, big.NewInt(1))
-	resStr := i.Text(2)
-
-	if len(resStr) < len(s) {
-		resStr = strings.Repeat("0", len(s)-len(resStr)) + resStr
-	} else if len(resStr) > len(s) {
-		resStr = resStr[len(resStr)-len(s):]
-	}
-
-	return bits.NewFromBinary(resStr)
+	// Use the efficient BitString method that appends '1' and computes successor
+	return bs.AppendBit(true).Successor()
 }

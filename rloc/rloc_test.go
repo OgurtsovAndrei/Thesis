@@ -43,7 +43,7 @@ func TestRangeLocator_Correctness(t *testing.T) {
 
 				if start != expectedStart || end != expectedEnd {
 					t.Errorf("Mismatch for node %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
-						toBinary(node.Extent), seed, start, end, expectedStart, expectedEnd)
+						node.Extent.String(), seed, start, end, expectedStart, expectedEnd)
 					t.FailNow()
 				}
 			}
@@ -86,9 +86,9 @@ func genUniqueBitStrings(seed int64) []bits.BitString {
 }
 
 func findRange(keys []bits.BitString, prefix bits.BitString) (int, int) {
-	pStr := toBinary(prefix)
+	// Use BitString.Compare() instead of string comparison for better performance
 	start := sort.Search(len(keys), func(i int) bool {
-		return toBinary(keys[i]) >= pStr
+		return keys[i].Compare(prefix) >= 0
 	})
 
 	end := start
