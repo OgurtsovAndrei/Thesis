@@ -9,6 +9,7 @@ import (
 )
 
 func TestTable_Randomized(t *testing.T) {
+	t.Parallel()
 	sizes := []int{1, 10, 100, 1_000, 10_000, 100_000, 1_000_000}
 
 	for _, size := range sizes {

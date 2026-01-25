@@ -8,6 +8,7 @@ import (
 )
 
 func TestSerializeDeserialize(t *testing.T) {
+	t.Parallel()
 	keys := []string{
 		"alpha", "beta", "gamma", "delta", "epsilon",
 		"zeta", "eta", "theta", "iota", "kappa",
@@ -37,6 +38,7 @@ func TestSerializeDeserialize(t *testing.T) {
 }
 
 func TestDeserialize_InvalidData(t *testing.T) {
+	t.Parallel()
 	var table Table
 
 	err := Deserialize([]byte{}, &table)

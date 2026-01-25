@@ -49,6 +49,7 @@ func (s bitStringSorter) Less(i, j int) bool {
 }
 
 func TestMonotoneHash_Randomized(t *testing.T) {
+	t.Parallel()
 	sizes := []int{1, 10, 100, 1_000, 10_000, 100_000, 1_000_000}
 
 	for _, size := range sizes {
@@ -63,6 +64,7 @@ func TestMonotoneHash_Randomized(t *testing.T) {
 
 		testName := fmt.Sprintf("Size_%d", size)
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 			mh := NewMonotoneHash(bitKeys)
 
 			for i, key := range bitKeys {

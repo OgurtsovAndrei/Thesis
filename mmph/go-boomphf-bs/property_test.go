@@ -24,6 +24,7 @@ func genUniqueKeys(n int) []tbits.BitString {
 }
 
 func TestMPHRangeProperty(t *testing.T) {
+	t.Parallel()
 	f := func(n uint8) bool {
 		size := int(n)%100 + 1
 		keys := genUniqueKeys(size)
@@ -60,6 +61,7 @@ func TestMPHRangeProperty(t *testing.T) {
 }
 
 func TestMPHReproducible(t *testing.T) {
+	t.Parallel()
 	f := func(n uint8) bool {
 		size := int(n)%100 + 1
 		keys := genUniqueKeys(size)
@@ -85,6 +87,7 @@ func TestMPHReproducible(t *testing.T) {
 }
 
 func TestMPHOrderIndependence(t *testing.T) {
+	t.Parallel()
 	keys := genUniqueKeys(200)
 
 	h1 := New(2.0, append([]tbits.BitString{}, keys...))
