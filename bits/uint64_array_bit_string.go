@@ -426,3 +426,207 @@ func (bs Uint64ArrayBitString) Compare(other BitString) int {
 	}
 	return 0
 }
+
+func (bs Uint64ArrayBitString) TrimTrailingZeros() BitString {
+	if bs.sizeBits == 0 {
+		return bs
+	}
+
+	// Find the last non-zero bit
+	lastOneBit := int32(-1)
+
+	for i := int32(len(bs.data) - 1); i >= 0; i-- {
+		word := bs.data[i]
+		if word != 0 {
+			// Find the highest bit position in this word
+			highestBit := 63 - bits.LeadingZeros64(word)
+			lastOneBit = i*64 + int32(highestBit)
+			break
+		}
+	}
+
+	if lastOneBit < 0 {
+		// All bits are zero
+		return Uint64ArrayBitString{}
+	}
+
+	newSize := uint32(lastOneBit + 1)
+	if newSize > bs.sizeBits {
+		newSize = bs.sizeBits
+	}
+
+	return bs.Prefix(int(newSize))
+}
+
+func (bs Uint64ArrayBitString) AppendBit(bit bool) BitString {
+	newSize := bs.sizeBits + 1
+	newNumWords := (newSize + 63) / 64
+
+	var newData []uint64
+	if newNumWords > uint32(len(bs.data)) {
+		// Need to allocate a new word
+		newData = make([]uint64, newNumWords)
+		copy(newData, bs.data)
+	} else {
+		// Can reuse existing capacity
+		newData = make([]uint64, len(bs.data))
+		copy(newData, bs.data)
+	}
+
+	if bit {
+		wordIndex := bs.sizeBits / 64
+		bitIndex := bs.sizeBits % 64
+		newData[wordIndex] |= uint64(1) << bitIndex
+	}
+
+	return Uint64ArrayBitString{
+		data:     newData,
+		sizeBits: newSize,
+	}
+}
+
+func (bs Uint64ArrayBitString) IsAllOnes() bool {
+	if bs.sizeBits == 0 {
+		return false
+	}
+
+	fullWords := bs.sizeBits / 64
+	remainingBits := bs.sizeBits % 64
+
+	// Check full words
+	for i := uint32(0); i < fullWords; i++ {
+		if i >= uint32(len(bs.data)) || bs.data[i] != ^uint64(0) {
+			return false
+		}
+	}
+
+	// Check remaining bits in the last word
+	if remainingBits > 0 {
+		if fullWords >= uint32(len(bs.data)) {
+			return false
+		}
+		mask := (uint64(1) << remainingBits) - 1
+		if (bs.data[fullWords] & mask) != mask {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (bs Uint64ArrayBitString) Successor() BitString {
+	// Convert to Uint64BitString if possible, compute successor, convert back
+	// This ensures consistent behavior across all implementations
+
+	if bs.sizeBits == 0 {
+		newData := []uint64{1}
+		return Uint64ArrayBitString{
+			data:     newData,
+			sizeBits: 1,
+		}
+	}
+
+	// For small BitStrings (≤64 bits), use Uint64BitString logic
+	if bs.sizeBits <= 64 {
+		// Convert to uint64 value
+		value := uint64(0)
+		if len(bs.data) > 0 {
+			value = bs.data[0]
+		}
+
+		// Create temporary Uint64BitString and compute successor
+		tempBs := Uint64BitString{value: value, len: int8(bs.sizeBits)}
+		successorBs := tempBs.Successor()
+
+		// Convert back to Uint64ArrayBitString
+		tempUint64, ok := successorBs.(Uint64BitString)
+		if !ok {
+			return bs // Fallback
+		}
+
+		newSize := uint32(tempUint64.len)
+		numWords := (newSize + 63) / 64
+		newData := make([]uint64, numWords)
+		if numWords > 0 {
+			newData[0] = tempUint64.value
+		}
+
+		return Uint64ArrayBitString{
+			data:     newData,
+			sizeBits: newSize,
+		}
+	}
+
+	// For larger BitStrings, implement full multi-word successor logic
+	// We need to convert the LSB-first representation to a normal number,
+	// increment it, then convert back to LSB-first
+
+	// First, convert to big-endian byte array for easier arithmetic
+	numBytes := (bs.sizeBits + 7) / 8
+	bigEndianBytes := make([]byte, numBytes)
+
+	// Copy LSB-first bits to big-endian bytes
+	for bitIdx := uint32(0); bitIdx < bs.sizeBits; bitIdx++ {
+		if bs.At(bitIdx) {
+			byteIdx := numBytes - 1 - (bitIdx / 8)
+			bitInByte := 7 - (bitIdx % 8)
+			bigEndianBytes[byteIdx] |= 1 << bitInByte
+		}
+	}
+
+	// Add 1 to the big-endian number
+	carry := byte(1)
+	for i := len(bigEndianBytes) - 1; i >= 0 && carry > 0; i-- {
+		sum := uint16(bigEndianBytes[i]) + uint16(carry)
+		bigEndianBytes[i] = byte(sum)
+		if sum > 255 {
+			carry = 1
+		} else {
+			carry = 0
+		}
+	}
+
+	// Determine result size
+	var resultSize uint32
+	var resultBytes []byte
+	if carry > 0 {
+		// Need one more bit
+		resultSize = bs.sizeBits + 1
+		newNumBytes := (resultSize + 7) / 8
+		resultBytes = make([]byte, newNumBytes)
+
+		if newNumBytes > numBytes {
+			// Need new byte
+			resultBytes[0] = 1
+			copy(resultBytes[1:], bigEndianBytes)
+		} else {
+			// Can fit in existing bytes
+			copy(resultBytes, bigEndianBytes)
+			resultBytes[0] |= 0x80 // Set MSB
+		}
+	} else {
+		resultSize = bs.sizeBits
+		resultBytes = bigEndianBytes
+	}
+
+	// Convert back to LSB-first BitString
+	resultNumWords := (resultSize + 63) / 64
+	resultData := make([]uint64, resultNumWords)
+
+	for bitIdx := uint32(0); bitIdx < resultSize; bitIdx++ {
+		// Map from LSB-first bit index to big-endian bit position
+		bigEndianByteIdx := len(resultBytes) - 1 - int(bitIdx/8)
+		bitInByte := 7 - (bitIdx % 8)
+
+		if bigEndianByteIdx >= 0 && (resultBytes[bigEndianByteIdx]&(1<<bitInByte)) != 0 {
+			wordIdx := bitIdx / 64
+			bitInWord := bitIdx % 64
+			resultData[wordIdx] |= uint64(1) << bitInWord
+		}
+	}
+
+	return Uint64ArrayBitString{
+		data:     resultData,
+		sizeBits: resultSize,
+	}
+}

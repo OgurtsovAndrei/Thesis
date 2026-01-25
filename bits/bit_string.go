@@ -18,11 +18,16 @@ type BitString interface {
 	Hash() uint64
 	HashWithSeed(seed uint64) uint64
 	Compare(other BitString) int
+
+	TrimTrailingZeros() BitString
+	AppendBit(bit bool) BitString
+	IsAllOnes() bool
+	Successor() BitString
 }
 
 type BitStringImpl int
 
-const SelectedImpl = Uint64String
+const SelectedImpl = Uint64ArrayString
 
 const (
 	CharString BitStringImpl = iota
