@@ -15,7 +15,7 @@ func generateIteratorBitString(bitLen int, r *rand.Rand) bits.BitString {
 		k := r.Uint64()
 		s := bits.NewFromUint64(k)
 		if uint32(bitLen) < s.Size() {
-			s = bits.NewBitStringPrefix(s, uint32(bitLen))
+			s = s.Prefix(bitLen)
 		}
 		return s
 	} else {
@@ -29,7 +29,7 @@ func generateIteratorBitString(bitLen int, r *rand.Rand) bits.BitString {
 		}
 		s := bits.NewFromText(string(b))
 		if uint32(bitLen) < s.Size() {
-			s = bits.NewBitStringPrefix(s, uint32(bitLen))
+			s = s.Prefix(bitLen)
 		}
 		return s
 	}

@@ -83,7 +83,7 @@ func (zt *ZFastTrie[V]) InsertBitString(newText bits.BitString, value V) {
 
 			var newExtent bits.BitString = bits.NewFromText("")
 			if lcpLength > 0 {
-				newExtent = bits.NewBitStringPrefix(exitNode.extent, lcpLength)
+				newExtent = exitNode.extent.Prefix(int(lcpLength))
 			}
 
 			if exitNode.isLeaf() {
@@ -177,7 +177,7 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText bits.BitString) {
 				if targetNode.nameLength <= 1 {
 					parentNode = zt.root
 				} else {
-					parentPrefix := bits.NewBitStringPrefix(targetNode.extent, uint32(targetNode.nameLength-1))
+					parentPrefix := targetNode.extent.Prefix(int(targetNode.nameLength - 1))
 					parentNode = zt.getExitNode(parentPrefix)
 				}
 
@@ -267,7 +267,7 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *znode[V]) (notEmptyNodesInTrie int) {
 	if node.nameLength != 0 {
 		fFast := node.handleLength()
 		f := int32(fFast)
-		handle := bits.NewBitStringPrefix(node.extent, uint32(f))
+		handle := node.extent.Prefix(int(f))
 		handleNode, ok := zt.handle2NodeMap[handle]
 		errutil.BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node, handleNode, zt)
 		errutil.BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node, handleNode, zt)
