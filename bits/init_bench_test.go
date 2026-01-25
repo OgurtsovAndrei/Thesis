@@ -3,7 +3,7 @@
 // This file contains benchmarks for BitString creation/initialization
 // across all implementations:
 // 1. Uint64BitString - Direct value assignment
-// 2. CharBitString - String-based initialization
+// 2. CharBitString - PrettyString-based initialization
 // 3. Uint64ArrayBitString - Array allocation and bit parsing
 // 4. trie.BitString - For comparison
 

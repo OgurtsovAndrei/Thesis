@@ -153,7 +153,7 @@ func (bs Uint64ArrayBitString) Data() []byte {
 	return result
 }
 
-func (bs Uint64ArrayBitString) String() string {
+func (bs Uint64ArrayBitString) PrettyString() string {
 	if bs.sizeBits == 0 {
 		return "<empty>"
 	}

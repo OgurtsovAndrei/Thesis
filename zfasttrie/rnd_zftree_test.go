@@ -93,7 +93,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 				s := generateBitString(genLen, r)
 				mk := toMapKey(s)
 
-				history = append(history, testOperation{Op: "InsertBitString", Key: s.String(), Size: s.Size(), Value: true})
+				history = append(history, testOperation{Op: "InsertBitString", Key: s.PrettyString(), Size: s.Size(), Value: true})
 
 				if _, exists := groundTruth[mk]; !exists {
 					groundTruth[mk] = true
@@ -101,7 +101,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 					tree.InsertBitString(s, true)
 
 					if !tree.ContainsBitString(s) {
-						saveHistoryAndFail(t, seed, history, "Failed to find just-inserted key: %s", s.String())
+						saveHistoryAndFail(t, seed, history, "Failed to find just-inserted key: %s", s.PrettyString())
 					}
 				}
 			} else if op < 80 {
@@ -113,7 +113,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 				s := insertedKeys[idx]
 				mk := toMapKey(s)
 
-				history = append(history, testOperation{Op: "EraseBitString", Key: s.String(), Size: s.Size()})
+				history = append(history, testOperation{Op: "EraseBitString", Key: s.PrettyString(), Size: s.Size()})
 
 				delete(groundTruth, mk)
 
@@ -123,26 +123,26 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 				tree.EraseBitString(s)
 
 				if tree.ContainsBitString(s) {
-					saveHistoryAndFail(t, seed, history, "Found just-deleted key: %s", s.String())
+					saveHistoryAndFail(t, seed, history, "Found just-deleted key: %s", s.PrettyString())
 				}
 			} else {
 				s := generateBitString(genLen, r)
 				mk := toMapKey(s)
 				expected, _ := groundTruth[mk]
 
-				history = append(history, testOperation{Op: "ContainsBitString", Key: s.String(), Size: s.Size(), Expected: expected})
+				history = append(history, testOperation{Op: "ContainsBitString", Key: s.PrettyString(), Size: s.Size(), Expected: expected})
 
 				actual := tree.ContainsBitString(s)
 
 				if actual != expected {
-					saveHistoryAndFail(t, seed, history, "ContainsBitString mismatch for key %s. Expected: %v, Got: %v", s.String(), expected, actual)
+					saveHistoryAndFail(t, seed, history, "ContainsBitString mismatch for key %s. Expected: %v, Got: %v", s.PrettyString(), expected, actual)
 				}
 			}
 		}
 
 		for _, key := range insertedKeys {
 			if !tree.ContainsBitString(key) {
-				saveHistoryAndFail(t, seed, history, "Final check failed: key %s in ground truth but not in trie", key.String())
+				saveHistoryAndFail(t, seed, history, "Final check failed: key %s in ground truth but not in trie", key.PrettyString())
 			}
 		}
 
@@ -184,7 +184,7 @@ func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
 				mk := toMapKey(s)
 				v := r.Intn(1000000)
 
-				history = append(history, testOperation{Op: "InsertBitString", Key: s.String(), Size: s.Size(), Value: v})
+				history = append(history, testOperation{Op: "InsertBitString", Key: s.PrettyString(), Size: s.Size(), Value: v})
 
 				if _, exists := groundTruth[mk]; !exists {
 					insertedKeys = append(insertedKeys, s)
@@ -205,12 +205,12 @@ func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
 					expected = emptyValue
 				}
 
-				history = append(history, testOperation{Op: "GetBitString", Key: s.String(), Size: s.Size(), Expected: expected})
+				history = append(history, testOperation{Op: "GetBitString", Key: s.PrettyString(), Size: s.Size(), Expected: expected})
 
 				actual := tree.GetBitString(s)
 
 				if actual != expected {
-					saveHistoryAndFail(t, seed, history, "GetBitString mismatch for key %s. Expected: %v, Got: %v", s.String(), expected, actual)
+					saveHistoryAndFail(t, seed, history, "GetBitString mismatch for key %s. Expected: %v, Got: %v", s.PrettyString(), expected, actual)
 				}
 			}
 		}
@@ -220,7 +220,7 @@ func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
 			expectedValue := groundTruth[mk]
 			actualValue := tree.GetBitString(bs)
 			if actualValue != expectedValue {
-				saveHistoryAndFail(t, seed, history, "Final check GetBitString mismatch for key %s. Expected: %v, Got: %v", bs.String(), expectedValue, actualValue)
+				saveHistoryAndFail(t, seed, history, "Final check GetBitString mismatch for key %s. Expected: %v, Got: %v", bs.PrettyString(), expectedValue, actualValue)
 			}
 		}
 	}

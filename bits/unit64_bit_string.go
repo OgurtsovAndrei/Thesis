@@ -171,7 +171,7 @@ func (bs Uint64BitString) Data() []byte {
 	return data
 }
 
-func (bs Uint64BitString) String() string {
+func (bs Uint64BitString) PrettyString() string {
 	if bs.len == 0 {
 		return "<empty>"
 	}

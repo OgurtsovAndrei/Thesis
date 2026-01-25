@@ -56,7 +56,7 @@ func TestHZFastTrie_Correctness_AllPrefixes(t *testing.T) {
 					errorsInRun++
 					errorCount++
 					t.Errorf("Mismatch for prefix %s (key %s). HZFT length: %d, Ref length: %d (Seed: %d)",
-						prefix.String(), key.String(), hzftResult, expectedLength, seed)
+						prefix.PrettyString(), key.PrettyString(), hzftResult, expectedLength, seed)
 					fmt.Println(keys)
 					fmt.Println(hzft)
 					fmt.Println(hzft.GetExistingPrefix(prefix))

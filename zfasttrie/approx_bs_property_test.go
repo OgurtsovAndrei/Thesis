@@ -35,12 +35,12 @@ func TestApproxZFastTrie_Properties(t *testing.T) {
 
 		for _, key := range keys {
 			node := azft.GetExistingPrefix(key)
-			require.NotNil(t, node, "expected node for key %s, got nil (seed: %d)", key.String(), seed)
+			require.NotNil(t, node, "expected node for key %s, got nil (seed: %d)", key.PrettyString(), seed)
 
 			require.LessOrEqual(t, uint32(node.extentLen), key.Size(), "found extent length %d is greater than key size %d", node.extentLen, key.Size())
 
 			prefix := key.Prefix(int(node.extentLen))
-			require.Equal(t, node.PSig, uint8(hashBitString(prefix, azft.seed)), "signature mismatch for key %s", key.String())
+			require.Equal(t, node.PSig, uint8(hashBitString(prefix, azft.seed)), "signature mismatch for key %s", key.PrettyString())
 		}
 
 		// Count False Positives using random patterns
@@ -90,7 +90,7 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 			node := azft.GetExistingPrefix(validPrefix)
 			if node == nil {
 				node := azft.GetExistingPrefix(validPrefix)
-				require.NotNil(t, node, "False Negative: expected node for prefix of existing key (seed: %d), prefix: %s\n\ntree dump:\n%s\n", seed, validPrefix.String(), referenceTrie.String())
+				require.NotNil(t, node, "False Negative: expected node for prefix of existing key (seed: %d), prefix: %s\n\ntree dump:\n%s\n", seed, validPrefix.PrettyString(), referenceTrie.String())
 			}
 			resultPrefix := validPrefix.Prefix(int(node.extentLen))
 

@@ -10,7 +10,7 @@ type BitString interface {
 	At(index uint32) bool
 	Equal(a BitString) bool
 	Eq(other BitString) bool
-	String() string
+	PrettyString() string
 	GetLCPLength(other BitString) uint32
 	HasPrefix(prefixToCheck BitString) bool
 	Prefix(size int) BitString

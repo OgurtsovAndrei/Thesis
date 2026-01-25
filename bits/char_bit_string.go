@@ -213,7 +213,7 @@ func (bs CharBitString) Data() []byte {
 	return []byte(bs.data)
 }
 
-func (bs CharBitString) String() string {
+func (bs CharBitString) PrettyString() string {
 	if bs.sizeBits == 0 {
 		return "<empty>"
 	}

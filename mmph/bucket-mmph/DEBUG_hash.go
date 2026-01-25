@@ -152,17 +152,17 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 	fmt.Println("=== DEBUG: Constructed DebugMonotoneHash Maps ===")
 	fmt.Println("--- D0 (Key -> LCP Length) ---")
 	for k, v := range mh.d0DebugMap {
-		fmt.Printf("Key: %s, Hash: %x, LCP Len: %d\n", k.String(), k.Hash(), v)
+		fmt.Printf("Key: %s, Hash: %x, LCP Len: %d\n", k.PrettyString(), k.Hash(), v)
 	}
 	fmt.Println("--- D1 (Prefix -> Bucket Index) ---")
 	for k, v := range mh.d1DebugMap {
-		fmt.Printf("Prefix: %s, Hash: %x, Bucket: %d\n", k.String(), k.Hash(), v)
+		fmt.Printf("Prefix: %s, Hash: %x, Bucket: %d\n", k.PrettyString(), k.Hash(), v)
 	}
 	fmt.Println("--- Buckets (Key -> Local Rank) ---")
 	for i, m := range mh.bucketsDebugMap {
 		fmt.Printf("Bucket %d:\n", i)
 		for k, v := range m {
-			fmt.Printf("  Key: %s, Hash: %x, Rank: %d\n", k.String(), k.Hash(), v)
+			fmt.Printf("  Key: %s, Hash: %x, Rank: %d\n", k.PrettyString(), k.Hash(), v)
 		}
 	}
 	fmt.Println("============================================")
@@ -171,7 +171,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 }
 
 func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
-	fmt.Printf("\n--- GetRank for %s (Hash: %x) ---\n", key.String(), key.Hash())
+	fmt.Printf("\n--- GetRank for %s (Hash: %x) ---\n", key.PrettyString(), key.Hash())
 
 	if mh.d0Table == nil {
 		return -1
@@ -210,7 +210,7 @@ func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
 	if d1PhfIdx != 0 && int(d1PhfIdx) <= len(mh.d1Indices) {
 		bucketIdx = int(mh.d1Indices[d1PhfIdx-1])
 	}
-	fmt.Printf("2. D1 Lookup: Prefix=%s, Hash=%x -> PHF_Idx=%d -> Bucket=%d (Expected: %d)\n", prefix.String(), prefixHash, d1PhfIdx, bucketIdx, mh.d1DebugMap[prefix])
+	fmt.Printf("2. D1 Lookup: Prefix=%s, Hash=%x -> PHF_Idx=%d -> Bucket=%d (Expected: %d)\n", prefix.PrettyString(), prefixHash, d1PhfIdx, bucketIdx, mh.d1DebugMap[prefix])
 
 	if d1PhfIdx == 0 || int(d1PhfIdx) > len(mh.d1Indices) {
 		errutil.BugOn(true, "d1Table miss for prefix %s (key %s)", prefix, key)

@@ -379,7 +379,7 @@ func (zt *ZFastTrie[V]) String() string {
 	}
 
 	for bitString, z := range zt.handle2NodeMap {
-		sb.WriteString(bitString.String())
+		sb.WriteString(bitString.PrettyString())
 		sb.WriteString(": ")
 		sb.WriteString(z.String())
 		sb.WriteString("\n")
@@ -402,7 +402,7 @@ func (zt *ZFastTrie[V]) stringNode(node *znode[V], prefix string) string {
 	sb.WriteString("\n")
 
 	sb.WriteString(fmt.Sprintf("%svalue: %v\n", prefix, node.value))
-	sb.WriteString(fmt.Sprintf("%sextent: %q\n", prefix, node.extent.String()))
+	sb.WriteString(fmt.Sprintf("%sextent: %q\n", prefix, node.extent.PrettyString()))
 	sb.WriteString(fmt.Sprintf("%snameLength: %d\n", prefix, node.nameLength))
 	sb.WriteString(fmt.Sprintf("%sleftChild:", prefix))
 	sb.WriteString(zt.stringNode(node.leftChild, prefix+"| "))

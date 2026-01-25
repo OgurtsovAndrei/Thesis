@@ -156,7 +156,7 @@ func (mh *MonotoneHash) GetRank(key bits.BitString) int {
 
 	d1PhfIdx := mh.d1Table.Query(prefixHash)
 	if d1PhfIdx == 0 || int(d1PhfIdx) > len(mh.d1Indices) {
-		errutil.Bug("d1Table miss for prefix %s (key %s). Likely hash collision or unsorted input.", prefix.String(), key.String())
+		errutil.Bug("d1Table miss for prefix %s (key %s). Likely hash collision or unsorted input.", prefix.PrettyString(), key.PrettyString())
 		return -1
 	}
 	bucketIdx := int(mh.d1Indices[d1PhfIdx-1])
@@ -167,7 +167,7 @@ func (mh *MonotoneHash) GetRank(key bits.BitString) int {
 
 	localPhfIdx := mh.buckets[bucketIdx].Query(keyHash)
 	if localPhfIdx == 0 || int(localPhfIdx) > len(mh.bucketRanks[bucketIdx]) {
-		errutil.Bug("Local bucket %d miss for key %s", bucketIdx, key.String())
+		errutil.Bug("Local bucket %d miss for key %s", bucketIdx, key.PrettyString())
 		return -1
 	}
 
