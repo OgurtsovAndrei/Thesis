@@ -156,3 +156,31 @@ func calcSuccessor(bs bits.BitString) bits.BitString {
 	// Use the efficient BitString method that appends '1' and computes successor
 	return bs.AppendBit(true).Successor()
 }
+
+// ByteSize returns the total size of the structure in bytes.
+func (rl *RangeLocator) ByteSize() int {
+	if rl == nil {
+		return 0
+	}
+
+	size := 0
+
+	// Size of the MPH (Minimal Perfect Hash function)
+	if rl.mph != nil {
+		size += rl.mph.Size()
+	}
+
+	// Size of the permutation array
+	size += len(rl.perm) * 4 // uint32 = 4 bytes
+
+	// Size of the bit vector
+	if rl.bv != nil {
+		// RSDic doesn't expose Size() method, approximate based on bits stored
+		size += int(rl.bv.Num()/8) + 64 // rough estimate: bits/8 + overhead
+	}
+
+	// Size of totalLeaves (int)
+	size += 8 // assuming 64-bit int
+
+	return size
+}
