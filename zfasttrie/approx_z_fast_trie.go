@@ -84,11 +84,13 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
 
 		mostLeft := node
-		for mostLeft.rightChild != nil && mostLeft.leftChild != nil {
-			errutil.BugOn(mostLeft.leftChild == nil, "Branch with only one child")
+		// Find the leftmost node by always going left when possible
+		for mostLeft.leftChild != nil {
 			mostLeft = mostLeft.leftChild
 		}
-		errutil.BugOn(!mostLeft.value || mostLeft.leftChild != nil || mostLeft.rightChild != nil, "mostLeft is not a leaf")
+		// With mixed-size strings, mostLeft might have a right child (unbalanced tree)
+		// We only require that mostLeft has a value (is a valid node)
+		errutil.BugOn(!mostLeft.value, "mostLeft should have a value")
 		minChildHandle := mostLeft.handle()
 		minChildIdx := mph.Query(minChildHandle) - 1
 		errutil.BugOn(minChildIdx >= uint64(len(data)), "Out of bounds")
@@ -99,11 +101,13 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 		errutil.BugOn(uint64(minGreaterChild) != idx, "Data loss on minChild index")
 		if node.rightChild != nil {
 			mostLeft := node.rightChild
-			for mostLeft.rightChild != nil && mostLeft.leftChild != nil {
-				errutil.BugOn(mostLeft.leftChild == nil, "LeftChild")
+			// Find the leftmost node in the right subtree
+			for mostLeft.leftChild != nil {
 				mostLeft = mostLeft.leftChild
 			}
-			errutil.BugOn(!mostLeft.value || mostLeft.leftChild != nil || mostLeft.rightChild != nil, "mostLeft is not a leaf")
+			// With mixed-size strings, mostLeft might have a right child (unbalanced tree)
+			// We only require that mostLeft has a value (is a valid node)
+			errutil.BugOn(!mostLeft.value, "mostLeft in right subtree should have a value")
 			lmcHandle := mostLeft.handle()
 			lmcIdx := mph.Query(lmcHandle) - 1
 			errutil.BugOn(lmcIdx >= uint64(len(data)), "Out of bounds")
@@ -269,7 +273,7 @@ func hashBitString(bs bits.BitString, seed uint64) uint64 {
 
 func areSorted(keys []bits.BitString) bool {
 	for i := 1; i < len(keys); i++ {
-		if keys[i-1].Compare(keys[i]) > 0 {
+		if keys[i-1].TrieCompare(keys[i]) > 0 {
 			return false
 		}
 	}
