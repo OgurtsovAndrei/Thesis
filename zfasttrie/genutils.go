@@ -39,7 +39,7 @@ func generateBitString(bitLen int, r *rand.Rand) bits.BitString {
 		for j := range b {
 			b[j] = benchmarkCharset[r.Intn(len(benchmarkCharset))]
 		}
-		s := bits.NewBitString(string(b))
+		s := bits.NewFromText(string(b))
 		if uint32(bitLen) < s.Size() {
 			s = bits.NewBitStringPrefix(s, uint32(bitLen))
 		}

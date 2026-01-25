@@ -19,7 +19,7 @@ func init() {
 
 		bsKeys := make([]bits.BitString, count)
 		for i, k := range rawKeys {
-			bsKeys[i] = bits.NewBitString(k)
+			bsKeys[i] = bits.NewFromText(k)
 		}
 
 		sort.Sort(bitStringSorter(bsKeys))

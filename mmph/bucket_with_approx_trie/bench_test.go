@@ -22,7 +22,7 @@ func initBenchKeys() {
 
 			bsKeys := make([]bits.BitString, count)
 			for i, k := range rawKeys {
-				bsKeys[i] = bits.NewBitString(k)
+				bsKeys[i] = bits.NewFromText(k)
 			}
 
 			sort.Sort(bitStringSorter(bsKeys))
@@ -102,7 +102,7 @@ func BenchmarkMonotoneHashWithTrieLookupMiss(b *testing.B) {
 			missKeys := buildUniqueStrKeys(100)
 			missBitKeys := make([]bits.BitString, len(missKeys))
 			for i, s := range missKeys {
-				missBitKeys[i] = bits.NewBitString(s)
+				missBitKeys[i] = bits.NewFromText(s)
 			}
 
 			b.ReportAllocs()

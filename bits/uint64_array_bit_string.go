@@ -18,7 +18,7 @@ type Uint64ArrayBitString struct {
 	sizeBits uint32
 }
 
-func NewUint64ArrayBitString(sizeBits uint32) Uint64ArrayBitString {
+func NewUint64ArrFromUint64(sizeBits uint32) Uint64ArrayBitString {
 	numWords := (sizeBits + 63) / 64
 	return Uint64ArrayBitString{
 		data:     make([]uint64, numWords),
@@ -53,7 +53,7 @@ func NewUint64ArrayFromBinaryText(text string) Uint64ArrayBitString {
 	}
 }
 
-func NewUint64ArrayFromDataAndSize(data []byte, size uint32) Uint64ArrayBitString {
+func NewUint64ArrFromDataAndSize(data []byte, size uint32) Uint64ArrayBitString {
 	if size == 0 {
 		return Uint64ArrayBitString{}
 	}

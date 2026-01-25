@@ -16,7 +16,7 @@ func TestO1BucketLookup(t *testing.T) {
 	keys := buildUniqueStrKeys(10000)
 	bitKeys := make([]bits.BitString, len(keys))
 	for i, s := range keys {
-		bitKeys[i] = bits.NewBitString(s)
+		bitKeys[i] = bits.NewFromText(s)
 	}
 	sort.Sort(bitStringSorter(bitKeys))
 
@@ -75,7 +75,7 @@ func BenchmarkBucketLookupScaling(b *testing.B) {
 			keys := buildUniqueStrKeys(size)
 			bitKeys := make([]bits.BitString, len(keys))
 			for i, s := range keys {
-				bitKeys[i] = bits.NewBitString(s)
+				bitKeys[i] = bits.NewFromText(s)
 			}
 			sort.Sort(bitStringSorter(bitKeys))
 

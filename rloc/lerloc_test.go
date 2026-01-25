@@ -10,7 +10,7 @@ import (
 
 func TestLocalExactRangeLocator_EmptyKeys(t *testing.T) {
 	lerl := NewLocalExactRangeLocator([]bits.BitString{})
-	start, end, err := lerl.WeakPrefixSearch(bits.NewBitString("test"))
+	start, end, err := lerl.WeakPrefixSearch(bits.NewFromText("test"))
 	if err != nil {
 		t.Errorf("Expected no error for empty keys, got: %v", err)
 	}
@@ -21,8 +21,8 @@ func TestLocalExactRangeLocator_EmptyKeys(t *testing.T) {
 
 func TestLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 	keys := []bits.BitString{
-		bits.NewBitString("abc"),
-		bits.NewBitString("def"),
+		bits.NewFromText("abc"),
+		bits.NewFromText("def"),
 	}
 
 	sort.Slice(keys, func(i, j int) bool {
@@ -31,7 +31,7 @@ func TestLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 
 	lerl := NewLocalExactRangeLocator(keys)
 
-	start, end, err := lerl.WeakPrefixSearch(bits.NewBitString(""))
+	start, end, err := lerl.WeakPrefixSearch(bits.NewFromText(""))
 	if err != nil {
 		t.Errorf("Expected no error for empty prefix, got: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 				for prefixLen := uint32(0); prefixLen <= key.Size(); prefixLen++ {
 					var prefix bits.BitString
 					if prefixLen == 0 {
-						prefix = bits.NewBitString("")
+						prefix = bits.NewFromText("")
 					} else {
 						prefix = bits.NewBitStringPrefix(key, prefixLen)
 					}

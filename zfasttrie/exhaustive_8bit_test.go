@@ -44,7 +44,7 @@ func TestTrie_BitString_Exhaustive8Bit(t *testing.T) {
 
 			for _, checkKey := range allKeys {
 				shouldBePresent := insertedSoFar[checkKey]
-				actual := tree.GetBitString(bits.NewBitString(checkKey))
+				actual := tree.GetBitString(bits.NewFromText(checkKey))
 
 				if actual != shouldBePresent {
 					t.Fatalf("Seed %d, Iter %d, Op %d (Key %v): Mismatch for checkKey %v. Expected: %v, Got: %v",

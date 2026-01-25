@@ -56,7 +56,7 @@ func TestMonotoneHash_Randomized(t *testing.T) {
 
 		bitKeys := make([]bits.BitString, size)
 		for i, s := range keys {
-			bitKeys[i] = bits.NewBitString(s)
+			bitKeys[i] = bits.NewFromText(s)
 		}
 
 		sort.Sort(bitStringSorter(bitKeys))

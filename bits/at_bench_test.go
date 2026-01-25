@@ -54,7 +54,7 @@ func BenchmarkAt_Uint64Array(b *testing.B) {
 
 func BenchmarkAccess_Uint64(b *testing.B) {
 	value := randomUint64()
-	bs := NewUint64BitString(value, 64) // 64-bit uint64
+	bs := NewUint64FromUint64(value, 64) // 64-bit uint64
 	limit := uint32(64)
 
 	b.ResetTimer()
@@ -65,7 +65,7 @@ func BenchmarkAccess_Uint64(b *testing.B) {
 
 func BenchmarkAccess_Char(b *testing.B) {
 	input := randomTextString(8) // 8 chars = 64 bits
-	bs := NewCharBitString(input)
+	bs := NewCharFromText(input)
 	limit := uint32(64)
 
 	b.ResetTimer()
@@ -113,9 +113,9 @@ func benchmarkAccessBySize(b *testing.B, size int) {
 	var bsUint64Array Uint64ArrayBitString
 
 	if size <= 64 { // Uint64 limited to 64 bits
-		bsUint64 = NewUint64BitString(uint64Value, int8(size))
+		bsUint64 = NewUint64FromUint64(uint64Value, int8(size))
 	}
-	bsChar = NewCharBitString(textInput)
+	bsChar = NewCharFromText(textInput)
 	bsUint64Array = NewUint64ArrayFromBinaryText(binaryInput) // Works with any size
 
 	// Trie BitString

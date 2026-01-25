@@ -12,7 +12,7 @@ func TestByteSizeMethods(t *testing.T) {
 
 	bitKeys := make([]bits.BitString, len(keys))
 	for i, s := range keys {
-		bitKeys[i] = bits.NewBitString(s)
+		bitKeys[i] = bits.NewFromText(s)
 	}
 
 	// Sort the keys as required by the implementation
@@ -77,7 +77,7 @@ func TestTrieExcludesDebugData(t *testing.T) {
 	rawKeys := buildUniqueStrKeys(50) // Use more keys for robustness
 	keys := make([]bits.BitString, len(rawKeys))
 	for i, s := range rawKeys {
-		keys[i] = bits.NewBitString(s)
+		keys[i] = bits.NewFromText(s)
 	}
 
 	// Sort the keys as required by the implementation

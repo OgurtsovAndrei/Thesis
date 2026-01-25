@@ -11,7 +11,7 @@ import (
 func TestStatistics_GetExitNode(t *testing.T) {
 	t.Run("CallCountIncrement", func(t *testing.T) {
 		zt := NewZFastTrie[int](-1)
-		key := bits.NewBitString("test_key")
+		key := bits.NewFromText("test_key")
 		zt.InsertBitString(key, 1)
 
 		// Reset stats to have a clean state
@@ -58,6 +58,6 @@ func buildBitString(lenBytes int) bits.BitString {
 		sb.WriteByte('x')
 	}
 	keyStr := sb.String()
-	key := bits.NewBitString(keyStr)
+	key := bits.NewFromText(keyStr)
 	return key
 }

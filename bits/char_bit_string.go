@@ -18,7 +18,7 @@ type CharBitString struct {
 	sizeBits uint32
 }
 
-func NewCharBitString(text string) CharBitString {
+func NewCharFromText(text string) CharBitString {
 	return CharBitString{
 		data:     text,
 		sizeBits: uint32(len(text)) * 8,

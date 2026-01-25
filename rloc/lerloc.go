@@ -34,7 +34,7 @@ func (lerl *LocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitString) (int
 
 	var exitNode bits.BitString
 	if exitNodeLength == 0 {
-		exitNode = bits.NewBitString("")
+		exitNode = bits.NewFromText("")
 	} else {
 		exitNode = prefix.Prefix(int(exitNodeLength))
 	}
