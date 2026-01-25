@@ -18,6 +18,7 @@ type BitString interface {
 	Hash() uint64
 	HashWithSeed(seed uint64) uint64
 	Compare(other BitString) int
+	TrieCompare(other BitString) int
 
 	TrimTrailingZeros() BitString
 	AppendBit(bit bool) BitString
