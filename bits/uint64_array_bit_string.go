@@ -418,11 +418,93 @@ func (bs Uint64ArrayBitString) Compare(other BitString) int {
 		}
 	}
 
+	// Standard lexicographic comparison: shorter < longer when prefixes match
 	if aSize < bSize {
 		return -1
 	}
 	if aSize > bSize {
 		return 1
+	}
+	return 0
+}
+
+// TrieCompare implements trie-traversal-consistent comparison where trailing zeros come before trimmed
+func (bs Uint64ArrayBitString) TrieCompare(other BitString) int {
+	aSize := bs.Size()
+	bSize := other.Size()
+
+	if aSize == 0 && bSize == 0 {
+		return 0
+	}
+	if aSize == 0 {
+		return -1
+	}
+	if bSize == 0 {
+		return 1
+	}
+
+	minSize := aSize
+	if bSize < minSize {
+		minSize = bSize
+	}
+
+	// Compare bit-by-bit up to the minimum size
+	if otherBs, ok := other.(Uint64ArrayBitString); ok {
+		minWords := (minSize + 63) / 64
+
+		for i := uint32(0); i < minWords; i++ {
+			aWord := uint64(0)
+			bWord := uint64(0)
+
+			if i < uint32(len(bs.data)) {
+				aWord = bs.data[i]
+			}
+			if i < uint32(len(otherBs.data)) {
+				bWord = otherBs.data[i]
+			}
+
+			if aWord != bWord {
+				xor := aWord ^ bWord
+				firstDiffBit := i*64 + uint32(bits.TrailingZeros64(xor))
+				if firstDiffBit < minSize {
+					if (aWord & (uint64(1) << (firstDiffBit % 64))) != 0 {
+						return 1
+					}
+					return -1
+				}
+			}
+		}
+	} else {
+		for i := uint32(0); i < minSize; i++ {
+			aBit := bs.At(i)
+			bBit := other.At(i)
+			if !aBit && bBit {
+				return -1
+			}
+			if aBit && !bBit {
+				return 1
+			}
+		}
+	}
+
+	// Handle different sizes - strings with trailing zeros should come before trimmed versions
+	if aSize < bSize {
+		// a is shorter - check if b has trailing zeros beyond a's length
+		for i := aSize; i < bSize; i++ {
+			if other.At(i) {
+				return -1 // b has non-zero beyond a's length, so a < b
+			}
+		}
+		return 1 // b is all zeros beyond a's length, so b < a (trailing zeros < trimmed)
+	}
+	if aSize > bSize {
+		// b is shorter - check if a has trailing zeros beyond b's length
+		for i := bSize; i < aSize; i++ {
+			if bs.At(i) {
+				return 1 // a has non-zero beyond b's length, so a > b
+			}
+		}
+		return -1 // a is all zeros beyond b's length, so a < b (trailing zeros < trimmed)
 	}
 	return 0
 }
