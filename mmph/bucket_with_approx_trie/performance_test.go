@@ -9,6 +9,7 @@ import (
 )
 
 func TestO1BucketLookup(t *testing.T) {
+	t.Parallel()
 	// Test that we're actually using O(1) bucket lookup via rank
 	// rather than linear search through delimiters
 

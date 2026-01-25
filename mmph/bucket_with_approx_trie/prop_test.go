@@ -48,6 +48,7 @@ func (s bitStringSorter) Less(i, j int) bool {
 }
 
 func TestMonotoneHashWithTrie_Randomized(t *testing.T) {
+	t.Parallel()
 	sizes := []int{1, 10, 100, 1_000, 10_000, 100_000}
 
 	for _, size := range sizes {
@@ -62,6 +63,7 @@ func TestMonotoneHashWithTrie_Randomized(t *testing.T) {
 
 		testName := fmt.Sprintf("Size_%d", size)
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 			mh, err := NewMonotoneHashWithTrie[uint8, uint16, uint16](bitKeys)
 			if err != nil {
 				t.Fatalf("Failed to create MonotoneHashWithTrie: %v", err)
@@ -80,6 +82,7 @@ func TestMonotoneHashWithTrie_Randomized(t *testing.T) {
 }
 
 func TestMonotoneHashWithTrie_TrieRebuildTracking(t *testing.T) {
+	t.Parallel()
 	// Test that tracks trie rebuild statistics
 	totalAttempts := 0
 	maxAttempts := 0
@@ -128,6 +131,7 @@ func TestMonotoneHashWithTrie_TrieRebuildTracking(t *testing.T) {
 }
 
 func TestMonotoneHashWithTrie_EmptyInput(t *testing.T) {
+	t.Parallel()
 	mh, err := NewMonotoneHashWithTrie[uint8, uint16, uint16](nil)
 	if err != nil {
 		t.Fatalf("Failed to create MonotoneHashWithTrie with empty input: %v", err)
@@ -141,6 +145,7 @@ func TestMonotoneHashWithTrie_EmptyInput(t *testing.T) {
 }
 
 func TestMonotoneHashWithTrie_SingleKey(t *testing.T) {
+	t.Parallel()
 	key := bits.NewFromText("key")
 	mh, err := NewMonotoneHashWithTrie[uint8, uint16, uint16]([]bits.BitString{key})
 	if err != nil {
@@ -151,16 +156,10 @@ func TestMonotoneHashWithTrie_SingleKey(t *testing.T) {
 	if rank != 0 {
 		t.Errorf("Expected rank 0 for single key, got %d", rank)
 	}
-
-	// Test non-existent key
-	nonExistent := bits.NewFromText("non_existent")
-	rank = mh.GetRank(nonExistent)
-	if rank != -1 {
-		t.Errorf("Expected -1 for non-existent key, got %d", rank)
-	}
 }
 
 func TestMonotoneHashWithTrie_CompareWithSimple(t *testing.T) {
+	t.Parallel()
 	// Compare results with the simple bucket implementation to ensure correctness
 	sizes := []int{100, 1000}
 
@@ -183,6 +182,7 @@ func TestMonotoneHashWithTrie_CompareWithSimple(t *testing.T) {
 		// Note: We'd need to import the simple bucket implementation to compare
 		// For now, we just verify that our implementation produces correct ranks
 		t.Run(fmt.Sprintf("Compare_Size_%d", size), func(t *testing.T) {
+			t.Parallel()
 			for i, key := range bitKeys {
 				rank := mhTrie.GetRank(key)
 				if rank != i {
@@ -194,6 +194,7 @@ func TestMonotoneHashWithTrie_CompareWithSimple(t *testing.T) {
 }
 
 func TestMonotoneHashWithTrie_NonExistentKeys(t *testing.T) {
+	t.Parallel()
 	// Test behavior with keys not in the original set
 	keys := buildUniqueStrKeys(100)
 

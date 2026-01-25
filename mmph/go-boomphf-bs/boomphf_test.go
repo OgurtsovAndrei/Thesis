@@ -50,4 +50,7 @@ func testKeys(t *testing.T, n int) {
 
 }
 
-func TestKeys(t *testing.T) { testKeys(t, 1e5) }
+func TestKeys(t *testing.T) {
+	t.Parallel()
+	testKeys(t, 1e5)
+}

@@ -7,6 +7,7 @@ import (
 )
 
 func TestByteSizeMethods(t *testing.T) {
+	t.Parallel()
 	// Test that ByteSize methods work correctly
 	keys := buildUniqueStrKeys(100)
 
@@ -73,6 +74,7 @@ func TestByteSizeMethods(t *testing.T) {
 }
 
 func TestTrieExcludesDebugData(t *testing.T) {
+	t.Parallel()
 	// Create a small but robust trie to test that debug data is excluded from size calculation
 	rawKeys := buildUniqueStrKeys(50) // Use more keys for robustness
 	keys := make([]bits.BitString, len(rawKeys))
