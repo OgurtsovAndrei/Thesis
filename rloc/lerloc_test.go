@@ -55,7 +55,7 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 					if prefixLen == 0 {
 						prefix = bits.NewFromText("")
 					} else {
-						prefix = bits.NewBitStringPrefix(key, prefixLen)
+						prefix = key.Prefix(int(prefixLen))
 					}
 
 					start, end, err := lerl.WeakPrefixSearch(prefix)

@@ -74,7 +74,7 @@ func genUniqueBitStrings(seed int64) []bits.BitString {
 	for val := range uniqueUints {
 		bs := bits.NewFromUint64(val)
 		if uint32(bitLen) < bs.Size() {
-			bs = bits.NewBitStringPrefix(bs, uint32(bitLen))
+			bs = bs.Prefix(bitLen)
 		}
 		keys = append(keys, bs)
 	}

@@ -62,7 +62,7 @@ func (n *znode[V]) handle() bits.BitString {
 	if n.extentLength() <= 0 {
 		return bits.NewFromText("")
 	}
-	return bits.NewBitStringPrefix(n.extent, n.handleLength())
+	return n.extent.Prefix(int(n.handleLength()))
 }
 
 func (n *znode[V]) isLeaf() bool {

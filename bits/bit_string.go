@@ -83,31 +83,3 @@ func NewFromBinary(text string) BitString {
 	}
 	return nil
 }
-
-func NewBitStringPrefix(bs BitString, size uint32) BitString {
-	switch SelectedImpl {
-	case CharString:
-		return NewCharBitStringPrefix(bs, size)
-	case Uint64String:
-		return NewUint64BitStringPrefix(bs, size)
-	case Uint64ArrayString:
-		return NewUint64ArrayBitStringPrefix(bs, size)
-	default:
-		errutil.Bug("Unexpected Impl selected")
-	}
-	return nil
-}
-
-func NewBitStringFormDataAndSize(data []byte, size uint32) BitString {
-	switch SelectedImpl {
-	case CharString:
-		return NewCharBitStringFromDataAndSize(data, size)
-	case Uint64String:
-		return NewUint64BitStringFromDataAndSize(data, size)
-	case Uint64ArrayString:
-		return NewUint64ArrFromDataAndSize(data, size)
-	default:
-		errutil.Bug("Unexpected Impl selected")
-	}
-	return nil
-}
