@@ -19,6 +19,7 @@ type replayTestHistory struct {
 }
 
 func TestTrie_ReplayFromHistory(t *testing.T) {
+	t.Parallel()
 	filePath := "out/fail_history_1762347109872759000.json"
 
 	data, err := os.ReadFile(filePath)

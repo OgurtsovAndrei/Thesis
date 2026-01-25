@@ -9,7 +9,9 @@ import (
 )
 
 func TestStatistics_GetExitNode(t *testing.T) {
+	t.Parallel()
 	t.Run("CallCountIncrement", func(t *testing.T) {
+		t.Parallel()
 		zt := NewZFastTrie[int](-1)
 		key := bits.NewFromText("test_key")
 		zt.InsertBitString(key, 1)
@@ -28,6 +30,7 @@ func TestStatistics_GetExitNode(t *testing.T) {
 	})
 
 	t.Run("InnerLoopLogarithmicGrowth", func(t *testing.T) {
+		t.Parallel()
 		sizes := []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096}
 		for range 10_000 {
 			sizes = append(sizes, rand.Intn(4095)+1)

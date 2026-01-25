@@ -9,6 +9,7 @@ import (
 )
 
 func TestTrie_BitString_Exhaustive8Bit(t *testing.T) {
+	t.Parallel()
 	numIterations := 1000
 	for iter := 0; iter < numIterations; iter++ {
 		fmt.Println("TestTrie_BitString_Exhaustive8Bit iteration:", iter)

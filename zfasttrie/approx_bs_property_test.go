@@ -19,6 +19,7 @@ const (
 )
 
 func TestApproxZFastTrie_Properties(t *testing.T) {
+	t.Parallel()
 	fpCount := 0
 	bar := progressbar.Default(testRuns)
 	for run := 0; run < testRuns; run++ {
@@ -68,6 +69,7 @@ func TestApproxZFastTrie_Properties(t *testing.T) {
 }
 
 func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
+	t.Parallel()
 	fnCount := 0
 	bar := progressbar.Default(testRuns)
 	for run := 0; run < testRuns; run++ {
@@ -115,6 +117,7 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 }
 
 func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
+	t.Parallel()
 	fpCount := 0
 	bar := progressbar.Default(testRuns)
 	for run := 0; run < testRuns; run++ {
@@ -156,6 +159,7 @@ func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
 }
 
 func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
+	t.Parallel()
 	errCount := 0
 	totalChecks := 0
 

@@ -9,6 +9,7 @@ import (
 )
 
 func TestHZFastTrie_GetExistingPrefix(t *testing.T) {
+	t.Parallel()
 	// Строки из Figure 1 в статье [cite: 112, 113]
 	s0 := bits.NewFromBinary("001001010")
 	s1 := bits.NewFromBinary("0010011010010")
@@ -55,6 +56,7 @@ func TestHZFastTrie_GetExistingPrefix(t *testing.T) {
 }
 
 func TestHZFastTrie_Empty(t *testing.T) {
+	t.Parallel()
 	var keys []bits.BitString
 	hzft := NewHZFastTrie[uint32](keys)
 	if hzft != nil {
@@ -63,6 +65,7 @@ func TestHZFastTrie_Empty(t *testing.T) {
 }
 
 func TestHZFastTrie_Simple2(t *testing.T) {
+	t.Parallel()
 	// Строки из Figure 1 в статье [cite: 112, 113]
 	s0 := bits.NewFromBinary("00")
 	s1 := bits.NewFromBinary("11")
@@ -99,7 +102,9 @@ func TestHZFastTrie_Simple2(t *testing.T) {
 }
 
 func TestHZFastTrie_CornerCases(t *testing.T) {
+	t.Parallel()
 	t.Run("SingleKey", func(t *testing.T) {
+		t.Parallel()
 		key := bits.NewFromBinary("010101")
 		hzft := NewHZFastTrie[uint32]([]bits.BitString{key})
 		require.NotNil(t, hzft)
@@ -109,6 +114,7 @@ func TestHZFastTrie_CornerCases(t *testing.T) {
 	})
 
 	t.Run("DivergentAtFirstBit", func(t *testing.T) {
+		t.Parallel()
 		s0 := bits.NewFromBinary("011")
 		s1 := bits.NewFromBinary("100")
 		hzft := NewHZFastTrie[uint32]([]bits.BitString{s0, s1})
@@ -120,6 +126,7 @@ func TestHZFastTrie_CornerCases(t *testing.T) {
 	})
 
 	t.Run("LongCommonPrefix", func(t *testing.T) {
+		t.Parallel()
 		common := "0101010101010101"
 		s0 := bits.NewFromBinary(common + "00")
 		s1 := bits.NewFromBinary(common + "11")
@@ -131,6 +138,7 @@ func TestHZFastTrie_CornerCases(t *testing.T) {
 	})
 
 	t.Run("DeeplyNestedTrie", func(t *testing.T) {
+		t.Parallel()
 		keys := []bits.BitString{
 			bits.NewFromBinary("0000"),
 			bits.NewFromBinary("0001"),
@@ -147,6 +155,7 @@ func TestHZFastTrie_CornerCases(t *testing.T) {
 	})
 
 	t.Run("DeeplyNestedTrie1", func(t *testing.T) {
+		t.Parallel()
 		keys := []bits.BitString{
 			bits.NewFromBinary("1000"),
 			bits.NewFromBinary("1100"),

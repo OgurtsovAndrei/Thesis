@@ -36,6 +36,7 @@ func generateIteratorBitString(bitLen int, r *rand.Rand) bits.BitString {
 }
 
 func TestIterator(t *testing.T) {
+	t.Parallel()
 	trie := NewZFastTrie[bool](false)
 
 	// Test empty trie
@@ -69,8 +70,10 @@ func TestIterator(t *testing.T) {
 }
 
 func TestIteratorRandomSortedOrder(t *testing.T) {
+	t.Parallel()
 	for testId := 0; testId < 100; testId++ {
 		t.Run("iteration", func(t *testing.T) {
+			t.Parallel()
 			seed := time.Now().UnixNano()
 			r := rand.New(rand.NewSource(seed))
 

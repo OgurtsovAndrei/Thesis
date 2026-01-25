@@ -63,6 +63,7 @@ func saveHistoryAndFail(t *testing.T, seed int64, history []testOperation, forma
 }
 
 func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
+	t.Parallel()
 	for test_id := range 100 {
 		fmt.Println("TestTrie_HeavyRandom_BitString_Ops iteration:", test_id)
 		seed := time.Now().UnixNano()
@@ -153,6 +154,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 }
 
 func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
+	t.Parallel()
 	for test_id := range 100 {
 		fmt.Println("TestTrie_HeavyRandom_BitString_Get iteration:", test_id)
 		seed := time.Now().UnixNano()
