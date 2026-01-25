@@ -6,6 +6,7 @@ import (
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"fmt"
 	"strings"
+	"unsafe"
 )
 
 // see https://arxiv.org/abs/1804.04720
@@ -214,4 +215,32 @@ func (hzft *HZFastTrie[E]) String() string {
 	}
 
 	return sb.String()
+}
+
+// ByteSize returns the total size of the structure in bytes.
+func (hzft *HZFastTrie[E]) ByteSize() int {
+	if hzft == nil {
+		return 0
+	}
+
+	size := 0
+
+	// Size of the MPH (Minimal Perfect Hash function)
+	if hzft.mph != nil {
+		size += hzft.mph.Size()
+	}
+
+	// Size of the data array (HNodeData entries)
+	// Each HNodeData contains: extentLen(E) + originalNode pointer
+	nodeDataSize := len(hzft.data) * (int(unsafe.Sizeof(*new(E))) +
+		int(unsafe.Sizeof((*znode[bool])(nil))))
+	size += nodeDataSize
+
+	// Size of rootId (uint64)
+	size += 8
+
+	// Size of debug trie pointer (always present in struct, but nil in production)
+	size += int(unsafe.Sizeof((*ZFastTrie[bool])(nil)))
+
+	return size
 }
