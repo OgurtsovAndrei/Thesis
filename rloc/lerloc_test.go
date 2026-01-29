@@ -9,7 +9,10 @@ import (
 )
 
 func TestLocalExactRangeLocator_EmptyKeys(t *testing.T) {
-	lerl := NewLocalExactRangeLocator([]bits.BitString{})
+	lerl, err := NewLocalExactRangeLocator([]bits.BitString{})
+	if err != nil {
+		t.Fatalf("NewLocalExactRangeLocator failed: %v", err)
+	}
 	start, end, err := lerl.WeakPrefixSearch(bits.NewFromText("test"))
 	if err != nil {
 		t.Errorf("Expected no error for empty keys, got: %v", err)
@@ -29,7 +32,10 @@ func TestLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 		return keys[i].Compare(keys[j]) < 0
 	})
 
-	lerl := NewLocalExactRangeLocator(keys)
+	lerl, err := NewLocalExactRangeLocator(keys)
+	if err != nil {
+		t.Fatalf("NewLocalExactRangeLocator failed: %v", err)
+	}
 
 	start, end, err := lerl.WeakPrefixSearch(bits.NewFromText(""))
 	if err != nil {
@@ -47,7 +53,10 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 			seed := time.Now().UnixNano()
 			keys := genUniqueBitStrings(seed)
 
-			lerl := NewLocalExactRangeLocator(keys)
+			lerl, err := NewLocalExactRangeLocator(keys)
+			if err != nil {
+				t.Fatalf("NewLocalExactRangeLocator failed (seed: %d): %v", seed, err)
+			}
 
 			for _, key := range keys {
 				for prefixLen := uint32(0); prefixLen <= key.Size(); prefixLen++ {

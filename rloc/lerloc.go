@@ -10,19 +10,22 @@ type LocalExactRangeLocator struct {
 	rl   *RangeLocator
 }
 
-func NewLocalExactRangeLocator(keys []bits.BitString) *LocalExactRangeLocator {
+func NewLocalExactRangeLocator(keys []bits.BitString) (*LocalExactRangeLocator, error) {
 	if len(keys) == 0 {
-		return &LocalExactRangeLocator{}
+		return &LocalExactRangeLocator{}, nil
 	}
 
 	zt := zfasttrie.Build(keys)
 	hzft := zfasttrie.NewHZFastTrie[uint32](keys)
-	rl := NewRangeLocator(zt)
+	rl, err := NewRangeLocator(zt)
+	if err != nil {
+		return nil, err
+	}
 
 	return &LocalExactRangeLocator{
 		hzft: hzft,
 		rl:   rl,
-	}
+	}, nil
 }
 
 func (lerl *LocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitString) (int, int, error) {
