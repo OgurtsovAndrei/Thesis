@@ -2,7 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
-	boomphf "Thesis/mmph/go-boomphf-bs"
+	bucket "Thesis/mmph/bucket_with_approx_trie"
 	"Thesis/zfasttrie"
 	"fmt"
 	"sort"
@@ -11,8 +11,7 @@ import (
 )
 
 type RangeLocator struct {
-	mph         *boomphf.H
-	perm        []uint32
+	mmph        *bucket.MonotoneHashWithTrie[uint16, uint16, uint16]
 	bv          *rsdic.RSDic
 	totalLeaves int
 }
@@ -22,9 +21,9 @@ type pItem struct {
 	isLeaf bool
 }
 
-func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
+func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) (*RangeLocator, error) {
 	if zt == nil {
-		return &RangeLocator{totalLeaves: 0}
+		return &RangeLocator{totalLeaves: 0}, nil
 	}
 
 	// Use BitString directly as map key
@@ -83,19 +82,18 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 
 	// Build structures
 	bv := rsdic.New()
-	keysForMPH := make([]bits.BitString, len(sortedItems))
+	keysForMMPH := make([]bits.BitString, len(sortedItems))
 
 	for i, item := range sortedItems {
 		bv.PushBack(item.isLeaf)
-		keysForMPH[i] = item.bs
+		keysForMMPH[i] = item.bs
 	}
 
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
-
-	perm := make([]uint32, len(sortedItems))
-	for rank, item := range sortedItems {
-		idx := mph.Query(item.bs) - 1
-		perm[idx] = uint32(rank)
+	// Build MMPH - data is already sorted in TrieCompare order
+	// Type parameters: E=uint16 (extent length), S=uint16 (signature), I=uint16 (delimiter index)
+	mmph, err := bucket.NewMonotoneHashWithTrie[uint16, uint16, uint16](keysForMMPH)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build MMPH for P set of size %d: %w", len(keysForMMPH), err)
 	}
 
 	totalLeaves := 0
@@ -104,11 +102,10 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 	}
 
 	return &RangeLocator{
-		mph:         mph,
-		perm:        perm,
+		mmph:        mmph,
 		bv:          bv,
 		totalLeaves: totalLeaves,
-	}
+	}, nil
 }
 
 func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
@@ -116,15 +113,18 @@ func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 		return 0, rl.totalLeaves, nil
 	}
 
+	if rl.mmph == nil {
+		return 0, 0, fmt.Errorf("MMPH not initialized")
+	}
+
 	// Use TrimTrailingZeros instead of string conversion and trimming
 	xArrowBs := nodeName.TrimTrailingZeros()
-	idxLeft := rl.mph.Query(xArrowBs)
+	lexRankLeft := rl.mmph.GetRank(xArrowBs)
 
-	if idxLeft == 0 {
+	if lexRankLeft == -1 {
 		return 0, 0, fmt.Errorf("key not found in structure")
 	}
 
-	lexRankLeft := rl.perm[idxLeft-1]
 	i := int(rl.bv.Rank(uint64(lexRankLeft), true))
 
 	var j int
@@ -136,12 +136,11 @@ func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 		// Use TrimTrailingZeros instead of string conversion and trimming
 		xSuccArrowBs := xSucc.TrimTrailingZeros()
 
-		idxRight := rl.mph.Query(xSuccArrowBs)
-		if idxRight == 0 {
+		lexRankRight := rl.mmph.GetRank(xSuccArrowBs)
+		if lexRankRight == -1 {
 			return i, i, nil
 		}
 
-		lexRankRight := rl.perm[idxRight-1]
 		j = int(rl.bv.Rank(uint64(lexRankRight), true))
 	}
 
@@ -165,13 +164,10 @@ func (rl *RangeLocator) ByteSize() int {
 
 	size := 0
 
-	// Size of the MPH (Minimal Perfect Hash function)
-	if rl.mph != nil {
-		size += rl.mph.Size()
+	// Size of the MMPH (Monotone Minimal Perfect Hash function)
+	if rl.mmph != nil {
+		size += rl.mmph.ByteSize()
 	}
-
-	// Size of the permutation array
-	size += len(rl.perm) * 4 // uint32 = 4 bytes
 
 	// Size of the bit vector
 	if rl.bv != nil {

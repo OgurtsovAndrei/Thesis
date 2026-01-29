@@ -25,7 +25,10 @@ func TestRangeLocator_Correctness(t *testing.T) {
 			keys := genUniqueBitStrings(seed)
 
 			zt := zfasttrie.Build(keys)
-			rl := NewRangeLocator(zt)
+			rl, err := NewRangeLocator(zt)
+			if err != nil {
+				t.Fatalf("NewRangeLocator failed (seed: %d): %v", seed, err)
+			}
 
 			it := zfasttrie.NewIterator(zt)
 			for it.Next() {
