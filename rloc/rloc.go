@@ -78,7 +78,7 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) *RangeLocator {
 	}
 
 	sort.Slice(sortedItems, func(i, j int) bool {
-		return sortedItems[i].bs.Compare(sortedItems[j].bs) < 0
+		return sortedItems[i].bs.TrieCompare(sortedItems[j].bs) < 0
 	})
 
 	// Build structures

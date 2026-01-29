@@ -57,4 +57,4 @@ type bitStringSorter []bits.BitString
 
 func (b bitStringSorter) Len() int           { return len(b) }
 func (b bitStringSorter) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b bitStringSorter) Less(i, j int) bool { return b[i].Compare(b[j]) < 0 }
+func (b bitStringSorter) Less(i, j int) bool { return b[i].TrieCompare(b[j]) < 0 }
