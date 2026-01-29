@@ -21,7 +21,10 @@ func BenchmarkRangeLocatorBuild(b *testing.B) {
 
 			for i := 0; i < b.N; i++ {
 				zt := zfasttrie.Build(keys)
-				rl := NewRangeLocator(zt)
+				rl, err := NewRangeLocator(zt)
+				if err != nil {
+					b.Fatalf("NewRangeLocator failed: %v", err)
+				}
 
 				if rl == nil {
 					b.Fatal("Failed to build RangeLocator")
@@ -44,7 +47,10 @@ func BenchmarkRangeLocatorQuery(b *testing.B) {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
 			keys := benchKeys[count]
 			zt := zfasttrie.Build(keys)
-			rl := NewRangeLocator(zt)
+			rl, err := NewRangeLocator(zt)
+			if err != nil {
+				b.Fatalf("NewRangeLocator failed: %v", err)
+			}
 
 			if rl == nil {
 				b.Fatal("Failed to build RangeLocator")

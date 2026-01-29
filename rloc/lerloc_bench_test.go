@@ -23,7 +23,10 @@ func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				lerl := NewLocalExactRangeLocator(keys)
+				lerl, err := NewLocalExactRangeLocator(keys)
+				if err != nil {
+					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+				}
 
 				if lerl == nil {
 					b.Fatal("Failed to build LocalExactRangeLocator")
@@ -45,7 +48,10 @@ func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
 			keys := benchKeys[count]
-			lerl := NewLocalExactRangeLocator(keys)
+			lerl, err := NewLocalExactRangeLocator(keys)
+			if err != nil {
+				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+			}
 
 			if lerl == nil {
 				b.Fatal("Failed to build LocalExactRangeLocator")
@@ -93,8 +99,14 @@ func BenchmarkMemoryComparison(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				// Build both structures
 				zt := zfasttrie.Build(keys)
-				rl := NewRangeLocator(zt)
-				lerl := NewLocalExactRangeLocator(keys)
+				rl, err := NewRangeLocator(zt)
+				if err != nil {
+					b.Fatalf("Failed to build RangeLocator: %v", err)
+				}
+				lerl, err := NewLocalExactRangeLocator(keys)
+				if err != nil {
+					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+				}
 
 				if rl == nil || lerl == nil {
 					b.Fatal("Failed to build structures")
@@ -130,7 +142,10 @@ func BenchmarkEmptyPrefixQuery(b *testing.B) {
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
 			keys := benchKeys[count]
-			lerl := NewLocalExactRangeLocator(keys)
+			lerl, err := NewLocalExactRangeLocator(keys)
+			if err != nil {
+				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+			}
 
 			if lerl == nil {
 				b.Fatal("Failed to build LocalExactRangeLocator")
@@ -161,7 +176,10 @@ func BenchmarkPrefixLengthVariation(b *testing.B) {
 
 	count := benchKeyCounts[3] // Use medium-sized dataset
 	keys := benchKeys[count]
-	lerl := NewLocalExactRangeLocator(keys)
+	lerl, err := NewLocalExactRangeLocator(keys)
+	if err != nil {
+		b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+	}
 
 	if lerl == nil {
 		b.Fatal("Failed to build LocalExactRangeLocator")
@@ -206,7 +224,10 @@ func BenchmarkMissQueries(b *testing.B) {
 
 	count := benchKeyCounts[3] // Use medium-sized dataset
 	keys := benchKeys[count]
-	lerl := NewLocalExactRangeLocator(keys)
+	lerl, err := NewLocalExactRangeLocator(keys)
+	if err != nil {
+		b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+	}
 
 	if lerl == nil {
 		b.Fatal("Failed to build LocalExactRangeLocator")
@@ -257,7 +278,10 @@ func BenchmarkScalingBehavior(b *testing.B) {
 			keys := benchKeys[count]
 
 			start := time.Now()
-			lerl := NewLocalExactRangeLocator(keys)
+			lerl, err := NewLocalExactRangeLocator(keys)
+			if err != nil {
+				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+			}
 			buildTime := time.Since(start)
 
 			if lerl == nil {
