@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"time"
 )
 
 // Bucket represents a single bucket in the hash structure
@@ -56,7 +55,7 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 	// Validate that input data is sorted according to TrieCompare ordering
 	// This is required for the MMPH algorithm to work correctly with mixed-size strings
 	for i := 1; i < len(data); i++ {
-		if data[i-1].TrieCompare(data[i]) > 0 {
+		if data[i-1].TrieCompare(data[i]) >= 0 {
 			return nil, fmt.Errorf("input data must be sorted in TrieCompare order: data[%d] (%s) > data[%d] (%s)",
 				i-1, data[i-1].PrettyString(), i, data[i].PrettyString())
 		}
@@ -137,9 +136,7 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 // buildValidatedTrieWithIndices builds the approximate z-fast trie with bucket indices and validates it works for all keys.
 // It retries with different seeds if validation fails.
 func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys []bits.BitString, delimiters []bits.BitString) error {
-	// Create delimiter indices array - each delimiter maps to its bucket index
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-
+	fmt.Printf("Building MMPH for %d keys with %d delimiters\n", len(allKeys), len(delimiters))
 	for attempt := 0; attempt < maxTrieRebuilds; attempt++ {
 		mh.TrieRebuildAttempts = attempt + 1
 
@@ -150,20 +147,19 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 			return err
 		}
 
+		fmt.Printf("Attempt %d: validating...\n", attempt+1)
 		// Validate that all keys work correctly with this trie
 		if mh.validateAllKeys(allKeys) {
+			fmt.Printf("Attempt %d: SUCCESS!\n", attempt+1)
 			return nil // Success!
 		}
 
-		// ACHTUNG hack !
-		// If we're here, validation failed. We need to force a new seed.
-		// The NewApproxZFastTrie uses rand.Uint64() internally, so we need to
-		// change the global random state or modify the input slightly
-
-		// Approach: Add some entropy to force different hash seeds
-		// We'll perturb the random state to get different internal seeds
+		// Validation failed - perturb global rand state for next attempt
+		// NewApproxZFastTrie uses global rand.Uint64() for seeds, so we need to
+		// advance the global random state to get different hash functions
+		// Consume some random values to change the state
 		for i := 0; i < 10; i++ {
-			rng.Uint64()
+			rand.Uint64()
 		}
 	}
 
@@ -179,6 +175,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 
 	bucketIdx := 0
 	maxDelimiterIndex := I(^I(0))
+	failedKeys := 0
 
 	for _, key := range allKeys {
 		// Find the correct bucket using two-pointer approach
@@ -224,10 +221,14 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		// If trie failed to provide any candidate that leads to correct bucket,
 		// this is a false negative
 		if !foundCorrectBucket {
-			return false
+			failedKeys++
 		}
 	}
 
+	if failedKeys > 0 {
+		fmt.Printf("  Validation failed: %d/%d keys failed\n", failedKeys, len(allKeys))
+		return false
+	}
 	return true
 }
 

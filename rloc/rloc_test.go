@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	testRuns  = 1000
-	maxKeys   = 1024
+	testRuns  = 10_000
+	maxKeys   = 256
 	maxBitLen = 16
 )
 
