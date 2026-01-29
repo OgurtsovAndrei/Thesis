@@ -38,8 +38,12 @@ type MonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.
 const maxTrieRebuilds = 100 // Maximum number of attempts to build a working trie
 
 // NewMonotoneHashWithTrie creates a new monotone hash function using approximate z-fast trie
-// for bucket identification. The buckets are divided based on lexicographic order,
+// for bucket identification. The buckets are divided based on TrieCompare ordering,
 // with delimiters being the last key in each bucket.
+//
+// IMPORTANT: Input data must be sorted in TrieCompare order for mixed-size string support.
+// Use sort.Sort(TrieCompareSorter(data)) to ensure correct ordering.
+//
 // It validates that all keys work correctly with the trie and rebuilds with new seeds if needed.
 // S - used in PSig should be at least ((log log n) + (log log w) - (log eps)) bits
 // E - used for Max String Len
@@ -47,6 +51,15 @@ const maxTrieRebuilds = 100 // Maximum number of attempts to build a working tri
 func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString) (*MonotoneHashWithTrie[E, S, I], error) {
 	if len(data) == 0 {
 		return &MonotoneHashWithTrie[E, S, I]{}, nil
+	}
+
+	// Validate that input data is sorted according to TrieCompare ordering
+	// This is required for the MMPH algorithm to work correctly with mixed-size strings
+	for i := 1; i < len(data); i++ {
+		if data[i-1].TrieCompare(data[i]) > 0 {
+			return nil, fmt.Errorf("input data must be sorted in TrieCompare order: data[%d] (%s) > data[%d] (%s)",
+				i-1, data[i-1].PrettyString(), i, data[i].PrettyString())
+		}
 	}
 
 	// Choose bucket size as log n (as suggested in the paper)
@@ -170,9 +183,10 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 	for _, key := range allKeys {
 		// Find the correct bucket using two-pointer approach
 		// Advance bucketIdx until we find a bucket where key <= bucket.delimiter
+		// Use TrieCompare for consistent ordering with mixed-size strings
 		for bucketIdx < len(mh.buckets) {
 			bucket := mh.buckets[bucketIdx]
-			if bucket != nil && key.Compare(bucket.delimiter) <= 0 {
+			if bucket != nil && key.TrieCompare(bucket.delimiter) <= 0 {
 				// Found the correct bucket for this key
 				break
 			}
@@ -248,10 +262,11 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 				bucket := mh.buckets[candidateBucketIdx]
 
 				// Check if key is <= delimiter and > previous bucket's delimiter
-				if key.Compare(bucket.delimiter) <= 0 {
+				// Use TrieCompare for consistent ordering with mixed-size strings
+				if key.TrieCompare(bucket.delimiter) <= 0 {
 					if candidateBucketIdx == 0 ||
 						(candidateBucketIdx > 0 && mh.buckets[candidateBucketIdx-1] != nil &&
-							key.Compare(mh.buckets[candidateBucketIdx-1].delimiter) > 0) {
+							key.TrieCompare(mh.buckets[candidateBucketIdx-1].delimiter) > 0) {
 						bucketIdx = candidateBucketIdx
 						return true
 					}
