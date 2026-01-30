@@ -11,7 +11,7 @@ import (
 // 2. Update the filename below to match the saved file
 // 3. Run: go test -v -run TestDebugFailingCase
 func TestDebugFailingCase(t *testing.T) {
-	//t.Skip("Skipping debug test - enable manually when needed")
+	t.Skip("Skipping debug test - enable manually when needed")
 
 	// Update this to the actual saved file
 	filename := "failing_case_seed_1769679785375971000.json"

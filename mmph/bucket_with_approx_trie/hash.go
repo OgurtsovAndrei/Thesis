@@ -40,8 +40,8 @@ const maxTrieRebuilds = 100 // Maximum number of attempts to build a working tri
 // for bucket identification. The buckets are divided based on TrieCompare ordering,
 // with delimiters being the last key in each bucket.
 //
-// IMPORTANT: Input data must be sorted in TrieCompare order for mixed-size string support.
-// Use sort.Sort(TrieCompareSorter(data)) to ensure correct ordering.
+// IMPORTANT: Input data must be sorted in TrieCompare order.
+// This is in-order trie traversal ordering where left children < parent < right children.
 //
 // It validates that all keys work correctly with the trie and rebuilds with new seeds if needed.
 // S - used in PSig should be at least ((log log n) + (log log w) - (log eps)) bits
@@ -53,7 +53,7 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 	}
 
 	// Validate that input data is sorted according to TrieCompare ordering
-	// This is required for the MMPH algorithm to work correctly with mixed-size strings
+	// This is required for the MMPH algorithm to work correctly
 	for i := 1; i < len(data); i++ {
 		if data[i-1].TrieCompare(data[i]) >= 0 {
 			return nil, fmt.Errorf("input data must be sorted in TrieCompare order: data[%d] (%s) > data[%d] (%s)",

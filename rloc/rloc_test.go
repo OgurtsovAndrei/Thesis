@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	testRuns  = 10_000
+	testRuns  = 10000
 	maxKeys   = 256
 	maxBitLen = 16
 )
@@ -93,7 +93,8 @@ func genUniqueBitStrings(seed int64) []bits.BitString {
 }
 
 func findRange(keys []bits.BitString, prefix bits.BitString) (int, int) {
-	// Use BitString.Compare() instead of string comparison for better performance
+	// Keys are in lexicographic (Compare) order, as per paper requirement
+	// that ranges represent lexicographic ranks
 	start := sort.Search(len(keys), func(i int) bool {
 		return keys[i].Compare(prefix) >= 0
 	})

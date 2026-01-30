@@ -42,7 +42,7 @@ type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
 // This is used for bucketing where we need to map trie nodes to bucket indices.
 // saveOriginalTrie controls whether to keep debug information (original trie and node references).
 func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
-	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
+	errutil.BugOn(!areSorted(keys), "Keys should be sorted in TrieCompare order")
 
 	trie := Build(keys)
 	if trie == nil || trie.root == nil {
