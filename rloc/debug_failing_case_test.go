@@ -21,6 +21,17 @@ func TestDebugFailingCase(t *testing.T) {
 		t.Fatalf("Failed to load failing case: %v", err)
 	}
 
+	// Verify keys are sorted and unique
+	for i := 1; i < len(keys); i++ {
+		cmp := keys[i].TrieCompare(keys[i-1])
+		if cmp < 0 {
+			t.Fatalf("Keys are not sorted at index %d", i)
+		}
+		if cmp == 0 {
+			t.Fatalf("Duplicate key found at index %d", i)
+		}
+	}
+
 	t.Logf("Testing with %d keys", len(keys))
 
 	// Try to build the RangeLocator
