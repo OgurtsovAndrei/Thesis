@@ -151,51 +151,91 @@ func TestBitStringCompare(t *testing.T) {
 func TestBitStringTrieCompare(t *testing.T) {
 	t.Parallel()
 
-	// Test TrieCompare with trailing zeros scenarios
-	bs_short := NewFromBinary("11")  // 2 bits: 11
-	bs_long := NewFromBinary("1100") // 4 bits: 1100 (11 + trailing zeros)
+	t.Run("trailing zeros vs trimmed", func(t *testing.T) {
+		bs_short := NewFromBinary("11")
+		bs_long := NewFromBinary("1100")
 
-	// With TrieCompare: "1100" should be < "11" (trailing zeros < trimmed)
-	if bs_long.TrieCompare(bs_short) >= 0 {
-		t.Error("TrieCompare: 1100 should be < 11 (trailing zeros should come before trimmed)")
-	}
+		if bs_long.TrieCompare(bs_short) >= 0 {
+			t.Error("TrieCompare: 1100 should be < 11 (trailing zeros should come before trimmed)")
+		}
 
-	if bs_short.TrieCompare(bs_long) <= 0 {
-		t.Error("TrieCompare: 11 should be > 1100 (trimmed should come after trailing zeros)")
-	}
+		if bs_short.TrieCompare(bs_long) <= 0 {
+			t.Error("TrieCompare: 11 should be > 1100 (trimmed should come after trailing zeros)")
+		}
+	})
 
-	// Test different behavior between Compare and TrieCompare
-	bs1 := NewFromBinary("10")  // 2 bits: 10
-	bs2 := NewFromBinary("100") // 3 bits: 100 (10 + trailing zero)
+	t.Run("compare vs trie compare behavior", func(t *testing.T) {
+		bs1 := NewFromBinary("10")
+		bs2 := NewFromBinary("100")
 
-	// Compare: shorter < longer
-	if bs1.Compare(bs2) >= 0 {
-		t.Error("Compare: 10 should be < 100 (standard lexicographic)")
-	}
+		if bs1.Compare(bs2) >= 0 {
+			t.Error("Compare: 10 should be < 100 (standard lexicographic)")
+		}
 
-	// TrieCompare: trailing zeros < trimmed
-	if bs2.TrieCompare(bs1) >= 0 {
-		t.Error("TrieCompare: 100 should be < 10 (trailing zeros before trimmed)")
-	}
+		if bs2.TrieCompare(bs1) >= 0 {
+			t.Error("TrieCompare: 100 should be < 10 (trailing zeros before trimmed)")
+		}
+	})
 
-	// Test equal strings
-	bs3 := NewFromBinary("101")
-	bs4 := NewFromBinary("101")
+	t.Run("equal strings", func(t *testing.T) {
+		bs3 := NewFromBinary("101")
+		bs4 := NewFromBinary("101")
 
-	if bs3.TrieCompare(bs4) != 0 {
-		t.Error("TrieCompare: equal strings should compare to 0")
-	}
+		if bs3.TrieCompare(bs4) != 0 {
+			t.Error("TrieCompare: equal strings should compare to 0")
+		}
+	})
 
-	// Test different values (not trailing zero scenario)
-	bs5 := NewFromBinary("101") // 101
-	bs6 := NewFromBinary("110") // 110
+	t.Run("different values same length", func(t *testing.T) {
+		bs5 := NewFromBinary("101")
+		bs6 := NewFromBinary("110")
 
-	// Both Compare and TrieCompare should give same result for different values
-	cmp := bs5.Compare(bs6)
-	trieCmp := bs5.TrieCompare(bs6)
-	if cmp != trieCmp {
-		t.Error("Compare and TrieCompare should give same result for different values")
-	}
+		cmp := bs5.Compare(bs6)
+		trieCmp := bs5.TrieCompare(bs6)
+		if cmp != trieCmp {
+			t.Error("Compare and TrieCompare should give same result for different values")
+		}
+	})
+
+	t.Run("from mmph", func(t *testing.T) {
+		bs1 := NewFromBinary("1111111100101")
+		bs2 := NewFromBinary("11111111")
+
+		trieCmp := bs1.TrieCompare(bs2)
+		require.Less(t, trieCmp, 0)
+	})
+
+	t.Run("ones", func(t *testing.T) {
+		bs1 := NewFromBinary("11")
+		bs2 := NewFromBinary("1111")
+
+		trieCmp := bs1.TrieCompare(bs2)
+		require.Less(t, trieCmp, 0)
+	})
+
+	t.Run("ones after zero", func(t *testing.T) {
+		bs1 := NewFromBinary("00")
+		bs2 := NewFromBinary("0011")
+
+		trieCmp := bs1.TrieCompare(bs2)
+		require.Less(t, trieCmp, 0)
+	})
+
+	t.Run("zeros after ones", func(t *testing.T) {
+		bs1 := NewFromBinary("1100")
+		bs2 := NewFromBinary("11")
+
+		trieCmp := bs1.TrieCompare(bs2)
+		require.Less(t, trieCmp, 0)
+	})
+
+	t.Run("ones after zeros after ones", func(t *testing.T) {
+		bs1 := NewFromBinary("11001")
+		bs2 := NewFromBinary("110")
+
+		trieCmp := bs1.TrieCompare(bs2)
+		require.Less(t, trieCmp, 0)
+	})
 }
 
 func TestBitStringLongCompare(t *testing.T) {
