@@ -29,14 +29,14 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 	expectedOrder := []string{
 		"100",   // 100 (10 + trailing zero)
 		"10",    // 10 (trimmed)
-		"1",     // 1 (single bit)
 		"10100", // 10100 (1010 + trailing zero)
 		"1010",  // 1010
 		"101",   // 101
+		"1",     // 1 (single bit)
 		"1100",  // 1100 (11 + trailing zeros)
 		"110",   // 110 (11 + trailing zero)
-		"11",    // 11 (trimmed)
 		"1101",  // 1101
+		"11",    // 11 (trimmed)
 	}
 
 	// Sort keys using TrieCompare to verify expected order
