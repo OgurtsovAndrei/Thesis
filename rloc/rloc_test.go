@@ -3,9 +3,11 @@ package rloc
 import (
 	"Thesis/bits"
 	"Thesis/zfasttrie"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
 	"sort"
 	"testing"
 	"time"
@@ -27,6 +29,8 @@ func TestRangeLocator_Correctness(t *testing.T) {
 			zt := zfasttrie.Build(keys)
 			rl, err := NewRangeLocator(zt)
 			if err != nil {
+				// Save the failing case for manual debugging
+				saveFailingCase(t, keys, seed, err)
 				t.Fatalf("NewRangeLocator failed (seed: %d): %v", seed, err)
 			}
 
@@ -102,4 +106,42 @@ func findRange(keys []bits.BitString, prefix bits.BitString) (int, int) {
 		end++
 	}
 	return start, end
+}
+
+type FailingCase struct {
+	Seed      int64    `json:"seed"`
+	Error     string   `json:"error"`
+	NumKeys   int      `json:"num_keys"`
+	KeysData  [][]byte `json:"keys_data"`  // Raw byte data
+	KeysSizes []uint32 `json:"keys_sizes"` // Bit sizes
+}
+
+func saveFailingCase(t *testing.T, keys []bits.BitString, seed int64, err error) {
+	failCase := FailingCase{
+		Seed:      seed,
+		Error:     err.Error(),
+		NumKeys:   len(keys),
+		KeysData:  make([][]byte, len(keys)),
+		KeysSizes: make([]uint32, len(keys)),
+	}
+
+	for i, key := range keys {
+		failCase.KeysData[i] = key.Data()
+		failCase.KeysSizes[i] = key.Size()
+	}
+
+	filename := fmt.Sprintf("failing_case_seed_%d.json", seed)
+	data, err := json.MarshalIndent(failCase, "", "  ")
+	if err != nil {
+		t.Logf("Failed to marshal failing case: %v", err)
+		return
+	}
+
+	err = os.WriteFile(filename, data, 0644)
+	if err != nil {
+		t.Logf("Failed to write failing case to %s: %v", filename, err)
+		return
+	}
+
+	t.Logf("Saved failing case to %s", filename)
 }

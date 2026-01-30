@@ -4,7 +4,6 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
-	"fmt"
 	"math/rand"
 	"unsafe"
 )
@@ -71,15 +70,12 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 	seed := rand.Uint64()
-	//fmt.Printf("[ApproxZFastTrie] Using seed: %d for %d keys\n", seed, len(keys))
 
 	// Create mapping from keys to their delimiter indices using hash for efficiency
 	keyToDelimiterIdx := make(map[bits.BitString]int)
 	for i, key := range keys {
 		keyToDelimiterIdx[key] = i
 	}
-
-	matchedDelimiters := 0
 
 	maxDelimiterIndex := I(^I(0)) // Maximum value for I type (means "not a delimiter")
 
@@ -127,7 +123,6 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 		delimiterIdx := maxDelimiterIndex
 		if delimIdx, exists := keyToDelimiterIdx[node.extent]; exists {
 			delimiterIdx = I(delimIdx)
-			matchedDelimiters++
 		}
 
 		nodeData := NodeData[E, S, I]{
@@ -142,10 +137,6 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 			nodeData.originalNode = node
 		}
 		data[idx] = nodeData
-	}
-
-	if len(keys) > 0 && matchedDelimiters != len(keys) {
-		fmt.Printf("[ApproxZFastTrie] WARNING: Only %d/%d delimiters matched!\n", matchedDelimiters, len(keys))
 	}
 
 	// Set up parent relationships - find first ancestor where node is in left subtree

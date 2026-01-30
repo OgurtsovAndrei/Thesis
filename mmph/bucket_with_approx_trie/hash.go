@@ -136,7 +136,6 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 // buildValidatedTrieWithIndices builds the approximate z-fast trie with bucket indices and validates it works for all keys.
 // It retries with different seeds if validation fails.
 func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys []bits.BitString, delimiters []bits.BitString) error {
-	fmt.Printf("Building MMPH for %d keys with %d delimiters\n", len(allKeys), len(delimiters))
 	for attempt := 0; attempt < maxTrieRebuilds; attempt++ {
 		mh.TrieRebuildAttempts = attempt + 1
 
@@ -147,10 +146,8 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 			return err
 		}
 
-		fmt.Printf("Attempt %d: validating...\n", attempt+1)
 		// Validate that all keys work correctly with this trie
 		if mh.validateAllKeys(allKeys) {
-			fmt.Printf("Attempt %d: SUCCESS!\n", attempt+1)
 			return nil // Success!
 		}
 
@@ -175,7 +172,6 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 
 	bucketIdx := 0
 	maxDelimiterIndex := I(^I(0))
-	failedKeys := 0
 
 	for _, key := range allKeys {
 		// Find the correct bucket using two-pointer approach
@@ -221,14 +217,10 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		// If trie failed to provide any candidate that leads to correct bucket,
 		// this is a false negative
 		if !foundCorrectBucket {
-			failedKeys++
+			return false
 		}
 	}
 
-	if failedKeys > 0 {
-		fmt.Printf("  Validation failed: %d/%d keys failed\n", failedKeys, len(allKeys))
-		return false
-	}
 	return true
 }
 
