@@ -173,6 +173,17 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 	bucketIdx := 0
 	maxDelimiterIndex := I(^I(0))
 
+	// Verify keys are sorted and unique
+	for i := 1; i < len(mh.buckets); i++ {
+		cmp := mh.buckets[i].delimiter.TrieCompare(mh.buckets[i-1].delimiter)
+		if cmp < 0 {
+			errutil.Bug("Keys are not sorted at index %d", i)
+		}
+		if cmp == 0 {
+			errutil.Bug("Duplicate key found at index %d", i)
+		}
+	}
+
 	for _, key := range allKeys {
 		// Find the correct bucket using two-pointer approach
 		// Advance bucketIdx until we find a bucket where key <= bucket.delimiter
