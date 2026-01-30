@@ -401,24 +401,31 @@ func (bs Uint64BitString) TrieCompare(other BitString) int {
 		}
 	}
 
-	// Handle different sizes - strings with trailing zeros should come before trimmed versions
+	// Handle different sizes - in trie in-order traversal:
+	// - Left children (extension starts with 0) come before parent
+	// - Parent comes in the middle
+	// - Right children (extension starts with 1) come after parent
 	if aSize < bSize {
-		// a is shorter - check if b has trailing zeros beyond a's length
-		for i := aSize; i < bSize; i++ {
-			if other.At(i) {
-				return -1 // b has non-zero beyond a's length, so a < b
-			}
+		// b is longer - check if it's a left or right child
+		// Look at the first bit after a's length in b
+		if other.At(aSize) {
+			// First bit of extension is 1 - right child, so b > a
+			return -1
+		} else {
+			// First bit of extension is 0 - left child, so b < a
+			return 1
 		}
-		return 1 // b is all zeros beyond a's length, so b < a (trailing zeros < trimmed)
 	}
 	if aSize > bSize {
-		// b is shorter - check if a has trailing zeros beyond b's length
-		for i := bSize; i < aSize; i++ {
-			if bs.At(i) {
-				return 1 // a has non-zero beyond b's length, so a > b
-			}
+		// a is longer - check if it's a left or right child
+		// Look at the first bit after b's length in a
+		if bs.At(bSize) {
+			// First bit of extension is 1 - right child, so a > b
+			return 1
+		} else {
+			// First bit of extension is 0 - left child, so a < b
+			return -1
 		}
-		return -1 // a is all zeros beyond b's length, so a < b (trailing zeros < trimmed)
 	}
 	return 0
 }
