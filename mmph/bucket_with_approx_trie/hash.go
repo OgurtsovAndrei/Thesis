@@ -41,10 +41,23 @@ const maxTrieRebuilds = 100 // Maximum number of attempts to build a working tri
 // for bucket identification. The buckets are divided based on lexicographic order,
 // with delimiters being the last key in each bucket.
 // It validates that all keys work correctly with the trie and rebuilds with new seeds if needed.
+// Uses a random seed from time.Now() for the trie construction.
 // S - used in PSig should be at least ((log log n) + (log log w) - (log eps)) bits
 // E - used for Max String Len
 // I - used for indexing in Delimiters Trie, should be at least log(N / 256)
 func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString) (*MonotoneHashWithTrie[E, S, I], error) {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return NewMonotoneHashWithTrieSeeded[E, S, I](data, rng.Uint64())
+}
+
+// NewMonotoneHashWithTrieSeeded creates a new monotone hash function using approximate z-fast trie
+// with a specified seed for deterministic trie construction.
+// The buckets are divided based on lexicographic order, with delimiters being the last key in each bucket.
+// It validates that all keys work correctly with the trie and rebuilds with different derived seeds if needed.
+// S - used in PSig should be at least ((log log n) + (log log w) - (log eps)) bits
+// E - used for Max String Len
+// I - used for indexing in Delimiters Trie, should be at least log(N / 256)
+func NewMonotoneHashWithTrieSeeded[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString, baseSeed uint64) (*MonotoneHashWithTrie[E, S, I], error) {
 	if len(data) == 0 {
 		return &MonotoneHashWithTrie[E, S, I]{}, nil
 	}
@@ -112,7 +125,7 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 
 	// Build approximate z-fast trie with validation and retry logic
 	if len(delimiters) > 0 {
-		err := mh.buildValidatedTrieWithIndices(data, delimiters)
+		err := mh.buildValidatedTrieWithIndices(data, delimiters, baseSeed)
 		if err != nil {
 			return nil, err
 		}
@@ -122,17 +135,19 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 }
 
 // buildValidatedTrieWithIndices builds the approximate z-fast trie with bucket indices and validates it works for all keys.
-// It retries with different seeds if validation fails.
-func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys []bits.BitString, delimiters []bits.BitString) error {
-	// Create delimiter indices array - each delimiter maps to its bucket index
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+// It retries with different derived seeds if validation fails.
+func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys []bits.BitString, delimiters []bits.BitString, baseSeed uint64) error {
 
 	for attempt := 0; attempt < maxTrieRebuilds; attempt++ {
 		mh.TrieRebuildAttempts = attempt + 1
 
-		// Build trie with current attempt using delimiter indices
+		// Derive a deterministic seed for this attempt
+		// Each attempt gets a unique seed, but the same attempt will always get the same seed
+		trySeed := baseSeed + uint64(attempt)
+
+		// Build trie with current attempt using delimiter indices and deterministic seed
 		var err error
-		mh.delimiterTrie, err = zfasttrie.NewApproxZFastTrie[E, S, I](delimiters, false)
+		mh.delimiterTrie, err = zfasttrie.NewApproxZFastTrieWithSeed[E, S, I](delimiters, false, trySeed)
 		if err != nil {
 			return err
 		}
@@ -140,17 +155,6 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 		// Validate that all keys work correctly with this trie
 		if mh.validateAllKeys(allKeys) {
 			return nil // Success!
-		}
-
-		// ACHTUNG hack !
-		// If we're here, validation failed. We need to force a new seed.
-		// The NewApproxZFastTrie uses rand.Uint64() internally, so we need to
-		// change the global random state or modify the input slightly
-
-		// Approach: Add some entropy to force different hash seeds
-		// We'll perturb the random state to get different internal seeds
-		for i := 0; i < 10; i++ {
-			rng.Uint64()
 		}
 	}
 

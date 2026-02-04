@@ -5,6 +5,7 @@ import (
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"math/rand"
+	"sort"
 	"unsafe"
 )
 
@@ -41,12 +42,21 @@ type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
 // NewApproxZFastTrie initializes a compact trie with delimiter index information.
 // This is used for bucketing where we need to map trie nodes to bucket indices.
 // saveOriginalTrie controls whether to keep debug information (original trie and node references).
+// Uses a random seed from the global rand package.
 func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
+	return NewApproxZFastTrieWithSeed[E, S, I](keys, saveOriginalTrie, rand.Uint64())
+}
+
+// NewApproxZFastTrieWithSeed initializes a compact trie with delimiter index information using a specified seed.
+// This is used for bucketing where we need to map trie nodes to bucket indices.
+// saveOriginalTrie controls whether to keep debug information (original trie and node references).
+// seed is the value used for computing PSig signatures, allowing deterministic construction.
+func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
 	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
 
 	trie := Build(keys)
 	if trie == nil || trie.root == nil {
-		result := &ApproxZFastTrie[E, S, I]{seed: rand.Uint64()}
+		result := &ApproxZFastTrie[E, S, I]{seed: seed}
 		if saveOriginalTrie {
 			result.trie = trie
 		}
@@ -57,9 +67,13 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 	for handle := range trie.handle2NodeMap {
 		keysForMPH = append(keysForMPH, handle)
 	}
+	// Sort keysForMPH to ensure deterministic order (map iteration is non-deterministic)
+	sort.Slice(keysForMPH, func(i, j int) bool {
+		return keysForMPH[i].Compare(keysForMPH[j]) < 0
+	})
 
 	if len(keysForMPH) == 0 {
-		result := &ApproxZFastTrie[E, S, I]{seed: rand.Uint64()}
+		result := &ApproxZFastTrie[E, S, I]{seed: seed}
 		if saveOriginalTrie {
 			result.trie = trie
 		}
@@ -69,7 +83,6 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
 	data := make([]NodeData[E, S, I], len(keysForMPH))
-	seed := rand.Uint64()
 
 	// Create mapping from keys to their delimiter indices using hash for efficiency
 	keyToDelimiterIdx := make(map[bits.BitString]int)
