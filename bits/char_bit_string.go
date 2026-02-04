@@ -230,9 +230,10 @@ func (bs CharBitString) PrettyString() string {
 	}
 	sb.WriteString(": (")
 	sb.WriteString(strconv.Itoa(int(bs.sizeBits)))
-	sb.WriteString(" bits) [")
-	sb.WriteString(bs.data)
-	sb.WriteString("]")
+	sb.WriteString(" bits)")
+	//sb.WriteString(" [")
+	//sb.WriteString(bs.data)
+	//sb.WriteString("]")
 
 	return sb.String()
 }
