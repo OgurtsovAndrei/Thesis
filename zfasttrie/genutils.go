@@ -17,7 +17,7 @@ func generateRandomBitStrings(n, bitLen int, r *rand.Rand) []bits.BitString {
 		keys[i] = generateBitString(bitLen, r)
 	}
 	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].TrieCompare(keys[j]) < 0
+		return keys[i].Compare(keys[j]) < 0
 	})
 	return keys
 }
