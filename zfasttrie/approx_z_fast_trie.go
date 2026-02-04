@@ -273,7 +273,7 @@ func hashBitString(bs bits.BitString, seed uint64) uint64 {
 
 func areSorted(keys []bits.BitString) bool {
 	for i := 1; i < len(keys); i++ {
-		if keys[i-1].TrieCompare(keys[i]) > 0 {
+		if keys[i-1].Compare(keys[i]) > 0 {
 			return false
 		}
 	}

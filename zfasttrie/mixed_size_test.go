@@ -27,15 +27,15 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 	// Verify our TrieCompare produces the expected order
 	// With TrieCompare: strings with trailing zeros should come before trimmed versions
 	expectedOrder := []string{
-		"100",   // 100 (10 + trailing zero)
-		"10",    // 10 (trimmed)
 		"1",     // 1 (single bit)
-		"10100", // 10100 (1010 + trailing zero)
-		"1010",  // 1010
+		"10",    // 10 (trimmed)
+		"100",   // 100 (10 + trailing zero)
 		"101",   // 101
-		"1100",  // 1100 (11 + trailing zeros)
-		"110",   // 110 (11 + trailing zero)
+		"1010",  // 1010
+		"10100", // 10100 (1010 + trailing zero)
 		"11",    // 11 (trimmed)
+		"110",   // 110 (11 + trailing zero)
+		"1100",  // 1100 (11 + trailing zeros)
 		"1101",  // 1101
 	}
 
@@ -46,7 +46,7 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 	// Manual sort using TrieCompare
 	for i := 0; i < len(sortedKeys); i++ {
 		for j := i + 1; j < len(sortedKeys); j++ {
-			if sortedKeys[i].TrieCompare(sortedKeys[j]) > 0 {
+			if sortedKeys[i].Compare(sortedKeys[j]) > 0 {
 				sortedKeys[i], sortedKeys[j] = sortedKeys[j], sortedKeys[i]
 			}
 		}
