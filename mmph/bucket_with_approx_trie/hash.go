@@ -32,8 +32,12 @@ type MonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.
 
 	// Statistics
 	TrieRebuildAttempts int // Number of trie rebuild attempts during construction
+
+	// DEBUG only
+	Data []bits.BitString
 }
 
+const debugSaveInitList = true
 const maxTrieRebuilds = 100 // Maximum number of attempts to build a working trie
 
 // NewMonotoneHashWithTrie creates a new monotone hash function using approximate z-fast trie
@@ -128,6 +132,10 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if debugSaveInitList {
+		mh.Data = data
 	}
 
 	return mh, nil

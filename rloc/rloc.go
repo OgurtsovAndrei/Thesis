@@ -3,6 +3,7 @@ package rloc
 import (
 	"Thesis/bits"
 	bucket "Thesis/mmph/bucket_with_approx_trie"
+	"Thesis/utils"
 	"Thesis/zfasttrie"
 	"fmt"
 	"sort"
@@ -116,6 +117,9 @@ func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 	if rl.mmph == nil {
 		return 0, 0, fmt.Errorf("MMPH not initialized")
 	}
+
+	prettyBitStrings := utils.Map(rl.mmph.Data, func(bs bits.BitString) string { return bs.PrettyString() })
+	fmt.Println(prettyBitStrings)
 
 	// Use TrimTrailingZeros instead of string conversion and trimming
 	xArrowBs := nodeName.TrimTrailingZeros()

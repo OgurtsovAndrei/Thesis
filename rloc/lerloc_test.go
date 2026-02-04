@@ -2,6 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
+	"Thesis/utils"
 	"fmt"
 	"sort"
 	"testing"
@@ -49,7 +50,7 @@ func TestLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 	for run := 0; run < testRuns; run++ {
 		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			seed := time.Now().UnixNano()
 			keys := genUniqueBitStrings(seed)
 
@@ -76,6 +77,14 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 					expectedStart, expectedEnd := findRange(keys, prefix)
 
 					if start != expectedStart || end != expectedEnd {
+						prettyBitStrings := utils.Map(keys, func(bs bits.BitString) string { return bs.PrettyString() })
+						fmt.Println(prettyBitStrings)
+						fmt.Println("Failed prefix:", prefix.PrettyString())
+						fmt.Println("Failed key:", key.PrettyString())
+						fmt.Println("Trie:", lerl.hzft.String())
+						fmt.Printf("Mismatch for prefix %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)\n",
+							prefix.PrettyString(), seed, start, end, expectedStart, expectedEnd)
+						start, end, _ := lerl.WeakPrefixSearch(prefix)
 						t.Errorf("Mismatch for prefix %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
 							prefix.PrettyString(), seed, start, end, expectedStart, expectedEnd)
 						t.FailNow()
