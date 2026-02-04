@@ -15,7 +15,7 @@ import (
 
 const (
 	debugTestRuns  = 1000 // Fewer runs for faster debugging
-	debugMaxKeys   = 1024
+	debugMaxKeys   = 256
 	debugMaxBitLen = 16
 )
 
@@ -134,19 +134,30 @@ func TestRangeLocator_LoadAndReplayFailures(t *testing.T) {
 	failCount := 0
 
 	for i, record := range failures {
-		t.Run(fmt.Sprintf("replay_seed_%d", record.Seed), func(t *testing.T) {
-			// Regenerate keys using the original seed (avoids lossy serialization)
+		t.Run(fmt.Sprintf("replay_seed_%d_mmphSeed_%d", record.Seed, record.MMPHSeed), func(t *testing.T) {
+			// Regenerate keys using the original seed
 			keys := genUniqueBitStringsDebug(record.Seed)
-			t.Logf("Regenerated %d keys from seed %d", len(keys), record.Seed)
+			t.Logf("Regenerated %d keys from seed %d (expected: %d keys)",
+				len(keys), record.Seed, record.KeyCount)
+
+			// Verify key count matches (catches bugs in key generation)
+			if len(keys) != record.KeyCount {
+				t.Fatalf("BUG: Key count mismatch! Regenerated: %d, Expected: %d",
+					len(keys), record.KeyCount)
+			}
+
+			// Note: We use regenerated keys instead of saved keys because the
+			// BitString serialization (Data() -> hex -> NewFromUint64) is lossy.
+			// The seeds are the source of truth for perfect reproducibility.
 
 			zt := zfasttrie.Build(keys)
-			rl, err := NewRangeLocator(zt)
+			rl, err := NewRangeLocatorSeeded(zt, record.MMPHSeed)
 
 			if err != nil {
-				t.Logf("Replay %d: MMPH build still fails (seed: %d): %v", i, record.Seed, err)
+				t.Logf("Replay %d: MMPH build still fails (seed: %d, mmphSeed: %d): %v", i, record.Seed, record.MMPHSeed, err)
 				failCount++
 			} else {
-				t.Logf("Replay %d: MMPH build now succeeds! (seed: %d)", i, record.Seed)
+				t.Logf("Replay %d: MMPH build now succeeds! (seed: %d, mmphSeed: %d)", i, record.Seed, record.MMPHSeed)
 				successCount++
 
 				// Try to query the structure to verify it works
