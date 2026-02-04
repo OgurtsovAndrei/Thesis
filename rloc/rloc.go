@@ -5,7 +5,9 @@ import (
 	bucket "Thesis/mmph/bucket_with_approx_trie"
 	"Thesis/zfasttrie"
 	"fmt"
+	"math/rand"
 	"sort"
+	"time"
 
 	"github.com/hillbig/rsdic"
 )
@@ -22,6 +24,12 @@ type pItem struct {
 }
 
 func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) (*RangeLocator, error) {
+	// Use a random seed for MMPH construction
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return NewRangeLocatorSeeded(zt, rng.Uint64())
+}
+
+func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*RangeLocator, error) {
 	if zt == nil {
 		return &RangeLocator{totalLeaves: 0}, nil
 	}
@@ -91,7 +99,7 @@ func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) (*RangeLocator, error) {
 
 	// Build MMPH - data is already sorted in TrieCompare order
 	// Type parameters: E=uint16 (extent length), S=uint16 (signature), I=uint16 (delimiter index)
-	mmph, err := bucket.NewMonotoneHashWithTrie[uint16, uint16, uint16](keysForMMPH)
+	mmph, err := bucket.NewMonotoneHashWithTrieSeeded[uint16, uint16, uint16](keysForMMPH, mmphSeed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build MMPH for P set of size %d: %w", len(keysForMMPH), err)
 	}
