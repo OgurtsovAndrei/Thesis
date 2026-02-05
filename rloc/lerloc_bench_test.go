@@ -7,7 +7,6 @@ import (
 	"math"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 // Benchmark LocalExactRangeLocator construction
@@ -18,7 +17,6 @@ func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
 			keys := benchKeys[count]
 
-			b.SetParallelism(benchmarkParallelism)
 			b.ReportAllocs()
 			b.ResetTimer()
 
@@ -70,7 +68,6 @@ func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
 				}
 			}
 
-			b.SetParallelism(benchmarkParallelism)
 			b.ReportAllocs()
 			b.ResetTimer()
 
@@ -153,7 +150,6 @@ func BenchmarkEmptyPrefixQuery(b *testing.B) {
 
 			emptyPrefix := bits.NewFromText("")
 
-			b.SetParallelism(benchmarkParallelism)
 			b.ReportAllocs()
 			b.ResetTimer()
 
@@ -203,7 +199,6 @@ func BenchmarkPrefixLengthVariation(b *testing.B) {
 				b.Skip("No keys long enough for this prefix length")
 			}
 
-			b.SetParallelism(benchmarkParallelism)
 			b.ReportAllocs()
 			b.ResetTimer()
 
@@ -253,7 +248,6 @@ func BenchmarkMissQueries(b *testing.B) {
 		missQueries = append(missQueries, bs)
 	}
 
-	b.SetParallelism(benchmarkParallelism)
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -277,12 +271,10 @@ func BenchmarkScalingBehavior(b *testing.B) {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
 			keys := benchKeys[count]
 
-			start := time.Now()
 			lerl, err := NewLocalExactRangeLocator(keys)
 			if err != nil {
 				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
 			}
-			buildTime := time.Since(start)
 
 			if lerl == nil {
 				b.Fatal("Failed to build LocalExactRangeLocator")
@@ -300,24 +292,21 @@ func BenchmarkScalingBehavior(b *testing.B) {
 				}
 			}
 
-			// Measure query performance
-			queryStart := time.Now()
-			for _, prefix := range queryPrefixes {
+			size := lerl.ByteSize()
+			b.ReportMetric(float64(size), "memory_bytes")
+			b.ReportMetric(float64(size)/float64(count), "bytes_per_key")
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			// Use b.N for proper benchmarking
+			for i := 0; i < b.N; i++ {
+				prefix := queryPrefixes[i%len(queryPrefixes)]
 				_, _, err := lerl.WeakPrefixSearch(prefix)
 				if err != nil {
 					b.Fatalf("Query failed: %v", err)
 				}
 			}
-			totalQueryTime := time.Since(queryStart)
-
-			size := lerl.ByteSize()
-
-			// Report scaling metrics
-			b.ReportMetric(float64(buildTime.Nanoseconds()), "build_time_ns")
-			b.ReportMetric(float64(totalQueryTime.Nanoseconds())/float64(len(queryPrefixes)), "avg_query_time_ns")
-			b.ReportMetric(float64(size), "memory_bytes")
-			b.ReportMetric(float64(size)/float64(count), "bytes_per_key")
-			b.ReportMetric(float64(buildTime.Nanoseconds())/float64(count), "build_time_per_key_ns")
 		})
 	}
 }
