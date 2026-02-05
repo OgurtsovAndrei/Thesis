@@ -190,7 +190,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		expectedBucket := bucketIdx
 
 		// Test if trie can find this bucket using LowerBound
-		cand1, cand2, cand3 := mh.delimiterTrie.LowerBound(key)
+		cand1, cand2, cand3, cand4 := mh.delimiterTrie.LowerBound(key)
 
 		// Check if any of the candidates can lead us to the correct bucket
 		foundCorrectBucket := false
@@ -231,7 +231,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 
 	// Use the approximate z-fast trie to get candidates for the bucket
 	// This implements the relative ranking approach from Section 4.2
-	cand1, cand2, cand3 := mh.delimiterTrie.LowerBound(key)
+	cand1, cand2, cand3, cand4 := mh.delimiterTrie.LowerBound(key)
 
 	// Try candidates to find the correct bucket using O(1) delimiterIndex lookup
 	bucketIdx := -1
@@ -267,7 +267,9 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 
 	if !tryCandidate(cand1) {
 		if !tryCandidate(cand2) {
-			tryCandidate(cand3)
+			if !tryCandidate(cand3) {
+				tryCandidate(cand4)
+			}
 		}
 	}
 

@@ -38,12 +38,12 @@ func TestO1BucketLookup(t *testing.T) {
 
 	// Test that the rank field is properly set in trie nodes
 	if mh.delimiterTrie != nil {
-		cand1, cand2, cand3 := mh.delimiterTrie.LowerBound(bitKeys[len(bitKeys)/2])
+		cand1, cand2, cand3, cand4 := mh.delimiterTrie.LowerBound(bitKeys[len(bitKeys)/2])
 
 		maxDelimiterIndex := uint16(^uint16(0))
 		foundValidIndex := false
 
-		for _, candidate := range []*zfasttrie.NodeData[uint8, uint16, uint16]{cand1, cand2, cand3} {
+		for _, candidate := range []*zfasttrie.NodeData[uint8, uint16, uint16]{cand1, cand2, cand3, cand4} {
 			if candidate != nil && candidate.Rank != maxDelimiterIndex {
 				foundValidIndex = true
 				bucketIdx := int(candidate.Rank)
