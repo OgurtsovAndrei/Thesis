@@ -13,14 +13,42 @@ import (
 func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 	initBenchKeys()
 
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
 
-			b.ReportAllocs()
-			b.ResetTimer()
+				b.ReportAllocs()
+				b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+				for i := 0; i < b.N; i++ {
+					lerl, err := NewLocalExactRangeLocator(keys)
+					if err != nil {
+						b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+					}
+
+					if lerl == nil {
+						b.Fatal("Failed to build LocalExactRangeLocator")
+					}
+
+					// Report memory metrics
+					size := lerl.ByteSize()
+					b.ReportMetric(float64(size), "total_bytes")
+					b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
+				}
+			})
+		}
+	}
+}
+
+// Benchmark LocalExactRangeLocator query performance
+func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
 				lerl, err := NewLocalExactRangeLocator(keys)
 				if err != nil {
 					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
@@ -30,55 +58,31 @@ func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 					b.Fatal("Failed to build LocalExactRangeLocator")
 				}
 
-				// Report memory metrics
-				size := lerl.ByteSize()
-				b.ReportMetric(float64(size), "total_bytes")
-				b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
-			}
-		})
-	}
-}
-
-// Benchmark LocalExactRangeLocator query performance
-func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
-	initBenchKeys()
-
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
-			lerl, err := NewLocalExactRangeLocator(keys)
-			if err != nil {
-				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
-			}
-
-			if lerl == nil {
-				b.Fatal("Failed to build LocalExactRangeLocator")
-			}
-
-			// Generate query prefixes from existing keys
-			queryPrefixes := make([]bits.BitString, 0, len(keys))
-			for _, key := range keys {
-				if key.Size() > 2 {
-					// Use prefix of varying lengths
-					prefixLen := 1 + (int(key.Size()) / 3)
-					prefix := key.Prefix(prefixLen)
-					queryPrefixes = append(queryPrefixes, prefix)
-				} else {
-					queryPrefixes = append(queryPrefixes, key)
+				// Generate query prefixes from existing keys
+				queryPrefixes := make([]bits.BitString, 0, len(keys))
+				for _, key := range keys {
+					if key.Size() > 2 {
+						// Use prefix of varying lengths
+						prefixLen := 1 + (int(key.Size()) / 3)
+						prefix := key.Prefix(prefixLen)
+						queryPrefixes = append(queryPrefixes, prefix)
+					} else {
+						queryPrefixes = append(queryPrefixes, key)
+					}
 				}
-			}
 
-			b.ReportAllocs()
-			b.ResetTimer()
+				b.ReportAllocs()
+				b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
-				prefix := queryPrefixes[i%len(queryPrefixes)]
-				_, _, err := lerl.WeakPrefixSearch(prefix)
-				if err != nil {
-					b.Fatalf("WeakPrefixSearch failed: %v", err)
+				for i := 0; i < b.N; i++ {
+					prefix := queryPrefixes[i%len(queryPrefixes)]
+					_, _, err := lerl.WeakPrefixSearch(prefix)
+					if err != nil {
+						b.Fatalf("WeakPrefixSearch failed: %v", err)
+					}
 				}
-			}
-		})
+			})
+		}
 	}
 }
 
@@ -86,49 +90,51 @@ func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
 func BenchmarkMemoryComparison(b *testing.B) {
 	initBenchKeys()
 
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
 
-			b.ReportAllocs()
-			b.ResetTimer()
+				b.ReportAllocs()
+				b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
-				// Build both structures
-				zt := zfasttrie.Build(keys)
-				rl, err := NewRangeLocator(zt)
-				if err != nil {
-					b.Fatalf("Failed to build RangeLocator: %v", err)
+				for i := 0; i < b.N; i++ {
+					// Build both structures
+					zt := zfasttrie.Build(keys)
+					rl, err := NewRangeLocator(zt)
+					if err != nil {
+						b.Fatalf("Failed to build RangeLocator: %v", err)
+					}
+					lerl, err := NewLocalExactRangeLocator(keys)
+					if err != nil {
+						b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+					}
+
+					if rl == nil || lerl == nil {
+						b.Fatal("Failed to build structures")
+					}
+
+					// Calculate sizes
+					rlSize := rl.ByteSize()
+					lerlSize := lerl.ByteSize()
+
+					// Calculate average string length
+					totalLen := 0
+					for _, key := range keys {
+						totalLen += int(key.Size())
+					}
+					avgLen := float64(totalLen) / float64(len(keys))
+
+					// Report metrics
+					b.ReportMetric(float64(rlSize), "rl_total_bytes")
+					b.ReportMetric(float64(lerlSize), "lerl_total_bytes")
+					b.ReportMetric(float64(rlSize)*8/float64(count), "rl_bits_per_key")
+					b.ReportMetric(float64(lerlSize)*8/float64(count), "lerl_bits_per_key")
+					b.ReportMetric(avgLen, "avg_string_length")
+					b.ReportMetric(float64(lerlSize)/float64(rlSize), "lerl_vs_rl_ratio")
 				}
-				lerl, err := NewLocalExactRangeLocator(keys)
-				if err != nil {
-					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
-				}
-
-				if rl == nil || lerl == nil {
-					b.Fatal("Failed to build structures")
-				}
-
-				// Calculate sizes
-				rlSize := rl.ByteSize()
-				lerlSize := lerl.ByteSize()
-
-				// Calculate average string length
-				totalLen := 0
-				for _, key := range keys {
-					totalLen += int(key.Size())
-				}
-				avgLen := float64(totalLen) / float64(len(keys))
-
-				// Report metrics
-				b.ReportMetric(float64(rlSize), "rl_total_bytes")
-				b.ReportMetric(float64(lerlSize), "lerl_total_bytes")
-				b.ReportMetric(float64(rlSize)*8/float64(count), "rl_bits_per_key")
-				b.ReportMetric(float64(lerlSize)*8/float64(count), "lerl_bits_per_key")
-				b.ReportMetric(avgLen, "avg_string_length")
-				b.ReportMetric(float64(lerlSize)/float64(rlSize), "lerl_vs_rl_ratio")
-			}
-		})
+			})
+		}
 	}
 }
 
@@ -136,33 +142,35 @@ func BenchmarkMemoryComparison(b *testing.B) {
 func BenchmarkEmptyPrefixQuery(b *testing.B) {
 	initBenchKeys()
 
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
-			lerl, err := NewLocalExactRangeLocator(keys)
-			if err != nil {
-				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
-			}
-
-			if lerl == nil {
-				b.Fatal("Failed to build LocalExactRangeLocator")
-			}
-
-			emptyPrefix := bits.NewFromText("")
-
-			b.ReportAllocs()
-			b.ResetTimer()
-
-			for i := 0; i < b.N; i++ {
-				start, end, err := lerl.WeakPrefixSearch(emptyPrefix)
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+				lerl, err := NewLocalExactRangeLocator(keys)
 				if err != nil {
-					b.Fatalf("Empty prefix search failed: %v", err)
+					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
 				}
-				if start != 0 || end != len(keys) {
-					b.Fatalf("Expected [0, %d), got [%d, %d)", len(keys), start, end)
+
+				if lerl == nil {
+					b.Fatal("Failed to build LocalExactRangeLocator")
 				}
-			}
-		})
+
+				emptyPrefix := bits.NewFromText("")
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					start, end, err := lerl.WeakPrefixSearch(emptyPrefix)
+					if err != nil {
+						b.Fatalf("Empty prefix search failed: %v", err)
+					}
+					if start != 0 || end != len(keys) {
+						b.Fatalf("Expected [0, %d), got [%d, %d)", len(keys), start, end)
+					}
+				}
+			})
+		}
 	}
 }
 
@@ -170,46 +178,48 @@ func BenchmarkEmptyPrefixQuery(b *testing.B) {
 func BenchmarkPrefixLengthVariation(b *testing.B) {
 	initBenchKeys()
 
-	count := benchKeyCounts[3] // Use medium-sized dataset
-	keys := benchKeys[count]
-	lerl, err := NewLocalExactRangeLocator(keys)
-	if err != nil {
-		b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
-	}
+	for _, bitLen := range benchBitLengths {
+		count := benchKeyCounts[3] // Use medium-sized dataset
+		keys := benchKeys[bitLen][count]
+		lerl, err := NewLocalExactRangeLocator(keys)
+		if err != nil {
+			b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+		}
 
-	if lerl == nil {
-		b.Fatal("Failed to build LocalExactRangeLocator")
-	}
+		if lerl == nil {
+			b.Fatal("Failed to build LocalExactRangeLocator")
+		}
 
-	// Test different prefix lengths
-	prefixLengths := []int{1, 2, 4, 8, 12, 16}
+		// Test different prefix lengths
+		prefixLengths := []int{1, 2, 4, 8, 10, 12, 16, 20, 24, 32, 48}
 
-	for _, prefixLen := range prefixLengths {
-		b.Run(fmt.Sprintf("PrefixLen=%d", prefixLen), func(b *testing.B) {
-			// Generate prefixes of specific length
-			var queryPrefixes []bits.BitString
-			for _, key := range keys {
-				if int(key.Size()) > prefixLen {
-					prefix := key.Prefix(prefixLen)
-					queryPrefixes = append(queryPrefixes, prefix)
+		for _, prefixLen := range prefixLengths {
+			b.Run(fmt.Sprintf("KeySize=%d/PrefixLen=%d", bitLen, prefixLen), func(b *testing.B) {
+				// Generate prefixes of specific length
+				var queryPrefixes []bits.BitString
+				for _, key := range keys {
+					if int(key.Size()) > prefixLen {
+						prefix := key.Prefix(prefixLen)
+						queryPrefixes = append(queryPrefixes, prefix)
+					}
 				}
-			}
 
-			if len(queryPrefixes) == 0 {
-				b.Skip("No keys long enough for this prefix length")
-			}
-
-			b.ReportAllocs()
-			b.ResetTimer()
-
-			for i := 0; i < b.N; i++ {
-				prefix := queryPrefixes[i%len(queryPrefixes)]
-				_, _, err := lerl.WeakPrefixSearch(prefix)
-				if err != nil {
-					b.Fatalf("WeakPrefixSearch failed: %v", err)
+				if len(queryPrefixes) == 0 {
+					b.Skip("No keys long enough for this prefix length")
 				}
-			}
-		})
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					prefix := queryPrefixes[i%len(queryPrefixes)]
+					_, _, err := lerl.WeakPrefixSearch(prefix)
+					if err != nil {
+						b.Fatalf("WeakPrefixSearch failed: %v", err)
+					}
+				}
+			})
+		}
 	}
 }
 
