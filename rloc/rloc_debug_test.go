@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	debugTestRuns  = 1000 // Fewer runs for faster debugging
-	debugMaxKeys   = 256
+	debugTestRuns  = 10_000 // Fewer runs for faster debugging
+	debugMaxKeys   = 1024
 	debugMaxBitLen = 16
 )
 
@@ -43,55 +43,58 @@ func TestRangeLocator_CaptureMMPHFailures(t *testing.T) {
 	outputFile := "/tmp/mmph_failures.json"
 
 	for run := 0; run < debugTestRuns; run++ {
-		seed := time.Now().UnixNano() + int64(run)
-		keys := genUniqueBitStringsDebug(seed)
+		t.Run(fmt.Sprintf("Run %d", run), func(t *testing.T) {
 
-		// Use a deterministic MMPH seed for this test run
-		mmphSeed := uint64(seed) * 31337 // Derive from key seed
+			seed := time.Now().UnixNano() + int64(run)
+			keys := genUniqueBitStringsDebug(seed)
 
-		zt := zfasttrie.Build(keys)
-		_, err := NewRangeLocatorSeeded(zt, mmphSeed)
+			// Use a deterministic MMPH seed for this test run
+			mmphSeed := uint64(seed) * 31337 // Derive from key seed
 
-		if err != nil {
-			t.Logf("MMPH Build failed (seed: %d, mmphSeed: %d): %v", seed, mmphSeed, err)
+			zt := zfasttrie.Build(keys)
+			_, err := NewRangeLocatorSeeded(zt, mmphSeed)
 
-			// Immediately retry with THE SAME keys and mmphSeed to verify reproducibility
-			zt2 := zfasttrie.Build(keys)
-			_, err2 := NewRangeLocatorSeeded(zt2, mmphSeed)
+			if err != nil {
+				t.Logf("MMPH Build failed (seed: %d, mmphSeed: %d): %v", seed, mmphSeed, err)
 
-			if err2 == nil {
-				t.Errorf("INCONSISTENT FAILURE (seed: %d, mmphSeed: %d): Original build failed but retry succeeded! This should not happen with deterministic seeds.", seed, mmphSeed)
-				t.Logf("  Original error: %v", err)
-				t.Logf("  Retry error: nil (succeeded)")
-				t.Logf("  Retry succeeded - THIS IS A BUG in the determinism")
-				continue
+				// Immediately retry with THE SAME keys and mmphSeed to verify reproducibility
+				zt2 := zfasttrie.Build(keys)
+				_, err2 := NewRangeLocatorSeeded(zt2, mmphSeed)
+
+				if err2 == nil {
+					t.Errorf("INCONSISTENT FAILURE (seed: %d, mmphSeed: %d): Original build failed but retry succeeded! This should not happen with deterministic seeds.", seed, mmphSeed)
+					t.Logf("  Original error: %v", err)
+					t.Logf("  Retry error: nil (succeeded)")
+					t.Logf("  Retry succeeded - THIS IS A BUG in the determinism")
+					return
+				}
+
+				// Verify it's the same error
+				if err.Error() != err2.Error() {
+					t.Logf("WARNING (seed: %d, mmphSeed: %d): Different errors on retry", seed, mmphSeed)
+					t.Logf("  Original: %v", err)
+					t.Logf("  Retry: %v", err2)
+				}
+
+				// Serialize the keys for JSON storage
+				serializedKeys := keysToData(keys)
+
+				// Save the reproducible failure
+				record := MMPHFailureRecord{
+					Seed:             seed,
+					MMPHSeed:         mmphSeed,
+					Keys:             serializedKeys,
+					KeyCount:         len(keys),
+					MaxBitLength:     inferBitLength(keys),
+					ErrorMessage:     err.Error(),
+					TrieRebuildCount: -1, // Unknown without modifying MMPH error
+					Timestamp:        time.Now().Format(time.RFC3339),
+				}
+
+				failures = append(failures, record)
+				t.Logf("Reproducible failure confirmed and saved (seed: %d, mmphSeed: %d)", seed, mmphSeed)
 			}
-
-			// Verify it's the same error
-			if err.Error() != err2.Error() {
-				t.Logf("WARNING (seed: %d, mmphSeed: %d): Different errors on retry", seed, mmphSeed)
-				t.Logf("  Original: %v", err)
-				t.Logf("  Retry: %v", err2)
-			}
-
-			// Serialize the keys for JSON storage
-			serializedKeys := keysToData(keys)
-
-			// Save the reproducible failure
-			record := MMPHFailureRecord{
-				Seed:             seed,
-				MMPHSeed:         mmphSeed,
-				Keys:             serializedKeys,
-				KeyCount:         len(keys),
-				MaxBitLength:     inferBitLength(keys),
-				ErrorMessage:     err.Error(),
-				TrieRebuildCount: -1, // Unknown without modifying MMPH error
-				Timestamp:        time.Now().Format(time.RFC3339),
-			}
-
-			failures = append(failures, record)
-			t.Logf("Reproducible failure confirmed and saved (seed: %d, mmphSeed: %d)", seed, mmphSeed)
-		}
+		})
 	}
 
 	// Write failures to JSON file

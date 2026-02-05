@@ -299,7 +299,7 @@ func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle bits.BitString) {
 	delete(zt.handle2NodeMap, handle)
 }
 
-// ContainsPrefix checks if the string is a prefix of any entry in the trie.
+// ContainsPrefix checks if the string is a prefix of any entry in the Trie.
 func (zt *ZFastTrie[V]) ContainsPrefix(pattern string) bool {
 	return zt.containsPrefixBitString(bits.NewFromText(pattern))
 }

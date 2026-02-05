@@ -84,3 +84,13 @@ func NewFromBinary(text string) BitString {
 	}
 	return nil
 }
+
+func BugIfNotSortedOrHaveDuplicates(bss []BitString) {
+	i := 1
+	for i < len(bss) {
+		if bss[i-1].Compare(bss[i]) >= 0 {
+			errutil.Bug("BitStrings are not sorted")
+		}
+		i++
+	}
+}

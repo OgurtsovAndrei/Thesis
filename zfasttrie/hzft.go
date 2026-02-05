@@ -210,7 +210,7 @@ func (hzft *HZFastTrie[E]) String() string {
 	}
 
 	if hzft.trie != nil {
-		sb.WriteString("| Original trie:\n")
+		sb.WriteString("| Original Trie:\n")
 		sb.WriteString(strings.ReplaceAll(hzft.trie.String(), "\n", "\n  "))
 	}
 
@@ -239,7 +239,7 @@ func (hzft *HZFastTrie[E]) ByteSize() int {
 	// Size of rootId (uint64)
 	size += 8
 
-	// Size of debug trie pointer (always present in struct, but nil in production)
+	// Size of debug Trie pointer (always present in struct, but nil in production)
 	size += int(unsafe.Sizeof((*ZFastTrie[bool])(nil)))
 
 	return size

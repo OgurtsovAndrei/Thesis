@@ -106,7 +106,7 @@ func TestTrie_ReplayFromHistory(t *testing.T) {
 	t.Log("--- Final Replay State Validation ---")
 	for key := range groundTruth {
 		if !tree.Contains(key) {
-			t.Fatalf("Final replay check failed: key %q in ground truth but not in trie", key)
+			t.Fatalf("Final replay check failed: key %q in ground truth but not in Trie", key)
 		}
 	}
 	if int(tree.size) != len(groundTruth) {

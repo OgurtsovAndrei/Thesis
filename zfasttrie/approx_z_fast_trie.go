@@ -13,7 +13,7 @@ type UNumber interface {
 	~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
-// NodeData contains the packed data for a trie node.
+// NodeData contains the packed data for a Trie node.
 type NodeData[E UNumber, S UNumber, I UNumber] struct {
 	extentLen E // Length of the extent (prefix) represented by this node,  should be (log w)
 	// should be at ((log log n) + (log log w) - (log eps)) bits
@@ -37,20 +37,20 @@ type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
 	rootId I
 
 	// Debug field - only populated when saveOriginalTrie is true
-	trie *ZFastTrie[bool]
+	Trie *ZFastTrie[bool]
 }
 
-// NewApproxZFastTrie initializes a compact trie with delimiter index information.
-// This is used for bucketing where we need to map trie nodes to bucket indices.
-// saveOriginalTrie controls whether to keep debug information (original trie and node references).
+// NewApproxZFastTrie initializes a compact Trie with delimiter index information.
+// This is used for bucketing where we need to map Trie nodes to bucket indices.
+// saveOriginalTrie controls whether to keep debug information (original Trie and node references).
 // Uses a random seed from the global rand package.
 func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
 	return NewApproxZFastTrieWithSeed[E, S, I](keys, saveOriginalTrie, rand.Uint64())
 }
 
-// NewApproxZFastTrieWithSeed initializes a compact trie with delimiter index information using a specified seed.
-// This is used for bucketing where we need to map trie nodes to bucket indices.
-// saveOriginalTrie controls whether to keep debug information (original trie and node references).
+// NewApproxZFastTrieWithSeed initializes a compact Trie with delimiter index information using a specified seed.
+// This is used for bucketing where we need to map Trie nodes to bucket indices.
+// saveOriginalTrie controls whether to keep debug information (original Trie and node references).
 // seed is the value used for computing PSig signatures, allowing deterministic construction.
 func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
 	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
@@ -59,7 +59,7 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 	if trie == nil || trie.root == nil {
 		result := &ApproxZFastTrie[E, S, I]{seed: seed}
 		if saveOriginalTrie {
-			result.trie = trie
+			result.Trie = trie
 		}
 		return result, nil
 	}
@@ -76,7 +76,7 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 	if len(keysForMPH) == 0 {
 		result := &ApproxZFastTrie[E, S, I]{seed: seed}
 		if saveOriginalTrie {
-			result.trie = trie
+			result.Trie = trie
 		}
 		return result, nil
 	}
@@ -111,8 +111,7 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 		minChild := I(minChildIdx)
 		errutil.BugOn(uint64(minChild) != minChildIdx, "Data loss on minChild index")
 
-		var minGreaterChild = I(idx)
-		errutil.BugOn(uint64(minGreaterChild) != idx, "Data loss on minChild index")
+		var minGreaterChild = maxDelimiterIndex
 		if node.rightChild != nil {
 			mostLeft := node.rightChild
 			// Find the leftmost node in the right subtree
@@ -138,9 +137,6 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 		if delimIdx, exists := keyToDelimiterIdx[node.extent]; exists {
 			delimiterIdx = I(delimIdx)
 		}
-		//fmt.Println("keyToDelimiterIdx: ", strings.Join(utils.MapEntries(keyToDelimiterIdx, func(t bits.BitString, v int) string {
-		//	return t.PrettyString() + ": " + fmt.Sprint(v)
-		//}), "\t"))
 
 		// Set rightChild index
 		var rightChildIdx I = maxDelimiterIndex // default: no right child
@@ -155,7 +151,7 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 		nodeData := NodeData[E, S, I]{
 			extentLen:       extentLength,
 			PSig:            sig,
-			parent:          I(idx), // will be set correctly in the next loop
+			parent:          maxDelimiterIndex, // will be set correctly in the next loop
 			minChild:        minChild,
 			minGreaterChild: minGreaterChild,
 			rightChild:      rightChildIdx,
@@ -191,7 +187,7 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 		errutil.Bug("Root is empty")
 	} else {
 		rootIdx = I(rootQuery - 1)
-		setParentRecursive(trie.root, rootIdx)
+		setParentRecursive(trie.root, maxDelimiterIndex)
 	}
 
 	result := &ApproxZFastTrie[E, S, I]{
@@ -201,7 +197,7 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 		rootId: rootIdx,
 	}
 	if saveOriginalTrie {
-		result.trie = trie
+		result.Trie = trie
 	}
 	return result, nil
 }
@@ -241,28 +237,65 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 	return result
 }
 
-// LowerBound returns 4 candidates for being lower-bound:
-// 1. minChild of current node
-// 2. minGreaterChild of current node
-// 3. minGreaterChild of parent node
-// 4. rightChild of parent node
 func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
+	// HERE WE HAVE SOME MAGIC
+	// todo: !!! DOC is REALLY REQUIRED !!!
+
 	node := azft.GetExistingPrefix(pattern)
 	if node == nil {
 		return nil, nil, nil, nil, nil, nil
 	}
-	parentId := node.parent
-	parentNode := &azft.data[parentId]
-	cand4 := (*NodeData[E, S, I])(nil)
-	if parentNode.rightChild != I(^I(0)) {
-		cand4 = &azft.data[parentNode.rightChild]
+
+	parentNode := (*NodeData[E, S, I])(nil)
+	if node.parent != I(^I(0)) {
+		parentNode = &azft.data[node.parent]
+	}
+
+	cand2 := (*NodeData[E, S, I])(nil)
+	if node.minGreaterChild != I(^I(0)) {
+		cand2 = &azft.data[node.minGreaterChild]
 	}
 	cand5 := (*NodeData[E, S, I])(nil)
 	if node.rightChild != I(^I(0)) {
 		cand5 = &azft.data[node.rightChild]
 	}
+
+	// work with parents
+	cand3 := azft.getMinGreaterFromParent(parentNode)
+	cand4 := azft.getGreaterFromParent(parentNode)
+
 	cand6 := (*NodeData[E, S, I])(node)
-	return &azft.data[node.minChild], &azft.data[node.minGreaterChild], &azft.data[parentNode.minGreaterChild], cand4, cand5, cand6
+	return &azft.data[node.minChild], cand2, cand3, cand4, cand5, cand6
+}
+
+func (azft *ApproxZFastTrie[E, S, I]) getMinGreaterFromParent(parentNode *NodeData[E, S, I]) *NodeData[E, S, I] {
+	if parentNode == nil {
+		return nil
+	}
+	for parentNode.minGreaterChild == I(^I(0)) && parentNode.parent != I(^I(0)) {
+		parentId := parentNode.parent
+		parentNode = &azft.data[parentId]
+	}
+	cand := (*NodeData[E, S, I])(nil)
+	if parentNode.minGreaterChild != I(^I(0)) {
+		cand = &azft.data[parentNode.minGreaterChild]
+	}
+	return cand
+}
+
+func (azft *ApproxZFastTrie[E, S, I]) getGreaterFromParent(parentNode *NodeData[E, S, I]) *NodeData[E, S, I] {
+	if parentNode == nil {
+		return nil
+	}
+	for parentNode.rightChild == I(^I(0)) && parentNode.parent != I(^I(0)) {
+		parentId := parentNode.parent
+		parentNode = &azft.data[parentId]
+	}
+	cand4 := (*NodeData[E, S, I])(nil)
+	if parentNode.rightChild != I(^I(0)) {
+		cand4 = &azft.data[parentNode.rightChild]
+	}
+	return cand4
 }
 
 func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *NodeData[E, S, I] {
@@ -276,7 +309,7 @@ func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *Nod
 }
 
 // ByteSize returns the exact size of the ApproxZFastTrie in bytes.
-// Excludes the debug trie and originalNode pointers when not in debug mode.
+// Excludes the debug Trie and originalNode pointers when not in debug mode.
 func (azft *ApproxZFastTrie[E, S, I]) ByteSize() int {
 	if azft == nil {
 		return 0
@@ -302,7 +335,7 @@ func (azft *ApproxZFastTrie[E, S, I]) ByteSize() int {
 	// Size of seed (uint64)
 	size += 8
 
-	// Size of debug trie pointer (always present in struct, but nil in production)
+	// Size of debug Trie pointer (always present in struct, but nil in production)
 	size += int(unsafe.Sizeof((*ZFastTrie[bool])(nil)))
 
 	return size

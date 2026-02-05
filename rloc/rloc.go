@@ -2,6 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
+	"Thesis/errutil"
 	bucket "Thesis/mmph/bucket_with_approx_trie"
 	"Thesis/zfasttrie"
 	"fmt"
@@ -53,9 +54,7 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*Ran
 	it := zfasttrie.NewIterator(zt)
 	for it.Next() {
 		node := it.Node()
-		if node == nil {
-			continue
-		}
+		errutil.BugOn(node == nil, "node should not be nil")
 
 		extent := node.Extent
 
@@ -96,6 +95,7 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*Ran
 		bv.PushBack(item.isLeaf)
 		keysForMMPH[i] = item.bs
 	}
+	bits.BugIfNotSortedOrHaveDuplicates(keysForMMPH)
 
 	// Build MMPH - data is already sorted in TrieCompare order
 	// Type parameters: E=uint16 (extent length), S=uint16 (signature), I=uint16 (delimiter index)
