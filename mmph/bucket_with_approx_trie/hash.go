@@ -163,6 +163,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 
 // validateAllKeys checks that the trie can correctly handle all input keys
 // Uses two-pointer approach since both keys and buckets are sorted
+// Reports statistics on which candidates match at the end
 func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitString) bool {
 	if len(allKeys) == 0 || len(mh.buckets) == 0 {
 		return true
@@ -170,6 +171,12 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 
 	bucketIdx := 0
 	maxDelimiterIndex := I(^I(0))
+
+	// Statistics tracking
+	cand1Matches := 0
+	cand2Matches := 0
+	cand3Matches := 0
+	cand4Matches := 0
 
 	for _, key := range allKeys {
 		// Find the correct bucket using two-pointer approach
@@ -195,8 +202,10 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		// Check if any of the candidates can lead us to the correct bucket
 		foundCorrectBucket := false
 
-		candidates := []*zfasttrie.NodeData[E, S, I]{cand1, cand2, cand3}
-		for _, candidate := range candidates {
+		candidates := []*zfasttrie.NodeData[E, S, I]{cand1, cand2, cand3, cand4}
+		matchCounts := []*int{&cand1Matches, &cand2Matches, &cand3Matches, &cand4Matches}
+
+		for i, candidate := range candidates {
 			if candidate == nil {
 				continue
 			}
@@ -206,7 +215,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 				candidateBucketIdx := int(candidate.Rank)
 				if candidateBucketIdx == expectedBucket {
 					foundCorrectBucket = true
-					break
+					*matchCounts[i]++
 				}
 			}
 		}
@@ -214,9 +223,29 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		// If trie failed to provide any candidate that leads to correct bucket,
 		// this is a false negative
 		if !foundCorrectBucket {
+			fmt.Println(mh.delimiterTrie.Trie.String())
+			fmt.Printf("Failed to find bucket for key %s\n", key.PrettyString())
+			fmt.Println(utils.Map(mh.buckets, func(b *Bucket) string {
+				if b == nil {
+					return "nil"
+				}
+				return b.delimiter.PrettyString()
+			}))
+			_, _, _, _ = mh.delimiterTrie.LowerBound(key)
+			fmt.Printf("Candidate match statistics:\n")
+			fmt.Printf("cand1 - match %d times\n", cand1Matches)
+			fmt.Printf("cand2 - match %d times\n", cand2Matches)
+			fmt.Printf("cand3 - match %d times\n", cand3Matches)
+			fmt.Printf("cand4 - match %d times\n", cand4Matches)
 			return false
 		}
 	}
+
+	fmt.Printf("Validation successful. Candidate match statistics:\n")
+	fmt.Printf("cand1 - match %d times\n", cand1Matches)
+	fmt.Printf("cand2 - match %d times\n", cand2Matches)
+	fmt.Printf("cand3 - match %d times\n", cand3Matches)
+	fmt.Printf("cand4 - match %d times\n", cand4Matches)
 
 	return true
 }
