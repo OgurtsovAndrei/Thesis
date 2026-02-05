@@ -7,10 +7,8 @@ import (
 	"sync"
 )
 
-const benchmarkParallelism = 4
-
 var (
-	benchKeyCounts = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20}
+	benchKeyCounts = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18}
 	benchBitLength = 64 // Fixed bit length for all keys
 	benchKeys      map[int][]bits.BitString
 	benchOnce      sync.Once

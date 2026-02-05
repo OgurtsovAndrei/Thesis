@@ -15,7 +15,6 @@ func BenchmarkRangeLocatorBuild(b *testing.B) {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
 			keys := benchKeys[count]
 
-			b.SetParallelism(benchmarkParallelism)
 			b.ReportAllocs()
 			b.ResetTimer()
 
@@ -70,7 +69,6 @@ func BenchmarkRangeLocatorQuery(b *testing.B) {
 				b.Skip("No trie nodes found")
 			}
 
-			b.SetParallelism(benchmarkParallelism)
 			b.ReportAllocs()
 			b.ResetTimer()
 

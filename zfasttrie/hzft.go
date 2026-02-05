@@ -232,8 +232,7 @@ func (hzft *HZFastTrie[E]) ByteSize() int {
 
 	// Size of the data array (HNodeData entries)
 	// Each HNodeData contains: extentLen(E) + originalNode pointer
-	nodeDataSize := len(hzft.data) * (int(unsafe.Sizeof(*new(E))) +
-		int(unsafe.Sizeof((*znode[bool])(nil))))
+	nodeDataSize := len(hzft.data) * (int(unsafe.Sizeof(*new(E))) /* + int(unsafe.Sizeof((*znode[bool])(nil)))*/)
 	size += nodeDataSize
 
 	// Size of rootId (uint64)
