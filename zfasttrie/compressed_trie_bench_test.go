@@ -1,4 +1,4 @@
-// Benchmark comparison: ZFastTrie vs Compressed Trie (siongui/go-succinct-data-structure-trie)
+// Benchmark comparison: ZFastTrie vs Compressed Trie (siongui/go-succinct-data-structure-Trie)
 //
 // Results (Apple M4):
 // ┌─────────────┬─────────────────┬──────────────────┬─────────────────┐
@@ -28,7 +28,7 @@ import (
 	trie "github.com/siongui/go-succinct-data-structure-trie/reference"
 )
 
-// generateTextKeys generates random text keys for trie benchmarking
+// generateTextKeys generates random text keys for Trie benchmarking
 func generateTextKeys(n int) []string {
 	r := rand.New(rand.NewSource(42))
 	keys := make([]string, n)
@@ -65,20 +65,20 @@ func setupZFastTrieText(b *testing.B, n int) (*ZFastTrie[bool], []string) {
 	return tree, keys
 }
 
-// setupCompressedTrie sets up the library's compressed trie
+// setupCompressedTrie sets up the library's compressed Trie
 func setupCompressedTrie(b *testing.B, n int) (*trie.FrozenTrie, []string) {
 	b.Helper()
 	b.StopTimer()
 	keys := generateTextKeys(n)
 
-	// Build the trie
+	// Build the Trie
 	t := &trie.Trie{}
 	t.Init()
 	for _, key := range keys {
 		t.Insert(key)
 	}
 
-	// Encode and freeze the trie
+	// Encode and freeze the Trie
 	encoded := t.Encode()
 	rd := trie.CreateRankDirectory(encoded, t.GetNodeCount()*2+1, trie.L1, trie.L2)
 	frozenTrie := &trie.FrozenTrie{}
@@ -248,7 +248,7 @@ func BenchmarkZFastTrie_PrefixSearch_1K(b *testing.B) {
 	}
 }
 
-// Note: The library's compressed trie doesn't appear to have prefix search,
+// Note: The library's compressed Trie doesn't appear to have prefix search,
 // so we'll focus on exact lookup comparisons
 
 // --- Memory Usage Benchmarks ---

@@ -39,10 +39,10 @@ func TestIterator(t *testing.T) {
 	t.Parallel()
 	trie := NewZFastTrie[bool](false)
 
-	// Test empty trie
+	// Test empty Trie
 	it := NewIterator(trie)
 	if it.Next() {
-		t.Error("Expected no next element in empty trie")
+		t.Error("Expected no next element in empty Trie")
 	}
 
 	// Add some elements
@@ -63,7 +63,7 @@ func TestIterator(t *testing.T) {
 
 	t.Logf("Visited nodes: %v", visited)
 
-	// Should visit all nodes in the trie
+	// Should visit all nodes in the Trie
 	if len(visited) == 0 {
 		t.Error("Expected to visit some nodes")
 	}

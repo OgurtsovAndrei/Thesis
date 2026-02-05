@@ -65,18 +65,18 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 		require.Equal(t, expected, actual, "Order mismatch at position %d", i)
 	}
 
-	// Test Z-fast trie construction with mixed-size strings
+	// Test Z-fast Trie construction with mixed-size strings
 	azft, err := NewApproxZFastTrie[uint16, uint8, uint8](sortedKeys, true)
-	require.NoError(t, err, "failed to build trie with mixed-size strings")
-	require.NotNil(t, azft, "trie should not be nil")
+	require.NoError(t, err, "failed to build Trie with mixed-size strings")
+	require.NotNil(t, azft, "Trie should not be nil")
 
-	// Verify the trie can find all keys
+	// Verify the Trie can find all keys
 	for _, key := range sortedKeys {
 		node := azft.GetExistingPrefix(key)
 		require.NotNil(t, node, "should find prefix for key %s", key.PrettyString())
 
 		// The node should have an extent that is a prefix of our key
-		require.True(t, key.HasPrefix(azft.trie.getNode(key.Prefix(int(node.extentLen))).extent),
+		require.True(t, key.HasPrefix(azft.Trie.getNode(key.Prefix(int(node.extentLen))).extent),
 			"found extent should be a prefix of key %s", key.PrettyString())
 	}
 

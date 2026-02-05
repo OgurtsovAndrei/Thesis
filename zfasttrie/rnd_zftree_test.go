@@ -143,7 +143,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 
 		for _, key := range insertedKeys {
 			if !tree.ContainsBitString(key) {
-				saveHistoryAndFail(t, seed, history, "Final check failed: key %s in ground truth but not in trie", key.PrettyString())
+				saveHistoryAndFail(t, seed, history, "Final check failed: key %s in ground truth but not in Trie", key.PrettyString())
 			}
 		}
 

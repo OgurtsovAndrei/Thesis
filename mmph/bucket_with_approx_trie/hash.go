@@ -4,7 +4,6 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	"Thesis/mmph/go-boomphf"
-	"Thesis/utils"
 	"Thesis/zfasttrie"
 	"fmt"
 	"math"
@@ -226,33 +225,9 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		// If trie failed to provide any candidate that leads to correct bucket,
 		// this is a false negative
 		if !foundCorrectBucket {
-			fmt.Println(mh.delimiterTrie.Trie.String())
-			fmt.Printf("Failed to find bucket for key %s\n", key.PrettyString())
-			fmt.Println(utils.Map(mh.buckets, func(b *Bucket) string {
-				if b == nil {
-					return "nil"
-				}
-				return b.delimiter.PrettyString()
-			}))
-			_, _, _, _, _, _ = mh.delimiterTrie.LowerBound(key)
-			//fmt.Printf("Candidate match statistics:\n")
-			//fmt.Printf("cand1 - match %d times\n", cand1Matches)
-			//fmt.Printf("cand2 - match %d times\n", cand2Matches)
-			//fmt.Printf("cand3 - match %d times\n", cand3Matches)
-			//fmt.Printf("cand4 - match %d times\n", cand4Matches)
-			//fmt.Printf("cand5 - match %d times\n", cand5Matches)
-			//fmt.Printf("cand6 - match %d times\n", cand6Matches)
 			return false
 		}
 	}
-
-	//fmt.Printf("Validation successful. Candidate match statistics:\n")
-	//fmt.Printf("cand1 - match %d times\n", cand1Matches)
-	//fmt.Printf("cand2 - match %d times\n", cand2Matches)
-	//fmt.Printf("cand3 - match %d times\n", cand3Matches)
-	//fmt.Printf("cand4 - match %d times\n", cand4Matches)
-	//fmt.Printf("cand5 - match %d times\n", cand5Matches)
-	//fmt.Printf("cand6 - match %d times\n", cand6Matches)
 
 	return true
 }
