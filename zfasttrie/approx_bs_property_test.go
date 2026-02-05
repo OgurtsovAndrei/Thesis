@@ -144,11 +144,11 @@ func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
 				continue
 			}
 
-			c1, c2, c3, c4 := azft.LowerBound(pattern)
+			c1, c2, c3, c4, c5, c6 := azft.LowerBound(pattern)
 
-			if c1 == nil || c2 == nil || c3 == nil || c4 == nil ||
-				(!c1.originalNode.extent.Equal(expectedKey) && !c2.originalNode.extent.Equal(expectedKey) && !c3.originalNode.extent.Equal(expectedKey) && !c4.originalNode.extent.Equal(expectedKey)) {
-				c1, c2, c3, c4 = azft.LowerBound(pattern)
+			if c1 == nil || c2 == nil || c3 == nil || c4 == nil || c5 == nil || c6 == nil ||
+				(!c1.originalNode.extent.Equal(expectedKey) && !c2.originalNode.extent.Equal(expectedKey) && !c3.originalNode.extent.Equal(expectedKey) && !c4.originalNode.extent.Equal(expectedKey) && !c5.originalNode.extent.Equal(expectedKey) && !c6.originalNode.extent.Equal(expectedKey)) {
+				c1, c2, c3, c4, c5, c6 = azft.LowerBound(pattern)
 				fpCount++
 			}
 		}
@@ -189,10 +189,10 @@ func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
 				}
 
 				totalChecks++
-				c1, c2, c3, c4 := azft.LowerBound(prefix)
+				c1, c2, c3, c4, c5, c6 := azft.LowerBound(prefix)
 
 				if !found {
-					if c1 != nil || c2 != nil || c3 != nil || c4 != nil {
+					if c1 != nil || c2 != nil || c3 != nil || c4 != nil || c5 != nil || c6 != nil {
 						errCount++
 						errRun = 1
 					}
@@ -202,7 +202,9 @@ func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
 				if (c1 == nil || !c1.originalNode.extent.Equal(expectedKey)) &&
 					(c2 == nil || !c2.originalNode.extent.Equal(expectedKey)) &&
 					(c3 == nil || !c3.originalNode.extent.Equal(expectedKey)) &&
-					(c4 == nil || !c4.originalNode.extent.Equal(expectedKey)) {
+					(c4 == nil || !c4.originalNode.extent.Equal(expectedKey)) &&
+					(c5 == nil || !c5.originalNode.extent.Equal(expectedKey)) &&
+					(c6 == nil || !c6.originalNode.extent.Equal(expectedKey)) {
 					errCount++
 					errRun = 1
 				}

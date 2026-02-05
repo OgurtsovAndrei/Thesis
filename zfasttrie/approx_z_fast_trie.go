@@ -21,6 +21,7 @@ type NodeData[E UNumber, S UNumber, I UNumber] struct {
 	parent          I // Index of the first ancestor where this node is in the left subtree
 	minChild        I
 	minGreaterChild I
+	rightChild      I
 	Rank            I // Index of this key in the original array (or max value if not a delimiter)
 
 	// Debug field - only populated when saveOriginalTrie is true
@@ -137,6 +138,19 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 		if delimIdx, exists := keyToDelimiterIdx[node.extent]; exists {
 			delimiterIdx = I(delimIdx)
 		}
+		//fmt.Println("keyToDelimiterIdx: ", strings.Join(utils.MapEntries(keyToDelimiterIdx, func(t bits.BitString, v int) string {
+		//	return t.PrettyString() + ": " + fmt.Sprint(v)
+		//}), "\t"))
+
+		// Set rightChild index
+		var rightChildIdx I = maxDelimiterIndex // default: no right child
+		if node.rightChild != nil {
+			rcHandle := node.rightChild.handle()
+			rcIdx := mph.Query(rcHandle) - 1
+			errutil.BugOn(rcIdx >= uint64(len(data)), "Out of bounds")
+			rightChildIdx = I(rcIdx)
+			errutil.BugOn(uint64(rightChildIdx) != rcIdx, "Data loss on rightChild index")
+		}
 
 		nodeData := NodeData[E, S, I]{
 			extentLen:       extentLength,
@@ -232,10 +246,10 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 // 2. minGreaterChild of current node
 // 3. minGreaterChild of parent node
 // 4. rightChild of parent node
-func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
+func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
 	node := azft.GetExistingPrefix(pattern)
 	if node == nil {
-		return nil, nil, nil, nil
+		return nil, nil, nil, nil, nil, nil
 	}
 	parentId := node.parent
 	parentNode := &azft.data[parentId]
@@ -243,7 +257,12 @@ func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeD
 	if parentNode.rightChild != I(^I(0)) {
 		cand4 = &azft.data[parentNode.rightChild]
 	}
-	return &azft.data[node.minChild], &azft.data[node.minGreaterChild], &azft.data[parentNode.minGreaterChild], cand4
+	cand5 := (*NodeData[E, S, I])(nil)
+	if node.rightChild != I(^I(0)) {
+		cand5 = &azft.data[node.rightChild]
+	}
+	cand6 := (*NodeData[E, S, I])(node)
+	return &azft.data[node.minChild], &azft.data[node.minGreaterChild], &azft.data[parentNode.minGreaterChild], cand4, cand5, cand6
 }
 
 func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *NodeData[E, S, I] {

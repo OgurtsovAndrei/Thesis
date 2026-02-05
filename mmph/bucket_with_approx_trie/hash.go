@@ -4,6 +4,7 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	"Thesis/mmph/go-boomphf"
+	"Thesis/utils"
 	"Thesis/zfasttrie"
 	"fmt"
 	"math"
@@ -147,7 +148,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 
 		// Build trie with current attempt using delimiter indices and deterministic seed
 		var err error
-		mh.delimiterTrie, err = zfasttrie.NewApproxZFastTrieWithSeed[E, S, I](delimiters, false, trySeed)
+		mh.delimiterTrie, err = zfasttrie.NewApproxZFastTrieWithSeed[E, S, I](delimiters, true, trySeed)
 		if err != nil {
 			return err
 		}
@@ -177,6 +178,8 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 	cand2Matches := 0
 	cand3Matches := 0
 	cand4Matches := 0
+	cand5Matches := 0
+	cand6Matches := 0
 
 	for _, key := range allKeys {
 		// Find the correct bucket using two-pointer approach
@@ -197,13 +200,13 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		expectedBucket := bucketIdx
 
 		// Test if trie can find this bucket using LowerBound
-		cand1, cand2, cand3, cand4 := mh.delimiterTrie.LowerBound(key)
+		cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(key)
 
 		// Check if any of the candidates can lead us to the correct bucket
 		foundCorrectBucket := false
 
-		candidates := []*zfasttrie.NodeData[E, S, I]{cand1, cand2, cand3, cand4}
-		matchCounts := []*int{&cand1Matches, &cand2Matches, &cand3Matches, &cand4Matches}
+		candidates := []*zfasttrie.NodeData[E, S, I]{cand1, cand2, cand3, cand4, cand5, cand6}
+		matchCounts := []*int{&cand1Matches, &cand2Matches, &cand3Matches, &cand4Matches, &cand5Matches, &cand6Matches}
 
 		for i, candidate := range candidates {
 			if candidate == nil {
@@ -231,21 +234,25 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 				}
 				return b.delimiter.PrettyString()
 			}))
-			_, _, _, _ = mh.delimiterTrie.LowerBound(key)
-			fmt.Printf("Candidate match statistics:\n")
-			fmt.Printf("cand1 - match %d times\n", cand1Matches)
-			fmt.Printf("cand2 - match %d times\n", cand2Matches)
-			fmt.Printf("cand3 - match %d times\n", cand3Matches)
-			fmt.Printf("cand4 - match %d times\n", cand4Matches)
+			_, _, _, _, _, _ = mh.delimiterTrie.LowerBound(key)
+			//fmt.Printf("Candidate match statistics:\n")
+			//fmt.Printf("cand1 - match %d times\n", cand1Matches)
+			//fmt.Printf("cand2 - match %d times\n", cand2Matches)
+			//fmt.Printf("cand3 - match %d times\n", cand3Matches)
+			//fmt.Printf("cand4 - match %d times\n", cand4Matches)
+			//fmt.Printf("cand5 - match %d times\n", cand5Matches)
+			//fmt.Printf("cand6 - match %d times\n", cand6Matches)
 			return false
 		}
 	}
 
-	fmt.Printf("Validation successful. Candidate match statistics:\n")
-	fmt.Printf("cand1 - match %d times\n", cand1Matches)
-	fmt.Printf("cand2 - match %d times\n", cand2Matches)
-	fmt.Printf("cand3 - match %d times\n", cand3Matches)
-	fmt.Printf("cand4 - match %d times\n", cand4Matches)
+	//fmt.Printf("Validation successful. Candidate match statistics:\n")
+	//fmt.Printf("cand1 - match %d times\n", cand1Matches)
+	//fmt.Printf("cand2 - match %d times\n", cand2Matches)
+	//fmt.Printf("cand3 - match %d times\n", cand3Matches)
+	//fmt.Printf("cand4 - match %d times\n", cand4Matches)
+	//fmt.Printf("cand5 - match %d times\n", cand5Matches)
+	//fmt.Printf("cand6 - match %d times\n", cand6Matches)
 
 	return true
 }
@@ -260,7 +267,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 
 	// Use the approximate z-fast trie to get candidates for the bucket
 	// This implements the relative ranking approach from Section 4.2
-	cand1, cand2, cand3, cand4 := mh.delimiterTrie.LowerBound(key)
+	cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(key)
 
 	// Try candidates to find the correct bucket using O(1) delimiterIndex lookup
 	bucketIdx := -1
@@ -297,7 +304,11 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 	if !tryCandidate(cand1) {
 		if !tryCandidate(cand2) {
 			if !tryCandidate(cand3) {
-				tryCandidate(cand4)
+				if !tryCandidate(cand4) {
+					if !tryCandidate(cand5) {
+						tryCandidate(cand6)
+					}
+				}
 			}
 		}
 	}
