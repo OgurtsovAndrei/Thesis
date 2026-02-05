@@ -11,14 +11,43 @@ import (
 func BenchmarkRangeLocatorBuild(b *testing.B) {
 	initBenchKeys()
 
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
 
-			b.ReportAllocs()
-			b.ResetTimer()
+				b.ReportAllocs()
+				b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+				for i := 0; i < b.N; i++ {
+					zt := zfasttrie.Build(keys)
+					rl, err := NewRangeLocator(zt)
+					if err != nil {
+						b.Fatalf("NewRangeLocator failed: %v", err)
+					}
+
+					if rl == nil {
+						b.Fatal("Failed to build RangeLocator")
+					}
+
+					// Report memory metrics
+					size := rl.ByteSize()
+					b.ReportMetric(float64(size), "total_bytes")
+					b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
+				}
+			})
+		}
+	}
+}
+
+// Benchmark RangeLocator query performance
+func BenchmarkRangeLocatorQuery(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
 				zt := zfasttrie.Build(keys)
 				rl, err := NewRangeLocator(zt)
 				if err != nil {
@@ -29,56 +58,31 @@ func BenchmarkRangeLocatorBuild(b *testing.B) {
 					b.Fatal("Failed to build RangeLocator")
 				}
 
-				// Report memory metrics
-				size := rl.ByteSize()
-				b.ReportMetric(float64(size), "total_bytes")
-				b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
-			}
-		})
-	}
-}
-
-// Benchmark RangeLocator query performance
-func BenchmarkRangeLocatorQuery(b *testing.B) {
-	initBenchKeys()
-
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
-			zt := zfasttrie.Build(keys)
-			rl, err := NewRangeLocator(zt)
-			if err != nil {
-				b.Fatalf("NewRangeLocator failed: %v", err)
-			}
-
-			if rl == nil {
-				b.Fatal("Failed to build RangeLocator")
-			}
-
-			// Collect node extents from the trie
-			var nodeExtents []bits.BitString
-			it := zfasttrie.NewIterator(zt)
-			for it.Next() {
-				node := it.Node()
-				if node != nil {
-					nodeExtents = append(nodeExtents, node.Extent)
+				// Collect node extents from the trie
+				var nodeExtents []bits.BitString
+				it := zfasttrie.NewIterator(zt)
+				for it.Next() {
+					node := it.Node()
+					if node != nil {
+						nodeExtents = append(nodeExtents, node.Extent)
+					}
 				}
-			}
 
-			if len(nodeExtents) == 0 {
-				b.Skip("No trie nodes found")
-			}
-
-			b.ReportAllocs()
-			b.ResetTimer()
-
-			for i := 0; i < b.N; i++ {
-				extent := nodeExtents[i%len(nodeExtents)]
-				_, _, err := rl.Query(extent)
-				if err != nil {
-					b.Fatalf("Query failed: %v", err)
+				if len(nodeExtents) == 0 {
+					b.Skip("No trie nodes found")
 				}
-			}
-		})
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					extent := nodeExtents[i%len(nodeExtents)]
+					_, _, err := rl.Query(extent)
+					if err != nil {
+						b.Fatalf("Query failed: %v", err)
+					}
+				}
+			})
+		}
 	}
 }
