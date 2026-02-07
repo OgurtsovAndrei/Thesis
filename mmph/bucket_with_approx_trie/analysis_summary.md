@@ -1,5 +1,15 @@
 # PSig / Memory Study Summary
 
+## Inputs
+- `mmph/bucket_with_approx_trie/study/data/grid_main_v2.csv`
+- `mmph/bucket_with_approx_trie/study/data/grid_focus_v2.csv`
+- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s16.csv`
+- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s8.csv`
+- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s32.csv`
+- `mmph/bucket_with_approx_trie/study/data/grid_focus_big_s32.csv`
+- `mmph/bucket_with_approx_trie/study/data/grid_focus_small_s8.csv`
+- `/Users/andrei.ogurtsov/Thesis/mmph/bucket_with_approx_trie/study/memory_bench_v2.txt`
+
 ## Main Findings
 - On `grid_main_v2` (144 scenarios, 64 trials each): mean success by S is S=8: 0.166, S=16: 0.893, S=32: 1.000.
 - `S=32` is fully stable in this grid (all scenarios succeeded in all trials); S=8 fails for most medium/large settings.
@@ -7,11 +17,11 @@
 - This confirms that theorem-based `S` from per-query bound (`epsilon_query = m/n`) is necessary but not sufficient for high probability of full-structure build success.
 
 ## Plots
-- [S=8 empirical](plots/s8_success_vs_n.svg), [S=8 theory](plots/s8_success_vs_n_theory.svg), [S=8 overlay](plots/s8_success_vs_n_overlay.svg)
-- [S=16 empirical](plots/s16_success_vs_n.svg), [S=16 theory](plots/s16_success_vs_n_theory.svg), [S=16 overlay](plots/s16_success_vs_n_overlay.svg)
-- [S=32 empirical](plots/s32_success_vs_n.svg), [S=32 theory](plots/s32_success_vs_n_theory.svg), [S=32 overlay](plots/s32_success_vs_n_overlay.svg)
-- [Grid size report (bpk vs n)](plots/grid_size_report_bpk_vs_n.svg)
-- [Memory bits/key at 32768 keys](plots/memory_bits_per_key_keys32768.svg)
+- [S=8 empirical](study/plots/s8_success_vs_n.svg), [S=8 theory](study/plots/s8_success_vs_n_theory.svg), [S=8 overlay](study/plots/s8_success_vs_n_overlay.svg)
+- [S=16 empirical](study/plots/s16_success_vs_n.svg), [S=16 theory](study/plots/s16_success_vs_n_theory.svg), [S=16 overlay](study/plots/s16_success_vs_n_overlay.svg)
+- [S=32 empirical](study/plots/s32_success_vs_n.svg), [S=32 theory](study/plots/s32_success_vs_n_theory.svg), [S=32 overlay](study/plots/s32_success_vs_n_overlay.svg)
+- [Grid size report (bpk vs n)](study/plots/grid_size_report_bpk_vs_n.svg)
+- [Memory bits/key at 32768 keys](study/plots/memory_bits_per_key_keys32768.svg)
 
 ## Detailed Theory: how build-success probability was computed
 - References used: `papers/MMPH/Definitions-and-Tools.md`, `papers/MMPH/Section-3-Bucketing.md`, `papers/MMPH/Section-4-Relative-Ranking.md` (Theorem 4.1), `papers/MMPH/Section-5-Relative-Trie.md` (Theorem 5.2).
@@ -19,7 +29,7 @@
 
 ### 0. Notation aligned with the paper
 - `n = |S|`: number of keys for which queries must be correct.
-- `m = |D|`: number of delimiters (one per bucket). For bucket size `b`, typically `m = ceil(n/b)`. we use fixed `b=256` in our code (int8)
+- `m = |D|`: number of delimiters (one per bucket). For bucket size `b`, typically `m = ceil(n/b)`.
 - `w`: max key length in bits.
 - `k`: number of signature checks during fat binary search; by Theorem 4.1 analysis, `k <= ceil(log2(w))`.
 - `S`: PSig width in bits (hash/signature length stored in trie entries).
@@ -120,27 +130,27 @@ $$
 - `summary_by_margin.csv` shows behavior grouped by `s_margin_bits = S - S_required`.
 - Positive margin improves success rate but does not guarantee `~1.0` success for largest `n`.
 
-## Memory Snapshot (from `/Users/andrei.ogurtsov/Thesis/mmph/paramselect/study/memory_bench_v2.txt`)
+## Memory Snapshot (from `/Users/andrei.ogurtsov/Thesis/mmph/bucket_with_approx_trie/study/memory_bench_v2.txt`)
 - RLOC bits/key: min=51.27, median=56.04, max=106.00.
 - LERLOC bits/key: min=115.30, median=212.40, max=320.00.
 - Stable regime (`keys>=8192`): RLOC avg=54.33 bits/key, LERLOC avg=182.43 bits/key.
 - MMPH baseline from paper chart: ~14 bits/key (for large n).
 
 ## Generated Artifacts
-- [`data/summary_by_s.csv`](data/summary_by_s.csv)
-- [`data/summary_by_margin.csv`](data/summary_by_margin.csv)
-- [`data/worst_cases.csv`](data/worst_cases.csv)
-- [`data/memory_points.csv`](data/memory_points.csv)
-- [`data/theory_focus_success.csv`](data/theory_focus_success.csv)
-- [`plots/success_rate_by_s.svg`](plots/success_rate_by_s.svg)
-- [`plots/s16_success_vs_n.svg`](plots/s16_success_vs_n.svg)
-- [`plots/s16_success_vs_n_theory.svg`](plots/s16_success_vs_n_theory.svg)
-- [`plots/s16_success_vs_n_overlay.svg`](plots/s16_success_vs_n_overlay.svg)
-- [`plots/s8_success_vs_n.svg`](plots/s8_success_vs_n.svg)
-- [`plots/s8_success_vs_n_theory.svg`](plots/s8_success_vs_n_theory.svg)
-- [`plots/s8_success_vs_n_overlay.svg`](plots/s8_success_vs_n_overlay.svg)
-- [`plots/s32_success_vs_n.svg`](plots/s32_success_vs_n.svg)
-- [`plots/s32_success_vs_n_theory.svg`](plots/s32_success_vs_n_theory.svg)
-- [`plots/s32_success_vs_n_overlay.svg`](plots/s32_success_vs_n_overlay.svg)
-- [`plots/grid_size_report_bpk_vs_n.svg`](plots/grid_size_report_bpk_vs_n.svg)
-- [`plots/memory_bits_per_key_keys32768.svg`](plots/memory_bits_per_key_keys32768.svg)
+- [`data/summary_by_s.csv`](study/data/summary_by_s.csv)
+- [`data/summary_by_margin.csv`](study/data/summary_by_margin.csv)
+- [`data/worst_cases.csv`](study/data/worst_cases.csv)
+- [`data/memory_points.csv`](study/data/memory_points.csv)
+- [`data/theory_focus_success.csv`](study/data/theory_focus_success.csv)
+- [`plots/success_rate_by_s.svg`](study/plots/success_rate_by_s.svg)
+- [`plots/s16_success_vs_n.svg`](study/plots/s16_success_vs_n.svg)
+- [`plots/s16_success_vs_n_theory.svg`](study/plots/s16_success_vs_n_theory.svg)
+- [`plots/s16_success_vs_n_overlay.svg`](study/plots/s16_success_vs_n_overlay.svg)
+- [`plots/s8_success_vs_n.svg`](study/plots/s8_success_vs_n.svg)
+- [`plots/s8_success_vs_n_theory.svg`](study/plots/s8_success_vs_n_theory.svg)
+- [`plots/s8_success_vs_n_overlay.svg`](study/plots/s8_success_vs_n_overlay.svg)
+- [`plots/s32_success_vs_n.svg`](study/plots/s32_success_vs_n.svg)
+- [`plots/s32_success_vs_n_theory.svg`](study/plots/s32_success_vs_n_theory.svg)
+- [`plots/s32_success_vs_n_overlay.svg`](study/plots/s32_success_vs_n_overlay.svg)
+- [`plots/grid_size_report_bpk_vs_n.svg`](study/plots/grid_size_report_bpk_vs_n.svg)
+- [`plots/memory_bits_per_key_keys32768.svg`](study/plots/memory_bits_per_key_keys32768.svg)
