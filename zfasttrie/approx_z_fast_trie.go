@@ -308,35 +308,38 @@ func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *Nod
 	return &azft.data[id]
 }
 
-// ByteSize returns the exact size of the ApproxZFastTrie in bytes.
-// Excludes the debug Trie and originalNode pointers when not in debug mode.
+// ByteSize returns the resident size estimate of ApproxZFastTrie in bytes.
+//
+// Approximate memory model (bits):
+//   - Let u be the number of trie nodes materialized in data[] (typically u=O(m),
+//     and for a binary trie with m leaves, u <= 2m-1).
+//   - AZFT_bits ~= O(1) + MPH_u_bits + u*(E + S + 5*I).
+//   - Current implementation keeps originalNode pointer in NodeData layout, so
+//     practical model is:
+//     AZFT_bits ~= O(1) + MPH_u_bits + u*(E + S + 5*I + 64).
+//
+// It includes:
+//   - top-level struct header (pointers/slice header/scalars),
+//   - backing storage of MPH (via mph.Size()),
+//   - backing storage of data[] (len * sizeof(NodeData)).
+//
+// Note: NodeData always includes originalNode pointer field in layout (nil in
+// production mode). The debug Trie object itself is not included.
 func (azft *ApproxZFastTrie[E, S, I]) ByteSize() int {
 	if azft == nil {
 		return 0
 	}
 
-	size := 0
+	// Include struct header: mph pointer, data slice header, seed, rootId, Trie pointer.
+	size := int(unsafe.Sizeof(*azft))
 
 	// Size of the MPH (Minimal Perfect Hash function)
 	if azft.mph != nil {
 		size += azft.mph.Size()
 	}
 
-	// Size of the data array (NodeData entries)
-	// Core fields: extentLen(E) + PSig(S) + parent(I) + minChild(I) + minGreaterChild(I) + delimiterIndex(I)
-	nodeDataSize := len(azft.data) * (int(unsafe.Sizeof(*new(E))) +
-		int(unsafe.Sizeof(*new(S))) +
-		4*int(unsafe.Sizeof(*new(I)))) // parent, minChild, minGreaterChild, Rank
-
-	// Add pointer size for originalNode field (always present in struct, but nil in production)
-	nodeDataSize += len(azft.data) * int(unsafe.Sizeof((*znode[bool])(nil)))
-	size += nodeDataSize
-
-	// Size of seed (uint64)
-	size += 8
-
-	// Size of debug Trie pointer (always present in struct, but nil in production)
-	size += int(unsafe.Sizeof((*ZFastTrie[bool])(nil)))
+	// Size of data backing array (real NodeData layout including padding/all fields).
+	size += len(azft.data) * int(unsafe.Sizeof(NodeData[E, S, I]{}))
 
 	return size
 }

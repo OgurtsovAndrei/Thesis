@@ -42,9 +42,24 @@ const maxTrieRebuilds = 100 // Maximum number of attempts to build a working tri
 // with delimiters being the last key in each bucket.
 // It validates that all keys work correctly with the trie and rebuilds with new seeds if needed.
 // Uses a random seed from time.Now() for the trie construction.
-// S - used in PSig should be at least ((log log n) + (log log w) - (log eps)) bits
-// E - used for Max String Len
-// I - used for indexing in Delimiters Trie, should be at least log(N / 256)
+//
+// Type-parameter sizing notes:
+//   - E (extent length) must represent max key length in bits: E >= ceil(log2(w)).
+//   - I (delimiter-trie node index) must represent node indices plus sentinel.
+//     For m delimiters, a binary trie has <= 2m-1 nodes, so 2m is a safe upper bound.
+//   - S (PSig width) follows probabilistic trie analysis:
+//     S >= log2(log2(w)) + log2(1/epsilon_query).
+//     In the relative-trie setting (Theorem 5.2), epsilon_query = m/n, giving
+//     S >= log2(log2(w)) + log2(n/m).
+//     With bucket size b (so m ~= n/b), this is log2(log2(w)) + log2(b):
+//     if b=log n then this becomes Theta(log log n + log log w).
+//
+// References:
+//   - papers/MonotoneMinimalPerfectHashing.pdf
+//   - papers/MMPH/Definitions-and-Tools.md
+//   - papers/MMPH/Section-3-Bucketing.md
+//   - papers/MMPH/Section-4-Relative-Ranking.md
+//   - papers/MMPH/Section-5-Relative-Trie.md
 func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString) (*MonotoneHashWithTrie[E, S, I], error) {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return NewMonotoneHashWithTrieSeeded[E, S, I](data, rng.Uint64())
@@ -54,9 +69,8 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 // with a specified seed for deterministic trie construction.
 // The buckets are divided based on lexicographic order, with delimiters being the last key in each bucket.
 // It validates that all keys work correctly with the trie and rebuilds with different derived seeds if needed.
-// S - used in PSig should be at least ((log log n) + (log log w) - (log eps)) bits
-// E - used for Max String Len
-// I - used for indexing in Delimiters Trie, should be at least log(N / 256)
+//
+// Type-parameter sizing notes are the same as in NewMonotoneHashWithTrie.
 func NewMonotoneHashWithTrieSeeded[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString, baseSeed uint64) (*MonotoneHashWithTrie[E, S, I], error) {
 	if len(data) == 0 {
 		return &MonotoneHashWithTrie[E, S, I]{}, nil
@@ -306,6 +320,18 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 }
 
 // Size returns the total size of the structure in bytes.
+//
+// Approximate memory model (bits):
+//   - m = ceil(n/256), where n is the number of keys.
+//   - MHT_bits ~= O(1) + AZFT_bits + MPHF_bucket_bits + 8*n + m*(W+8),
+//     where W is key length in bits, MPHF_bucket_bits is often approximated as ~3*n.
+//   - With MPHF_bucket_bits ~= 3*n:
+//     MHT_bits ~= O(1) + AZFT_bits + (3+8)*n + m*(W+8).
+//
+// Notes:
+//   - This is an asymptotic/engineering model, not byte-exact (allocator overhead,
+//     slice headers, and alignment are ignored in the formula).
+//   - AZFT_bits is detailed in ApproxZFastTrie.ByteSize comments.
 func (mh *MonotoneHashWithTrie[E, S, I]) Size() int {
 	size := 4 // bucket size
 

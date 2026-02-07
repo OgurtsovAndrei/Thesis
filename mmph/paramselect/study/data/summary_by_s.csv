@@ -1,0 +1,4 @@
+s_bits,scenarios,success_rate_mean,success_rate_p50,fail_rate_mean,fail_rate_max,avg_attempts_success_mean
+8,48,0.166341,0.0,0.833659,1.0,24.4168
+16,48,0.893229,1.0,0.106771,1.0,7.3768
+32,48,1.0,1.0,0.0,0.0,1.0

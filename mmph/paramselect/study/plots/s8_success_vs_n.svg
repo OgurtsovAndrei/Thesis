@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">S=8 Build Success vs n (focus grid)</text>
+<line class="axis" x1="90" y1="465" x2="920" y2="465" />
+<line class="axis" x1="90" y1="55" x2="90" y2="465" />
+<line class="grid" x1="90" y1="465.00" x2="920" y2="465.00" />
+<text class="label" x="82" y="469.00" text-anchor="end">0.00</text>
+<line class="grid" x1="90" y1="362.50" x2="920" y2="362.50" />
+<text class="label" x="82" y="366.50" text-anchor="end">0.25</text>
+<line class="grid" x1="90" y1="260.00" x2="920" y2="260.00" />
+<text class="label" x="82" y="264.00" text-anchor="end">0.50</text>
+<line class="grid" x1="90" y1="157.50" x2="920" y2="157.50" />
+<text class="label" x="82" y="161.50" text-anchor="end">0.75</text>
+<line class="grid" x1="90" y1="55.00" x2="920" y2="55.00" />
+<text class="label" x="82" y="59.00" text-anchor="end">1.00</text>
+<line class="grid" x1="90.00" y1="55" x2="90.00" y2="465" />
+<text class="label" x="90.00" y="485" text-anchor="middle">32</text>
+<line class="grid" x1="159.17" y1="55" x2="159.17" y2="465" />
+<text class="label" x="159.17" y="485" text-anchor="middle">64</text>
+<line class="grid" x1="228.33" y1="55" x2="228.33" y2="465" />
+<text class="label" x="228.33" y="485" text-anchor="middle">128</text>
+<line class="grid" x1="297.50" y1="55" x2="297.50" y2="465" />
+<text class="label" x="297.50" y="485" text-anchor="middle">256</text>
+<line class="grid" x1="366.67" y1="55" x2="366.67" y2="465" />
+<text class="label" x="366.67" y="485" text-anchor="middle">512</text>
+<line class="grid" x1="435.83" y1="55" x2="435.83" y2="465" />
+<text class="label" x="435.83" y="485" text-anchor="middle">1024</text>
+<line class="grid" x1="505.00" y1="55" x2="505.00" y2="465" />
+<text class="label" x="505.00" y="485" text-anchor="middle">2048</text>
+<line class="grid" x1="574.17" y1="55" x2="574.17" y2="465" />
+<text class="label" x="574.17" y="485" text-anchor="middle">4096</text>
+<line class="grid" x1="712.50" y1="55" x2="712.50" y2="465" />
+<text class="label" x="712.50" y="485" text-anchor="middle">16384</text>
+<line class="grid" x1="850.83" y1="55" x2="850.83" y2="465" />
+<text class="label" x="850.83" y="485" text-anchor="middle">65536</text>
+<line class="grid" x1="920.00" y1="55" x2="920.00" y2="465" />
+<text class="label" x="920.00" y="485" text-anchor="middle">131072</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,55.00 159.17,55.00 228.33,55.00 297.50,55.00 366.67,55.00 435.83,55.00 505.00,160.70 574.17,465.00 712.50,465.00 850.83,465.00 920.00,465.00" />
+<circle cx="90.00" cy="55.00" r="3.5" fill="#2a7fff" />
+<circle cx="159.17" cy="55.00" r="3.5" fill="#2a7fff" />
+<circle cx="228.33" cy="55.00" r="3.5" fill="#2a7fff" />
+<circle cx="297.50" cy="55.00" r="3.5" fill="#2a7fff" />
+<circle cx="366.67" cy="55.00" r="3.5" fill="#2a7fff" />
+<circle cx="435.83" cy="55.00" r="3.5" fill="#2a7fff" />
+<circle cx="505.00" cy="160.70" r="3.5" fill="#2a7fff" />
+<circle cx="574.17" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="712.50" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="850.83" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#2a7fff" />
+<line x1="100" y1="67" x2="116" y2="67" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122" y="71">w=64</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,55.00 159.17,55.00 228.33,55.00 297.50,55.00 366.67,55.00 435.83,55.00 505.00,227.97 574.17,465.00 712.50,465.00 850.83,465.00 920.00,465.00" />
+<circle cx="90.00" cy="55.00" r="3.5" fill="#e4572e" />
+<circle cx="159.17" cy="55.00" r="3.5" fill="#e4572e" />
+<circle cx="228.33" cy="55.00" r="3.5" fill="#e4572e" />
+<circle cx="297.50" cy="55.00" r="3.5" fill="#e4572e" />
+<circle cx="366.67" cy="55.00" r="3.5" fill="#e4572e" />
+<circle cx="435.83" cy="55.00" r="3.5" fill="#e4572e" />
+<circle cx="505.00" cy="227.97" r="3.5" fill="#e4572e" />
+<circle cx="574.17" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="712.50" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="850.83" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#e4572e" />
+<line x1="100" y1="85" x2="116" y2="85" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122" y="89">w=128</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,55.00 159.17,55.00 228.33,55.00 297.50,55.00 366.67,55.00 435.83,55.00 505.00,308.05 574.17,465.00 712.50,465.00 850.83,465.00 920.00,465.00" />
+<circle cx="90.00" cy="55.00" r="3.5" fill="#22a06b" />
+<circle cx="159.17" cy="55.00" r="3.5" fill="#22a06b" />
+<circle cx="228.33" cy="55.00" r="3.5" fill="#22a06b" />
+<circle cx="297.50" cy="55.00" r="3.5" fill="#22a06b" />
+<circle cx="366.67" cy="55.00" r="3.5" fill="#22a06b" />
+<circle cx="435.83" cy="55.00" r="3.5" fill="#22a06b" />
+<circle cx="505.00" cy="308.05" r="3.5" fill="#22a06b" />
+<circle cx="574.17" cy="465.00" r="3.5" fill="#22a06b" />
+<circle cx="712.50" cy="465.00" r="3.5" fill="#22a06b" />
+<circle cx="850.83" cy="465.00" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#22a06b" />
+<line x1="100" y1="103" x2="116" y2="103" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122" y="107">w=256</text>
+<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" points="90.00,55.00 159.17,55.00 228.33,55.00 297.50,55.00 366.67,55.00 435.83,55.00 505.00,384.92 574.17,465.00 712.50,465.00 850.83,465.00 920.00,465.00" />
+<circle cx="90.00" cy="55.00" r="3.5" fill="#7c3aed" />
+<circle cx="159.17" cy="55.00" r="3.5" fill="#7c3aed" />
+<circle cx="228.33" cy="55.00" r="3.5" fill="#7c3aed" />
+<circle cx="297.50" cy="55.00" r="3.5" fill="#7c3aed" />
+<circle cx="366.67" cy="55.00" r="3.5" fill="#7c3aed" />
+<circle cx="435.83" cy="55.00" r="3.5" fill="#7c3aed" />
+<circle cx="505.00" cy="384.92" r="3.5" fill="#7c3aed" />
+<circle cx="574.17" cy="465.00" r="3.5" fill="#7c3aed" />
+<circle cx="712.50" cy="465.00" r="3.5" fill="#7c3aed" />
+<circle cx="850.83" cy="465.00" r="3.5" fill="#7c3aed" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#7c3aed" />
+<line x1="100" y1="121" x2="116" y2="121" stroke="#7c3aed" stroke-width="2.5" />
+<text class="label" x="122" y="125">w=512</text>
+<polyline fill="none" stroke="#a16207" stroke-width="2.5" points="90.00,55.00 159.17,55.00 228.33,55.00 297.50,55.00 366.67,55.00 435.83,55.00 505.00,429.77 574.17,465.00 712.50,465.00 850.83,465.00 920.00,465.00" />
+<circle cx="90.00" cy="55.00" r="3.5" fill="#a16207" />
+<circle cx="159.17" cy="55.00" r="3.5" fill="#a16207" />
+<circle cx="228.33" cy="55.00" r="3.5" fill="#a16207" />
+<circle cx="297.50" cy="55.00" r="3.5" fill="#a16207" />
+<circle cx="366.67" cy="55.00" r="3.5" fill="#a16207" />
+<circle cx="435.83" cy="55.00" r="3.5" fill="#a16207" />
+<circle cx="505.00" cy="429.77" r="3.5" fill="#a16207" />
+<circle cx="574.17" cy="465.00" r="3.5" fill="#a16207" />
+<circle cx="712.50" cy="465.00" r="3.5" fill="#a16207" />
+<circle cx="850.83" cy="465.00" r="3.5" fill="#a16207" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#a16207" />
+<line x1="100" y1="139" x2="116" y2="139" stroke="#a16207" stroke-width="2.5" />
+<text class="label" x="122" y="143">w=2048</text>
+<text class="label" x="480.0" y="522" text-anchor="middle">n (log2 scale)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">Success rate</text>
+</svg>

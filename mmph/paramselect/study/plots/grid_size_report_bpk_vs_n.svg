@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Grid Size Report: median bpk vs n by S</text>
+<line class="axis" x1="90" y1="465" x2="920" y2="465" />
+<line class="axis" x1="90" y1="55" x2="90" y2="465" />
+<line class="grid" x1="90" y1="465.00" x2="920" y2="465.00" />
+<text class="label" x="82" y="469.00" text-anchor="end">0.0</text>
+<line class="grid" x1="90" y1="383.00" x2="920" y2="383.00" />
+<text class="label" x="82" y="387.00" text-anchor="end">3.7</text>
+<line class="grid" x1="90" y1="301.00" x2="920" y2="301.00" />
+<text class="label" x="82" y="305.00" text-anchor="end">7.4</text>
+<line class="grid" x1="90" y1="219.00" x2="920" y2="219.00" />
+<text class="label" x="82" y="223.00" text-anchor="end">11.2</text>
+<line class="grid" x1="90" y1="137.00" x2="920" y2="137.00" />
+<text class="label" x="82" y="141.00" text-anchor="end">14.9</text>
+<line class="grid" x1="90" y1="55.00" x2="920" y2="55.00" />
+<text class="label" x="82" y="59.00" text-anchor="end">18.6</text>
+<line class="grid" x1="90.00" y1="55" x2="90.00" y2="465" />
+<text class="label" x="90.00" y="485" text-anchor="middle">1024</text>
+<line class="grid" x1="208.57" y1="55" x2="208.57" y2="465" />
+<text class="label" x="208.57" y="485" text-anchor="middle">2048</text>
+<line class="grid" x1="327.14" y1="55" x2="327.14" y2="465" />
+<text class="label" x="327.14" y="485" text-anchor="middle">4096</text>
+<line class="grid" x1="445.71" y1="55" x2="445.71" y2="465" />
+<text class="label" x="445.71" y="485" text-anchor="middle">8192</text>
+<line class="grid" x1="564.29" y1="55" x2="564.29" y2="465" />
+<text class="label" x="564.29" y="485" text-anchor="middle">16384</text>
+<line class="grid" x1="682.86" y1="55" x2="682.86" y2="465" />
+<text class="label" x="682.86" y="485" text-anchor="middle">32768</text>
+<line class="grid" x1="801.43" y1="55" x2="801.43" y2="465" />
+<text class="label" x="801.43" y="485" text-anchor="middle">65536</text>
+<line class="grid" x1="920.00" y1="55" x2="920.00" y2="465" />
+<text class="label" x="920.00" y="485" text-anchor="middle">131072</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,99.85 208.57,125.69" />
+<circle cx="90.00" cy="99.85" r="3.5" fill="#2a7fff" />
+<circle cx="208.57" cy="125.69" r="3.5" fill="#2a7fff" />
+<line x1="100" y1="67" x2="116" y2="67" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122" y="71">S=8</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,101.92 208.57,106.05 327.14,110.53 445.71,105.62 564.29,111.39 682.86,111.24 801.43,109.20 920.00,138.31" />
+<circle cx="90.00" cy="101.92" r="3.5" fill="#e4572e" />
+<circle cx="208.57" cy="106.05" r="3.5" fill="#e4572e" />
+<circle cx="327.14" cy="110.53" r="3.5" fill="#e4572e" />
+<circle cx="445.71" cy="105.62" r="3.5" fill="#e4572e" />
+<circle cx="564.29" cy="111.39" r="3.5" fill="#e4572e" />
+<circle cx="682.86" cy="111.24" r="3.5" fill="#e4572e" />
+<circle cx="801.43" cy="109.20" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="138.31" r="3.5" fill="#e4572e" />
+<line x1="100" y1="85" x2="116" y2="85" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122" y="89">S=16</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,92.27 208.57,106.05 327.14,108.46 445.71,109.41 564.29,110.36 682.86,99.92 801.43,100.22 920.00,101.00" />
+<circle cx="90.00" cy="92.27" r="3.5" fill="#22a06b" />
+<circle cx="208.57" cy="106.05" r="3.5" fill="#22a06b" />
+<circle cx="327.14" cy="108.46" r="3.5" fill="#22a06b" />
+<circle cx="445.71" cy="109.41" r="3.5" fill="#22a06b" />
+<circle cx="564.29" cy="110.36" r="3.5" fill="#22a06b" />
+<circle cx="682.86" cy="99.92" r="3.5" fill="#22a06b" />
+<circle cx="801.43" cy="100.22" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="101.00" r="3.5" fill="#22a06b" />
+<line x1="100" y1="103" x2="116" y2="103" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122" y="107">S=32</text>
+<text class="label" x="480.0" y="522" text-anchor="middle">n (log2 scale)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">bits per key (median over w)</text>
+</svg>

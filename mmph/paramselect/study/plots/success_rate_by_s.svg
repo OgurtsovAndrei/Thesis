@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Build Success Rate vs S (grid_main_v2)</text>
+<line class="axis" x1="90" y1="465" x2="920" y2="465" />
+<line class="axis" x1="90" y1="55" x2="90" y2="465" />
+<line class="grid" x1="90" y1="465.00" x2="920" y2="465.00" />
+<text class="label" x="82" y="469.00" text-anchor="end">0.00</text>
+<line class="grid" x1="90" y1="383.00" x2="920" y2="383.00" />
+<text class="label" x="82" y="387.00" text-anchor="end">0.22</text>
+<line class="grid" x1="90" y1="301.00" x2="920" y2="301.00" />
+<text class="label" x="82" y="305.00" text-anchor="end">0.44</text>
+<line class="grid" x1="90" y1="219.00" x2="920" y2="219.00" />
+<text class="label" x="82" y="223.00" text-anchor="end">0.66</text>
+<line class="grid" x1="90" y1="137.00" x2="920" y2="137.00" />
+<text class="label" x="82" y="141.00" text-anchor="end">0.88</text>
+<line class="grid" x1="90" y1="55.00" x2="920" y2="55.00" />
+<text class="label" x="82" y="59.00" text-anchor="end">1.10</text>
+<rect x="110.00" y="403.00" width="250.00" height="62.00" fill="#2a7fff" />
+<text class="label" x="235.00" y="485" text-anchor="middle">8</text>
+<text class="label" x="235.00" y="397.00" text-anchor="middle">0.166</text>
+<rect x="380.00" y="132.07" width="250.00" height="332.93" fill="#2a7fff" />
+<text class="label" x="505.00" y="485" text-anchor="middle">16</text>
+<text class="label" x="505.00" y="126.07" text-anchor="middle">0.893</text>
+<rect x="650.00" y="92.27" width="250.00" height="372.73" fill="#2a7fff" />
+<text class="label" x="775.00" y="485" text-anchor="middle">32</text>
+<text class="label" x="775.00" y="86.27" text-anchor="middle">1.000</text>
+<text class="label" x="480.0" y="522" text-anchor="middle">S bits</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">Success rate</text>
+</svg>

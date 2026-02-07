@@ -59,8 +59,15 @@ type RangeLocator interface {
 //   - Practical estimate from fields:
 //     24 + mmph.ByteSize() + 200 + bv.AllocSize() bytes.
 //
-//   - Empirical resident-size range from recent BenchmarkMemoryComparison runs:
-//     about 51.99..109.2 bits/key for tested workloads.
+//   - Empirical resident-size range from recent BenchmarkMemoryComparison runs
+//     (see mmph/paramselect/study/memory_bench_v2.txt):
+//     about 51.27..106.00 bits/key, with ~51..59 bits/key in the larger-key
+//     regime (keys >= 8192 in that run).
+//
+// References:
+//   - papers/Fast Prefix Search.pdf (range-locator idea and space bounds)
+//   - papers/MMPH/Section-4-Relative-Ranking.md
+//   - papers/MMPH/Section-5-Relative-Trie.md
 type GenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber] struct {
 	mmph        *bucket.MonotoneHashWithTrie[E, S, I]
 	bv          *rsdic.RSDic
@@ -96,19 +103,25 @@ func NewGenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttri
 // with a monotone minimal perfect hash, and store leaf markers in a rankable
 // bitvector.
 //
-// The constructor chooses the smallest practical type widths for E/S/I from
-// input data and escalates to wider types if needed.
+// The constructor chooses deterministic widths:
+//   - E from max key bit-length;
+//   - I from delimiter count upper bound (2*m with m buckets);
+//   - S from relative-trie formula, with escalation only across {8,16,32} if
+//     construction still fails for the chosen seed.
 func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (RangeLocator, error) {
 	if zt == nil {
 		return &GenericRangeLocator[uint8, uint8, uint8]{totalLeaves: 0}, nil
 	}
 
 	sortedItems, maxBitLen := collectPSortedItems(zt)
-	choices := autoWidthChoices(len(sortedItems), maxBitLen)
+	plan, err := makeAutoBuildPlan(len(sortedItems), maxBitLen)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auto build plan for P size %d: %w", len(sortedItems), err)
+	}
 
 	var lastErr error
-	for _, choice := range choices {
-		rl, err := buildWithWidths(sortedItems, mmphSeed, choice)
+	for _, sBits := range plan.sCandidates {
+		rl, err := buildWithFixedWidths(sortedItems, mmphSeed, plan.eBits, sBits, plan.iBits)
 		if err == nil {
 			return rl, nil
 		}
@@ -118,7 +131,14 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (Rang
 	if lastErr == nil {
 		lastErr = fmt.Errorf("no width choices available")
 	}
-	return nil, fmt.Errorf("failed to build auto RangeLocator for P size %d: %w", len(sortedItems), lastErr)
+	return nil, fmt.Errorf(
+		"failed to build auto RangeLocator for P size %d (E=%d I=%d S=%v): %w",
+		len(sortedItems),
+		plan.eBits,
+		plan.iBits,
+		plan.sCandidates,
+		lastErr,
+	)
 }
 
 // NewGenericRangeLocatorSeeded builds a generic RangeLocator from a compacted

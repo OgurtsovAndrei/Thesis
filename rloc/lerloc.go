@@ -36,8 +36,15 @@ type LocalExactRangeLocator interface {
 //   - Practical estimate from fields:
 //     16 + hzft.ByteSize() + rl.ByteSize() bytes.
 //
-//   - Empirical resident-size range from recent BenchmarkMemoryComparison runs:
-//     about 116.1..347.0 bits/key for tested workloads.
+//   - Empirical resident-size range from recent BenchmarkMemoryComparison runs
+//     (see mmph/paramselect/study/memory_bench_v2.txt):
+//     about 115.3..320.0 bits/key, with ~116..246 bits/key in the larger-key
+//     regime (keys >= 8192 in that run).
+//
+// References:
+//   - papers/Fast Prefix Search.pdf (Local Exact Range Locator decomposition)
+//   - papers/Hollow-Z-Fast-Trie (Fast Prefix Search)/Section-5.md
+//   - papers/Hollow-Z-Fast-Trie (Fast Prefix Search)/Section-6.md
 type GenericLocalExactRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber] struct {
 	hzft *zfasttrie.HZFastTrie[E]
 	rl   *GenericRangeLocator[E, S, I]
