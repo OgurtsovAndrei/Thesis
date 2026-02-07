@@ -1,0 +1,608 @@
+GOROOT=/Users/andrei.ogurtsov/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.0.darwin-arm64 #gosetup
+GOPATH=/Users/andrei.ogurtsov/go #gosetup
+/Users/andrei.ogurtsov/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.0.darwin-arm64/bin/go test -v ./... -bench . -run ^$ #gosetup
+goos: darwin
+goarch: arm64
+pkg: Thesis/rloc
+cpu: Apple M4 Max
+BenchmarkLocalExactRangeLocatorBuild
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32-16         	    5488	    226699 ns/op	       382.0 bits_per_key	      1528 total_bytes	  126912 B/op	    3033 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=256
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=256-16        	     631	   1933960 ns/op	       271.6 bits_per_key	      8690 total_bytes	  951970 B/op	   25324 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=1024
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=1024-16       	     128	   9193844 ns/op	       267.7 bits_per_key	     34262 total_bytes	 4054254 B/op	  118353 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=8192
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=8192-16       	      14	  80892423 ns/op	       246.8 bits_per_key	    252745 total_bytes	33424741 B/op	 1036583 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32768
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32768-16      	       3	 569991222 ns/op	       246.5 bits_per_key	   1009677 total_bytes	196827381 B/op	 7884738 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=262144
+    lerloc_bench_test.go:27: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=262144
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32-16        	    7760	    162398 ns/op	       373.0 bits_per_key	      1492 total_bytes	  151256 B/op	    3286 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=256
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=256-16       	     814	   1411296 ns/op	       309.2 bits_per_key	      9895 total_bytes	 1162327 B/op	   27886 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=1024
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=1024-16      	     182	   6498882 ns/op	       304.9 bits_per_key	     39026 total_bytes	 4779080 B/op	  128508 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=8192
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=8192-16      	      18	  57861762 ns/op	       283.6 bits_per_key	    290400 total_bytes	36965246 B/op	 1146445 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32768
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32768-16     	       4	 345326010 ns/op	       283.1 bits_per_key	   1159628 total_bytes	180013774 B/op	 6541113 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=262144
+    lerloc_bench_test.go:27: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=262144
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32-16        	    7086	    178440 ns/op	       405.8 bits_per_key	      1623 total_bytes	  172184 B/op	    3691 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=256
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=256-16       	     738	   1573857 ns/op	       354.9 bits_per_key	     11356 total_bytes	 1395941 B/op	   31559 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=1024
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=1024-16      	     160	   7446526 ns/op	       339.6 bits_per_key	     43468 total_bytes	 5793293 B/op	  143630 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=8192
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=8192-16      	      18	  71181058 ns/op	       319.6 bits_per_key	    327292 total_bytes	50176022 B/op	 1360340 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32768
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32768-16     	       3	 412154944 ns/op	       319.0 bits_per_key	   1306498 total_bytes	243402504 B/op	 7771691 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=262144
+    lerloc_bench_test.go:27: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=262144
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32-16        	    5835	    209082 ns/op	       419.2 bits_per_key	      1677 total_bytes	  217856 B/op	    4330 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=256
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=256-16       	     646	   1862592 ns/op	       388.8 bits_per_key	     12441 total_bytes	 1784019 B/op	   36679 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=1024
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=1024-16      	     136	   8930353 ns/op	       376.2 bits_per_key	     48148 total_bytes	 7562838 B/op	  166659 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=8192
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=8192-16      	      14	  91965795 ns/op	       357.5 bits_per_key	    366101 total_bytes	66668571 B/op	 1612785 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32768
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32768-16     	       3	 422567555 ns/op	       357.6 bits_per_key	   1464735 total_bytes	269224114 B/op	 6726053 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=262144
+    lerloc_bench_test.go:27: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=262144
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32-16       	    4522	    269586 ns/op	       501.0 bits_per_key	      2004 total_bytes	  300511 B/op	    4846 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=256
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=256-16      	     507	   2297582 ns/op	       432.1 bits_per_key	     13828 total_bytes	 2494493 B/op	   40817 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=1024
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=1024-16     	     100	  10572939 ns/op	       415.6 bits_per_key	     53202 total_bytes	10302181 B/op	  182248 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=8192
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=8192-16     	      10	 103733938 ns/op	       397.1 bits_per_key	    406591 total_bytes	88503114 B/op	 1645786 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32768
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32768-16    	       3	 514757944 ns/op	       396.9 bits_per_key	   1625505 total_bytes	379431232 B/op	 7504805 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=262144
+    lerloc_bench_test.go:27: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkLocalExactRangeLocatorBuild
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32-16         	 2090497	       570.0 ns/op	     394 B/op	      18 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=256
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=256-16        	 1452609	       819.6 ns/op	     464 B/op	      24 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=1024
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=1024-16       	 1000000	      1095 ns/op	     555 B/op	      31 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=8192
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=8192-16       	  924870	      1302 ns/op	     599 B/op	      34 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32768
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32768-16      	  796111	      1466 ns/op	     628 B/op	      39 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=262144
+    lerloc_bench_test.go:54: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=262144-16
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32-16        	 2024683	       579.0 ns/op	     414 B/op	      19 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=256
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=256-16       	 1416684	       842.9 ns/op	     488 B/op	      26 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=1024
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=1024-16      	 1000000	      1142 ns/op	     581 B/op	      33 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=8192
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=8192-16      	  886016	      1383 ns/op	     632 B/op	      36 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32768
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32768-16     	  746059	      1567 ns/op	     668 B/op	      42 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=262144
+    lerloc_bench_test.go:54: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=262144
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=32
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=32-16        	 1753640	       661.8 ns/op	     444 B/op	      21 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=256
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=256-16       	 1280714	       936.9 ns/op	     524 B/op	      29 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=1024
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=1024-16      	  992510	      1193 ns/op	     614 B/op	      35 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=8192
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=8192-16      	  838945	      1448 ns/op	     663 B/op	      38 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=32768
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=32768-16     	  659871	      1659 ns/op	     701 B/op	      44 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=262144
+    lerloc_bench_test.go:54: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=256/Keys=262144
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=32
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=32-16        	 1609614	       741.1 ns/op	     490 B/op	      23 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=256
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=256-16       	 1209411	       987.2 ns/op	     563 B/op	      30 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=1024
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=1024-16      	  909860	      1303 ns/op	     657 B/op	      37 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=8192
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=8192-16      	  755401	      1533 ns/op	     704 B/op	      40 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=32768
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=32768-16     	  646036	      1743 ns/op	     738 B/op	      45 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=262144
+    lerloc_bench_test.go:54: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=512/Keys=262144
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=32
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=32-16       	 1521084	       782.6 ns/op	     545 B/op	      26 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=256
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=256-16      	 1000000	      1095 ns/op	     618 B/op	      32 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=1024
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=1024-16     	  865374	      1386 ns/op	     705 B/op	      38 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=8192
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=8192-16     	  714757	      1640 ns/op	     760 B/op	      42 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=32768
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=32768-16    	  614805	      1874 ns/op	     795 B/op	      47 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=262144
+    lerloc_bench_test.go:54: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkLocalExactRangeLocatorWeakPrefixSearch
+BenchmarkMemoryComparison
+BenchmarkMemoryComparison/KeySize=64/Keys=32
+BenchmarkMemoryComparison/KeySize=64/Keys=32-16                               	    5247	    232449 ns/op	        64.00 avg_string_length	       382.0 lerl_bits_per_key	      1528 lerl_total_bytes	         4.391 lerl_vs_rl_ratio	        87.00 rl_bits_per_key	       348.0 rl_total_bytes	  191104 B/op	    4898 allocs/op
+BenchmarkMemoryComparison/KeySize=64/Keys=256
+BenchmarkMemoryComparison/KeySize=64/Keys=256-16                              	     592	   1974137 ns/op	        64.00 avg_string_length	       271.6 lerl_bits_per_key	      8690 lerl_total_bytes	         5.023 lerl_vs_rl_ratio	        54.06 rl_bits_per_key	      1730 rl_total_bytes	 1442554 B/op	   41421 allocs/op
+BenchmarkMemoryComparison/KeySize=64/Keys=1024
+BenchmarkMemoryComparison/KeySize=64/Keys=1024-16                             	     121	   9816015 ns/op	        64.00 avg_string_length	       267.7 lerl_bits_per_key	     34262 lerl_total_bytes	         5.005 lerl_vs_rl_ratio	        53.48 rl_bits_per_key	      6846 rl_total_bytes	 6237159 B/op	  196953 allocs/op
+BenchmarkMemoryComparison/KeySize=64/Keys=8192
+BenchmarkMemoryComparison/KeySize=64/Keys=8192-16                             	      12	  91078583 ns/op	        64.00 avg_string_length	       246.8 lerl_bits_per_key	    252745 lerl_total_bytes	         4.782 lerl_vs_rl_ratio	        51.61 rl_bits_per_key	     52849 rl_total_bytes	53039467 B/op	 1803997 allocs/op
+BenchmarkMemoryComparison/KeySize=64/Keys=32768
+BenchmarkMemoryComparison/KeySize=64/Keys=32768-16                            	       3	 495403014 ns/op	        64.00 avg_string_length	       246.5 lerl_bits_per_key	   1009677 lerl_total_bytes	         4.790 lerl_vs_rl_ratio	        51.46 rl_bits_per_key	    210793 rl_total_bytes	251443893 B/op	 9851472 allocs/op
+BenchmarkMemoryComparison/KeySize=64/Keys=262144
+    lerloc_bench_test.go:110: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkMemoryComparison/KeySize=64/Keys=262144
+BenchmarkMemoryComparison/KeySize=128/Keys=32
+BenchmarkMemoryComparison/KeySize=128/Keys=32-16                              	    4872	    266452 ns/op	       128.0 avg_string_length	       373.0 lerl_bits_per_key	      1492 lerl_total_bytes	         3.730 lerl_vs_rl_ratio	       100.0 rl_bits_per_key	       400.0 rl_total_bytes	  219872 B/op	    5316 allocs/op
+BenchmarkMemoryComparison/KeySize=128/Keys=256
+BenchmarkMemoryComparison/KeySize=128/Keys=256-16                             	     498	   2281708 ns/op	       128.0 avg_string_length	       309.2 lerl_bits_per_key	      9895 lerl_total_bytes	         5.651 lerl_vs_rl_ratio	        54.72 rl_bits_per_key	      1751 rl_total_bytes	 1691955 B/op	   45493 allocs/op
+BenchmarkMemoryComparison/KeySize=128/Keys=1024
+BenchmarkMemoryComparison/KeySize=128/Keys=1024-16                            	     100	  10685533 ns/op	       128.0 avg_string_length	       304.9 lerl_bits_per_key	     39026 lerl_total_bytes	         5.677 lerl_vs_rl_ratio	        53.70 rl_bits_per_key	      6874 rl_total_bytes	 7140157 B/op	  212234 allocs/op
+BenchmarkMemoryComparison/KeySize=128/Keys=8192
+BenchmarkMemoryComparison/KeySize=128/Keys=8192-16                            	      12	  98637722 ns/op	       128.0 avg_string_length	       283.6 lerl_bits_per_key	    290400 lerl_total_bytes	         5.476 lerl_vs_rl_ratio	        51.79 rl_bits_per_key	     53032 rl_total_bytes	57427895 B/op	 1933697 allocs/op
+BenchmarkMemoryComparison/KeySize=128/Keys=32768
+BenchmarkMemoryComparison/KeySize=128/Keys=32768-16                           	       2	 514372229 ns/op	       128.0 avg_string_length	       283.1 lerl_bits_per_key	   1159628 lerl_total_bytes	         5.458 lerl_vs_rl_ratio	        51.87 rl_bits_per_key	    212476 rl_total_bytes	246218140 B/op	 9030183 allocs/op
+BenchmarkMemoryComparison/KeySize=128/Keys=262144
+    lerloc_bench_test.go:106: Failed to build RangeLocator: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkMemoryComparison/KeySize=128/Keys=262144
+BenchmarkMemoryComparison/KeySize=256/Keys=32
+BenchmarkMemoryComparison/KeySize=256/Keys=32-16                              	    4413	    280004 ns/op	       256.0 avg_string_length	       405.8 lerl_bits_per_key	      1623 lerl_total_bytes	         4.521 lerl_vs_rl_ratio	        89.75 rl_bits_per_key	       359.0 rl_total_bytes	  254632 B/op	    6000 allocs/op
+BenchmarkMemoryComparison/KeySize=256/Keys=256
+BenchmarkMemoryComparison/KeySize=256/Keys=256-16                             	     482	   2455144 ns/op	       256.0 avg_string_length	       354.9 lerl_bits_per_key	     11356 lerl_total_bytes	         5.927 lerl_vs_rl_ratio	        59.88 rl_bits_per_key	      1916 rl_total_bytes	 2044184 B/op	   51725 allocs/op
+BenchmarkMemoryComparison/KeySize=256/Keys=1024
+BenchmarkMemoryComparison/KeySize=256/Keys=1024-16                            	     100	  11843571 ns/op	       256.0 avg_string_length	       339.6 lerl_bits_per_key	     43468 lerl_total_bytes	         6.325 lerl_vs_rl_ratio	        53.69 rl_bits_per_key	      6872 rl_total_bytes	 8599500 B/op	  236729 allocs/op
+BenchmarkMemoryComparison/KeySize=256/Keys=8192
+BenchmarkMemoryComparison/KeySize=256/Keys=8192-16                            	      10	 111737604 ns/op	       256.0 avg_string_length	       319.6 lerl_bits_per_key	    327292 lerl_total_bytes	         6.084 lerl_vs_rl_ratio	        52.53 rl_bits_per_key	     53792 rl_total_bytes	72775418 B/op	 2144767 allocs/op
+BenchmarkMemoryComparison/KeySize=256/Keys=32768
+BenchmarkMemoryComparison/KeySize=256/Keys=32768-16                           	       2	 549541354 ns/op	       256.0 avg_string_length	       319.0 lerl_bits_per_key	   1306498 lerl_total_bytes	         6.066 lerl_vs_rl_ratio	        52.59 rl_bits_per_key	    215390 rl_total_bytes	311336132 B/op	 9926453 allocs/op
+BenchmarkMemoryComparison/KeySize=256/Keys=262144
+    lerloc_bench_test.go:106: Failed to build RangeLocator: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkMemoryComparison/KeySize=256/Keys=262144
+BenchmarkMemoryComparison/KeySize=512/Keys=32
+BenchmarkMemoryComparison/KeySize=512/Keys=32-16                              	    3745	    328055 ns/op	       512.0 avg_string_length	       419.2 lerl_bits_per_key	      1677 lerl_total_bytes	         5.290 lerl_vs_rl_ratio	        79.25 rl_bits_per_key	       317.0 rl_total_bytes	  325816 B/op	    6989 allocs/op
+BenchmarkMemoryComparison/KeySize=512/Keys=256
+BenchmarkMemoryComparison/KeySize=512/Keys=256-16                             	     405	   2953545 ns/op	       512.0 avg_string_length	       388.8 lerl_bits_per_key	     12441 lerl_total_bytes	         6.306 lerl_vs_rl_ratio	        61.66 rl_bits_per_key	      1973 rl_total_bytes	 2658403 B/op	   59638 allocs/op
+BenchmarkMemoryComparison/KeySize=512/Keys=1024
+BenchmarkMemoryComparison/KeySize=512/Keys=1024-16                            	      85	  14309248 ns/op	       512.0 avg_string_length	       376.2 lerl_bits_per_key	     48148 lerl_total_bytes	         6.759 lerl_vs_rl_ratio	        55.66 rl_bits_per_key	      7124 rl_total_bytes	11406419 B/op	  275044 allocs/op
+BenchmarkMemoryComparison/KeySize=512/Keys=8192
+BenchmarkMemoryComparison/KeySize=512/Keys=8192-16                            	       8	 132042255 ns/op	       512.0 avg_string_length	       357.5 lerl_bits_per_key	    366101 lerl_total_bytes	         6.551 lerl_vs_rl_ratio	        54.58 rl_bits_per_key	     55885 rl_total_bytes	95481072 B/op	 2431413 allocs/op
+BenchmarkMemoryComparison/KeySize=512/Keys=32768
+BenchmarkMemoryComparison/KeySize=512/Keys=32768-16                           	       2	 697876271 ns/op	       512.0 avg_string_length	       357.6 lerl_bits_per_key	   1464735 lerl_total_bytes	         6.508 lerl_vs_rl_ratio	        54.94 rl_bits_per_key	    225051 rl_total_bytes	422455272 B/op	11609922 allocs/op
+BenchmarkMemoryComparison/KeySize=512/Keys=262144
+    lerloc_bench_test.go:106: Failed to build RangeLocator: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkMemoryComparison/KeySize=512/Keys=262144
+BenchmarkMemoryComparison/KeySize=1024/Keys=32
+BenchmarkMemoryComparison/KeySize=1024/Keys=32-16                             	    3001	    409931 ns/op	      1024 avg_string_length	       501.0 lerl_bits_per_key	      2004 lerl_total_bytes	         4.282 lerl_vs_rl_ratio	       117.0 rl_bits_per_key	       468.0 rl_total_bytes	  458192 B/op	    7814 allocs/op
+BenchmarkMemoryComparison/KeySize=1024/Keys=256
+BenchmarkMemoryComparison/KeySize=1024/Keys=256-16                            	     332	   3586283 ns/op	      1024 avg_string_length	       432.1 lerl_bits_per_key	     13828 lerl_total_bytes	         6.076 lerl_vs_rl_ratio	        71.12 rl_bits_per_key	      2276 rl_total_bytes	 3803784 B/op	   66411 allocs/op
+BenchmarkMemoryComparison/KeySize=1024/Keys=1024
+BenchmarkMemoryComparison/KeySize=1024/Keys=1024-16                           	      75	  16578486 ns/op	      1024 avg_string_length	       415.6 lerl_bits_per_key	     53202 lerl_total_bytes	         7.006 lerl_vs_rl_ratio	        59.33 rl_bits_per_key	      7594 rl_total_bytes	15833548 B/op	  300422 allocs/op
+BenchmarkMemoryComparison/KeySize=1024/Keys=8192
+BenchmarkMemoryComparison/KeySize=1024/Keys=8192-16                           	       6	 169738667 ns/op	      1024 avg_string_length	       397.1 lerl_bits_per_key	    406591 lerl_total_bytes	         6.734 lerl_vs_rl_ratio	        58.96 rl_bits_per_key	     60375 rl_total_bytes	142895276 B/op	 2887473 allocs/op
+BenchmarkMemoryComparison/KeySize=1024/Keys=32768
+BenchmarkMemoryComparison/KeySize=1024/Keys=32768-16                          	       2	 864776666 ns/op	      1024 avg_string_length	       396.9 lerl_bits_per_key	   1625505 lerl_total_bytes	         6.751 lerl_vs_rl_ratio	        58.79 rl_bits_per_key	    240797 rl_total_bytes	621358572 B/op	13385261 allocs/op
+BenchmarkMemoryComparison/KeySize=1024/Keys=262144
+    lerloc_bench_test.go:106: Failed to build RangeLocator: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkMemoryComparison/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkMemoryComparison
+BenchmarkEmptyPrefixQuery
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=32
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=32-16                               	75111883	        17.65 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=256
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=256-16                              	72324194	        17.29 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=1024
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=1024-16                             	71171388	        17.42 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=8192
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=8192-16                             	71500922	        17.14 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=32768
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=32768-16                            	76767042	        17.23 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=64/Keys=262144
+    lerloc_bench_test.go:151: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkEmptyPrefixQuery/KeySize=64/Keys=262144
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=32
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=32-16                              	76604916	        17.19 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=256
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=256-16                             	71549950	        17.27 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=1024
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=1024-16                            	73788067	        17.21 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=8192
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=8192-16                            	72446815	        17.10 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=32768
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=32768-16                           	72628233	        17.36 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=128/Keys=262144
+    lerloc_bench_test.go:151: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkEmptyPrefixQuery/KeySize=128/Keys=262144
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=32
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=32-16                              	76904998	        17.07 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=256
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=256-16                             	73340850	        17.16 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=1024
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=1024-16                            	74616229	        17.09 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=8192
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=8192-16                            	73867554	        17.13 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=32768
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=32768-16                           	69489669	        17.29 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=256/Keys=262144
+    lerloc_bench_test.go:151: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkEmptyPrefixQuery/KeySize=256/Keys=262144
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=32
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=32-16                              	77833418	        16.81 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=256
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=256-16                             	73532974	        17.41 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=1024
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=1024-16                            	74696349	        17.16 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=8192
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=8192-16                            	74893509	        16.94 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=32768
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=32768-16                           	68967165	        16.84 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=512/Keys=262144
+    lerloc_bench_test.go:151: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkEmptyPrefixQuery/KeySize=512/Keys=262144
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=32
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=32-16                             	73557960	        17.71 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=256
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=256-16                            	71357247	        17.18 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=1024
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=1024-16                           	72604614	        18.26 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=8192
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=8192-16                           	70101393	        17.92 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=32768
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=32768-16                          	76300489	        17.34 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=262144
+    lerloc_bench_test.go:151: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkEmptyPrefixQuery/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkEmptyPrefixQuery
+BenchmarkPrefixLengthVariation
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=1
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=1-16                      	 5622822	       200.1 ns/op	     127 B/op	       5 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=2
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=2-16                      	 3656905	       320.4 ns/op	     203 B/op	       8 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=4
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=4-16                      	 2459924	       481.3 ns/op	     291 B/op	      12 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=8
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=8-16                      	 1407657	       842.1 ns/op	     475 B/op	      21 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=10
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=10-16                     	 1237080	       967.4 ns/op	     496 B/op	      26 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=12
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=12-16                     	 1000000	      1091 ns/op	     537 B/op	      29 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=16
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=16-16                     	  933496	      1236 ns/op	     568 B/op	      31 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=20
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=20-16                     	  896631	      1306 ns/op	     596 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=24
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=24-16                     	  900810	      1327 ns/op	     599 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=32
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=32-16                     	  872152	      1337 ns/op	     602 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=48
+BenchmarkPrefixLengthVariation/KeySize=64/PrefixLen=48-16                     	  808779	      1390 ns/op	     632 B/op	      36 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=1
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=1-16                     	 5687492	       202.1 ns/op	     127 B/op	       5 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=2
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=2-16                     	 3595213	       337.1 ns/op	     204 B/op	       8 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=4
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=4-16                     	 2289850	       496.8 ns/op	     290 B/op	      12 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=8
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=8-16                     	 1397619	       848.2 ns/op	     475 B/op	      21 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=10
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=10-16                    	 1240533	       960.9 ns/op	     495 B/op	      26 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=12
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=12-16                    	 1000000	      1094 ns/op	     535 B/op	      29 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=16
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=16-16                    	  932463	      1234 ns/op	     567 B/op	      31 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=20
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=20-16                    	  882998	      1321 ns/op	     595 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=24
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=24-16                    	  890931	      1323 ns/op	     599 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=32
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=32-16                    	  862197	      1340 ns/op	     602 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=48
+BenchmarkPrefixLengthVariation/KeySize=128/PrefixLen=48-16                    	  846951	      1398 ns/op	     632 B/op	      36 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=1
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=1-16                     	 5746456	       199.4 ns/op	     127 B/op	       5 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=2
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=2-16                     	 3696919	       321.0 ns/op	     202 B/op	       8 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=4
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=4-16                     	 2455420	       480.4 ns/op	     290 B/op	      12 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=8
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=8-16                     	 1412005	       840.9 ns/op	     475 B/op	      21 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=10
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=10-16                    	 1247803	       955.9 ns/op	     494 B/op	      25 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=12
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=12-16                    	 1000000	      1072 ns/op	     532 B/op	      29 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=16
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=16-16                    	  944732	      1236 ns/op	     565 B/op	      31 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=20
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=20-16                    	  868612	      1316 ns/op	     594 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=24
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=24-16                    	  875677	      1326 ns/op	     597 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=32
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=32-16                    	  874791	      1334 ns/op	     600 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=48
+BenchmarkPrefixLengthVariation/KeySize=256/PrefixLen=48-16                    	  821235	      1396 ns/op	     630 B/op	      36 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=1
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=1-16                     	 5798491	       200.5 ns/op	     128 B/op	       5 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=2
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=2-16                     	 3633262	       321.1 ns/op	     204 B/op	       8 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=4
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=4-16                     	 2481582	       488.8 ns/op	     290 B/op	      12 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=8
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=8-16                     	 1412943	       835.8 ns/op	     474 B/op	      21 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=10
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=10-16                    	 1236324	       950.2 ns/op	     494 B/op	      26 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=12
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=12-16                    	 1000000	      1073 ns/op	     532 B/op	      28 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=16
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=16-16                    	  905725	      1235 ns/op	     566 B/op	      31 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=20
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=20-16                    	  842526	      1313 ns/op	     594 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=24
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=24-16                    	  848676	      1320 ns/op	     598 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=32
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=32-16                    	  836917	      1331 ns/op	     601 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=48
+BenchmarkPrefixLengthVariation/KeySize=512/PrefixLen=48-16                    	  823918	      1409 ns/op	     630 B/op	      36 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=1
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=1-16                    	 5569906	       207.0 ns/op	     128 B/op	       5 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=2
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=2-16                    	 3679588	       322.7 ns/op	     204 B/op	       8 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=4
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=4-16                    	 2472895	       477.1 ns/op	     290 B/op	      12 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=8
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=8-16                    	 1401112	       851.2 ns/op	     476 B/op	      22 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=10
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=10-16                   	 1223544	       971.9 ns/op	     496 B/op	      26 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=12
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=12-16                   	 1000000	      1079 ns/op	     534 B/op	      29 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=16
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=16-16                   	  958782	      1246 ns/op	     567 B/op	      31 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=20
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=20-16                   	  892413	      1389 ns/op	     595 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=24
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=24-16                   	  872853	      1350 ns/op	     598 B/op	      33 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=32
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=32-16                   	  886180	      1391 ns/op	     601 B/op	      34 allocs/op
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=48
+BenchmarkPrefixLengthVariation/KeySize=1024/PrefixLen=48-16                   	  786003	      1449 ns/op	     630 B/op	      36 allocs/op
+BenchmarkMissQueries
+BenchmarkMissQueries/KeySize=64/Keys=8192
+    lerloc_bench_test.go:271: WeakPrefixSearch failed: key not found in structure
+--- FAIL: BenchmarkMissQueries/KeySize=64/Keys=8192-16
+BenchmarkMissQueries/KeySize=128/Keys=8192
+BenchmarkMissQueries/KeySize=128/Keys=8192-16                                 	 1000000	      1072 ns/op	     502 B/op	      26 allocs/op
+BenchmarkMissQueries/KeySize=256/Keys=8192
+BenchmarkMissQueries/KeySize=256/Keys=8192-16                                 	 1000000	      1101 ns/op	     503 B/op	      26 allocs/op
+BenchmarkMissQueries/KeySize=512/Keys=8192
+BenchmarkMissQueries/KeySize=512/Keys=8192-16                                 	 1000000	      1075 ns/op	     497 B/op	      26 allocs/op
+BenchmarkMissQueries/KeySize=1024/Keys=8192
+    lerloc_bench_test.go:271: WeakPrefixSearch failed: key not found in structure
+--- FAIL: BenchmarkMissQueries/KeySize=1024/Keys=8192-16
+--- FAIL: BenchmarkMissQueries
+BenchmarkScalingBehavior
+BenchmarkScalingBehavior/KeySize=64/Keys=32
+BenchmarkScalingBehavior/KeySize=64/Keys=32-16                                	 2046565	       589.8 ns/op	     394 B/op	      18 allocs/op
+BenchmarkScalingBehavior/KeySize=64/Keys=256
+BenchmarkScalingBehavior/KeySize=64/Keys=256-16                               	 1391493	       858.7 ns/op	     464 B/op	      24 allocs/op
+BenchmarkScalingBehavior/KeySize=64/Keys=1024
+BenchmarkScalingBehavior/KeySize=64/Keys=1024-16                              	  996667	      1128 ns/op	     557 B/op	      31 allocs/op
+BenchmarkScalingBehavior/KeySize=64/Keys=8192
+BenchmarkScalingBehavior/KeySize=64/Keys=8192-16                              	  903358	      1332 ns/op	     608 B/op	      35 allocs/op
+BenchmarkScalingBehavior/KeySize=64/Keys=32768
+BenchmarkScalingBehavior/KeySize=64/Keys=32768-16                             	  811903	      1415 ns/op	     628 B/op	      38 allocs/op
+BenchmarkScalingBehavior/KeySize=64/Keys=262144
+    lerloc_bench_test.go:292: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkScalingBehavior/KeySize=64/Keys=262144-16
+BenchmarkScalingBehavior/KeySize=128/Keys=32
+BenchmarkScalingBehavior/KeySize=128/Keys=32-16                               	 1975984	       612.4 ns/op	     414 B/op	      19 allocs/op
+BenchmarkScalingBehavior/KeySize=128/Keys=256
+BenchmarkScalingBehavior/KeySize=128/Keys=256-16                              	 1391938	       861.6 ns/op	     488 B/op	      26 allocs/op
+BenchmarkScalingBehavior/KeySize=128/Keys=1024
+BenchmarkScalingBehavior/KeySize=128/Keys=1024-16                             	 1000000	      1170 ns/op	     582 B/op	      33 allocs/op
+BenchmarkScalingBehavior/KeySize=128/Keys=8192
+BenchmarkScalingBehavior/KeySize=128/Keys=8192-16                             	  908516	      1316 ns/op	     622 B/op	      35 allocs/op
+BenchmarkScalingBehavior/KeySize=128/Keys=32768
+BenchmarkScalingBehavior/KeySize=128/Keys=32768-16                            	  797286	      1508 ns/op	     666 B/op	      42 allocs/op
+BenchmarkScalingBehavior/KeySize=128/Keys=262144
+    lerloc_bench_test.go:292: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkScalingBehavior/KeySize=128/Keys=262144
+BenchmarkScalingBehavior/KeySize=256/Keys=32
+BenchmarkScalingBehavior/KeySize=256/Keys=32-16                               	 1746462	       663.5 ns/op	     444 B/op	      21 allocs/op
+BenchmarkScalingBehavior/KeySize=256/Keys=256
+BenchmarkScalingBehavior/KeySize=256/Keys=256-16                              	 1285975	       932.7 ns/op	     524 B/op	      29 allocs/op
+BenchmarkScalingBehavior/KeySize=256/Keys=1024
+BenchmarkScalingBehavior/KeySize=256/Keys=1024-16                             	  963684	      1232 ns/op	     617 B/op	      35 allocs/op
+BenchmarkScalingBehavior/KeySize=256/Keys=8192
+BenchmarkScalingBehavior/KeySize=256/Keys=8192-16                             	  862563	      1421 ns/op	     656 B/op	      37 allocs/op
+BenchmarkScalingBehavior/KeySize=256/Keys=32768
+BenchmarkScalingBehavior/KeySize=256/Keys=32768-16                            	  690307	      1573 ns/op	     697 B/op	      44 allocs/op
+BenchmarkScalingBehavior/KeySize=256/Keys=262144
+    lerloc_bench_test.go:292: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkScalingBehavior/KeySize=256/Keys=262144
+BenchmarkScalingBehavior/KeySize=512/Keys=32
+BenchmarkScalingBehavior/KeySize=512/Keys=32-16                               	 1609041	       738.9 ns/op	     490 B/op	      23 allocs/op
+BenchmarkScalingBehavior/KeySize=512/Keys=256
+BenchmarkScalingBehavior/KeySize=512/Keys=256-16                              	 1211338	       992.2 ns/op	     563 B/op	      30 allocs/op
+BenchmarkScalingBehavior/KeySize=512/Keys=1024
+BenchmarkScalingBehavior/KeySize=512/Keys=1024-16                             	  913162	      1300 ns/op	     660 B/op	      37 allocs/op
+BenchmarkScalingBehavior/KeySize=512/Keys=8192
+BenchmarkScalingBehavior/KeySize=512/Keys=8192-16                             	  791173	      1506 ns/op	     715 B/op	      40 allocs/op
+BenchmarkScalingBehavior/KeySize=512/Keys=32768
+BenchmarkScalingBehavior/KeySize=512/Keys=32768-16                            	  723240	      1637 ns/op	     745 B/op	      45 allocs/op
+BenchmarkScalingBehavior/KeySize=512/Keys=262144
+    lerloc_bench_test.go:292: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkScalingBehavior/KeySize=512/Keys=262144
+BenchmarkScalingBehavior/KeySize=1024/Keys=32
+BenchmarkScalingBehavior/KeySize=1024/Keys=32-16                              	 1518474	       782.8 ns/op	     545 B/op	      26 allocs/op
+BenchmarkScalingBehavior/KeySize=1024/Keys=256
+BenchmarkScalingBehavior/KeySize=1024/Keys=256-16                             	 1000000	      1095 ns/op	     618 B/op	      32 allocs/op
+BenchmarkScalingBehavior/KeySize=1024/Keys=1024
+BenchmarkScalingBehavior/KeySize=1024/Keys=1024-16                            	  864705	      1382 ns/op	     707 B/op	      38 allocs/op
+BenchmarkScalingBehavior/KeySize=1024/Keys=8192
+BenchmarkScalingBehavior/KeySize=1024/Keys=8192-16                            	  759050	      1571 ns/op	     748 B/op	      41 allocs/op
+BenchmarkScalingBehavior/KeySize=1024/Keys=32768
+BenchmarkScalingBehavior/KeySize=1024/Keys=32768-16                           	  689596	      1776 ns/op	     785 B/op	      47 allocs/op
+BenchmarkScalingBehavior/KeySize=1024/Keys=262144
+    lerloc_bench_test.go:292: Failed to build LocalExactRangeLocator: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkScalingBehavior/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkScalingBehavior
+BenchmarkRangeLocatorBuild
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32-16                              	   14044	     84824 ns/op	        87.00 bits_per_key	       348.0 total_bytes	   64192 B/op	    1865 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=256
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=256-16                             	    1605	    739231 ns/op	        54.06 bits_per_key	      1730 total_bytes	  490580 B/op	   16095 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=1024
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=1024-16                            	     306	   3818369 ns/op	        53.48 bits_per_key	      6846 total_bytes	 2166139 B/op	   77743 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=8192
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=8192-16                            	      33	  36774769 ns/op	        51.61 bits_per_key	     52849 total_bytes	18549702 B/op	  713333 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32768
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32768-16                           	       6	 174843993 ns/op	        51.46 bits_per_key	    210793 total_bytes	80594405 B/op	 3434725 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=262144
+    rloc_bench_test.go:26: NewRangeLocator failed: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorBuild/KeySize=64/Keys=262144
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32-16                             	   13755	     87963 ns/op	       100.0 bits_per_key	       400.0 total_bytes	   68616 B/op	    2030 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=256
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=256-16                            	    1536	    776757 ns/op	        54.72 bits_per_key	      1751 total_bytes	  531304 B/op	   17609 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=1024
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=1024-16                           	     291	   4065794 ns/op	        53.70 bits_per_key	      6874 total_bytes	 2354306 B/op	   83848 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=8192
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=8192-16                           	      31	  40007546 ns/op	        51.79 bits_per_key	     53032 total_bytes	20889296 B/op	  809000 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32768
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32768-16                          	       5	 250686983 ns/op	        51.87 bits_per_key	    212476 total_bytes	116097840 B/op	 5254215 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=262144
+    rloc_bench_test.go:26: NewRangeLocator failed: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorBuild/KeySize=128/Keys=262144
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32-16                             	   12523	     95824 ns/op	        89.75 bits_per_key	       359.0 total_bytes	   82448 B/op	    2309 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=256
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=256-16                            	    1348	    864751 ns/op	        59.88 bits_per_key	      1916 total_bytes	  648488 B/op	   20178 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=1024
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=1024-16                           	     270	   4403665 ns/op	        53.69 bits_per_key	      6872 total_bytes	 2829906 B/op	   94300 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=8192
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=8192-16                           	      28	  43126790 ns/op	        52.53 bits_per_key	     53792 total_bytes	24643068 B/op	  882304 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32768
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32768-16                          	       6	 247928125 ns/op	        52.59 bits_per_key	    215390 total_bytes	126929376 B/op	 5137221 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=262144
+    rloc_bench_test.go:26: NewRangeLocator failed: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorBuild/KeySize=256/Keys=262144
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=32
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=32-16                             	   10000	    111646 ns/op	        79.25 bits_per_key	       317.0 total_bytes	  107960 B/op	    2659 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=256
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=256-16                            	    1179	    997997 ns/op	        61.66 bits_per_key	      1973 total_bytes	  874312 B/op	   22956 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=1024
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=1024-16                           	     235	   5036547 ns/op	        55.66 bits_per_key	      7124 total_bytes	 3841137 B/op	  108205 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=8192
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=8192-16                           	      25	  50790487 ns/op	        54.58 bits_per_key	     55885 total_bytes	34676406 B/op	 1038959 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=32768
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=32768-16                          	       4	 277999052 ns/op	        54.94 bits_per_key	    225051 total_bytes	170223652 B/op	 5591433 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=262144
+    rloc_bench_test.go:26: NewRangeLocator failed: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorBuild/KeySize=512/Keys=262144
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=32
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=32-16                            	    8731	    141568 ns/op	       117.0 bits_per_key	       468.0 total_bytes	  157680 B/op	    2967 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=256
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=256-16                           	     938	   1234306 ns/op	        71.12 bits_per_key	      2276 total_bytes	 1309563 B/op	   25600 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=1024
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=1024-16                          	     199	   5963154 ns/op	        59.33 bits_per_key	      7594 total_bytes	 5523446 B/op	  117883 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=8192
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=8192-16                          	      18	  61898234 ns/op	        58.96 bits_per_key	     60375 total_bytes	50181170 B/op	 1123586 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=32768
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=32768-16                         	       4	 334084438 ns/op	        58.79 bits_per_key	    240797 total_bytes	249998080 B/op	 6145959 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=262144
+    rloc_bench_test.go:26: NewRangeLocator failed: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorBuild/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkRangeLocatorBuild
+BenchmarkRangeLocatorQuery
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=32
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=32-16                              	 2587884	       450.1 ns/op	     344 B/op	      17 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=256
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=256-16                             	 1863628	       640.9 ns/op	     408 B/op	      20 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=1024
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=1024-16                            	 1000000	      1006 ns/op	     523 B/op	      26 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=8192
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=8192-16                            	 1000000	      1207 ns/op	     583 B/op	      30 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=32768
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=32768-16                           	  892555	      1360 ns/op	     608 B/op	      34 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=262144
+    rloc_bench_test.go:54: NewRangeLocator failed: failed to build MMPH for P set of size 868624: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorQuery/KeySize=64/Keys=262144
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=32
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=32-16                             	 2378618	       493.9 ns/op	     390 B/op	      19 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=256
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=256-16                            	 1692288	       708.2 ns/op	     458 B/op	      22 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=1024
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=1024-16                           	 1000000	      1059 ns/op	     582 B/op	      28 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=8192
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=8192-16                           	  928008	      1316 ns/op	     652 B/op	      32 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=32768
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=32768-16                          	  776924	      1490 ns/op	     687 B/op	      38 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=262144
+    rloc_bench_test.go:54: NewRangeLocator failed: failed to build MMPH for P set of size 868640: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorQuery/KeySize=128/Keys=262144
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=32
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=32-16                             	 1948054	       598.4 ns/op	     533 B/op	      22 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=256
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=256-16                            	 1491846	       810.7 ns/op	     602 B/op	      25 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=1024
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=1024-16                           	 1000000	      1171 ns/op	     738 B/op	      32 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=8192
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=8192-16                           	  816720	      1534 ns/op	     834 B/op	      37 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=32768
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=32768-16                          	  623882	      1674 ns/op	     885 B/op	      42 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=262144
+    rloc_bench_test.go:54: NewRangeLocator failed: failed to build MMPH for P set of size 868815: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorQuery/KeySize=256/Keys=262144
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=32
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=32-16                             	 1606129	       747.2 ns/op	     777 B/op	      26 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=256
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=256-16                            	 1238712	       973.3 ns/op	     866 B/op	      29 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=1024
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=1024-16                           	  864225	      1403 ns/op	    1052 B/op	      36 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=8192
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=8192-16                           	  706999	      1740 ns/op	    1185 B/op	      42 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=32768
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=32768-16                          	  599895	      1968 ns/op	    1264 B/op	      47 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=262144
+    rloc_bench_test.go:54: NewRangeLocator failed: failed to build MMPH for P set of size 868526: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorQuery/KeySize=512/Keys=262144
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=32
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=32-16                            	 1208366	       984.0 ns/op	    1237 B/op	      28 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=256
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=256-16                           	  996652	      1253 ns/op	    1409 B/op	      32 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=1024
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=1024-16                          	  718719	      1681 ns/op	    1568 B/op	      39 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=8192
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=8192-16                          	  571515	      2169 ns/op	    1795 B/op	      45 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=32768
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=32768-16                         	  521734	      2378 ns/op	    1889 B/op	      51 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=1024/Keys=262144
+    rloc_bench_test.go:54: NewRangeLocator failed: failed to build MMPH for P set of size 868560: failed to build working approximate z-fast trie after 100 attempts, try to increase S and/or I
+--- FAIL: BenchmarkRangeLocatorQuery/KeySize=1024/Keys=262144
+--- FAIL: BenchmarkRangeLocatorQuery
+FAIL
+exit status 1
+FAIL	Thesis/rloc	893.543s
+FAIL
+
+Process finished with the exit code 1
+
