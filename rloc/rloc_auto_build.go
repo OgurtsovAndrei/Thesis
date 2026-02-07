@@ -2,174 +2,127 @@ package rloc
 
 import (
 	"Thesis/errutil"
+	"Thesis/mmph/paramselect"
 	"Thesis/zfasttrie"
 	"fmt"
 )
 
-type widthChoice struct {
-	e int
-	s int
-	i int
+const rlocBucketSize = 256
+
+type autoBuildPlan struct {
+	eBits       int
+	iBits       int
+	sCandidates []int
 }
 
-func autoWidthChoices(pSize int, maxBitLen int) []widthChoice {
-	eStart := widthForMaxValue(maxBitLen)
-	iStart := widthForIndexWithSentinel(estimatedDelimiterTrieNodes(pSize) - 1)
-	sStart := suggestedSignatureWidth(pSize, maxBitLen)
+func makeAutoBuildPlan(pSize int, maxBitLen int) (autoBuildPlan, error) {
+	errutil.BugOn(pSize < 0, "pSize must be non-negative, got %d", pSize)
+	errutil.BugOn(maxBitLen < 0, "maxBitLen must be non-negative, got %d", maxBitLen)
 
-	eCands := widthCandidates(eStart)
-	sCands := widthCandidates(sStart)
-	iCands := widthCandidates(iStart)
+	if pSize == 0 {
+		return autoBuildPlan{
+			eBits:       8,
+			iBits:       8,
+			sCandidates: []int{8},
+		}, nil
+	}
 
-	choices := make([]widthChoice, 0, len(eCands)*len(sCands)*len(iCands))
-	for _, e := range eCands {
-		for _, s := range sCands {
-			for _, i := range iCands {
-				choices = append(choices, widthChoice{e: e, s: s, i: i})
-			}
+	numBuckets := paramselect.BucketCount(pSize, rlocBucketSize)
+	eBits := paramselect.WidthForBitLength(maxBitLen)
+	iBits := paramselect.WidthForDelimiterTrieIndex(numBuckets)
+
+	// Relative-trie setup from the paper: epsilon_query = m/n.
+	sMin := paramselect.SignatureBitsRelativeTrie(maxBitLen, pSize, numBuckets)
+	candidates := filterWidthsUpTo32(paramselect.WidthCandidates(sMin))
+	if len(candidates) == 0 {
+		return autoBuildPlan{}, fmt.Errorf("unsupported signature width: need >= %d bits", sMin)
+	}
+
+	return autoBuildPlan{
+		eBits:       eBits,
+		iBits:       iBits,
+		sCandidates: candidates,
+	}, nil
+}
+
+func filterWidthsUpTo32(widths []int) []int {
+	out := make([]int, 0, len(widths))
+	for _, w := range widths {
+		if w <= 32 {
+			out = append(out, w)
 		}
 	}
-	return choices
+	return out
 }
 
-func buildWithWidths(sortedItems []pItem, mmphSeed uint64, choice widthChoice) (RangeLocator, error) {
-	switch choice.e {
+func buildWithFixedWidths(sortedItems []pItem, mmphSeed uint64, eBits int, sBits int, iBits int) (RangeLocator, error) {
+	switch eBits {
 	case 8:
-		return buildWithWidthsE8(sortedItems, mmphSeed, choice)
+		return buildWithFixedWidthsE8(sortedItems, mmphSeed, sBits, iBits)
 	case 16:
-		return buildWithWidthsE16(sortedItems, mmphSeed, choice)
+		return buildWithFixedWidthsE16(sortedItems, mmphSeed, sBits, iBits)
 	case 32:
-		return buildWithWidthsE32(sortedItems, mmphSeed, choice)
+		return buildWithFixedWidthsE32(sortedItems, mmphSeed, sBits, iBits)
 	default:
-		errutil.Bug("unsupported E width %d", choice.e)
-		return nil, fmt.Errorf("unsupported E width %d", choice.e)
+		errutil.Bug("unsupported E width %d", eBits)
+		return nil, fmt.Errorf("unsupported E width %d", eBits)
 	}
 }
 
-func buildWithWidthsE8(sortedItems []pItem, mmphSeed uint64, choice widthChoice) (RangeLocator, error) {
-	switch choice.s {
+func buildWithFixedWidthsE8(sortedItems []pItem, mmphSeed uint64, sBits int, iBits int) (RangeLocator, error) {
+	switch iBits {
 	case 8:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint8, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint8, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint8, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint8, uint8](sortedItems, mmphSeed, sBits)
 	case 16:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint16, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint16, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint16, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint8, uint16](sortedItems, mmphSeed, sBits)
 	case 32:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint32, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint32, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint8, uint32, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint8, uint32](sortedItems, mmphSeed, sBits)
 	default:
-		errutil.Bug("unsupported S width %d for E=%d", choice.s, choice.e)
+		errutil.Bug("unsupported I width %d for E=%d", iBits, 8)
+		return nil, fmt.Errorf("unsupported I width %d", iBits)
 	}
-
-	return nil, fmt.Errorf("unsupported width combination E=%d S=%d I=%d", choice.e, choice.s, choice.i)
 }
 
-func buildWithWidthsE16(sortedItems []pItem, mmphSeed uint64, choice widthChoice) (RangeLocator, error) {
-	switch choice.s {
+func buildWithFixedWidthsE16(sortedItems []pItem, mmphSeed uint64, sBits int, iBits int) (RangeLocator, error) {
+	switch iBits {
 	case 8:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint8, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint8, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint8, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint16, uint8](sortedItems, mmphSeed, sBits)
 	case 16:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint16, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint16, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint16, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint16, uint16](sortedItems, mmphSeed, sBits)
 	case 32:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint32, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint32, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint16, uint32, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint16, uint32](sortedItems, mmphSeed, sBits)
 	default:
-		errutil.Bug("unsupported S width %d for E=%d", choice.s, choice.e)
+		errutil.Bug("unsupported I width %d for E=%d", iBits, 16)
+		return nil, fmt.Errorf("unsupported I width %d", iBits)
 	}
-
-	return nil, fmt.Errorf("unsupported width combination E=%d S=%d I=%d", choice.e, choice.s, choice.i)
 }
 
-func buildWithWidthsE32(sortedItems []pItem, mmphSeed uint64, choice widthChoice) (RangeLocator, error) {
-	switch choice.s {
+func buildWithFixedWidthsE32(sortedItems []pItem, mmphSeed uint64, sBits int, iBits int) (RangeLocator, error) {
+	switch iBits {
 	case 8:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint8, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint8, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint8, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint32, uint8](sortedItems, mmphSeed, sBits)
 	case 16:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint16, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint16, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint16, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint32, uint16](sortedItems, mmphSeed, sBits)
 	case 32:
-		switch choice.i {
-		case 8:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint32, uint8](sortedItems, mmphSeed)
-		case 16:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint32, uint16](sortedItems, mmphSeed)
-		case 32:
-			return safeBuildGenericRangeLocatorFromItems[uint32, uint32, uint32](sortedItems, mmphSeed)
-		default:
-			errutil.Bug("unsupported I width %d for E=%d S=%d", choice.i, choice.e, choice.s)
-		}
+		return buildWithFixedWidthsSI[uint32, uint32](sortedItems, mmphSeed, sBits)
 	default:
-		errutil.Bug("unsupported S width %d for E=%d", choice.s, choice.e)
+		errutil.Bug("unsupported I width %d for E=%d", iBits, 32)
+		return nil, fmt.Errorf("unsupported I width %d", iBits)
 	}
+}
 
-	return nil, fmt.Errorf("unsupported width combination E=%d S=%d I=%d", choice.e, choice.s, choice.i)
+func buildWithFixedWidthsSI[E zfasttrie.UNumber, I zfasttrie.UNumber](sortedItems []pItem, mmphSeed uint64, sBits int) (RangeLocator, error) {
+	switch sBits {
+	case 8:
+		return safeBuildGenericRangeLocatorFromItems[E, uint8, I](sortedItems, mmphSeed)
+	case 16:
+		return safeBuildGenericRangeLocatorFromItems[E, uint16, I](sortedItems, mmphSeed)
+	case 32:
+		return safeBuildGenericRangeLocatorFromItems[E, uint32, I](sortedItems, mmphSeed)
+	default:
+		errutil.Bug("unsupported S width %d", sBits)
+		return nil, fmt.Errorf("unsupported S width %d", sBits)
+	}
 }
 
 func safeBuildGenericRangeLocatorFromItems[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](sortedItems []pItem, mmphSeed uint64) (rl *GenericRangeLocator[E, S, I], err error) {
@@ -180,61 +133,4 @@ func safeBuildGenericRangeLocatorFromItems[E zfasttrie.UNumber, S zfasttrie.UNum
 		}
 	}()
 	return newGenericRangeLocatorFromItems[E, S, I](sortedItems, mmphSeed)
-}
-
-func widthForMaxValue(maxValue int) int {
-	switch {
-	case maxValue <= 0xFF:
-		return 8
-	case maxValue <= 0xFFFF:
-		return 16
-	case maxValue <= 0xFFFFFFFF:
-		return 32
-	default:
-		return 64
-	}
-}
-
-func widthForIndexWithSentinel(maxIndex int) int {
-	switch {
-	case maxIndex <= 0xFE:
-		return 8
-	case maxIndex <= 0xFFFE:
-		return 16
-	case uint64(maxIndex) <= 0xFFFFFFFE:
-		return 32
-	default:
-		return 64
-	}
-}
-
-func widthCandidates(start int) []int {
-	base := []int{8, 16, 32}
-	out := make([]int, 0, len(base))
-	for _, b := range base {
-		if b >= start {
-			out = append(out, b)
-		}
-	}
-	return out
-}
-
-func estimatedDelimiterTrieNodes(pSize int) int {
-	if pSize <= 0 {
-		return 1
-	}
-	numBuckets := (pSize + 255) / 256
-	// Conservative small bound for node-like entries in delimiter trie.
-	return 4*numBuckets + 2
-}
-
-func suggestedSignatureWidth(pSize int, maxBitLen int) int {
-	switch {
-	case pSize <= 1<<10 && maxBitLen <= 0xFF:
-		return 8
-	case pSize <= 1<<24 && maxBitLen <= 0xFFFF:
-		return 16
-	default:
-		return 32
-	}
 }

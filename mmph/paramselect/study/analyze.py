@@ -1,0 +1,600 @@
+#!/usr/bin/env python3
+import csv
+import math
+import os
+import re
+import statistics
+from collections import defaultdict
+
+
+def read_csv(path):
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def read_csv_if_exists(path):
+    if not os.path.exists(path):
+        return []
+    return read_csv(path)
+
+
+def as_int(row, key):
+    return int(float(row[key]))
+
+
+def as_float(row, key):
+    return float(row[key])
+
+
+def ensure_dir(path):
+    os.makedirs(path, exist_ok=True)
+
+
+def write_csv(path, rows, header):
+    with open(path, "w", newline="") as f:
+        wr = csv.DictWriter(f, fieldnames=header)
+        wr.writeheader()
+        wr.writerows(rows)
+
+
+def quantile(vals, q):
+    if not vals:
+        return 0.0
+    if len(vals) == 1:
+        return vals[0]
+    vals = sorted(vals)
+    pos = round((len(vals) - 1) * q)
+    pos = max(0, min(pos, len(vals) - 1))
+    return vals[pos]
+
+
+def svg_start(width, height):
+    return [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>',
+    ]
+
+
+def svg_finish(parts, path):
+    parts.append("</svg>")
+    with open(path, "w") as f:
+        f.write("\n".join(parts))
+
+
+def draw_bar_chart(path, title, x_label, y_label, labels, values, color="#2a7fff"):
+    width, height = 960, 540
+    left, right, top, bottom = 90, 40, 55, 75
+    pw = width - left - right
+    ph = height - top - bottom
+    ymax = max(1.0, max(values) * 1.1)
+
+    parts = svg_start(width, height)
+    parts.append(f'<text x="{width/2}" y="26" text-anchor="middle">{title}</text>')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top+ph}" x2="{left+pw}" y2="{top+ph}" />')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top}" x2="{left}" y2="{top+ph}" />')
+
+    for i in range(6):
+        yv = ymax * i / 5
+        y = top + ph - (yv / ymax) * ph
+        parts.append(f'<line class="grid" x1="{left}" y1="{y:.2f}" x2="{left+pw}" y2="{y:.2f}" />')
+        parts.append(f'<text class="label" x="{left-8}" y="{y+4:.2f}" text-anchor="end">{yv:.2f}</text>')
+
+    n = len(labels)
+    gap = 20
+    bar_w = (pw - gap * (n + 1)) / max(1, n)
+    for i, (lab, val) in enumerate(zip(labels, values)):
+        x = left + gap + i * (bar_w + gap)
+        h = (val / ymax) * ph
+        y = top + ph - h
+        parts.append(f'<rect x="{x:.2f}" y="{y:.2f}" width="{bar_w:.2f}" height="{h:.2f}" fill="{color}" />')
+        parts.append(f'<text class="label" x="{x + bar_w/2:.2f}" y="{top+ph+20}" text-anchor="middle">{lab}</text>')
+        parts.append(f'<text class="label" x="{x + bar_w/2:.2f}" y="{y-6:.2f}" text-anchor="middle">{val:.3f}</text>')
+
+    parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
+    parts.append(f'<text class="label" transform="translate(20,{height/2}) rotate(-90)" text-anchor="middle">{y_label}</text>')
+    svg_finish(parts, path)
+
+
+def draw_line_chart(path, title, x_label, y_label, x_vals, series):
+    width, height = 960, 540
+    left, right, top, bottom = 90, 40, 55, 75
+    pw = width - left - right
+    ph = height - top - bottom
+
+    x_min = min(x_vals)
+    x_max = max(x_vals)
+    y_min = 0.0
+    y_max = 1.0
+
+    def x_pos(x):
+        if x_max == x_min:
+            return left + pw / 2
+        t = (math.log2(x) - math.log2(x_min)) / (math.log2(x_max) - math.log2(x_min))
+        return left + t * pw
+
+    def y_pos(y):
+        return top + ph - ((y - y_min) / (y_max - y_min)) * ph
+
+    parts = svg_start(width, height)
+    parts.append(f'<text x="{width/2}" y="26" text-anchor="middle">{title}</text>')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top+ph}" x2="{left+pw}" y2="{top+ph}" />')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top}" x2="{left}" y2="{top+ph}" />')
+
+    for y in [0.0, 0.25, 0.5, 0.75, 1.0]:
+        py = y_pos(y)
+        parts.append(f'<line class="grid" x1="{left}" y1="{py:.2f}" x2="{left+pw}" y2="{py:.2f}" />')
+        parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{y:.2f}</text>')
+
+    for x in x_vals:
+        px = x_pos(x)
+        parts.append(f'<line class="grid" x1="{px:.2f}" y1="{top}" x2="{px:.2f}" y2="{top+ph}" />')
+        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{x}</text>')
+
+    palette = ["#2a7fff", "#e4572e", "#22a06b", "#7c3aed", "#a16207"]
+    legend_x = left + 10
+    legend_y = top + 12
+    for idx, (name, pts) in enumerate(series.items()):
+        color = palette[idx % len(palette)]
+        if not pts:
+            continue
+        coords = " ".join(f"{x_pos(x):.2f},{y_pos(y):.2f}" for x, y in pts)
+        parts.append(f'<polyline fill="none" stroke="{color}" stroke-width="2.5" points="{coords}" />')
+        for x, y in pts:
+            parts.append(f'<circle cx="{x_pos(x):.2f}" cy="{y_pos(y):.2f}" r="3.5" fill="{color}" />')
+        ly = legend_y + idx * 18
+        parts.append(f'<line x1="{legend_x}" y1="{ly}" x2="{legend_x+16}" y2="{ly}" stroke="{color}" stroke-width="2.5" />')
+        parts.append(f'<text class="label" x="{legend_x+22}" y="{ly+4}">{name}</text>')
+
+    parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
+    parts.append(f'<text class="label" transform="translate(20,{height/2}) rotate(-90)" text-anchor="middle">{y_label}</text>')
+    svg_finish(parts, path)
+
+
+def draw_line_chart_numeric(path, title, x_label, y_label, x_vals, series):
+    width, height = 960, 540
+    left, right, top, bottom = 90, 40, 55, 75
+    pw = width - left - right
+    ph = height - top - bottom
+
+    x_min = min(x_vals)
+    x_max = max(x_vals)
+    y_values = []
+    for pts in series.values():
+        y_values.extend(y for _, y in pts)
+    y_min = 0.0
+    y_max = max(1.0, max(y_values) * 1.1)
+
+    def x_pos(x):
+        if x_max == x_min:
+            return left + pw / 2
+        t = (x - x_min) / (x_max - x_min)
+        return left + t * pw
+
+    def y_pos(y):
+        return top + ph - ((y - y_min) / (y_max - y_min)) * ph
+
+    parts = svg_start(width, height)
+    parts.append(f'<text x="{width/2}" y="26" text-anchor="middle">{title}</text>')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top+ph}" x2="{left+pw}" y2="{top+ph}" />')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top}" x2="{left}" y2="{top+ph}" />')
+
+    for i in range(6):
+        yv = y_max * i / 5
+        py = y_pos(yv)
+        parts.append(f'<line class="grid" x1="{left}" y1="{py:.2f}" x2="{left+pw}" y2="{py:.2f}" />')
+        parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{yv:.1f}</text>')
+
+    for x in x_vals:
+        px = x_pos(x)
+        parts.append(f'<line class="grid" x1="{px:.2f}" y1="{top}" x2="{px:.2f}" y2="{top+ph}" />')
+        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{x}</text>')
+
+    palette = ["#2a7fff", "#e4572e", "#22a06b", "#7c3aed", "#a16207"]
+    legend_x = left + 10
+    legend_y = top + 12
+    for idx, (name, pts) in enumerate(series.items()):
+        color = palette[idx % len(palette)]
+        if not pts:
+            continue
+        coords = " ".join(f"{x_pos(x):.2f},{y_pos(y):.2f}" for x, y in pts)
+        parts.append(f'<polyline fill="none" stroke="{color}" stroke-width="2.5" points="{coords}" />')
+        for x, y in pts:
+            parts.append(f'<circle cx="{x_pos(x):.2f}" cy="{y_pos(y):.2f}" r="3.5" fill="{color}" />')
+        ly = legend_y + idx * 18
+        parts.append(f'<line x1="{legend_x}" y1="{ly}" x2="{legend_x+16}" y2="{ly}" stroke="{color}" stroke-width="2.5" />')
+        parts.append(f'<text class="label" x="{legend_x+22}" y="{ly+4}">{name}</text>')
+
+    parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
+    parts.append(f'<text class="label" transform="translate(20,{height/2}) rotate(-90)" text-anchor="middle">{y_label}</text>')
+    svg_finish(parts, path)
+
+
+def draw_line_chart_logx_numericy(path, title, x_label, y_label, x_vals, series):
+    width, height = 960, 540
+    left, right, top, bottom = 90, 40, 55, 75
+    pw = width - left - right
+    ph = height - top - bottom
+
+    x_min = min(x_vals)
+    x_max = max(x_vals)
+    y_values = []
+    for pts in series.values():
+        y_values.extend(y for _, y in pts)
+    y_min = 0.0
+    y_max = max(1.0, max(y_values) * 1.1)
+
+    def x_pos(x):
+        if x_max == x_min:
+            return left + pw / 2
+        t = (math.log2(x) - math.log2(x_min)) / (math.log2(x_max) - math.log2(x_min))
+        return left + t * pw
+
+    def y_pos(y):
+        return top + ph - ((y - y_min) / (y_max - y_min)) * ph
+
+    parts = svg_start(width, height)
+    parts.append(f'<text x="{width/2}" y="26" text-anchor="middle">{title}</text>')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top+ph}" x2="{left+pw}" y2="{top+ph}" />')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top}" x2="{left}" y2="{top+ph}" />')
+
+    for i in range(6):
+        yv = y_max * i / 5
+        py = y_pos(yv)
+        parts.append(f'<line class="grid" x1="{left}" y1="{py:.2f}" x2="{left+pw}" y2="{py:.2f}" />')
+        parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{yv:.1f}</text>')
+
+    for x in x_vals:
+        px = x_pos(x)
+        parts.append(f'<line class="grid" x1="{px:.2f}" y1="{top}" x2="{px:.2f}" y2="{top+ph}" />')
+        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{x}</text>')
+
+    palette = ["#2a7fff", "#e4572e", "#22a06b", "#7c3aed", "#a16207"]
+    legend_x = left + 10
+    legend_y = top + 12
+    for idx, (name, pts) in enumerate(series.items()):
+        color = palette[idx % len(palette)]
+        if not pts:
+            continue
+        coords = " ".join(f"{x_pos(x):.2f},{y_pos(y):.2f}" for x, y in pts)
+        parts.append(f'<polyline fill="none" stroke="{color}" stroke-width="2.5" points="{coords}" />')
+        for x, y in pts:
+            parts.append(f'<circle cx="{x_pos(x):.2f}" cy="{y_pos(y):.2f}" r="3.5" fill="{color}" />')
+        ly = legend_y + idx * 18
+        parts.append(f'<line x1="{legend_x}" y1="{ly}" x2="{legend_x+16}" y2="{ly}" stroke="{color}" stroke-width="2.5" />')
+        parts.append(f'<text class="label" x="{legend_x+22}" y="{ly+4}">{name}</text>')
+
+    parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
+    parts.append(f'<text class="label" transform="translate(20,{height/2}) rotate(-90)" text-anchor="middle">{y_label}</text>')
+    svg_finish(parts, path)
+
+
+def parse_memory_bench_text(path):
+    if not os.path.exists(path):
+        return []
+    rows = []
+    pat = re.compile(
+        r"BenchmarkMemoryComparison/KeySize=(\d+)/Keys=(\d+)-\d+\s+.*?\s([0-9.]+)\s+lerl_bits_per_key\s+.*?\s([0-9.]+)\s+rl_bits_per_key"
+    )
+    with open(path) as f:
+        for line in f:
+            m = pat.search(line)
+            if not m:
+                continue
+            rows.append(
+                {
+                    "keysize": int(m.group(1)),
+                    "keys": int(m.group(2)),
+                    "lerl_bits_per_key": float(m.group(3)),
+                    "rl_bits_per_key": float(m.group(4)),
+                }
+            )
+    return rows
+
+
+def main():
+    base = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(base, "data")
+    plots_dir = os.path.join(base, "plots")
+    ensure_dir(data_dir)
+    ensure_dir(plots_dir)
+
+    main_rows = read_csv(os.path.join(data_dir, "grid_main_v2.csv"))
+    size_rows = read_csv_if_exists(os.path.join(data_dir, "grid_size_report.csv"))
+    focus_rows_base = read_csv(os.path.join(data_dir, "grid_focus_v2.csv"))
+    focus_rows_extra_s16 = read_csv_if_exists(os.path.join(data_dir, "grid_focus_extra_s16.csv"))
+    focus_rows_extra_s8 = read_csv_if_exists(os.path.join(data_dir, "grid_focus_extra_s8.csv"))
+    focus_rows_extra_s32 = read_csv_if_exists(os.path.join(data_dir, "grid_focus_extra_s32.csv"))
+    focus_rows_big_s32 = read_csv_if_exists(os.path.join(data_dir, "grid_focus_big_s32.csv"))
+    focus_rows_small_s8 = read_csv_if_exists(os.path.join(data_dir, "grid_focus_small_s8.csv"))
+    focus_rows = (
+        focus_rows_base
+        + focus_rows_extra_s16
+        + focus_rows_extra_s8
+        + focus_rows_extra_s32
+        + focus_rows_big_s32
+        + focus_rows_small_s8
+    )
+    focus_unique = {}
+    for r in focus_rows:
+        k = (as_int(r, "n"), as_int(r, "w_bits"), as_int(r, "s_bits"))
+        focus_unique[k] = r
+    focus_rows = list(focus_unique.values())
+    mem_rows_txt = parse_memory_bench_text(os.path.join(base, "memory_bench_v2.txt"))
+    if mem_rows_txt:
+        mem_rows = mem_rows_txt
+        mem_source = os.path.join(base, "memory_bench_v2.txt")
+    else:
+        mem_rows = [r for r in read_csv("rloc/benchmarks_parsed.csv") if r["benchmark"] == "MemoryComparison"]
+        mem_source = "rloc/benchmarks_parsed.csv"
+
+    memory_points = [
+        {
+            "keysize": as_int(r, "keysize"),
+            "keys": as_int(r, "keys"),
+            "rl_bits_per_key": round(as_float(r, "rl_bits_per_key"), 6),
+            "lerl_bits_per_key": round(as_float(r, "lerl_bits_per_key"), 6),
+        }
+        for r in mem_rows
+    ]
+    memory_points.sort(key=lambda r: (r["keysize"], r["keys"]))
+    write_csv(
+        os.path.join(data_dir, "memory_points.csv"),
+        memory_points,
+        ["keysize", "keys", "rl_bits_per_key", "lerl_bits_per_key"],
+    )
+
+    by_s = defaultdict(list)
+    by_margin = defaultdict(list)
+    for r in main_rows:
+        s = as_int(r, "s_bits")
+        by_s[s].append(r)
+        by_margin[as_int(r, "s_margin_bits")].append(r)
+
+    summary_by_s = []
+    for s in sorted(by_s):
+        rows = by_s[s]
+        succ = [as_float(r, "success_rate") for r in rows]
+        fail = [as_float(r, "fail_rate") for r in rows]
+        att = [as_float(r, "avg_attempts_success") for r in rows if as_float(r, "success_rate") > 0]
+        summary_by_s.append(
+            {
+                "s_bits": s,
+                "scenarios": len(rows),
+                "success_rate_mean": round(statistics.fmean(succ), 6),
+                "success_rate_p50": round(quantile(succ, 0.5), 6),
+                "fail_rate_mean": round(statistics.fmean(fail), 6),
+                "fail_rate_max": round(max(fail), 6),
+                "avg_attempts_success_mean": round(statistics.fmean(att), 4) if att else 0.0,
+            }
+        )
+
+    write_csv(
+        os.path.join(data_dir, "summary_by_s.csv"),
+        summary_by_s,
+        [
+            "s_bits",
+            "scenarios",
+            "success_rate_mean",
+            "success_rate_p50",
+            "fail_rate_mean",
+            "fail_rate_max",
+            "avg_attempts_success_mean",
+        ],
+    )
+
+    summary_by_margin = []
+    for margin in sorted(by_margin):
+        rows = by_margin[margin]
+        succ = [as_float(r, "success_rate") for r in rows]
+        summary_by_margin.append(
+            {
+                "s_margin_bits": margin,
+                "scenarios": len(rows),
+                "success_rate_mean": round(statistics.fmean(succ), 6),
+                "success_rate_p50": round(quantile(succ, 0.5), 6),
+                "success_rate_min": round(min(succ), 6),
+            }
+        )
+
+    write_csv(
+        os.path.join(data_dir, "summary_by_margin.csv"),
+        summary_by_margin,
+        ["s_margin_bits", "scenarios", "success_rate_mean", "success_rate_p50", "success_rate_min"],
+    )
+
+    worst_rows = sorted(main_rows, key=lambda r: as_float(r, "fail_rate"), reverse=True)[:12]
+    write_csv(
+        os.path.join(data_dir, "worst_cases.csv"),
+        worst_rows,
+        list(worst_rows[0].keys()) if worst_rows else [],
+    )
+
+    # Plot 1: average success by S.
+    draw_bar_chart(
+        os.path.join(plots_dir, "success_rate_by_s.svg"),
+        "Build Success Rate vs S (grid_main_v2)",
+        "S bits",
+        "Success rate",
+        [str(r["s_bits"]) for r in summary_by_s],
+        [float(r["success_rate_mean"]) for r in summary_by_s],
+    )
+
+    # Plot 2: success vs n for S=16 in focused grid (+ optional extras).
+    s16_rows = [r for r in focus_rows if as_int(r, "s_bits") == 16]
+    n_vals = sorted({as_int(r, "n") for r in s16_rows})
+    by_w16 = defaultdict(list)
+    for r in s16_rows:
+        by_w16[as_int(r, "w_bits")].append((as_int(r, "n"), as_float(r, "success_rate")))
+    series16 = {f"w={w}": sorted(vals, key=lambda p: p[0]) for w, vals in sorted(by_w16.items())}
+    draw_line_chart(
+        os.path.join(plots_dir, "s16_success_vs_n.svg"),
+        "S=16 Build Success vs n (focus grid)",
+        "n (log2 scale)",
+        "Success rate",
+        n_vals,
+        series16,
+    )
+
+    # Plot 3: success vs n for S=8 in focused grid (+ optional extras).
+    s8_rows = [r for r in focus_rows if as_int(r, "s_bits") == 8]
+    n_vals_s8 = sorted({as_int(r, "n") for r in s8_rows})
+    by_w8 = defaultdict(list)
+    for r in s8_rows:
+        by_w8[as_int(r, "w_bits")].append((as_int(r, "n"), as_float(r, "success_rate")))
+    series8 = {f"w={w}": sorted(vals, key=lambda p: p[0]) for w, vals in sorted(by_w8.items())}
+    draw_line_chart(
+        os.path.join(plots_dir, "s8_success_vs_n.svg"),
+        "S=8 Build Success vs n (focus grid)",
+        "n (log2 scale)",
+        "Success rate",
+        n_vals_s8,
+        series8,
+    )
+
+    # Plot 4: memory bits/key at keys=32768 from parsed benchmark file.
+    s32_rows = [r for r in focus_rows if as_int(r, "s_bits") == 32]
+    n_vals_s32 = sorted({as_int(r, "n") for r in s32_rows})
+    by_w32 = defaultdict(list)
+    for r in s32_rows:
+        by_w32[as_int(r, "w_bits")].append((as_int(r, "n"), as_float(r, "success_rate")))
+    series32 = {f"w={w}": sorted(vals, key=lambda p: p[0]) for w, vals in sorted(by_w32.items())}
+    draw_line_chart(
+        os.path.join(plots_dir, "s32_success_vs_n.svg"),
+        "S=32 Build Success vs n (focus grid)",
+        "n (log2 scale)",
+        "Success rate",
+        n_vals_s32,
+        series32,
+    )
+
+    # Plot 4: memory bits/key at keys=32768 from parsed benchmark file.
+    mem_32768 = [r for r in mem_rows if as_int(r, "keys") == 32768]
+    mem_32768.sort(key=lambda r: as_int(r, "keysize"))
+    x_vals_mem = [as_int(r, "keysize") for r in mem_32768]
+    rl_series = [(as_int(r, "keysize"), as_float(r, "rl_bits_per_key")) for r in mem_32768]
+    lerl_series = [(as_int(r, "keysize"), as_float(r, "lerl_bits_per_key")) for r in mem_32768]
+    mmph_series = [(x, 14.0) for x in x_vals_mem]
+    draw_line_chart_numeric(
+        os.path.join(plots_dir, "memory_bits_per_key_keys32768.svg"),
+        "Memory bits/key at 32768 keys (from benchmarks_parsed.csv)",
+        "Key size (bits)",
+        "bits/key",
+        x_vals_mem,
+        {
+            "RLOC": rl_series,
+            "LERLOC": lerl_series,
+            "MMPH baseline=14": mmph_series,
+        },
+    )
+
+    if size_rows:
+        by_s_n = defaultdict(list)
+        n_vals_size = sorted({as_int(r, "n") for r in size_rows})
+        for r in size_rows:
+            bpk_raw = r.get("bpk", "none")
+            if bpk_raw == "none":
+                continue
+            s = as_int(r, "s_bits")
+            n = as_int(r, "n")
+            by_s_n[(s, n)].append(float(bpk_raw))
+
+        series_size = {}
+        for s in [8, 16, 32]:
+            pts = []
+            for n in n_vals_size:
+                vals = by_s_n.get((s, n), [])
+                if not vals:
+                    continue
+                pts.append((n, statistics.median(vals)))
+            if pts:
+                series_size[f"S={s}"] = pts
+
+        if series_size:
+            draw_line_chart_logx_numericy(
+                os.path.join(plots_dir, "grid_size_report_bpk_vs_n.svg"),
+                "Grid Size Report: median bpk vs n by S",
+                "n (log2 scale)",
+                "bits per key (median over w)",
+                n_vals_size,
+                series_size,
+            )
+
+    rl_vals = [as_float(r, "rl_bits_per_key") for r in mem_rows]
+    lerl_vals = [as_float(r, "lerl_bits_per_key") for r in mem_rows]
+    stable_rows = [r for r in mem_rows if as_int(r, "keys") >= 8192]
+    stable_rl = [as_float(r, "rl_bits_per_key") for r in stable_rows]
+    stable_lerl = [as_float(r, "lerl_bits_per_key") for r in stable_rows]
+
+    lines = []
+    lines.append("# PSig / Memory Study Summary")
+    lines.append("")
+    lines.append("## Inputs")
+    lines.append("- `mmph/paramselect/study/data/grid_main_v2.csv`")
+    lines.append("- `mmph/paramselect/study/data/grid_focus_v2.csv`")
+    if focus_rows_extra_s16:
+        lines.append("- `mmph/paramselect/study/data/grid_focus_extra_s16.csv`")
+    if focus_rows_extra_s8:
+        lines.append("- `mmph/paramselect/study/data/grid_focus_extra_s8.csv`")
+    if focus_rows_extra_s32:
+        lines.append("- `mmph/paramselect/study/data/grid_focus_extra_s32.csv`")
+    if focus_rows_big_s32:
+        lines.append("- `mmph/paramselect/study/data/grid_focus_big_s32.csv`")
+    if focus_rows_small_s8:
+        lines.append("- `mmph/paramselect/study/data/grid_focus_small_s8.csv`")
+    lines.append(f"- `{mem_source}`")
+    lines.append("")
+    lines.append("## Main Findings")
+    lines.append(
+        f"- On `grid_main_v2` (144 scenarios, 64 trials each): mean success by S is "
+        + ", ".join(f"S={r['s_bits']}: {r['success_rate_mean']:.3f}" for r in summary_by_s)
+        + "."
+    )
+    lines.append(
+        "- `S=32` is fully stable in this grid (all scenarios succeeded in all trials); "
+        "S=8 fails for most medium/large settings."
+    )
+    lines.append(
+        "- `S=16` is mixed: stable up to moderate `n`, but for `n=131072` several `w` values "
+        "show severe degradation."
+    )
+    lines.append(
+        "- This confirms that theorem-based `S` from per-query bound (`epsilon_query = m/n`) "
+        "is necessary but not sufficient for high probability of full-structure build success."
+    )
+    lines.append("")
+    lines.append("## Margin Analysis")
+    lines.append("- `summary_by_margin.csv` shows behavior grouped by `s_margin_bits = S - S_required`.")
+    lines.append("- Positive margin improves success rate but does not guarantee `~1.0` success for largest `n`.")
+    lines.append("")
+    lines.append(f"## Memory Snapshot (from `{mem_source}`)")
+    lines.append(
+        f"- RLOC bits/key: min={min(rl_vals):.2f}, median={statistics.median(rl_vals):.2f}, max={max(rl_vals):.2f}."
+    )
+    lines.append(
+        f"- LERLOC bits/key: min={min(lerl_vals):.2f}, median={statistics.median(lerl_vals):.2f}, max={max(lerl_vals):.2f}."
+    )
+    lines.append(
+        f"- Stable regime (`keys>=8192`): RLOC avg={statistics.fmean(stable_rl):.2f} bits/key, "
+        f"LERLOC avg={statistics.fmean(stable_lerl):.2f} bits/key."
+    )
+    lines.append("- MMPH baseline from paper chart: ~14 bits/key (for large n).")
+    lines.append("")
+    lines.append("## Generated Artifacts")
+    lines.append("- `mmph/paramselect/study/data/summary_by_s.csv`")
+    lines.append("- `mmph/paramselect/study/data/summary_by_margin.csv`")
+    lines.append("- `mmph/paramselect/study/data/worst_cases.csv`")
+    lines.append("- `mmph/paramselect/study/data/memory_points.csv`")
+    lines.append("- `mmph/paramselect/study/plots/success_rate_by_s.svg`")
+    lines.append("- `mmph/paramselect/study/plots/s16_success_vs_n.svg`")
+    lines.append("- `mmph/paramselect/study/plots/s8_success_vs_n.svg`")
+    lines.append("- `mmph/paramselect/study/plots/s32_success_vs_n.svg`")
+    if size_rows:
+        lines.append("- `mmph/paramselect/study/plots/grid_size_report_bpk_vs_n.svg`")
+    lines.append("- `mmph/paramselect/study/plots/memory_bits_per_key_keys32768.svg`")
+
+    with open(os.path.join(base, "analysis_summary.md"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+if __name__ == "__main__":
+    main()
