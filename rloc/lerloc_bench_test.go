@@ -227,60 +227,11 @@ func BenchmarkPrefixLengthVariation(b *testing.B) {
 func BenchmarkMissQueries(b *testing.B) {
 	initBenchKeys()
 
-	count := benchKeyCounts[3] // Use medium-sized dataset
-	keys := benchKeys[count]
-	lerl, err := NewLocalExactRangeLocator(keys)
-	if err != nil {
-		b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
-	}
+	for _, bitLen := range benchBitLengths {
+		count := benchKeyCounts[3] // Use medium-sized dataset
+		keys := benchKeys[bitLen][count]
 
-	if lerl == nil {
-		b.Fatal("Failed to build LocalExactRangeLocator")
-	}
-
-	// Generate prefixes that are unlikely to match
-	r := rand.New(rand.NewSource(42))
-	var missQueries []bits.BitString
-	for i := 0; i < 100; i++ {
-		// Generate random bit strings that are likely not prefixes
-		bitLen := 8 + r.Intn(8)
-		val := r.Uint64()
-		if bitLen < 64 {
-			val &= (1 << uint(bitLen)) - 1
-		}
-		// Flip some bits to make it even less likely to match
-		val ^= (1 << uint(r.Intn(bitLen)))
-
-		bs := bits.NewFromUint64(val)
-		if int(bs.Size()) > bitLen {
-			bs = bs.Prefix(bitLen)
-		}
-		missQueries = append(missQueries, bs)
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		prefix := missQueries[i%len(missQueries)]
-		start, end, err := lerl.WeakPrefixSearch(prefix)
-		if err != nil {
-			b.Fatalf("WeakPrefixSearch failed: %v", err)
-		}
-		// Miss queries should return [0,0) or small ranges
-		_ = start
-		_ = end
-	}
-}
-
-// Benchmark scaling behavior
-func BenchmarkScalingBehavior(b *testing.B) {
-	initBenchKeys()
-
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
-
+		b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 			lerl, err := NewLocalExactRangeLocator(keys)
 			if err != nil {
 				b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
@@ -290,33 +241,89 @@ func BenchmarkScalingBehavior(b *testing.B) {
 				b.Fatal("Failed to build LocalExactRangeLocator")
 			}
 
-			// Generate some queries
-			var queryPrefixes []bits.BitString
-			queryCount := int(math.Min(float64(len(keys)), 1000))
-			for i := 0; i < queryCount; i++ {
-				key := keys[i]
-				if key.Size() > 2 {
-					prefixLen := 1 + int(key.Size()/3)
-					prefix := key.Prefix(prefixLen)
-					queryPrefixes = append(queryPrefixes, prefix)
+			// Generate prefixes that are unlikely to match
+			r := rand.New(rand.NewSource(42))
+			var missQueries []bits.BitString
+			for i := 0; i < 100; i++ {
+				// Generate random bit strings that are likely not prefixes
+				queryBitLen := 8 + r.Intn(8)
+				val := r.Uint64()
+				if queryBitLen < 64 {
+					val &= (1 << uint(queryBitLen)) - 1
 				}
-			}
+				// Flip some bits to make it even less likely to match
+				val ^= (1 << uint(r.Intn(queryBitLen)))
 
-			size := lerl.ByteSize()
-			b.ReportMetric(float64(size), "memory_bytes")
-			b.ReportMetric(float64(size)/float64(count), "bytes_per_key")
+				bs := bits.NewFromUint64(val)
+				if int(bs.Size()) > queryBitLen {
+					bs = bs.Prefix(queryBitLen)
+				}
+				missQueries = append(missQueries, bs)
+			}
 
 			b.ReportAllocs()
 			b.ResetTimer()
 
-			// Use b.N for proper benchmarking
 			for i := 0; i < b.N; i++ {
-				prefix := queryPrefixes[i%len(queryPrefixes)]
-				_, _, err := lerl.WeakPrefixSearch(prefix)
+				prefix := missQueries[i%len(missQueries)]
+				start, end, err := lerl.WeakPrefixSearch(prefix)
 				if err != nil {
-					b.Fatalf("Query failed: %v", err)
+					b.Fatalf("WeakPrefixSearch failed: %v", err)
 				}
+				// Miss queries should return [0,0) or small ranges
+				_ = start
+				_ = end
 			}
 		})
+	}
+}
+
+// Benchmark scaling behavior
+func BenchmarkScalingBehavior(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				lerl, err := NewLocalExactRangeLocator(keys)
+				if err != nil {
+					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+				}
+
+				if lerl == nil {
+					b.Fatal("Failed to build LocalExactRangeLocator")
+				}
+
+				// Generate some queries
+				var queryPrefixes []bits.BitString
+				queryCount := int(math.Min(float64(len(keys)), 1000))
+				for i := 0; i < queryCount; i++ {
+					key := keys[i]
+					if key.Size() > 2 {
+						prefixLen := 1 + int(key.Size()/3)
+						prefix := key.Prefix(prefixLen)
+						queryPrefixes = append(queryPrefixes, prefix)
+					}
+				}
+
+				size := lerl.ByteSize()
+				b.ReportMetric(float64(size), "memory_bytes")
+				b.ReportMetric(float64(size)/float64(count), "bytes_per_key")
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				// Use b.N for proper benchmarking
+				for i := 0; i < b.N; i++ {
+					prefix := queryPrefixes[i%len(queryPrefixes)]
+					_, _, err := lerl.WeakPrefixSearch(prefix)
+					if err != nil {
+						b.Fatalf("Query failed: %v", err)
+					}
+				}
+			})
+		}
 	}
 }
