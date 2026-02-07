@@ -179,8 +179,8 @@ func (rl *RangeLocator) ByteSize() int {
 
 	// Size of the bit vector
 	if rl.bv != nil {
-		// RSDic doesn't expose Size() method, approximate based on bits stored
-		size += int(rl.bv.Num()/8) + 64 // rough estimate: bits/8 + overhead
+		// Account for all RSDic internal arrays, not just the raw bit count.
+		size += rl.bv.AllocSize()
 	}
 
 	// Size of totalLeaves (int)
