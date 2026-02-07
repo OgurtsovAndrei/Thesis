@@ -1,140 +1,142 @@
-# Отчет: Monotone Minimal Perfect Hashing (MMPH)
+# Report: Monotone Minimal Perfect Hashing (MMPH)
 
-## 1. Обзор проблемы
+## 1. Problem overview
 
-**Monotone Minimal Perfect Hash Function (MMPH)** — это функция $h$, которая отображает набор из $n$ ключей $S$ в диапазон целых
-чисел $[0, n-1]$ так, что сохраняется лексикографический порядок ключей.
+**Monotone Minimal Perfect Hash Function (MMPH)** is a function $h$ that maps a set of $n$ keys $S$ into the integer range
+$[0, n-1]$ while preserving lexicographic order.
 
-Если $key_1 < key_2$, то $h(key_1) < h(key_2)$. По сути, это функция, возвращающая ранг (порядковый номер) ключа в отсортированном множестве
-за константное время.
+If $key_1 < key_2$, then $h(key_1) < h(key_2)$. In essence, it returns the rank (order index) of a key in the sorted set
+in constant time.
 
-### Текущее состояние в Go
+### Current state in Go
 
-На данный момент в экосистеме Go отсутствуют готовые библиотеки, реализующие алгоритмы сжатия MMPH. Существующие библиотеки (например,
-`alecthomas/mph`) реализуют обычное минимальное идеальное хеширование (MPH), которое не сохраняет порядок.
+At the moment, the Go ecosystem has no ready libraries implementing compressed MMPH algorithms. Existing libraries (e.g.
+`alecthomas/mph`) implement standard minimal perfect hashing (MPH) and do not preserve order.
 
-## 2. Теоретические методы (на основе статьи 2009 г.)
+## 2. Theoretical methods (based on the 2009 paper)
 
-Согласно документу [«Monotone Minimal Perfect Hashing»](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf), существуют
-два основных теоретических подхода, оптимизирующих потребление памяти. Здесь $n$ — количество ключей, $w$ — длина машинного слова (например,
-64 бита).
+According to ["Monotone Minimal Perfect Hashing"](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf),
+there are two main theoretical approaches that optimize memory usage. Here $n$ is the number of keys, $w$ is the machine
+word size (e.g., 64 bits).
 
-### Метод А: Bucketing with LCP (Скорость)
+### Method A: Bucketing with LCP (Speed)
 
 see [bucket-mmph](bucket-mmph)
 
-Использует сегментирование на основе наибольших общих префиксов.
+Uses segmentation based on longest common prefixes.
 
-- **Время запроса**: $O(1)$
-- **Память**: $O(n \log w)$ бит
-- **Особенность**: Самый быстрый метод из классических, но потребляет больше памяти, чем вариант с Trie
+- **Query time**: $O(1)$
+- **Space**: $O(n \log w)$ bits
+- **Notes**: Fastest of the classic methods, but uses more memory than the trie variant
 
-### Метод Б: Hash Displace and Compress (MMPH)
+### Method B: Hash Displace and Compress (MMPH)
 
 see [rbtz-mmph](rbtz-mmph/)
 
-Использует двухуровневое хеширование с размещением и сжатием, описанное в
-статье [Hash, displace, and compress](https://cmph.sourceforge.net/papers/esa09.pdf). Поскольку единственные издержки - хранение индексов,
-алгоритм получается довольно оптимальным, на уровне LCP Bucketing.
+Uses two-level hashing with displacement and compression, as described in
+[Hash, displace, and compress](https://cmph.sourceforge.net/papers/esa09.pdf). Since the main cost is storing indices,
+this approach is quite efficient, at the LCP-bucketing level.
 
-- **Время запроса**: $O(1)$
-- **Память**: $O(n \log n)$ бит (два массива uint32)
-- **Особенность**: Эффективная реализация MMPH, сохраняет порядок благодаря хранению оригинальных индексов
+- **Query time**: $O(1)$
+- **Space**: $O(n \log n)$ bits (two uint32 arrays)
+- **Notes**: Efficient MMPH implementation, preserves order by storing original indices
 
-### Метод В: Probabilistic Trie (Сжатие)
+### Method C: Probabilistic Trie (Compression)
 
-Использует вероятностные деревья (z-fast trie) и относительное ранжирование.
+Uses probabilistic trees (z-fast trie) and relative ranking.
 
-- **Время запроса**: $O(\log w)$ (не зависит от $n$, только от разрядности ключа)
-- **Память**: $O(n \log \log w)$ бит
-- **Особенность**: Экстремально компактное хранение (теоретически 2-3 бита на ключ), но сложная реализация
+- **Query time**: $O(\log w)$ (independent of $n$, only key bit-width)
+- **Space**: $O(n \log \log w)$ bits
+- **Notes**: Extremely compact (theoretically 2-3 bits/key), but harder to implement
+- **In this repo**: prototype `bucket_with_approx_trie/` with an approximate z-fast trie and full-key validation;
+  details and plots in `bucket_with_approx_trie/analysis_summary.md` and the collision-filter note
+  `zfasttrie/getexistingprefix_collision_filter.md`.
 
-## 3. Современные подходы (State-of-the-Art)
+## 3. Modern approaches (State-of-the-Art)
 
 ### LeMonHash (Learned Monotone Minimal Perfect Hashing)
 
-Современный метод (представлен в 2023 году), использующий концепцию Learned Indexes вместо классических структур данных.
+A modern method (introduced in 2023) using learned indexes instead of classical data structures.
 
-**Принцип работы**: Использует PGM-index (Piecewise Geometric Model) для построения кусочно-линейной функции, аппроксимирующей график
-зависимости ключа от его ранга. Коллизии и неточности предсказания разрешаются с помощью вспомогательной структуры BuRR.
+**Idea**: Uses a PGM-index (Piecewise Geometric Model) to build a piecewise-linear function approximating the key-to-rank
+mapping. Collisions and prediction errors are resolved via an auxiliary BuRR structure.
 
-**Преимущества**:
+**Pros**:
 
-- **Компактность**: Достигает потребления памяти 1.3 – 3 бита на ключ, что часто превосходит теоретические методы на основе Trie
-- **Скорость**: Благодаря "плоской" структуре (вычисления вместо переходов по указателям) обеспечивает высокую скорость чтения, удобную для
-  префетчинга CPU
+- **Compact**: 1.3 - 3 bits per key, often beating trie-based theoretical methods
+- **Fast**: "Flat" structure (math instead of pointer chasing) gives strong read performance and CPU prefetch behavior
 
-**Статус**: Существует эталонная реализация на C++ ([GitHub: ByteHamster/LeMonHash](https://github.com/ByteHamster/LeMonHash)). Портов на Go
-пока нет.
+**Status**: Reference C++ implementation exists ([GitHub: ByteHamster/LeMonHash](https://github.com/ByteHamster/LeMonHash)).
+No Go ports yet.
 
-## 4. Сравнительный анализ асимптотик
+## 4. Asymptotic comparison
 
-Ниже приведено сравнение теоретических методов, современных подходов и стандартного Workaround'а.
+Below is a comparison of theoretical methods, modern approaches, and a standard workaround.
 
-| Метод                                  | Время запроса (Query)  | Потребление памяти (Space) |
-|----------------------------------------|------------------------|----------------------------|
-| MMPH: LCP Bucketing                    | $O(1)$                 | $O(n \log w)$              |
-| MMPH: Hash Displace and Compress (hdc) | $O(1)$                 | $O(n \log n)$              |
-| MMPH: Relative Trie                    | $O(\log w)$            | $O(n \log \log w)$         |
-| LeMonHash (Learned)                    | Быстро (Math + Lookup) | $? O(n) но как ? $         |
+| Method                                 | Query time            | Space                         |
+|----------------------------------------|-----------------------|-------------------------------|
+| MMPH: LCP Bucketing                    | $O(1)$                | $O(n \log w)$                |
+| MMPH: Hash Displace and Compress (hdc) | $O(1)$                | $O(n \log n)$                |
+| MMPH: Relative Trie                    | $O(\log w)$           | $O(n \log \log w)$           |
+| MMPH: Relative Trie (impl)             | $O(\log w)$           | $O(n \log \log w)$ + constants |
+| LeMonHash (Learned)                    | Fast (Math + Lookup)  | $? O(n) but how ? $           |
 
-**Примечание**: $n$ — кол-во ключей, $w$ — длина ключа в битах (обычно 64).
+**Note**: $n$ is the number of keys, $w$ is key length in bits (typically 64).
 
-## 5. Экспериментальное сравнение
+## 5. Experimental comparison (bench pipeline)
 
-# 📊 Сравнение MPH Структур: `hdc-rbtz` vs `lcp-bucketing`
+Benchmarks are collected via `benchmarks/analyze.py --run` using `go test -bench=. -benchmem -count=5` for each module.
+Results are parsed and normalized by `benchmarks/analyze.py`. Note that key distributions differ across modules
+(as-implemented), so comparisons reflect current implementations rather than a unified key generator.
 
-## 🏗 Build Time (ns)
+### Performance Summary (Bits per Key)
 
-| Keys       | rbtz           | bucket         |
-|------------|----------------|----------------|
-| 32         | 16,338         | 15,424         |
-| 256        | 53,985         | 76,537         |
-| 1,024      | 259,469        | 428,988        |
-| 8,192      | 2,371,186      | 3,671,151      |
-| 32,768     | 10,038,608     | 17,648,310     |
-| 262,144    | 108,401,879    | 134,163,823    |
-| 1,048,576  | 480,714,931    | 737,158,792    |
-| 4,194,304  | 2,220,704,042  | 3,582,287,916  |
-| 16,777,216 | 11,705,159,417 | 16,250,687,375 |
+| Key Count | bucket-mmph | bucket_with_approx_trie | rbtz-mmph |
+|-----------|-------------|-------------------------|-----------|
+| 32        | 88.00       | 58.25                   | 44.00     |
+| 1,024     | 51.38       | 15.41                   | 40.12     |
+| 32,768    | 46.60       | 15.24                   | 40.00     |
+| 1,048,576 | 43.56       | 15.31                   | 40.00     |
+| 16,777,216| 41.95       | -                       | 40.00     |
 
-## 🧠 Bits per Key (in memory)
+### Visualizations
 
-| Keys       | rbtz  | bucket |
-|------------|-------|--------|
-| 32         | 44.00 | 76.00  |
-| 256        | 40.50 | 61.62  |
-| 1,024      | 40.12 | 51.12  |
-| 8,192      | 40.02 | 48.56  |
-| 32,768     | 40.00 | 46.54  |
-| 262,144    | 40.00 | 44.59  |
-| 1,048,576  | 40.00 | 43.56  |
-| 4,194,304  | 40.00 | 42.69  |
-| 16,777,216 | 40.00 | 41.96  |
+#### 1. Space Efficiency (Memory)
+![Bits per Key](benchmarks/plots/bits_per_key_in_mem.svg)
+*Figure 1: `bucket_with_approx_trie` is significantly more compact (~15 bits/key) compared to classical bucketing (~40-42 bits/key).*
 
-## ⚡ Lookup Time (ns)
+#### 2. Query Performance
+![Lookup Time](benchmarks/plots/lookup_time_ns.svg)
+*Figure 2: `bucket-mmph` and `rbtz-mmph` provide $O(1)$ lookup. `bucket_with_approx_trie` is $O(\log w)$ but remains competitive at small-to-medium scales.*
 
-| Keys       | rbtz  | bucket |
-|------------|-------|--------|
-| 32         | 4.918 | 120.0  |
-| 256        | 4.651 | 138.7  |
-| 1,024      | 4.845 | 147.2  |
-| 8,192      | 4.823 | 158.0  |
-| 32,768     | 5.197 | 166.5  |
-| 262,144    | 6.158 | 180.7  |
-| 1,048,576  | 6.204 | 233.3  |
-| 4,194,304  | 16.32 | 374.0  |
-| 16,777,216 | 38.33 | 391.3  |
+#### 3. Build Scalability
+![Build Time](benchmarks/plots/build_time_ns.svg)
+*Figure 3: Build time scaling across implementations. `bucket-mmph` shows higher allocation overhead.*
 
-## Вывод:
+#### 4. Allocation Overhead
+![Allocs per Op](benchmarks/plots/allocs_per_op.svg)
+*Figure 4: `bucket-mmph` performs significantly more allocations during build than `rbtz-mmph`.*
 
-Пока что у меня не получилось нормально реализовать Bucketing, там много накладных расходов
+### Analysis
+1. **Memory King**: `bucket_with_approx_trie` lives up to its theoretical promise, achieving ~15 bits per key, which is 2.6x better than `rbtz-mmph`.
+2. **Stability**: `rbtz-mmph` is remarkably stable at exactly 40 bits per key (using two `uint32` arrays) for large $n$.
+3. **Build Cost**: `bucket-mmph` is currently the most "expensive" to build in terms of memory allocations, suggesting optimization potential in its bucket management logic.
 
-![img.png](imgs/cmp-hdc-buck-img.png)
+## Addendum: `bucket_with_approx_trie` (Relative Trie)
 
-## Литература
+For the probabilistic-trie approach, there is a separate study with build-success plots and theoretical curves.
+See `bucket_with_approx_trie/analysis_summary.md` and the overlays:
+
+- `bucket_with_approx_trie/study/plots/s8_success_vs_n_overlay.svg`
+- `bucket_with_approx_trie/study/plots/s16_success_vs_n_overlay.svg`
+
+A key difference from the paper: the implementation includes a length-consistency filter for MPH false hits
+(`zfasttrie/getexistingprefix_collision_filter.md`), which makes empirical success rates notably higher than the
+pessimistic theoretical bounds.
+
+## References
 
 - [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) -
   Belazzougui D., Boldi P., Pagh R., Vigna S.
 - [Hash, displace, and compress](https://cmph.sourceforge.net/papers/esa09.pdf)
-- [LeMonHash: Learned Monotone Minimal Perfect Hashing](https://github.com/ByteHamster/LeMonHash) - GitHub Repository
+- [LeMonHash: Learned Monotone Minimal Perfect Hashing](https://github.com/ByteHamster/LeMonHash) - GitHub repository
