@@ -13,7 +13,26 @@ in constant time.
 At the moment, the Go ecosystem has no ready libraries implementing compressed MMPH algorithms. Existing libraries (e.g.
 `alecthomas/mph`) implement standard minimal perfect hashing (MPH) and do not preserve order.
 
-## 2. Theoretical methods (based on the 2009 paper)
+## 2. API
+
+The structure provides a minimalistic interface:
+
+### `Build(sorted_keys)`
+
+Builds an index over the given set of unique sorted keys.
+- **Input**: Array of keys (static sorted list)
+- **Complexity**: $O(n \log w)$
+
+### `Rank(key) -> int`
+
+Returns the order index (rank) of a key in the original set.
+- **Input**: Key $x$
+- **Output**: Integer $i \in [0, n-1]$
+- **Complexity**: $O(1)$ for LCP Bucketing, $O(\log w)$ for Probabilistic Trie
+
+**Important**: If $key \notin S$, the result is undefined. Membership validation must be done externally (e.g., Bloom Filter).
+
+## 3. Theoretical methods (based on the 2009 paper)
 
 According to ["Monotone Minimal Perfect Hashing"](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf),
 there are two main theoretical approaches that optimize memory usage. Here $n$ is the number of keys, $w$ is the machine
@@ -83,7 +102,27 @@ Below is a comparison of theoretical methods, modern approaches, and a standard 
 
 **Note**: $n$ is the number of keys, $w$ is key length in bits (typically 64).
 
-## 5. Experimental comparison (bench pipeline)
+## 5. Application
+
+In the Range Filter architecture (Approximate Range Emptiness), MMPH is used as a low-level building block to speed up navigation.
+
+### Usage hierarchy
+
+```
+Approximate Range Emptiness (Top level)
+            ↓
+Local Exact Range Structure (Compressed key storage)
+            ↓
+Weak Prefix Search (Find node in implicit prefix tree)
+            ↓
+Range Locator (Map tree node to index interval)
+            ↓
+MMPH (Compute range boundaries in O(1))
+```
+
+MMPH replaces binary search ($O(\log n)$) with constant-time address computation, which is critical for overall filter performance.
+
+## 6. Experimental comparison (bench pipeline)
 
 Benchmarks are collected via `benchmarks/analyze.py --run` using `go test -bench=. -benchmem -count=5` for each module.
 Results are parsed and normalized by `benchmarks/analyze.py`. Note that key distributions differ across modules
@@ -136,7 +175,8 @@ pessimistic theoretical bounds.
 
 ## References
 
-- [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) -
-  Belazzougui D., Boldi P., Pagh R., Vigna S.
+- [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) - Belazzougui D., Boldi P., Pagh R., Vigna S.
 - [Hash, displace, and compress](https://cmph.sourceforge.net/papers/esa09.pdf)
 - [LeMonHash: Learned Monotone Minimal Perfect Hashing](https://github.com/ByteHamster/LeMonHash) - GitHub repository
+- [Fast Prefix Search in Little Space, with Applications](https://arxiv.org/abs/1804.04720) - Belazzougui D., Boldi P., Pagh R., Vigna S.
+- [Approximate Range Emptiness in Constant Time and Optimal Space](https://arxiv.org/pdf/1407.2907) - Goswami M., Gronlund A., Larsen K. G., Pagh R.
