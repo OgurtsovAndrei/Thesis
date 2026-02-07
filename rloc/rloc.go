@@ -9,12 +9,60 @@ import (
 	"math/rand"
 	"sort"
 	"time"
+	"unsafe"
 
 	"github.com/hillbig/rsdic"
 )
 
-type RangeLocator struct {
-	mmph        *bucket.MonotoneHashWithTrie[uint16, uint16, uint16]
+// TypeWidths stores bit-widths selected for generic integer parameters.
+type TypeWidths struct {
+	E int
+	S int
+	I int
+}
+
+// RangeLocator maps trie node names to leaf-rank intervals.
+//
+// This is the runtime-facing interface. The generic implementation is
+// GenericRangeLocator[E, S, I].
+type RangeLocator interface {
+	Query(nodeName bits.BitString) (int, int, error)
+	ByteSize() int
+	TypeWidths() TypeWidths
+}
+
+// GenericRangeLocator maps trie node names to leaf-rank intervals.
+//
+// Memory analysis:
+//
+//   - Theoretical asymptotics (from "Fast Prefix Search in Little Space, with
+//     Applications", Section 4, and MMPH results):
+//     for n keys with average length l, the construction stores a boundary set
+//     P with |P| = O(n) (up to three boundary strings per internal trie node
+//     before deduplication).
+//
+//     The leaf-marker bitvector with rank support is
+//     O(|P|) = O(n) bits (paper-level bound: <= 3n + o(n) for this component),
+//     and the MMPH on P is O(|P| log log l) bits (or O(|P| log l) with the
+//     simpler variant).
+//
+//     Total RangeLocator asymptotic space is therefore
+//     O(n log log l) bits (or O(n log l) bits in the simpler variant).
+//
+//   - Concrete field-level resident memory in this implementation (64-bit):
+//     struct payload is 24 bytes (mmph pointer + bv pointer + int totalLeaves).
+//     Real resident usage is dominated by pointed objects:
+//     mmph memory + rsdic memory. The rsdic object has fixed in-struct metadata
+//     (~200 bytes: 6 slice headers + 7 uint64 counters) plus backing arrays
+//     reported by bv.AllocSize().
+//
+//   - Practical estimate from fields:
+//     24 + mmph.ByteSize() + 200 + bv.AllocSize() bytes.
+//
+//   - Empirical resident-size range from recent BenchmarkMemoryComparison runs:
+//     about 51.99..109.2 bits/key for tested workloads.
+type GenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber] struct {
+	mmph        *bucket.MonotoneHashWithTrie[E, S, I]
 	bv          *rsdic.RSDic
 	totalLeaves int
 }
@@ -24,19 +72,69 @@ type pItem struct {
 	isLeaf bool
 }
 
-func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) (*RangeLocator, error) {
+// NewRangeLocator builds a RangeLocator using a random seed for MMPH
+// construction.
+//
+// The constructor chooses the smallest practical type widths for E/S/I from
+// input data and escalates to wider types if needed.
+func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) (RangeLocator, error) {
 	// Use a random seed for MMPH construction
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return NewRangeLocatorSeeded(zt, rng.Uint64())
 }
 
-func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*RangeLocator, error) {
+// NewGenericRangeLocator builds a generic RangeLocator using a random seed.
+func NewGenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](zt *zfasttrie.ZFastTrie[bool]) (*GenericRangeLocator[E, S, I], error) {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return NewGenericRangeLocatorSeeded[E, S, I](zt, rng.Uint64())
+}
+
+// NewRangeLocatorSeeded builds a RangeLocator from a compacted trie and a seed.
+//
+// Construction follows the range-locator idea from "Fast Prefix Search in Little
+// Space, with Applications": build a boundary set P from trie extents, index P
+// with a monotone minimal perfect hash, and store leaf markers in a rankable
+// bitvector.
+//
+// The constructor chooses the smallest practical type widths for E/S/I from
+// input data and escalates to wider types if needed.
+func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (RangeLocator, error) {
 	if zt == nil {
-		return &RangeLocator{totalLeaves: 0}, nil
+		return &GenericRangeLocator[uint8, uint8, uint8]{totalLeaves: 0}, nil
 	}
 
-	// Use BitString directly as map key
+	sortedItems, maxBitLen := collectPSortedItems(zt)
+	choices := autoWidthChoices(len(sortedItems), maxBitLen)
+
+	var lastErr error
+	for _, choice := range choices {
+		rl, err := buildWithWidths(sortedItems, mmphSeed, choice)
+		if err == nil {
+			return rl, nil
+		}
+		lastErr = err
+	}
+
+	if lastErr == nil {
+		lastErr = fmt.Errorf("no width choices available")
+	}
+	return nil, fmt.Errorf("failed to build auto RangeLocator for P size %d: %w", len(sortedItems), lastErr)
+}
+
+// NewGenericRangeLocatorSeeded builds a generic RangeLocator from a compacted
+// trie and an explicit seed.
+func NewGenericRangeLocatorSeeded[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*GenericRangeLocator[E, S, I], error) {
+	if zt == nil {
+		return &GenericRangeLocator[E, S, I]{totalLeaves: 0}, nil
+	}
+
+	sortedItems, _ := collectPSortedItems(zt)
+	return newGenericRangeLocatorFromItems[E, S, I](sortedItems, mmphSeed)
+}
+
+func collectPSortedItems(zt *zfasttrie.ZFastTrie[bool]) ([]pItem, int) {
 	pMap := make(map[bits.BitString]bool)
+	maxBitLen := 0
 
 	addToMap := func(bs bits.BitString, isLeaf bool) {
 		if existingIsLeaf, exists := pMap[bs]; exists {
@@ -48,6 +146,9 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*Ran
 			}
 		} else {
 			pMap[bs] = isLeaf
+		}
+		if int(bs.Size()) > maxBitLen {
+			maxBitLen = int(bs.Size())
 		}
 	}
 
@@ -87,7 +188,10 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*Ran
 		return sortedItems[i].bs.Compare(sortedItems[j].bs) < 0
 	})
 
-	// Build structures
+	return sortedItems, maxBitLen
+}
+
+func newGenericRangeLocatorFromItems[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](sortedItems []pItem, mmphSeed uint64) (*GenericRangeLocator[E, S, I], error) {
 	bv := rsdic.New()
 	keysForMMPH := make([]bits.BitString, len(sortedItems))
 
@@ -98,8 +202,7 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*Ran
 	bits.BugIfNotSortedOrHaveDuplicates(keysForMMPH)
 
 	// Build MMPH - data is already sorted in TrieCompare order
-	// Type parameters: E=uint16 (extent length), S=uint16 (signature), I=uint16 (delimiter index)
-	mmph, err := bucket.NewMonotoneHashWithTrieSeeded[uint16, uint16, uint16](keysForMMPH, mmphSeed)
+	mmph, err := bucket.NewMonotoneHashWithTrieSeeded[E, S, I](keysForMMPH, mmphSeed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build MMPH for P set of size %d: %w", len(keysForMMPH), err)
 	}
@@ -109,14 +212,19 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*Ran
 		totalLeaves = int(bv.Rank(bv.Num(), true))
 	}
 
-	return &RangeLocator{
+	return &GenericRangeLocator[E, S, I]{
 		mmph:        mmph,
 		bv:          bv,
 		totalLeaves: totalLeaves,
 	}, nil
 }
 
-func (rl *RangeLocator) Query(nodeName bits.BitString) (int, int, error) {
+// Query returns the half-open interval [i, j) of leaf ranks under nodeName.
+//
+// If nodeName is empty, the method returns the full range [0, number_of_leaves).
+// For non-empty names, bounds are computed using rank(h(x<-)) and
+// rank(h((x1+)<-)) as in the range-locator construction.
+func (rl *GenericRangeLocator[E, S, I]) Query(nodeName bits.BitString) (int, int, error) {
 	if nodeName.Size() == 0 {
 		return 0, rl.totalLeaves, nil
 	}
@@ -164,8 +272,11 @@ func calcSuccessor(bs bits.BitString) bits.BitString {
 	return bs.AppendBit(true).Successor()
 }
 
-// ByteSize returns the total size of the structure in bytes.
-func (rl *RangeLocator) ByteSize() int {
+// ByteSize returns the estimated resident size of RangeLocator in bytes.
+//
+// The value includes the MMPH size, RSDic allocated storage (via AllocSize),
+// and fixed scalar fields. It excludes temporary construction allocations.
+func (rl *GenericRangeLocator[E, S, I]) ByteSize() int {
 	if rl == nil {
 		return 0
 	}
@@ -187,4 +298,14 @@ func (rl *RangeLocator) ByteSize() int {
 	size += 8 // assuming 64-bit int
 
 	return size
+}
+
+// TypeWidths returns bit-widths of generic integer parameters used by this
+// concrete instance.
+func (rl *GenericRangeLocator[E, S, I]) TypeWidths() TypeWidths {
+	return TypeWidths{
+		E: int(unsafe.Sizeof(*new(E))) * 8,
+		S: int(unsafe.Sizeof(*new(S))) * 8,
+		I: int(unsafe.Sizeof(*new(I))) * 8,
+	}
 }

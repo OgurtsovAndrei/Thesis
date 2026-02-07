@@ -32,6 +32,10 @@ func BenchmarkRangeLocatorBuild(b *testing.B) {
 
 					// Report memory metrics
 					size := rl.ByteSize()
+					widths := rl.TypeWidths()
+					b.ReportMetric(float64(widths.E), "E_bits")
+					b.ReportMetric(float64(widths.S), "S_bits")
+					b.ReportMetric(float64(widths.I), "I_bits")
 					b.ReportMetric(float64(size), "total_bytes")
 					b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
 				}

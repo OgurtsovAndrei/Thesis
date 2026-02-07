@@ -33,6 +33,10 @@ func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 
 					// Report memory metrics
 					size := lerl.ByteSize()
+					widths := lerl.TypeWidths()
+					b.ReportMetric(float64(widths.E), "E_bits")
+					b.ReportMetric(float64(widths.S), "S_bits")
+					b.ReportMetric(float64(widths.I), "I_bits")
 					b.ReportMetric(float64(size), "total_bytes")
 					b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
 				}
@@ -126,6 +130,14 @@ func BenchmarkMemoryComparison(b *testing.B) {
 					avgLen := float64(totalLen) / float64(len(keys))
 
 					// Report metrics
+					rlWidths := rl.TypeWidths()
+					lerlWidths := lerl.TypeWidths()
+					b.ReportMetric(float64(rlWidths.E), "rl_E_bits")
+					b.ReportMetric(float64(rlWidths.S), "rl_S_bits")
+					b.ReportMetric(float64(rlWidths.I), "rl_I_bits")
+					b.ReportMetric(float64(lerlWidths.E), "lerl_E_bits")
+					b.ReportMetric(float64(lerlWidths.S), "lerl_S_bits")
+					b.ReportMetric(float64(lerlWidths.I), "lerl_I_bits")
 					b.ReportMetric(float64(rlSize), "rl_total_bytes")
 					b.ReportMetric(float64(lerlSize), "lerl_total_bytes")
 					b.ReportMetric(float64(rlSize)*8/float64(count), "rl_bits_per_key")
