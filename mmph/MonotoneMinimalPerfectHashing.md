@@ -1,79 +1,105 @@
 # Monotone Minimal Perfect Hashing (MMPH)
 
-## Обзор
+## Overview
 
-**Monotone Minimal Perfect Hashing (MMPH)** — это статическая сжатая (succinct) структура данных, которая обеспечивает биективное отображение элементов отсортированного множества ключей $S$ в их порядковые номера (ранги) в диапазоне $[0, |S|-1]$.
+**Monotone Minimal Perfect Hashing (MMPH)** is a static succinct data structure that provides a bijection from a sorted
+set of keys $S$ to their order indices (ranks) in the range $[0, |S|-1]$.
 
-В отличие от обычного хеширования, MMPH сохраняет лексикографический порядок ключей:
+Unlike standard hashing, MMPH preserves lexicographic order:
 
 $$\forall x, y \in S: x < y \implies MMPH(x) < MMPH(y)$$
 
-## Два варианта реализации
+## Two implementation variants
 
-### Вариант A: Time-optimized MMPH (Section 3)
-- **Query Time**: $O(1)$ (детерминированное)
-- **Space**: $O(n \log w)$ бит  
-- **Техника**: Bucketing with Longest Common Prefixes (LCP)
-- **Применение**: Когда критично время запроса (например, Range Locator)
+### Variant A: Time-optimized MMPH (Section 3)
+- **Query time**: $O(1)$ (deterministic)
+- **Space**: $O(n \log w)$ bits
+- **Technique**: Bucketing with Longest Common Prefixes (LCP)
+- **Use case**: When query time is critical (e.g., Range Locator)
 
-### Вариант B: Space-optimized MMPH (Section 6)  
-- **Query Time**: $O(\log w)$ 
-- **Space**: $O(n \log \log w)$ бит
-- **Техника**: Bucketing by relative ranking + probabilistic trie
-- **Применение**: Когда критична память
+### Variant B: Space-optimized MMPH (Section 6)
+- **Query time**: $O(\log w)$
+- **Space**: $O(n \log \log w)$ bits
+- **Technique**: Bucketing by relative ranking + probabilistic trie
+- **Use case**: When memory is critical
 
-**Общие характеристики**:
-- **Тип**: Статическая структура (строится один раз на неизменяемом наборе данных)
-- **Время построения**: $O(n \log w)$ для обоих вариантов
+**Shared characteristics**:
+- **Type**: Static structure (built once for an immutable dataset)
+- **Build time**: $O(n \log w)$ for both variants
 
 ## API
 
-Структура предоставляет следующий минималистичный интерфейс:
+The structure provides a minimalistic interface:
 
 ### `Build(sorted_keys)`
 
-Строит индекс на основе переданного набора уникальных отсортированных ключей.
+Builds an index over the given set of unique sorted keys.
 
-- **Вход**: Массив ключей (статический отсортированный список)
-- **Сложность**: $O(n \log w)$
+- **Input**: Array of keys (static sorted list)
+- **Complexity**: $O(n \log w)$
 
 ### `Rank(key) -> int`
 
-Возвращает порядковый номер (ранг) ключа в исходном множестве.
+Returns the order index (rank) of a key in the original set.
 
-- **Вход**: Ключ $x$
-- **Выход**: Целое число $i \in [0, n-1]$
-- **Сложность**: $O(1)$ для варианта A, $O(\log w)$ для варианта B
+- **Input**: Key $x$
+- **Output**: Integer $i \in [0, n-1]$
+- **Complexity**: $O(1)$ for Variant A, $O(\log w)$ for Variant B
 
-**⚠️ Важно**: Если $key \notin S$, результат не определен (возвращается произвольное значение). Валидация принадлежности должна выполняться внешними компонентами (например, Bloom Filter).
+**Important**: If $key \notin S$, the result is undefined (arbitrary). Membership validation must be done externally
+(e.g., Bloom Filter).
 
-## Область применения
+## Application
 
-В архитектуре Range Filter (задача Approximate Range Emptiness) MMPH используется как низкоуровневый строительный блок для ускорения навигации.
+In the Range Filter architecture (Approximate Range Emptiness), MMPH is used as a low-level building block to speed up
+navigation.
 
-### Иерархия использования
+### Usage hierarchy
 
 ```
-Approximate Range Emptiness (Верхний уровень)
+Approximate Range Emptiness (Top level)
             ↓
-Local Exact Range Structure (Хранилище сжатых ключей)
+Local Exact Range Structure (Compressed key storage)
             ↓
-Weak Prefix Search (Поиск узла в неявном префиксном дереве)
+Weak Prefix Search (Find node in implicit prefix tree)
             ↓
-Range Locator (Преобразование узла дерева в диапазон индексов массива)
+Range Locator (Map tree node to index interval)
             ↓
-MMPH (Непосредственное вычисление индексов границ диапазона за O(1))
+MMPH (Compute range boundaries in O(1))
 ```
 
-MMPH позволяет заменить бинарный поиск ($O(\log n)$) на константное вычисление адреса данных, что критично для общей производительности фильтра.
+MMPH replaces binary search ($O(\log n)$) with constant-time address computation, which is critical for overall filter
+performance.
 
-## Ссылки и Литература
+## Benchmarks & Performance
 
-### Основной алгоритм (Bucketing with LCP)
-- [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) - Belazzougui D., Boldi P., Pagh R., Vigna S. (Раздел 3)
+The following benchmarks compare the $O(1)$ LCP-bucketing approach (`bucket-mmph` and `rbtz-mmph`) against the space-optimized probabilistic trie (`bucket_with_approx_trie`).
 
-### Контекст использования (Weak Prefix Search)
+### Space vs Time Trade-off
+
+| Implementation | Query Complexity | Space Complexity | Empirical Bits/Key |
+|----------------|------------------|------------------|--------------------|
+| **bucket-mmph** | $O(1)$           | $O(n \log w)$    | ~42-45 bits        |
+| **rbtz-mmph**   | $O(1)$           | $O(n \log n)$    | ~40 bits           |
+| **approx-trie** | $O(\log w)$      | $O(n \log \log w)$| **~15 bits**      |
+
+### Performance Visuals
+
+#### Memory Usage
+![Bits per Key](benchmarks/plots/bits_per_key_in_mem.svg)
+The probabilistic trie variant (`bucket_with_approx_trie`) reduces memory footprint by ~60% compared to classical bucketing methods.
+
+#### Lookup Latency
+![Lookup Time](benchmarks/plots/lookup_time_ns.svg)
+While $O(1)$ methods are faster, the $O(\log w)$ overhead of the approximate trie is minimal for practical key lengths ($w=64$).
+
+## References
+
+### Core algorithm (Bucketing with LCP)
+- [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) - Belazzougui D., Boldi P., Pagh R., Vigna S. (Section 3)
+
+### Context (Weak Prefix Search)
 - [Fast Prefix Search in Little Space, with Applications](https://arxiv.org/abs/1804.04720) - Belazzougui D., Boldi P., Pagh R., Vigna S.
 
-### Родительская задача (Approximate Range Emptiness)
-- [Approximate Range Emptiness in Constant Time and Optimal Space](https://arxiv.org/pdf/1407.2907) - Goswami M., Grønlund A., Larsen K. G., Pagh R.
+### Parent problem (Approximate Range Emptiness)
+- [Approximate Range Emptiness in Constant Time and Optimal Space](https://arxiv.org/pdf/1407.2907) - Goswami M., Gronlund A., Larsen K. G., Pagh R.
