@@ -832,6 +832,7 @@ def main():
     lines.append("- Hash/signature events are not perfectly independent across keys (shared trie paths).")
     lines.append("- `validateAllKeys` behavior depends on actual trie shape, delimiter distribution, and candidate selection details (`LowerBound`).")
     lines.append("- Attempt-to-attempt outcomes may also be correlated for some key sets despite seed changes.")
+    lines.append("- The implementation applies a length-consistency collision filter in `GetExistingPrefix` that rejects MPH hits with `extentLen < fFast`, removing a class of deterministic false positives not modeled in the paper. See `zfasttrie/getexistingprefix_collision_filter.md`.")
     lines.append("- Therefore we expect qualitative trend alignment, not exact numeric equality.")
     lines.append("")
     # One concrete scenario to make the model transparent.

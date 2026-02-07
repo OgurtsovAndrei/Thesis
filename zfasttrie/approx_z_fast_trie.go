@@ -223,7 +223,7 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 
 		if node != nil && pattern.Size() >= uint32(node.extentLen) && S(hashBitString(pattern.Prefix(int(node.extentLen)), azft.seed)) == node.PSig {
 			if uint64(node.extentLen) < fFast {
-				// collision
+				// collision, see getexistingprefix_collision_filter.md
 				b = int32(fFast) - 1
 			} else {
 				a = int32(node.extentLen)
