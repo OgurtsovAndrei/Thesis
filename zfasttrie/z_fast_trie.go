@@ -412,12 +412,25 @@ func (zt *ZFastTrie[V]) stringNode(node *znode[V], prefix string) string {
 	return sb.String()
 }
 
+// BuildFromIterator creates a standard Z-Fast Trie from a sequence of bit strings.
+// It serves as an intermediate step during the construction of the compact version.
+func BuildFromIterator(iter bits.BitStringIterator) (*ZFastTrie[bool], error) {
+	trie := NewZFastTrie[bool](false)
+	for iter.Next() {
+		trie.InsertBitString(iter.Value(), true)
+	}
+	if err := iter.Error(); err != nil {
+		return nil, err
+	}
+	return trie, nil
+}
+
 // Build creates a standard Z-Fast Trie from a set of bit strings.
 // It serves as an intermediate step during the construction of the compact version.
 func Build(keys []bits.BitString) *ZFastTrie[bool] {
-	trie := NewZFastTrie[bool](false)
-	for i := 0; i < len(keys); i++ {
-		trie.InsertBitString(keys[i], true)
+	trie, err := BuildFromIterator(bits.NewSliceBitStringIterator(keys))
+	if err != nil {
+		panic(err) // Should not happen with slice iterator
 	}
 	return trie
 }
