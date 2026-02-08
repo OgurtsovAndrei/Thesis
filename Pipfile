@@ -9,6 +9,8 @@ matplotlib = "*"
 seaborn = "*"
 
 [dev-packages]
+mypy = "*"
+pandas-stubs = "*"
 
 [requires]
 python_version = "3.12"

@@ -4,6 +4,7 @@ import csv
 import os
 import sys
 from collections import defaultdict
+from typing import Dict
 
 # Setup path to import shared library
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -50,7 +51,7 @@ LOOKUP_BENCH = {
     "bucket_with_approx_trie": {"BenchmarkMonotoneHashWithTrieLookup"},
 }
 
-def main():
+def main() -> int:
     arg_parser = argparse.ArgumentParser(description="Parse Go benchmark outputs and generate SVG plots.")
     arg_parser.add_argument("--run", action="store_true", help="Run benchmarks before parsing.")
     arg_parser.add_argument("--count", type=int, default=5, help="Benchmark repeat count (default: 5).")
@@ -77,7 +78,7 @@ def main():
         
     if not all_rows:
         print("No data found. Did you run with --run?")
-        return
+        return 1
 
     # Write long CSV
     all_fields = set()
@@ -167,7 +168,7 @@ def main():
     # Print summary table for bits/key
     print("\nSummary: Bits per Key (in-mem)")
     # Collect bits per key from all possible keys (bits_per_key_in_mem or bits_per_key)
-    bits_table = defaultdict(dict)
+    bits_table: Dict[int, Dict[str, float]] = defaultdict(dict)
     all_keys = set()
     all_mods = set()
     
@@ -179,8 +180,8 @@ def main():
         
         val = r.get("bits_per_key_in_mem") or r.get("bits_per_key")
         if val is not None and bench in BUILD_BENCH.get(mod, set()):
-            bits_table[keys][mod] = val
-            all_keys.add(keys)
+            bits_table[int(keys)][mod] = val
+            all_keys.add(int(keys))
             all_mods.add(mod)
             
     if all_keys:

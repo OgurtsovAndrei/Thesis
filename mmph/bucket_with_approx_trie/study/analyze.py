@@ -5,65 +5,66 @@ import os
 import re
 import statistics
 from collections import defaultdict
+from typing import Dict, List, Tuple, Any, Optional, Sequence
 
 
-def read_csv(path):
+def read_csv(path: str) -> List[Dict[str, str]]:
     with open(path, newline="") as f:
         return list(csv.DictReader(f))
 
 
-def read_csv_if_exists(path):
+def read_csv_if_exists(path: str) -> List[Dict[str, str]]:
     if not os.path.exists(path):
         return []
     return read_csv(path)
 
 
-def as_int(row, key):
+def as_int(row: Dict[str, str], key: str) -> int:
     return int(float(row[key]))
 
 
-def as_float(row, key):
+def as_float(row: Dict[str, str], key: str) -> float:
     return float(row[key])
 
 
-def ensure_dir(path):
+def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
 
-def write_csv(path, rows, header):
+def write_csv(path: str, rows: List[Dict[str, Any]], header: List[str]) -> None:
     with open(path, "w", newline="") as f:
         wr = csv.DictWriter(f, fieldnames=header)
         wr.writeheader()
         wr.writerows(rows)
 
 
-def quantile(vals, q):
+def quantile(vals: Sequence[float], q: float) -> float:
     if not vals:
         return 0.0
     if len(vals) == 1:
         return vals[0]
-    vals = sorted(vals)
-    pos = round((len(vals) - 1) * q)
-    pos = max(0, min(pos, len(vals) - 1))
-    return vals[pos]
+    s_vals = sorted(vals)
+    pos = round((len(s_vals) - 1) * q)
+    pos = max(0, min(pos, len(s_vals) - 1))
+    return s_vals[pos]
 
 
-def svg_start(width, height):
+def svg_start(width: float, height: float) -> List[str]:
     return [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>',
     ]
 
 
-def svg_finish(parts, path):
+def svg_finish(parts: List[str], path: str) -> None:
     parts.append("</svg>")
     with open(path, "w") as f:
         f.write("\n".join(parts))
 
 
-def draw_bar_chart(path, title, x_label, y_label, labels, values, color="#2a7fff"):
-    width, height = 960, 540
-    left, right, top, bottom = 90, 40, 55, 75
+def draw_bar_chart(path: str, title: str, x_label: str, y_label: str, labels: List[str], values: List[float], color: str = "#2a7fff") -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
     ymax = max(1.0, max(values) * 1.1)
@@ -80,7 +81,7 @@ def draw_bar_chart(path, title, x_label, y_label, labels, values, color="#2a7fff
         parts.append(f'<text class="label" x="{left-8}" y="{y+4:.2f}" text-anchor="end">{yv:.2f}</text>')
 
     n = len(labels)
-    gap = 20
+    gap = 20.0
     bar_w = (pw - gap * (n + 1)) / max(1, n)
     for i, (lab, val) in enumerate(zip(labels, values)):
         x = left + gap + i * (bar_w + gap)
@@ -95,9 +96,9 @@ def draw_bar_chart(path, title, x_label, y_label, labels, values, color="#2a7fff
     svg_finish(parts, path)
 
 
-def draw_line_chart(path, title, x_label, y_label, x_vals, series):
-    width, height = 960, 540
-    left, right, top, bottom = 90, 40, 55, 75
+def draw_line_chart(path: str, title: str, x_label: str, y_label: str, x_vals: List[int], series: Dict[str, List[Tuple[int, float]]]) -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
 
@@ -106,13 +107,13 @@ def draw_line_chart(path, title, x_label, y_label, x_vals, series):
     y_min = 0.0
     y_max = 1.0
 
-    def x_pos(x):
+    def x_pos(x: int) -> float:
         if x_max == x_min:
             return left + pw / 2
         t = (math.log2(x) - math.log2(x_min)) / (math.log2(x_max) - math.log2(x_min))
         return left + t * pw
 
-    def y_pos(y):
+    def y_pos(y: float) -> float:
         return top + ph - ((y - y_min) / (y_max - y_min)) * ph
 
     parts = svg_start(width, height)
@@ -150,27 +151,27 @@ def draw_line_chart(path, title, x_label, y_label, x_vals, series):
     svg_finish(parts, path)
 
 
-def draw_line_chart_numeric(path, title, x_label, y_label, x_vals, series):
-    width, height = 960, 540
-    left, right, top, bottom = 90, 40, 55, 75
+def draw_line_chart_numeric(path: str, title: str, x_label: str, y_label: str, x_vals: List[int], series: Dict[str, List[Tuple[int, float]]]) -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
 
     x_min = min(x_vals)
     x_max = max(x_vals)
-    y_values = []
+    y_values: List[float] = []
     for pts in series.values():
         y_values.extend(y for _, y in pts)
     y_min = 0.0
     y_max = max(1.0, max(y_values) * 1.1)
 
-    def x_pos(x):
+    def x_pos(x: int) -> float:
         if x_max == x_min:
             return left + pw / 2
         t = (x - x_min) / (x_max - x_min)
         return left + t * pw
 
-    def y_pos(y):
+    def y_pos(y: float) -> float:
         return top + ph - ((y - y_min) / (y_max - y_min)) * ph
 
     parts = svg_start(width, height)
@@ -209,9 +210,9 @@ def draw_line_chart_numeric(path, title, x_label, y_label, x_vals, series):
     svg_finish(parts, path)
 
 
-def draw_overlay_empirical_theory(path, title, x_label, y_label, x_vals, empirical_series, theory_series):
-    width, height = 960, 540
-    left, right, top, bottom = 90, 40, 55, 75
+def draw_overlay_empirical_theory(path: str, title: str, x_label: str, y_label: str, x_vals: List[int], empirical_series: Dict[str, List[Tuple[int, float]]], theory_series: Dict[str, List[Tuple[int, float]]]) -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
 
@@ -220,13 +221,13 @@ def draw_overlay_empirical_theory(path, title, x_label, y_label, x_vals, empiric
     y_min = 0.0
     y_max = 1.0
 
-    def x_pos(x):
+    def x_pos(x: int) -> float:
         if x_max == x_min:
             return left + pw / 2
         t = (math.log2(x) - math.log2(x_min)) / (math.log2(x_max) - math.log2(x_min))
         return left + t * pw
 
-    def y_pos(y):
+    def y_pos(y: float) -> float:
         return top + ph - ((y - y_min) / (y_max - y_min)) * ph
 
     parts = svg_start(width, height)
@@ -279,27 +280,27 @@ def draw_overlay_empirical_theory(path, title, x_label, y_label, x_vals, empiric
     svg_finish(parts, path)
 
 
-def draw_line_chart_logx_numericy(path, title, x_label, y_label, x_vals, series):
-    width, height = 960, 540
-    left, right, top, bottom = 90, 40, 55, 75
+def draw_line_chart_logx_numericy(path: str, title: str, x_label: str, y_label: str, x_vals: List[int], series: Dict[str, List[Tuple[int, float]]]) -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
 
     x_min = min(x_vals)
     x_max = max(x_vals)
-    y_values = []
+    y_values: List[float] = []
     for pts in series.values():
         y_values.extend(y for _, y in pts)
     y_min = 0.0
     y_max = max(1.0, max(y_values) * 1.1)
 
-    def x_pos(x):
+    def x_pos(x: int) -> float:
         if x_max == x_min:
             return left + pw / 2
         t = (math.log2(x) - math.log2(x_min)) / (math.log2(x_max) - math.log2(x_min))
         return left + t * pw
 
-    def y_pos(y):
+    def y_pos(y: float) -> float:
         return top + ph - ((y - y_min) / (y_max - y_min)) * ph
 
     parts = svg_start(width, height)
@@ -338,10 +339,10 @@ def draw_line_chart_logx_numericy(path, title, x_label, y_label, x_vals, series)
     svg_finish(parts, path)
 
 
-def parse_memory_bench_text(path):
+def parse_memory_bench_text(path: str) -> List[Dict[str, Any]]:
     if not os.path.exists(path):
         return []
-    rows = []
+    rows: List[Dict[str, Any]] = []
     pat = re.compile(
         r"BenchmarkMemoryComparison/KeySize=(\d+)/Keys=(\d+)-\d+\s+.*?\s([0-9.]+)\s+lerl_bits_per_key\s+.*?\s([0-9.]+)\s+rl_bits_per_key"
     )
@@ -361,21 +362,21 @@ def parse_memory_bench_text(path):
     return rows
 
 
-def theory_query_false_positive(w_bits, s_bits):
+def theory_query_false_positive(w_bits: int, s_bits: int) -> float:
     checks = max(1, math.ceil(math.log2(max(2, w_bits))))
     # Exact "any false positive in checks independent comparisons" model.
-    return 1.0 - (1.0 - math.pow(2.0, -float(s_bits))) ** float(checks)
+    return float(1.0 - math.pow(1.0 - math.pow(2.0, -float(s_bits)), float(checks)))
 
 
-def theory_build_success(n_keys, w_bits, s_bits, rebuild_attempts=100):
+def theory_build_success(n_keys: int, w_bits: int, s_bits: int, rebuild_attempts: int = 100) -> float:
     p_query_fail = theory_query_false_positive(w_bits, s_bits)
     # Model: key failures are independent; one attempt succeeds only if all n keys succeed.
-    p_attempt_success = (1.0 - p_query_fail) ** float(n_keys)
+    p_attempt_success = math.pow(1.0 - p_query_fail, float(n_keys))
     # Build retries with fresh seeds (independent attempts).
-    return 1.0 - (1.0 - p_attempt_success) ** float(rebuild_attempts)
+    return float(1.0 - math.pow(1.0 - p_attempt_success, float(rebuild_attempts)))
 
 
-def main():
+def main() -> None:
     base = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(base, "data")
     plots_dir = os.path.join(base, "plots")
@@ -398,25 +399,25 @@ def main():
         + focus_rows_big_s32
         + focus_rows_small_s8
     )
-    focus_unique = {}
+    focus_unique: Dict[Tuple[int, int, int], Dict[str, str]] = {}
     for r in focus_rows:
         k = (as_int(r, "n"), as_int(r, "w_bits"), as_int(r, "s_bits"))
         focus_unique[k] = r
     focus_rows = list(focus_unique.values())
     mem_rows_txt = parse_memory_bench_text(os.path.join(base, "memory_bench_v2.txt"))
     if mem_rows_txt:
-        mem_rows = mem_rows_txt
+        mem_rows: List[Dict[str, Any]] = mem_rows_txt
         mem_source = os.path.join(base, "memory_bench_v2.txt")
     else:
         mem_rows = [r for r in read_csv("rloc/benchmarks_parsed.csv") if r["benchmark"] == "MemoryComparison"]
         mem_source = "rloc/benchmarks_parsed.csv"
 
-    memory_points = [
+    memory_points: List[Dict[str, Any]] = [
         {
-            "keysize": as_int(r, "keysize"),
-            "keys": as_int(r, "keys"),
-            "rl_bits_per_key": round(as_float(r, "rl_bits_per_key"), 6),
-            "lerl_bits_per_key": round(as_float(r, "lerl_bits_per_key"), 6),
+            "keysize": as_int(r, "keysize") if isinstance(r["keysize"], str) else r["keysize"],
+            "keys": as_int(r, "keys") if isinstance(r["keys"], str) else r["keys"],
+            "rl_bits_per_key": round(as_float(r, "rl_bits_per_key"), 6) if isinstance(r["rl_bits_per_key"], str) else round(float(r["rl_bits_per_key"]), 6),
+            "lerl_bits_per_key": round(as_float(r, "lerl_bits_per_key"), 6) if isinstance(r["lerl_bits_per_key"], str) else round(float(r["lerl_bits_per_key"]), 6),
         }
         for r in mem_rows
     ]
@@ -427,14 +428,14 @@ def main():
         ["keysize", "keys", "rl_bits_per_key", "lerl_bits_per_key"],
     )
 
-    by_s = defaultdict(list)
-    by_margin = defaultdict(list)
+    by_s: Dict[int, List[Dict[str, str]]] = defaultdict(list)
+    by_margin: Dict[int, List[Dict[str, str]]] = defaultdict(list)
     for r in main_rows:
         s = as_int(r, "s_bits")
         by_s[s].append(r)
         by_margin[as_int(r, "s_margin_bits")].append(r)
 
-    summary_by_s = []
+    summary_by_s: List[Dict[str, Any]] = []
     for s in sorted(by_s):
         rows = by_s[s]
         succ = [as_float(r, "success_rate") for r in rows]
@@ -466,7 +467,7 @@ def main():
         ],
     )
 
-    summary_by_margin = []
+    summary_by_margin: List[Dict[str, Any]] = []
     for margin in sorted(by_margin):
         rows = by_margin[margin]
         succ = [as_float(r, "success_rate") for r in rows]
@@ -486,7 +487,7 @@ def main():
         ["s_margin_bits", "scenarios", "success_rate_mean", "success_rate_p50", "success_rate_min"],
     )
 
-    theory_rows = []
+    theory_rows: List[Dict[str, Any]] = []
     for r in focus_rows:
         n = as_int(r, "n")
         w = as_int(r, "w_bits")
@@ -507,7 +508,7 @@ def main():
         ["n", "w_bits", "s_bits", "theory_build_success"],
     )
 
-    worst_rows = sorted(main_rows, key=lambda r: as_float(r, "fail_rate"), reverse=True)[:12]
+    worst_rows: List[Dict[str, Any]] = sorted(main_rows, key=lambda r: as_float(r, "fail_rate"), reverse=True)[:12]
     write_csv(
         os.path.join(data_dir, "worst_cases.csv"),
         worst_rows,
@@ -527,7 +528,7 @@ def main():
     # Plot 2: success vs n for S=16 in focused grid (+ optional extras).
     s16_rows = [r for r in focus_rows if as_int(r, "s_bits") == 16]
     n_vals = sorted({as_int(r, "n") for r in s16_rows})
-    by_w16 = defaultdict(list)
+    by_w16: Dict[int, List[Tuple[int, float]]] = defaultdict(list)
     for r in s16_rows:
         by_w16[as_int(r, "w_bits")].append((as_int(r, "n"), as_float(r, "success_rate")))
     series16 = {f"w={w}": sorted(vals, key=lambda p: p[0]) for w, vals in sorted(by_w16.items())}
@@ -540,9 +541,9 @@ def main():
         series16,
     )
 
-    s16_theory_series = {}
+    s16_theory_series: Dict[str, List[Tuple[int, float]]] = {}
     for w, vals in sorted(by_w16.items()):
-        pts = []
+        pts: List[Tuple[int, float]] = []
         for n, _ in sorted(vals, key=lambda p: p[0]):
             pts.append((n, theory_build_success(n, w, 16, rebuild_attempts=100)))
         s16_theory_series[f"w={w}"] = pts
@@ -567,7 +568,7 @@ def main():
     # Plot 3: success vs n for S=8 in focused grid (+ optional extras).
     s8_rows = [r for r in focus_rows if as_int(r, "s_bits") == 8]
     n_vals_s8 = sorted({as_int(r, "n") for r in s8_rows})
-    by_w8 = defaultdict(list)
+    by_w8: Dict[int, List[Tuple[int, float]]] = defaultdict(list)
     for r in s8_rows:
         by_w8[as_int(r, "w_bits")].append((as_int(r, "n"), as_float(r, "success_rate")))
     series8 = {f"w={w}": sorted(vals, key=lambda p: p[0]) for w, vals in sorted(by_w8.items())}
@@ -580,12 +581,12 @@ def main():
         series8,
     )
 
-    s8_theory_series = {}
+    s8_theory_series: Dict[str, List[Tuple[int, float]]] = {}
     for w, vals in sorted(by_w8.items()):
-        pts = []
+        pts_8: List[Tuple[int, float]] = []
         for n, _ in sorted(vals, key=lambda p: p[0]):
-            pts.append((n, theory_build_success(n, w, 8, rebuild_attempts=100)))
-        s8_theory_series[f"w={w}"] = pts
+            pts_8.append((n, theory_build_success(n, w, 8, rebuild_attempts=100)))
+        s8_theory_series[f"w={w}"] = pts_8
     draw_line_chart(
         os.path.join(plots_dir, "s8_success_vs_n_theory.svg"),
         "S=8 Theoretical Build Success vs n",
@@ -607,7 +608,7 @@ def main():
     # Plot 4: memory bits/key at keys=32768 from parsed benchmark file.
     s32_rows = [r for r in focus_rows if as_int(r, "s_bits") == 32]
     n_vals_s32 = sorted({as_int(r, "n") for r in s32_rows})
-    by_w32 = defaultdict(list)
+    by_w32: Dict[int, List[Tuple[int, float]]] = defaultdict(list)
     for r in s32_rows:
         by_w32[as_int(r, "w_bits")].append((as_int(r, "n"), as_float(r, "success_rate")))
     series32 = {f"w={w}": sorted(vals, key=lambda p: p[0]) for w, vals in sorted(by_w32.items())}
@@ -620,12 +621,12 @@ def main():
         series32,
     )
 
-    s32_theory_series = {}
+    s32_theory_series: Dict[str, List[Tuple[int, float]]] = {}
     for w, vals in sorted(by_w32.items()):
-        pts = []
+        pts_32: List[Tuple[int, float]] = []
         for n, _ in sorted(vals, key=lambda p: p[0]):
-            pts.append((n, theory_build_success(n, w, 32, rebuild_attempts=100)))
-        s32_theory_series[f"w={w}"] = pts
+            pts_32.append((n, theory_build_success(n, w, 32, rebuild_attempts=100)))
+        s32_theory_series[f"w={w}"] = pts_32
     draw_line_chart(
         os.path.join(plots_dir, "s32_success_vs_n_theory.svg"),
         "S=32 Theoretical Build Success vs n",
@@ -645,11 +646,11 @@ def main():
     )
 
     # Plot 4: memory bits/key at keys=32768 from parsed benchmark file.
-    mem_32768 = [r for r in mem_rows if as_int(r, "keys") == 32768]
-    mem_32768.sort(key=lambda r: as_int(r, "keysize"))
-    x_vals_mem = [as_int(r, "keysize") for r in mem_32768]
-    rl_series = [(as_int(r, "keysize"), as_float(r, "rl_bits_per_key")) for r in mem_32768]
-    lerl_series = [(as_int(r, "keysize"), as_float(r, "lerl_bits_per_key")) for r in mem_32768]
+    mem_32768 = [r for r in mem_rows if (as_int(r, "keys") if isinstance(r["keys"], str) else r["keys"]) == 32768]
+    mem_32768.sort(key=lambda r: as_int(r, "keysize") if isinstance(r["keysize"], str) else r["keysize"])
+    x_vals_mem = [as_int(r, "keysize") if isinstance(r["keysize"], str) else int(r["keysize"]) for r in mem_32768]
+    rl_series = [(as_int(r, "keysize") if isinstance(r["keysize"], str) else int(r["keysize"]), as_float(r, "rl_bits_per_key") if isinstance(r["rl_bits_per_key"], str) else float(r["rl_bits_per_key"])) for r in mem_32768]
+    lerl_series = [(as_int(r, "keysize") if isinstance(r["keysize"], str) else int(r["keysize"]), as_float(r, "lerl_bits_per_key") if isinstance(r["lerl_bits_per_key"], str) else float(r["lerl_bits_per_key"])) for r in mem_32768]
     mmph_series = [(x, 14.0) for x in x_vals_mem]
     draw_line_chart_numeric(
         os.path.join(plots_dir, "memory_bits_per_key_keys32768.svg"),
@@ -665,26 +666,26 @@ def main():
     )
 
     if size_rows:
-        by_s_n = defaultdict(list)
+        by_s_n: Dict[Tuple[int, int], List[float]] = defaultdict(list)
         n_vals_size = sorted({as_int(r, "n") for r in size_rows})
         for r in size_rows:
             bpk_raw = r.get("bpk", "none")
             if bpk_raw == "none":
                 continue
-            s = as_int(r, "s_bits")
-            n = as_int(r, "n")
-            by_s_n[(s, n)].append(float(bpk_raw))
+            s_val = as_int(r, "s_bits")
+            n_val = as_int(r, "n")
+            by_s_n[(s_val, n_val)].append(float(bpk_raw))
 
-        series_size = {}
-        for s in [8, 16, 32]:
-            pts = []
-            for n in n_vals_size:
-                vals = by_s_n.get((s, n), [])
-                if not vals:
+        series_size: Dict[str, List[Tuple[int, float]]] = {}
+        for s_bit in [8, 16, 32]:
+            pts_size: List[Tuple[int, float]] = []
+            for n_size in n_vals_size:
+                vals_size = by_s_n.get((s_bit, n_size), [])
+                if not vals_size:
                     continue
-                pts.append((n, statistics.median(vals)))
-            if pts:
-                series_size[f"S={s}"] = pts
+                pts_size.append((n_size, float(statistics.median(vals_size))))
+            if pts_size:
+                series_size[f"S={s_bit}"] = pts_size
 
         if series_size:
             draw_line_chart_logx_numericy(
@@ -696,11 +697,11 @@ def main():
                 series_size,
             )
 
-    rl_vals = [as_float(r, "rl_bits_per_key") for r in mem_rows]
-    lerl_vals = [as_float(r, "lerl_bits_per_key") for r in mem_rows]
-    stable_rows = [r for r in mem_rows if as_int(r, "keys") >= 8192]
-    stable_rl = [as_float(r, "rl_bits_per_key") for r in stable_rows]
-    stable_lerl = [as_float(r, "lerl_bits_per_key") for r in stable_rows]
+    rl_vals = [as_float(r, "rl_bits_per_key") if isinstance(r["rl_bits_per_key"], str) else float(r["rl_bits_per_key"]) for r in mem_rows]
+    lerl_vals = [as_float(r, "lerl_bits_per_key") if isinstance(r["lerl_bits_per_key"], str) else float(r["lerl_bits_per_key"]) for r in mem_rows]
+    stable_rows = [r for r in mem_rows if (as_int(r, "keys") if isinstance(r["keys"], str) else r["keys"]) >= 8192]
+    stable_rl = [as_float(r, "rl_bits_per_key") if isinstance(r["rl_bits_per_key"], str) else float(r["rl_bits_per_key"]) for r in stable_rows]
+    stable_lerl = [as_float(r, "lerl_bits_per_key") if isinstance(r["lerl_bits_per_key"], str) else float(r["lerl_bits_per_key"]) for r in stable_rows]
 
     lines = []
     lines.append("# PSig / Memory Study Summary")
@@ -909,7 +910,5 @@ def main():
 
     with open(os.path.join(base, "analysis_summary.md"), "w") as f:
         f.write("\n".join(lines) + "\n")
-
-
 if __name__ == "__main__":
     main()
