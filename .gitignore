@@ -12,3 +12,5 @@
 /papers/
 /Thesis
 /.venv/
+*.txt.*
+.DS_Store
