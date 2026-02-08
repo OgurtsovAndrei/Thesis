@@ -1,0 +1,136 @@
+goos: darwin
+goarch: arm64
+pkg: Thesis/rloc
+cpu: Apple M4 Max
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32-16         	    8071	    158683 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       176.2 bits_per_key	       705.0 total_bytes	  123904 B/op	    3007 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=256-16        	     898	   1327817 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       136.2 bits_per_key	      4358 total_bytes	  966446 B/op	   25591 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=1024-16       	     189	   6435259 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       124.7 bits_per_key	     15967 total_bytes	 4013505 B/op	  116059 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=8192-16       	      21	  60661079 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       117.1 bits_per_key	    119952 total_bytes	34348284 B/op	 1082555 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32768-16      	       4	 324500198 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       117.0 bits_per_key	    479272 total_bytes	156754704 B/op	 5620826 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=262144-16     	       1	5853178792 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       122.7 bits_per_key	   4021526 total_bytes	2358522848 B/op	120902044 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32-16        	    7446	    175808 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       211.0 bits_per_key	       844.0 total_bytes	  152344 B/op	    3314 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=256-16       	     799	   1447117 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       145.0 bits_per_key	      4641 total_bytes	 1141030 B/op	   27902 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=1024-16      	     169	   6979147 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       137.7 bits_per_key	     17631 total_bytes	 4795815 B/op	  127938 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=8192-16      	      20	  66216800 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       129.8 bits_per_key	    132959 total_bytes	37491013 B/op	 1170273 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32768-16     	       3	 417074208 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       129.4 bits_per_key	    530159 total_bytes	206689834 B/op	 7995875 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=262144-16    	       1	14538753459 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	       136.7 bits_per_key	   4478206 total_bytes	5942492128 B/op	336247612 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32-16        	    6330	    200296 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       277.5 bits_per_key	      1110 total_bytes	  181072 B/op	    3803 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=256-16       	     673	   1708362 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       222.0 bits_per_key	      7105 total_bytes	 1402744 B/op	   31639 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=1024-16      	     152	   8031697 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       214.2 bits_per_key	     27416 total_bytes	 5770186 B/op	  142440 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=8192-16      	      14	  74289125 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       202.2 bits_per_key	    207013 total_bytes	48464105 B/op	 1269860 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32768-16     	       3	 375087486 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       201.9 bits_per_key	    826859 total_bytes	207047322 B/op	 5951684 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=262144-16    	       1	13842700000 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       213.0 bits_per_key	   6978855 total_bytes	5994235552 B/op	300029037 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32-16        	    5733	    229978 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       324.8 bits_per_key	      1299 total_bytes	  221080 B/op	    4402 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=256-16       	     614	   1993430 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       246.9 bits_per_key	      7901 total_bytes	 1774206 B/op	   36842 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=1024-16      	     129	   9154600 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       233.7 bits_per_key	     29919 total_bytes	 7401029 B/op	  165053 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=8192-16      	      14	  90228506 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       224.4 bits_per_key	    229738 total_bytes	64847473 B/op	 1532820 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32768-16     	       2	 507620229 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       223.5 bits_per_key	    915533 total_bytes	291747504 B/op	 7673986 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=262144-16    	       1	14559375208 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       234.7 bits_per_key	   7691000 total_bytes	7400386992 B/op	300055677 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32-16       	    3795	    292835 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       348.5 bits_per_key	      1394 total_bytes	  303608 B/op	    4892 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=256-16      	     494	   2476389 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       258.2 bits_per_key	      8261 total_bytes	 2447233 B/op	   40735 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=1024-16     	      87	  12030734 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       262.1 bits_per_key	     33544 total_bytes	10587300 B/op	  184963 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=8192-16     	      10	 107837217 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       248.7 bits_per_key	    254666 total_bytes	91354601 B/op	 1671321 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32768-16    	       2	 503968250 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       247.2 bits_per_key	   1012533 total_bytes	356740920 B/op	 6797216 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=262144-16   	       1	16168877875 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       258.6 bits_per_key	   8475012 total_bytes	10105468880 B/op	299748934 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32-16         	 1966548	       605.4 ns/op	     388 B/op	      18 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=256-16        	 1325210	       892.7 ns/op	     464 B/op	      24 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=1024-16       	 1000000	      1166 ns/op	     544 B/op	      30 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=8192-16       	  920600	      1382 ns/op	     597 B/op	      33 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32768-16      	  770910	      1623 ns/op	     623 B/op	      39 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=262144-16     	  600432	      2016 ns/op	     696 B/op	      48 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32-16        	 1797896	       676.2 ns/op	     419 B/op	      20 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=256-16       	 1230810	       941.3 ns/op	     484 B/op	      26 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=1024-16      	 1000000	      1210 ns/op	     584 B/op	      33 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=8192-16      	  858404	      1453 ns/op	     628 B/op	      35 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32768-16     	  658933	      1726 ns/op	     667 B/op	      42 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=262144-16    	goos: darwin
+goarch: arm64
+pkg: Thesis/rloc
+cpu: Apple M4 Max
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32-16         	    8313	    155970 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       232.5 bits_per_key	       930.0 total_bytes	  124608 B/op	    3076 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=256-16        	     864	   1390664 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       131.9 bits_per_key	      4222 total_bytes	  980135 B/op	   25640 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=1024-16       	     187	   6310827 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       125.2 bits_per_key	     16024 total_bytes	 4044925 B/op	  117013 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=8192-16       	      19	  58578941 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       116.9 bits_per_key	    119685 total_bytes	33562113 B/op	 1043065 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32768-16      	       4	 322263364 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       116.9 bits_per_key	    478794 total_bytes	155389102 B/op	 5545730 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=262144-16     	       1	14371547917 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	       124.4 bits_per_key	   4076147 total_bytes	5805992384 B/op	345473899 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32-16        	    6493	    181475 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       247.8 bits_per_key	       991.0 total_bytes	  160696 B/op	    3378 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=256-16       	     688	   1528424 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       145.6 bits_per_key	      4660 total_bytes	 1202766 B/op	   28104 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=1024-16      	     168	   7059553 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       137.4 bits_per_key	     17583 total_bytes	 4822652 B/op	  129596 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=8192-16      	      20	  64946958 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       129.2 bits_per_key	    132291 total_bytes	37533006 B/op	 1172836 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32768-16     	       4	 333023521 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       129.0 bits_per_key	    528330 total_bytes	169735850 B/op	 5998526 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=262144-16    	       1	14050179958 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	       136.7 bits_per_key	   4478040 total_bytes	5759035968 B/op	323278802 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32-16        	    6727	    192369 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       279.0 bits_per_key	      1116 total_bytes	  172416 B/op	    3709 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=256-16       	     696	   1717435 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       221.5 bits_per_key	      7088 total_bytes	 1394710 B/op	   31494 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=1024-16      	     153	   7824421 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       214.1 bits_per_key	     27411 total_bytes	 5793264 B/op	  142725 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=8192-16      	      18	  73312574 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       202.0 bits_per_key	    206885 total_bytes	48376605 B/op	 1261567 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32768-16     	       3	 442260430 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       201.3 bits_per_key	    824617 total_bytes	239062301 B/op	 7634109 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=262144-16    	       1	17460013667 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       213.1 bits_per_key	   6981675 total_bytes	7578853432 B/op	395674102 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32-16        	    5658	    233640 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       314.2 bits_per_key	      1257 total_bytes	  220320 B/op	    4404 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=256-16       	     610	   1979996 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       243.5 bits_per_key	      7791 total_bytes	 1772854 B/op	   36552 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=1024-16      	     130	   9219126 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       237.0 bits_per_key	     30334 total_bytes	 7632500 B/op	  166010 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=8192-16      	      14	  87774854 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       222.9 bits_per_key	    228277 total_bytes	64320451 B/op	 1518981 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32768-16     	       3	 538159611 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       223.1 bits_per_key	    913848 total_bytes	313935864 B/op	 8540828 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=262144-16    	       1	16100336625 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       234.6 bits_per_key	   7687120 total_bytes	8073328560 B/op	335960554 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32-16       	    4542	    292045 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       332.8 bits_per_key	      1331 total_bytes	  300712 B/op	    4835 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=256-16      	     480	   2497387 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       274.6 bits_per_key	      8786 total_bytes	 2472545 B/op	   40987 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=1024-16     	     100	  12060628 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       260.2 bits_per_key	     33302 total_bytes	10340687 B/op	  182495 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=8192-16     	      10	 112405754 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       246.3 bits_per_key	    252161 total_bytes	89384420 B/op	 1679799 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32768-16    	       2	 616330104 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       247.4 bits_per_key	   1013298 total_bytes	433792596 B/op	 9129654 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=262144-16   	       1	14700877833 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       258.3 bits_per_key	   8465198 total_bytes	9252319480 B/op	273846161 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32-16         	 1937156	       630.8 ns/op	     396 B/op	      19 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=256-16        	 1300885	       894.4 ns/op	     465 B/op	      25 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=1024-16       	 1000000	      1156 ns/op	     548 B/op	      30 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=8192-16       	  891877	      1379 ns/op	     598 B/op	      33 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32768-16      	  780690	      1559 ns/op	     625 B/op	      39 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=262144-16     	  583176	      2027 ns/op	     698 B/op	      49 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32-16        	 1746874	       681.3 ns/op	     424 B/op	      21 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=256-16       	 1311531	       879.4 ns/op	     484 B/op	      27 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=1024-16      	  973995	      1254 ns/op	     581 B/op	      33 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=8192-16      	  835287	      1487 ns/op	     628 B/op	      36 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32768-16     	  709651	      1740 ns/op	     673 B/op	      42 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=262144-16    	goos: darwin
+goarch: arm64
+pkg: Thesis/rloc
+cpu: Apple M4 Max
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32-16         	    8312	    154689 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       198.5 bits_per_key	       794.0 total_bytes	  122104 B/op	    3003 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=256-16        	     925	   1350775 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       135.6 bits_per_key	      4339 total_bytes	  953556 B/op	   25210 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=1024-16       	     186	   6401663 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       125.7 bits_per_key	     16086 total_bytes	 4067349 B/op	  117094 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=8192-16       	      20	  60805204 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       117.1 bits_per_key	    119900 total_bytes	33897896 B/op	 1059604 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32768-16      	       4	 283987614 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       116.8 bits_per_key	    478336 total_bytes	142763324 B/op	 4842735 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=262144-16     	       1	13016285417 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	       124.4 bits_per_key	   4075767 total_bytes	5241731536 B/op	306404753 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32-16        	    7125	    181148 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       210.0 bits_per_key	       840.0 total_bytes	  161160 B/op	    3363 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=256-16       	     794	   1481198 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       142.4 bits_per_key	      4558 total_bytes	 1161516 B/op	   27951 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=1024-16      	     166	   7075886 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       136.9 bits_per_key	     17522 total_bytes	 4770746 B/op	  128292 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=8192-16      	      20	  63365892 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	       129.4 bits_per_key	    132475 total_bytes	37004419 B/op	 1149331 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32768-16     	       3	 356501375 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	       129.1 bits_per_key	    528989 total_bytes	178121058 B/op	 6438060 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=262144-16    	       1	13832456875 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	       136.6 bits_per_key	   4476366 total_bytes	5686917584 B/op	319397197 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32-16        	    6561	    198409 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       331.0 bits_per_key	      1324 total_bytes	  176719 B/op	    3779 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=256-16       	     686	   1693419 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       220.5 bits_per_key	      7055 total_bytes	 1392057 B/op	   31441 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=1024-16      	     147	   7948615 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       214.8 bits_per_key	     27495 total_bytes	 5802278 B/op	  143340 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=8192-16      	      15	  72343203 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       201.6 bits_per_key	    206468 total_bytes	48335748 B/op	 1267021 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32768-16     	       3	 362924819 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       201.6 bits_per_key	    825591 total_bytes	197208704 B/op	 5450347 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=262144-16    	       1	15925576708 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       213.1 bits_per_key	   6981588 total_bytes	6951695352 B/op	358648018 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32-16        	    5644	    237489 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       310.8 bits_per_key	      1243 total_bytes	  223056 B/op	    4454 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=256-16       	     596	   2040721 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       240.9 bits_per_key	      7709 total_bytes	 1769675 B/op	   36756 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=1024-16      	     129	   9093903 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       237.7 bits_per_key	     30431 total_bytes	 7555058 B/op	  165095 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=8192-16      	      14	  93382571 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       224.1 bits_per_key	    229444 total_bytes	64241145 B/op	 1520050 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=32768-16     	       3	 466377694 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       223.2 bits_per_key	    914174 total_bytes	273682434 B/op	 6913535 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=512/Keys=262144-16    	       1	15036129334 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       234.7 bits_per_key	   7691175 total_bytes	7563698000 B/op	310063150 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32-16       	    4650	    283607 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       341.2 bits_per_key	      1365 total_bytes	  301736 B/op	    4838 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=256-16      	     489	   2479609 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       268.9 bits_per_key	      8605 total_bytes	 2482094 B/op	   40882 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=1024-16     	     100	  11270570 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       262.4 bits_per_key	     33586 total_bytes	10632933 B/op	  183284 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=8192-16     	      12	 111250663 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       247.4 bits_per_key	    253380 total_bytes	89287246 B/op	 1659289 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=32768-16    	       2	 736996312 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	       246.8 bits_per_key	   1010791 total_bytes	489664056 B/op	10534452 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=1024/Keys=262144-16   	       1	17922433958 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	       258.5 bits_per_key	   8470888 total_bytes	11409673480 B/op	347375300 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32-16         	 1940524	       616.3 ns/op	     388 B/op	      17 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=256-16        	 1350572	       892.5 ns/op	     461 B/op	      24 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=1024-16       	 1000000	      1179 ns/op	     557 B/op	      31 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=8192-16       	  877740	      1426 ns/op	     597 B/op	      33 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=32768-16      	  761871	      1612 ns/op	     629 B/op	      39 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=64/Keys=262144-16     	  637818	      2074 ns/op	     696 B/op	      48 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32-16        	 1836525	       656.4 ns/op	     424 B/op	      21 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=256-16       	 1296321	       911.9 ns/op	     488 B/op	      26 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=1024-16      	 1000000	      1216 ns/op	     571 B/op	      32 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=8192-16      	  782816	      1502 ns/op	     630 B/op	      36 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=32768-16     	  659455	      1713 ns/op	     665 B/op	      41 allocs/op
+BenchmarkLocalExactRangeLocatorWeakPrefixSearch/KeySize=128/Keys=262144-16    	
