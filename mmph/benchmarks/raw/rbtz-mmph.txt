@@ -2,185 +2,205 @@ goos: darwin
 goarch: arm64
 pkg: Thesis/mmph/rbtz-mmph
 cpu: Apple M4 Max
-BenchmarkBuild/Keys=32-16  	   49012	     24350 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
-BenchmarkBuild/Keys=32-16  	   49336	     24819 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
-BenchmarkBuild/Keys=32-16  	   48964	     25078 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
-BenchmarkBuild/Keys=32-16  	   49449	     24232 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
-BenchmarkBuild/Keys=32-16  	   49344	     24232 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
-BenchmarkBuild/Keys=256-16 	   15057	     84423 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
-BenchmarkBuild/Keys=256-16 	   14791	     82694 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
-BenchmarkBuild/Keys=256-16 	   14362	     82230 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
-BenchmarkBuild/Keys=256-16 	   20326	     53859 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
-BenchmarkBuild/Keys=256-16 	   22417	     56147 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
-BenchmarkBuild/Keys=1024-16         	    4748	    260672 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
-BenchmarkBuild/Keys=1024-16         	    4770	    276797 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
-BenchmarkBuild/Keys=1024-16         	    3711	    272463 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
-BenchmarkBuild/Keys=1024-16         	    4767	    265759 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
-BenchmarkBuild/Keys=1024-16         	    4729	    301912 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
-BenchmarkBuild/Keys=8192-16         	     478	   2644699 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
-BenchmarkBuild/Keys=8192-16         	     448	   3070818 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
-BenchmarkBuild/Keys=8192-16         	     495	   2510188 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
-BenchmarkBuild/Keys=8192-16         	     468	   3160711 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
-BenchmarkBuild/Keys=8192-16         	     445	   3017047 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
-BenchmarkBuild/Keys=32768-16        	     100	  12331885 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
-BenchmarkBuild/Keys=32768-16        	     103	  13530888 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
-BenchmarkBuild/Keys=32768-16        	      99	  13618096 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
-BenchmarkBuild/Keys=32768-16        	     104	  12679798 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
-BenchmarkBuild/Keys=32768-16        	     100	  10932294 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
-BenchmarkBuild/Keys=262144-16       	      10	 102096046 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074376 B/op	  199645 allocs/op
-BenchmarkBuild/Keys=262144-16       	      12	 139705545 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074376 B/op	  199645 allocs/op
-BenchmarkBuild/Keys=262144-16       	      12	 141328323 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074377 B/op	  199645 allocs/op
-BenchmarkBuild/Keys=262144-16       	      12	 118257444 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074376 B/op	  199645 allocs/op
-BenchmarkBuild/Keys=262144-16       	      10	 112228629 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074376 B/op	  199645 allocs/op
-BenchmarkBuild/Keys=1048576-16      	       2	 639744688 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
-BenchmarkBuild/Keys=1048576-16      	       2	 565601334 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
-BenchmarkBuild/Keys=1048576-16      	       2	 614579979 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
-BenchmarkBuild/Keys=1048576-16      	       2	 545202375 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295624 B/op	  798394 allocs/op
-BenchmarkBuild/Keys=1048576-16      	       2	 522220771 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
-BenchmarkBuild/Keys=4194304-16      	       1	2730412958 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
-BenchmarkBuild/Keys=4194304-16      	       1	2442850666 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
-BenchmarkBuild/Keys=4194304-16      	       1	3059174416 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
-BenchmarkBuild/Keys=4194304-16      	       1	2816506500 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
-BenchmarkBuild/Keys=4194304-16      	       1	3073123416 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
-BenchmarkBuild/Keys=16777216-16     	       1	13925058542 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
-BenchmarkBuild/Keys=16777216-16     	       1	13828248000 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
-BenchmarkBuild/Keys=16777216-16     	       1	14163174959 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
-BenchmarkBuild/Keys=16777216-16     	       1	13454407417 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
-BenchmarkBuild/Keys=16777216-16     	       1	15025199791 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
-BenchmarkLookup/Keys=32-16          	209333877	         5.141 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32-16          	228165956	         5.346 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32-16          	213135528	         5.562 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32-16          	243253782	         5.371 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32-16          	242178231	         5.566 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=256-16         	234894872	         5.161 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=256-16         	205751599	         5.669 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=256-16         	227631634	         4.925 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=256-16         	235620553	         5.548 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=256-16         	231492384	         5.241 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1024-16        	239677034	         5.784 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1024-16        	213003840	         5.576 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1024-16        	209009847	         4.980 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1024-16        	239606026	         6.441 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1024-16        	222705782	         5.395 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=8192-16        	234016148	         6.031 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=8192-16        	248462336	         5.454 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=8192-16        	244072677	         5.088 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=8192-16        	235946768	         5.604 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=8192-16        	235870381	         5.154 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32768-16       	175333039	         5.934 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32768-16       	197904792	         5.721 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32768-16       	176776479	         5.789 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32768-16       	206167472	         6.160 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=32768-16       	212210925	         5.820 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=262144-16      	147426433	         6.872 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=262144-16      	190515301	         6.484 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=262144-16      	190020793	         6.788 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=262144-16      	189268999	         6.582 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=262144-16      	172791598	         6.619 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1048576-16     	158467172	        12.08 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1048576-16     	173196484	         9.315 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1048576-16     	100000000	        13.31 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1048576-16     	133417194	         9.288 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=1048576-16     	173526870	         7.020 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=4194304-16     	69075513	        14.71 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=4194304-16     	103429557	        15.05 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=4194304-16     	68761670	        23.65 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=4194304-16     	67508648	        27.66 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=4194304-16     	90615070	        14.97 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=16777216-16    	30463939	        39.42 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=16777216-16    	32591241	        32.73 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=16777216-16    	31677104	        42.09 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=16777216-16    	32059130	        33.04 ns/op	       0 B/op	       0 allocs/op
-BenchmarkLookup/Keys=16777216-16    	30462554	        36.94 ns/op	       0 B/op	       0 allocs/op
-BenchmarkSerialize/Keys=32-16       	11278989	       106.7 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32-16       	12245262	       103.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32-16       	11917786	       103.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32-16       	12471252	       100.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32-16       	12919252	       101.4 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=256-16      	 3590034	       296.2 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=256-16      	 4402992	       275.9 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=256-16      	 4222063	       273.7 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=256-16      	 3784167	       283.1 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=256-16      	 4369488	       270.1 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1024-16     	 1350942	       867.1 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1024-16     	 1410589	       964.9 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1024-16     	 1000000	      1070 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1024-16     	 1413475	       821.6 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1024-16     	 1371986	       829.9 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=8192-16     	  223906	      6458 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=8192-16     	  233685	      5667 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=8192-16     	  202402	      5901 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=8192-16     	  234822	      5637 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=8192-16     	  221635	      6356 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32768-16    	   54297	     23734 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32768-16    	   59028	     20940 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32768-16    	   52734	     20281 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32768-16    	   52566	     22792 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=32768-16    	   60555	     20928 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=262144-16   	    7759	    164632 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=262144-16   	    7098	    169873 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=262144-16   	    7821	    189438 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=262144-16   	    7560	    167100 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=262144-16   	    7669	    163589 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1048576-16  	    1924	    650517 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1048576-16  	    1926	    695082 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1048576-16  	    1552	    650897 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1048576-16  	    1646	    701365 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=1048576-16  	    1891	    651393 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=4194304-16  	     442	   2625494 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=4194304-16  	     436	   2655956 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=4194304-16  	     457	   2756268 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=4194304-16  	     456	   2553854 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=4194304-16  	     399	   2607819 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=16777216-16 	     100	  10173931 ns/op	        40.00 bits/key_serialized	  83886096 bytes_serialized	83894272 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=16777216-16 	     100	  10070842 ns/op	        40.00 bits/key_serialized	  83886096 bytes_serialized	83894272 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=16777216-16 	     121	   9319055 ns/op	        40.00 bits/key_serialized	  83886096 bytes_serialized	83894272 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=16777216-16 	     127	   9518776 ns/op	        40.00 bits/key_serialized	  83886096 bytes_serialized	83894272 B/op	       1 allocs/op
-BenchmarkSerialize/Keys=16777216-16 	     133	   9975396 ns/op	        40.00 bits/key_serialized	  83886096 bytes_serialized	83894272 B/op	       1 allocs/op
-BenchmarkDeserialize/Keys=32-16     	24818128	        47.49 ns/op	     160 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32-16     	26775877	        45.03 ns/op	     160 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32-16     	28421538	        48.23 ns/op	     160 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32-16     	29484964	        47.58 ns/op	     160 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32-16     	29271594	        47.29 ns/op	     160 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=256-16    	 5172735	       255.6 ns/op	    1280 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=256-16    	 5053467	       236.9 ns/op	    1280 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=256-16    	 5127627	       259.3 ns/op	    1280 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=256-16    	 4721553	       250.1 ns/op	    1280 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=256-16    	 4512598	       271.8 ns/op	    1280 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1024-16   	 1367403	       875.0 ns/op	    5120 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1024-16   	 1216530	       954.3 ns/op	    5120 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1024-16   	 1331967	       996.4 ns/op	    5120 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1024-16   	 1348771	       896.3 ns/op	    5120 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1024-16   	 1261838	       888.2 ns/op	    5120 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=8192-16   	  221966	      5868 ns/op	   40960 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=8192-16   	  210132	      5872 ns/op	   40960 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=8192-16   	  231206	      5601 ns/op	   40960 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=8192-16   	  234951	      5486 ns/op	   40960 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=8192-16   	  236629	      5256 ns/op	   40960 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32768-16  	   57825	     19845 ns/op	  163840 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32768-16  	   55911	     19906 ns/op	  163840 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32768-16  	   57261	     20300 ns/op	  163840 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32768-16  	   59937	     19951 ns/op	  163840 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=32768-16  	   57979	     20137 ns/op	  163840 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=262144-16 	    7615	    157791 ns/op	 1310720 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=262144-16 	    7543	    157523 ns/op	 1310720 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=262144-16 	    7519	    154426 ns/op	 1310720 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=262144-16 	    7692	    155253 ns/op	 1310720 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=262144-16 	    7814	    152464 ns/op	 1310720 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1048576-16         	    1724	    611416 ns/op	 5242880 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1048576-16         	    1978	    675297 ns/op	 5242880 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1048576-16         	    1959	    617197 ns/op	 5242880 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1048576-16         	    1876	    631315 ns/op	 5242880 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=1048576-16         	    1665	    607750 ns/op	 5242880 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=4194304-16         	     475	   2509561 ns/op	20971520 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=4194304-16         	     475	   2545670 ns/op	20971520 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=4194304-16         	     444	   2635698 ns/op	20971520 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=4194304-16         	     439	   2448295 ns/op	20971520 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=4194304-16         	     457	   2399950 ns/op	20971520 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=16777216-16        	     126	  10337002 ns/op	83886080 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=16777216-16        	     100	  10260686 ns/op	83886080 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=16777216-16        	     120	  10137821 ns/op	83886080 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=16777216-16        	     122	  10132524 ns/op	83886080 B/op	       2 allocs/op
-BenchmarkDeserialize/Keys=16777216-16        	     123	  10034859 ns/op	83886080 B/op	       2 allocs/op
+BenchmarkBuild/Keys=32-16         	   60345	     20202 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
+BenchmarkBuild/Keys=256-16        	   15840	    107442 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
+BenchmarkBuild/Keys=1024-16       	    4077	    509249 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
+BenchmarkBuild/Keys=8192-16       	     394	   3155406 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
+BenchmarkBuild/Keys=32768-16      	      82	  13916098 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
+BenchmarkBuild/Keys=262144-16     	       7	 197582577 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074377 B/op	  199645 allocs/op
+BenchmarkBuild/Keys=1048576-16    	       2	 679742812 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
+BenchmarkBuild/Keys=4194304-16    	       1	3346115333 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
+BenchmarkBuild/Keys=16777216-16   	       1	33297948750 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
 PASS
-ok  	Thesis/mmph/rbtz-mmph	1273.321s
+ok  	Thesis/mmph/rbtz-mmph	54.455s
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkBuild/Keys=32-16         	   55548	     19067 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
+BenchmarkBuild/Keys=256-16        	   18685	    112267 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
+BenchmarkBuild/Keys=1024-16       	    3384	    310080 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
+BenchmarkBuild/Keys=8192-16       	     382	   2952042 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
+BenchmarkBuild/Keys=32768-16      	      86	  16207774 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
+BenchmarkBuild/Keys=262144-16     	       6	 172340889 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074378 B/op	  199645 allocs/op
+BenchmarkBuild/Keys=1048576-16    	       2	 638070917 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
+BenchmarkBuild/Keys=4194304-16    	       1	3270548000 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
+BenchmarkBuild/Keys=16777216-16   	       1	38849789958 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
+PASS
+ok  	Thesis/mmph/rbtz-mmph	60.916s
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkBuild/Keys=32-16         	   56325	     20244 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
+BenchmarkBuild/Keys=256-16        	   16671	    115977 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
+BenchmarkBuild/Keys=1024-16       	    3734	    451276 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
+BenchmarkBuild/Keys=8192-16       	     373	   2990429 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
+BenchmarkBuild/Keys=32768-16      	      90	  14436691 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
+BenchmarkBuild/Keys=262144-16     	       7	 213238589 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074377 B/op	  199645 allocs/op
+BenchmarkBuild/Keys=1048576-16    	       2	 709486958 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
+BenchmarkBuild/Keys=4194304-16    	       1	3300703541 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
+BenchmarkBuild/Keys=16777216-16   	       1	37330311041 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
+PASS
+ok  	Thesis/mmph/rbtz-mmph	58.714s
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkBuild/Keys=32-16         	   64701	     20397 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
+BenchmarkBuild/Keys=256-16        	   16588	    110430 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
+BenchmarkBuild/Keys=1024-16       	    4134	    457738 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
+BenchmarkBuild/Keys=8192-16       	     408	   3232767 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
+BenchmarkBuild/Keys=32768-16      	      82	  15056046 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
+BenchmarkBuild/Keys=262144-16     	       7	 153374899 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074377 B/op	  199645 allocs/op
+BenchmarkBuild/Keys=1048576-16    	       2	 665607042 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
+BenchmarkBuild/Keys=4194304-16    	       1	3349655667 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
+BenchmarkBuild/Keys=16777216-16   	       1	39445643709 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
+PASS
+ok  	Thesis/mmph/rbtz-mmph	62.620s
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkBuild/Keys=32-16         	   55413	     21421 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
+BenchmarkBuild/Keys=256-16        	   18308	    110873 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
+BenchmarkBuild/Keys=1024-16       	    3566	    485566 ns/op	        40.12 bits/key_in_mem	      5136 bytes_in_mem	   51048 B/op	     792 allocs/op
+BenchmarkBuild/Keys=8192-16       	     422	   3003838 ns/op	        40.02 bits/key_in_mem	     40976 bytes_in_mem	  441608 B/op	    6258 allocs/op
+BenchmarkBuild/Keys=32768-16      	     100	  14309577 ns/op	        40.00 bits/key_in_mem	    163856 bytes_in_mem	 2094848 B/op	   24973 allocs/op
+BenchmarkBuild/Keys=262144-16     	       8	 166677125 ns/op	        40.00 bits/key_in_mem	   1310736 bytes_in_mem	19074378 B/op	  199645 allocs/op
+BenchmarkBuild/Keys=1048576-16    	       2	 745266000 ns/op	        40.00 bits/key_in_mem	   5242896 bytes_in_mem	76295616 B/op	  798394 allocs/op
+BenchmarkBuild/Keys=4194304-16    	       1	3256798500 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
+BenchmarkBuild/Keys=16777216-16   	       1	34015713125 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
+PASS
+ok  	Thesis/mmph/rbtz-mmph	54.966s
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkDeserialize/Keys=32-16         	16897134	       102.1 ns/op	     160 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=256-16        	 1965796	       544.0 ns/op	    1280 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=1024-16       	 1000000	      1457 ns/op	    5120 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=8192-16       	  146245	      9169 ns/op	   40960 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=32768-16      	   37130	     34411 ns/op	  163840 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=262144-16     	    5766	    227334 ns/op	 1310720 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=1048576-16    	    1059	    969711 ns/op	 5242880 B/op	       2 allocs/op
+BenchmarkDeserialize/Keys=4194304-16    	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkLookup/Keys=32-16         	198585244	         6.560 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=256-16        	130140757	         9.375 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1024-16       	198481341	         5.873 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=8192-16       	214975875	         6.633 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=32768-16      	140293740	         8.233 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=262144-16     	162254068	         8.435 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1048576-16    	122757918	        10.33 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=4194304-16    	27271538	        45.32 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkLookup/Keys=32-16         	100000000	        14.66 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=256-16        	57172123	        18.29 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1024-16       	127042813	        10.46 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=8192-16       	147609865	        19.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=32768-16      	100000000	        18.28 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=262144-16     	39674516	        42.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1048576-16    	49884429	        33.84 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=4194304-16    	22820322	        78.24 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkLookup/Keys=32-16         	71395724	        16.48 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=256-16        	100000000	        10.26 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1024-16       	135207864	         9.038 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=8192-16       	100000000	        20.80 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=32768-16      	100000000	        20.85 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=262144-16     	52596357	        50.70 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1048576-16    	54779096	        18.74 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=4194304-16    	24387517	        81.96 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkLookup/Keys=32-16         	100000000	        10.54 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=256-16        	170260240	         9.391 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1024-16       	100000000	        16.86 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=8192-16       	100000000	        16.84 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=32768-16      	94412918	        20.70 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=262144-16     	90389808	        38.21 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1048576-16    	86309250	        17.70 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=4194304-16    	27391839	       126.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkLookup/Keys=32-16         	216239263	        12.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=256-16        	100000000	        18.02 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1024-16       	100000000	        16.52 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=8192-16       	100000000	        24.01 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=32768-16      	46546861	        26.10 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=262144-16     	132639080	        12.53 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=1048576-16    	30360914	       108.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=4194304-16    	26759530	        88.06 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLookup/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkSerialize/Keys=32-16         	 7732660	       140.6 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=256-16        	 2451810	       759.3 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1024-16       	  887193	      2245 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=8192-16       	  109708	     20161 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=32768-16      	   14722	     93469 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=262144-16     	    2566	    521125 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1048576-16    	    1429	    968115 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=4194304-16    	     291	   6497703 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkSerialize/Keys=32-16         	 6519086	       208.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=256-16        	 2797329	       476.3 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1024-16       	 1110224	      1090 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=8192-16       	  171577	      8218 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=32768-16      	   23859	     45584 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=262144-16     	    7189	    231987 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1048576-16    	    1072	    937219 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=4194304-16    	     234	   6812008 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=16777216-16   	goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkSerialize/Keys=32-16         	 9275179	       198.7 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=256-16        	 3574075	       463.9 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1024-16       	 1000000	      1183 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=8192-16       	  104194	     11099 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=32768-16      	   25693	     57090 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=262144-16     	    4179	    436126 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1048576-16    	    1125	   1029293 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=4194304-16    	     314	   5567156 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkSerialize/Keys=32-16         	 8650568	       194.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=256-16        	 2181460	       616.4 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1024-16       	  907345	      2356 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=8192-16       	  129283	     12689 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=32768-16      	   35698	     36256 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=262144-16     	    3962	    259451 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1048576-16    	     879	   1334998 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=4194304-16    	     310	   3809854 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
+goos: darwin
+goarch: arm64
+pkg: Thesis/mmph/rbtz-mmph
+cpu: Apple M4 Max
+BenchmarkSerialize/Keys=32-16         	10197136	       174.3 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=256-16        	 2426814	       463.3 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1024-16       	 1000000	      1579 ns/op	        40.12 bits/key_serialized	      5136 bytes_serialized	    5376 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=8192-16       	  177650	      9032 ns/op	        40.02 bits/key_serialized	     40976 bytes_serialized	   49152 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=32768-16      	   41312	     28565 ns/op	        40.00 bits/key_serialized	    163856 bytes_serialized	  172032 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=262144-16     	    6918	    213510 ns/op	        40.00 bits/key_serialized	   1310736 bytes_serialized	 1318912 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=1048576-16    	    1274	   1073795 ns/op	        40.00 bits/key_serialized	   5242896 bytes_serialized	 5251072 B/op	       1 allocs/op
+BenchmarkSerialize/Keys=4194304-16    	     259	   4601541 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op

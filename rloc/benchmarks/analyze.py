@@ -61,10 +61,12 @@ def main():
         return
 
     # Write full raw csv
-    fieldnames = list(all_rows[0].keys())
-    # Ensure important fields come first
+    all_fieldnames = set()
+    for r in all_rows:
+        all_fieldnames.update(r.keys())
+    
     priority_fields = ["benchmark", "module", "keysize", "keys", "prefixlen"]
-    fieldnames = priority_fields + [f for f in fieldnames if f not in priority_fields]
+    fieldnames = priority_fields + [f for f in sorted(all_fieldnames) if f not in priority_fields]
     
     with open(os.path.join(PARSED_DIR, "all_runs.csv"), "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -75,8 +77,12 @@ def main():
     # Grouping by Benchmark Name, KeySize, Keys, PrefixLen
     agg_rows = parser.aggregate(all_rows, ["benchmark", "keysize", "keys", "prefixlen"])
     
+    agg_fieldnames = set()
+    for r in agg_rows:
+        agg_fieldnames.update(r.keys())
+    
     with open(os.path.join(PARSED_DIR, "agg.csv"), "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=agg_rows[0].keys())
+        writer = csv.DictWriter(f, fieldnames=sorted(agg_fieldnames))
         writer.writeheader()
         writer.writerows(agg_rows)
         
