@@ -27,14 +27,14 @@ type HZFastTrie[E UNumber] struct {
 	trie *ZFastTrie[bool]
 }
 
-func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
-	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
-
-	if len(keys) == 0 {
-		return nil
+func NewHZFastTrieFromIterator[E UNumber](iter bits.BitStringIterator) (*HZFastTrie[E], error) {
+	trie, err := BuildFromIterator(iter)
+	if err != nil {
+		return nil, err
 	}
-	trie := Build(keys)
-	errutil.BugOn(trie == nil || trie.root == nil, "Trie should not be nil")
+	if trie == nil || trie.root == nil {
+		return nil, nil
+	}
 
 	kv := make(map[bits.BitString]HNodeData[E], 0)
 
@@ -98,7 +98,17 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 		data:   data,
 		rootId: rootIdx,
 		trie:   trie,
+	}, nil
+}
+
+func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
+	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
+
+	hzft, err := NewHZFastTrieFromIterator[E](bits.NewSliceBitStringIterator(keys))
+	if err != nil {
+		panic(err)
 	}
+	return hzft
 }
 
 /*
