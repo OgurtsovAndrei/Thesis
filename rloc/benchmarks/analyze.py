@@ -36,6 +36,7 @@ def main():
     arg_parser.add_argument("--count", type=int, default=5, help="Number of iterations per benchmark")
     arg_parser.add_argument("--jobs", "-j", type=int, default=None, help="Parallel jobs")
     arg_parser.add_argument("--bench", default=".", help="Benchmark regex")
+    arg_parser.add_argument("--split", action="store_true", help="Split benchmarks into individual tasks for max parallelism")
     arg_parser.add_argument("--no-benchmem", action="store_true", help="Disable -benchmem")
     args = arg_parser.parse_args()
     
@@ -45,7 +46,7 @@ def main():
     
     # 1. Run Benchmarks
     if args.run:
-        runner.run_benchmarks(MODULES, args.count, args.bench, not args.no_benchmem, args.jobs)
+        runner.run_benchmarks(MODULES, args.count, args.bench, not args.no_benchmem, args.jobs, split=args.split)
         
     # 2. Parse Results
     all_rows = []
