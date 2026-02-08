@@ -48,14 +48,26 @@ func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, 
 	return NewApproxZFastTrieWithSeed[E, S, I](keys, saveOriginalTrie, rand.Uint64())
 }
 
+// NewApproxZFastTrieFromIterator initializes a compact Trie from an iterator.
+func NewApproxZFastTrieFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
+	return NewApproxZFastTrieWithSeedFromIterator[E, S, I](iter, saveOriginalTrie, rand.Uint64())
+}
+
 // NewApproxZFastTrieWithSeed initializes a compact Trie with delimiter index information using a specified seed.
 // This is used for bucketing where we need to map Trie nodes to bucket indices.
 // saveOriginalTrie controls whether to keep debug information (original Trie and node references).
 // seed is the value used for computing PSig signatures, allowing deterministic construction.
 func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
 	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
+	return NewApproxZFastTrieWithSeedFromIterator[E, S, I](bits.NewSliceBitStringIterator(keys), saveOriginalTrie, seed)
+}
 
-	trie := Build(keys)
+// NewApproxZFastTrieWithSeedFromIterator initializes a compact Trie from an iterator with a specified seed.
+func NewApproxZFastTrieWithSeedFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
+	trie, err := BuildFromIterator(iter)
+	if err != nil {
+		return nil, err
+	}
 	if trie == nil || trie.root == nil {
 		result := &ApproxZFastTrie[E, S, I]{seed: seed}
 		if saveOriginalTrie {
@@ -87,8 +99,17 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 
 	// Create mapping from keys to their delimiter indices using hash for efficiency
 	keyToDelimiterIdx := make(map[bits.BitString]int)
-	for i, key := range keys {
-		keyToDelimiterIdx[key] = i
+
+	// Reconstruct ranks by traversing Trie in-order.
+	// Since keys must be sorted, this traversal assigns ranks consistent with the sorted order.
+	trieIter := NewSortedIterator(trie)
+	rank := 0
+	for trieIter.Next() {
+		node := trieIter.Node()
+		if node.Value {
+			keyToDelimiterIdx[node.Extent] = rank
+			rank++
+		}
 	}
 
 	maxDelimiterIndex := I(^I(0)) // Maximum value for I type (means "not a delimiter")
