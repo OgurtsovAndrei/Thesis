@@ -1,34 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
 <style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
 <text x="480.0" y="26" text-anchor="middle">Lookup: Time (ns/op)</text>
-<line class="axis" x1="90" y1="465" x2="920" y2="465" />
-<line class="axis" x1="90" y1="55" x2="90" y2="465" />
-<line class="grid" x1="90" y1="465.00" x2="920" y2="465.00" />
-<text class="label" x="82" y="469.00" text-anchor="end">10^1</text>
-<line class="grid" x1="90" y1="328.33" x2="920" y2="328.33" />
-<text class="label" x="82" y="332.33" text-anchor="end">10^2</text>
-<line class="grid" x1="90" y1="191.67" x2="920" y2="191.67" />
-<text class="label" x="82" y="195.67" text-anchor="end">10^3</text>
-<line class="grid" x1="90" y1="55.00" x2="920" y2="55.00" />
-<text class="label" x="82" y="59.00" text-anchor="end">10^4</text>
-<line class="grid" x1="90.00" y1="55" x2="90.00" y2="465" />
-<text class="label" x="90.00" y="485" text-anchor="middle">32.0</text>
-<line class="grid" x1="228.33" y1="55" x2="228.33" y2="465" />
-<text class="label" x="228.33" y="485" text-anchor="middle">256.0</text>
-<line class="grid" x1="320.56" y1="55" x2="320.56" y2="465" />
-<text class="label" x="320.56" y="485" text-anchor="middle">1024.0</text>
-<line class="grid" x1="458.89" y1="55" x2="458.89" y2="465" />
-<text class="label" x="458.89" y="485" text-anchor="middle">8192.0</text>
-<line class="grid" x1="551.11" y1="55" x2="551.11" y2="465" />
-<text class="label" x="551.11" y="485" text-anchor="middle">32768.0</text>
-<line class="grid" x1="689.44" y1="55" x2="689.44" y2="465" />
-<text class="label" x="689.44" y="485" text-anchor="middle">262144.0</text>
-<line class="grid" x1="781.67" y1="55" x2="781.67" y2="465" />
-<text class="label" x="781.67" y="485" text-anchor="middle">1048576.0</text>
-<line class="grid" x1="873.89" y1="55" x2="873.89" y2="465" />
-<text class="label" x="873.89" y="485" text-anchor="middle">4194304.0</text>
-<line class="grid" x1="920.00" y1="55" x2="920.00" y2="465" />
-<text class="label" x="920.00" y="485" text-anchor="middle">8388608.0</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">10^1</text>
+<line class="grid" x1="90.0" y1="328.33" x2="920.0" y2="328.33" />
+<text class="label" x="82.0" y="332.33" text-anchor="end">10^2</text>
+<line class="grid" x1="90.0" y1="191.67" x2="920.0" y2="191.67" />
+<text class="label" x="82.0" y="195.67" text-anchor="end">10^3</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">10^4</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">32.0</text>
+<line class="grid" x1="228.33" y1="55.0" x2="228.33" y2="465.0" />
+<text class="label" x="228.33" y="485.0" text-anchor="middle">256.0</text>
+<line class="grid" x1="320.56" y1="55.0" x2="320.56" y2="465.0" />
+<text class="label" x="320.56" y="485.0" text-anchor="middle">1024.0</text>
+<line class="grid" x1="458.89" y1="55.0" x2="458.89" y2="465.0" />
+<text class="label" x="458.89" y="485.0" text-anchor="middle">8192.0</text>
+<line class="grid" x1="551.11" y1="55.0" x2="551.11" y2="465.0" />
+<text class="label" x="551.11" y="485.0" text-anchor="middle">32768.0</text>
+<line class="grid" x1="689.44" y1="55.0" x2="689.44" y2="465.0" />
+<text class="label" x="689.44" y="485.0" text-anchor="middle">262144.0</text>
+<line class="grid" x1="781.67" y1="55.0" x2="781.67" y2="465.0" />
+<text class="label" x="781.67" y="485.0" text-anchor="middle">1048576.0</text>
+<line class="grid" x1="873.89" y1="55.0" x2="873.89" y2="465.0" />
+<text class="label" x="873.89" y="485.0" text-anchor="middle">4194304.0</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">8388608.0</text>
 <polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,284.92 228.33,293.02 320.56,290.11 458.89,284.16 551.11,251.89 689.44,214.34 781.67,210.93 873.89,190.06" />
 <circle cx="90.00" cy="284.92" r="3.5" fill="#2a7fff" />
 <circle cx="228.33" cy="293.02" r="3.5" fill="#2a7fff" />
@@ -38,8 +38,8 @@
 <circle cx="689.44" cy="214.34" r="3.5" fill="#2a7fff" />
 <circle cx="781.67" cy="210.93" r="3.5" fill="#2a7fff" />
 <circle cx="873.89" cy="190.06" r="3.5" fill="#2a7fff" />
-<line x1="100" y1="67" x2="116" y2="67" stroke="#2a7fff" stroke-width="2.5" />
-<text class="label" x="122" y="71">bucket-mmph</text>
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">bucket-mmph</text>
 <polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,452.66 228.33,463.48 320.56,462.33 458.89,424.79 551.11,421.82 689.44,385.44 781.67,427.72 873.89,340.14" />
 <circle cx="90.00" cy="452.66" r="3.5" fill="#e4572e" />
 <circle cx="228.33" cy="463.48" r="3.5" fill="#e4572e" />
@@ -49,8 +49,8 @@
 <circle cx="689.44" cy="385.44" r="3.5" fill="#e4572e" />
 <circle cx="781.67" cy="427.72" r="3.5" fill="#e4572e" />
 <circle cx="873.89" cy="340.14" r="3.5" fill="#e4572e" />
-<line x1="100" y1="85" x2="116" y2="85" stroke="#e4572e" stroke-width="2.5" />
-<text class="label" x="122" y="89">rbtz-mmph</text>
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">rbtz-mmph</text>
 <polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,267.20 228.33,260.91 320.56,246.66 458.89,217.15 551.11,205.23 689.44,191.43 781.67,183.89 920.00,181.69" />
 <circle cx="90.00" cy="267.20" r="3.5" fill="#22a06b" />
 <circle cx="228.33" cy="260.91" r="3.5" fill="#22a06b" />
@@ -60,8 +60,8 @@
 <circle cx="689.44" cy="191.43" r="3.5" fill="#22a06b" />
 <circle cx="781.67" cy="183.89" r="3.5" fill="#22a06b" />
 <circle cx="920.00" cy="181.69" r="3.5" fill="#22a06b" />
-<line x1="100" y1="103" x2="116" y2="103" stroke="#22a06b" stroke-width="2.5" />
-<text class="label" x="122" y="107">bucket_with_approx_trie</text>
-<text class="label" x="480.0" y="522" text-anchor="middle">Key count</text>
+<line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122.0" y="107.0">bucket_with_approx_trie</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Key count</text>
 <text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">ns</text>
 </svg>

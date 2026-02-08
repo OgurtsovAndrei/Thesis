@@ -1,35 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
 <style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
 <text x="480.0" y="26" text-anchor="middle">Bits per Key</text>
-<line class="axis" x1="90" y1="465" x2="920" y2="465" />
-<line class="axis" x1="90" y1="55" x2="90" y2="465" />
-<line class="grid" x1="90" y1="465.00" x2="920" y2="465.00" />
-<text class="label" x="82" y="469.00" text-anchor="end">0.00</text>
-<line class="grid" x1="90" y1="383.00" x2="920" y2="383.00" />
-<text class="label" x="82" y="387.00" text-anchor="end">44.84</text>
-<line class="grid" x1="90" y1="301.00" x2="920" y2="301.00" />
-<text class="label" x="82" y="305.00" text-anchor="end">89.67</text>
-<line class="grid" x1="90" y1="219.00" x2="920" y2="219.00" />
-<text class="label" x="82" y="223.00" text-anchor="end">134.51</text>
-<line class="grid" x1="90" y1="137.00" x2="920" y2="137.00" />
-<text class="label" x="82" y="141.00" text-anchor="end">179.34</text>
-<line class="grid" x1="90" y1="55.00" x2="920" y2="55.00" />
-<text class="label" x="82" y="59.00" text-anchor="end">224.18</text>
-<line class="grid" x1="90.00" y1="55" x2="90.00" y2="465" />
-<text class="label" x="90.00" y="485" text-anchor="middle">32.0</text>
-<line class="grid" x1="401.25" y1="55" x2="401.25" y2="465" />
-<text class="label" x="401.25" y="485" text-anchor="middle">256.0</text>
-<line class="grid" x1="608.75" y1="55" x2="608.75" y2="465" />
-<text class="label" x="608.75" y="485" text-anchor="middle">1024.0</text>
-<line class="grid" x1="920.00" y1="55" x2="920.00" y2="465" />
-<text class="label" x="920.00" y="485" text-anchor="middle">8192.0</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">0.00</text>
+<line class="grid" x1="90.0" y1="383.00" x2="920.0" y2="383.00" />
+<text class="label" x="82.0" y="387.00" text-anchor="end">44.84</text>
+<line class="grid" x1="90.0" y1="301.00" x2="920.0" y2="301.00" />
+<text class="label" x="82.0" y="305.00" text-anchor="end">89.67</text>
+<line class="grid" x1="90.0" y1="219.00" x2="920.0" y2="219.00" />
+<text class="label" x="82.0" y="223.00" text-anchor="end">134.51</text>
+<line class="grid" x1="90.0" y1="137.00" x2="920.0" y2="137.00" />
+<text class="label" x="82.0" y="141.00" text-anchor="end">179.34</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">224.18</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">32.0</text>
+<line class="grid" x1="401.25" y1="55.0" x2="401.25" y2="465.0" />
+<text class="label" x="401.25" y="485.0" text-anchor="middle">256.0</text>
+<line class="grid" x1="608.75" y1="55.0" x2="608.75" y2="465.0" />
+<text class="label" x="608.75" y="485.0" text-anchor="middle">1024.0</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">8192.0</text>
 <polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,92.27 401.25,221.03 608.75,235.29 920.00,250.38" />
 <circle cx="90.00" cy="92.27" r="3.5" fill="#2a7fff" />
 <circle cx="401.25" cy="221.03" r="3.5" fill="#2a7fff" />
 <circle cx="608.75" cy="235.29" r="3.5" fill="#2a7fff" />
 <circle cx="920.00" cy="250.38" r="3.5" fill="#2a7fff" />
-<line x1="100" y1="67" x2="116" y2="67" stroke="#2a7fff" stroke-width="2.5" />
-<text class="label" x="122" y="71">KeySize=64</text>
-<text class="label" x="480.0" y="522" text-anchor="middle">Keys (N)</text>
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">KeySize=64</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Keys (N)</text>
 <text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">bits/key</text>
 </svg>
