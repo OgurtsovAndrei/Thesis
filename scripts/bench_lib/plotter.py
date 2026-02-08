@@ -1,24 +1,25 @@
 import math
 import os
+from typing import Dict, List, Tuple
 
-def ensure_dir(path):
+def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
-def svg_start(width, height):
+def svg_start(width: float, height: float) -> List[str]:
     return [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>',
     ]
 
-def svg_finish(parts, path):
+def svg_finish(parts: List[str], path: str) -> None:
     parts.append("</svg>")
     ensure_dir(os.path.dirname(path))
     with open(path, "w") as f:
         f.write("\n".join(parts))
 
-def draw_line_chart(path, title, x_label, y_label, series, log_x=False, log_y=False):
-    width, height = 960, 540
-    left, right, top, bottom = 90, 40, 55, 75
+def draw_line_chart(path: str, title: str, x_label: str, y_label: str, series: Dict[str, List[Tuple[float, float]]], log_x: bool = False, log_y: bool = False) -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
 
@@ -38,28 +39,28 @@ def draw_line_chart(path, title, x_label, y_label, series, log_x=False, log_y=Fa
         y_min_val = min(pos_y)
         y_max_val = max(pos_y)
         
-        y_min = math.floor(math.log10(y_min_val)) if y_min_val > 0 else 0
-        y_max = math.ceil(math.log10(y_max_val * 1.1))
-        if y_max <= y_min: y_max = y_min + 1
+        y_min = float(math.floor(math.log10(y_min_val))) if y_min_val > 0 else 0.0
+        y_max = float(math.ceil(math.log10(y_max_val * 1.1)))
+        if y_max <= y_min: y_max = y_min + 1.0
     else:
         y_min = 0.0
         y_max = max(1.0, max(y_values) * 1.1)
 
     # Coordinate mappers
-    def x_pos(x):
+    def x_pos(x: float) -> float:
         x_min_val = min(x_vals)
         x_max_val = max(x_vals)
         if x_max_val == x_min_val:
             return left + pw / 2
         
         if log_x:
-            if x <= 0: x = 1 # Avoid log(0)
+            if x <= 0: x = 1.0 # Avoid log(0)
             t = (math.log2(x) - math.log2(x_min_val)) / (math.log2(x_max_val) - math.log2(x_min_val))
         else:
             t = (x - x_min_val) / (x_max_val - x_min_val)
         return left + t * pw
 
-    def y_pos(y):
+    def y_pos(y: float) -> float:
         if log_y:
             if y <= 0: return top + ph
             val = math.log10(y)
@@ -78,7 +79,7 @@ def draw_line_chart(path, title, x_label, y_label, series, log_x=False, log_y=Fa
     # Y Grid
     if log_y:
         for p in range(int(y_min), int(y_max) + 1):
-            yv = 10**p
+            yv = 10.0**p
             py = y_pos(yv)
             if top <= py <= top + ph + 0.1:
                 parts.append(f'<line class="grid" x1="{left}" y1="{py:.2f}" x2="{left+pw}" y2="{py:.2f}" />')

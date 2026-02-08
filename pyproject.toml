@@ -1,0 +1,11 @@
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+explicit_package_bases = true
+python_version = "3.12"
+files = [
+    "scripts/bench_lib",
+    "rloc/benchmarks/analyze.py",
+    "mmph/benchmarks/analyze.py",
+    "mmph/bucket_with_approx_trie/study/analyze.py"
+]

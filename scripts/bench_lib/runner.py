@@ -3,11 +3,12 @@ import os
 import re
 import subprocess
 import sys
+from typing import Dict, List, Optional, Tuple, Any
 
-def ensure_dir(path):
+def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
-def list_benchmarks(cwd, pattern="."):
+def list_benchmarks(cwd: str, pattern: str = ".") -> List[str]:
     """Lists all benchmarks in the given directory matching the pattern."""
     try:
         args = ["go", "test", "-list", pattern]
@@ -21,7 +22,7 @@ def list_benchmarks(cwd, pattern="."):
         print(f"Error listing benchmarks in {cwd}: {e}", file=sys.stderr)
         return []
 
-def run_single_iteration(mod, iteration, bench, benchmem, bench_suffix=""):
+def run_single_iteration(mod: Dict[str, Any], iteration: int, bench: str, benchmem: bool, bench_suffix: str = "") -> Tuple[str, int, str, bool]:
     # If bench_suffix is provided (e.g. specific benchmark name), 
     # we use it for file naming and -bench flag.
     # Otherwise we use the provided bench pattern.
@@ -48,14 +49,14 @@ def run_single_iteration(mod, iteration, bench, benchmem, bench_suffix=""):
         print(f"Error running benchmark {mod['name']} ({actual_bench}) iter {iteration}: {e}", file=sys.stderr)
         return (mod["name"], iteration, temp_out, False)
 
-def run_benchmarks(modules, count, bench, benchmem, jobs, split=False):
+def run_benchmarks(modules: List[Dict[str, Any]], count: int, bench: str, benchmem: bool, jobs: Optional[int], split: bool = False) -> None:
     if jobs is None:
         jobs = os.cpu_count() or 4
     
     print(f"Running benchmarks with {jobs} workers (split={split})...")
     
     tasks = []
-    temp_files_map = {mod["name"]: [] for mod in modules}
+    temp_files_map: Dict[str, List[str]] = {mod["name"]: [] for mod in modules}
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
         for mod in modules:

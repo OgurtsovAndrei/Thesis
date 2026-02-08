@@ -1,10 +1,11 @@
 import os
 import statistics
 from collections import defaultdict
+from typing import Any, Dict, List, Optional, Union
 
-def parse_key_params(name):
+def parse_key_params(name: str) -> Dict[str, Any]:
     # Parses standard param format: "BenchmarkName/KeySize=64/Keys=1024-8"
-    row = {}
+    row: Dict[str, Any] = {}
     if "/" not in name:
         return row
         
@@ -22,8 +23,8 @@ def parse_key_params(name):
                 row[k.lower()] = v
     return row
 
-def parse_file(path):
-    rows = []
+def parse_file(path: str) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
     if not os.path.exists(path):
         return rows
         
@@ -37,7 +38,7 @@ def parse_file(path):
                 
             full_name = parts[0]
             # Standard Go fields
-            row = {
+            row: Dict[str, Any] = {
                 "full_name": full_name,
                 "benchmark": full_name.split("/")[0],
             }
@@ -45,7 +46,7 @@ def parse_file(path):
             row.update(parse_key_params(full_name))
             
             # Helper to parse Value Unit pairs
-            def try_float(s):
+            def try_float(s: str) -> Optional[float]:
                 try: return float(s)
                 except ValueError: return None
 
@@ -81,9 +82,9 @@ def parse_file(path):
             rows.append(row)
     return rows
 
-def aggregate(rows, group_keys):
+def aggregate(rows: List[Dict[str, Any]], group_keys: List[str]) -> List[Dict[str, Any]]:
     # Group by specified keys (e.g., ["benchmark", "keysize", "keys"])
-    grouped = defaultdict(list)
+    grouped: Dict[tuple[Any, ...], List[Dict[str, Any]]] = defaultdict(list)
     for r in rows:
         # Create a signature for grouping
         key_vals = []
@@ -91,9 +92,9 @@ def aggregate(rows, group_keys):
             key_vals.append(r.get(k))
         grouped[tuple(key_vals)].append(r)
         
-    agg_rows = []
+    agg_rows: List[Dict[str, Any]] = []
     for g_key, group in grouped.items():
-        res = {}
+        res: Dict[str, Any] = {}
         # Fill grouping keys
         for i, k in enumerate(group_keys):
             res[k] = g_key[i]
