@@ -195,7 +195,6 @@ func collectPSortedItems(zt *zft.ZFastTrie[bool]) ([]pItem, int) {
 		}
 	}
 
-	// Convert to sorted slice
 	sortedItems := make([]pItem, 0, len(pMap))
 	for bs, isLeaf := range pMap {
 		sortedItems = append(sortedItems, pItem{
@@ -253,7 +252,6 @@ func (rl *GenericRangeLocator[E, S, I]) Query(nodeName bits.BitString) (int, int
 		return 0, 0, fmt.Errorf("MMPH not initialized")
 	}
 
-	// Use TrimTrailingZeros instead of string conversion and trimming
 	xArrowBs := nodeName.TrimTrailingZeros()
 	lexRankLeft := rl.mmph.GetRank(xArrowBs)
 
@@ -269,7 +267,6 @@ func (rl *GenericRangeLocator[E, S, I]) Query(nodeName bits.BitString) (int, int
 		j = rl.totalLeaves
 	} else {
 		xSucc := calcSuccessor(nodeName)
-		// Use TrimTrailingZeros instead of string conversion and trimming
 		xSuccArrowBs := xSucc.TrimTrailingZeros()
 
 		lexRankRight := rl.mmph.GetRank(xSuccArrowBs)
@@ -288,14 +285,10 @@ func isAllOnes(bs bits.BitString) bool {
 }
 
 func calcSuccessor(bs bits.BitString) bits.BitString {
-	// Use the efficient BitString method that appends '1' and computes successor
 	return bs.AppendBit(true).Successor()
 }
 
 // ByteSize returns the estimated resident size of RangeLocator in bytes.
-//
-// The value includes the MMPH size, RSDic allocated storage (via AllocSize),
-// and fixed scalar fields. It excludes temporary construction allocations.
 func (rl *GenericRangeLocator[E, S, I]) ByteSize() int {
 	if rl == nil {
 		return 0
@@ -303,19 +296,15 @@ func (rl *GenericRangeLocator[E, S, I]) ByteSize() int {
 
 	size := 0
 
-	// Size of the MMPH (Monotone Minimal Perfect Hash function)
 	if rl.mmph != nil {
 		size += rl.mmph.ByteSize()
 	}
 
-	// Size of the bit vector
 	if rl.bv != nil {
-		// Account for all RSDic internal arrays, not just the raw bit count.
 		size += rl.bv.AllocSize()
 	}
 
-	// Size of totalLeaves (int)
-	size += 8 // assuming 64-bit int
+	size += 8
 
 	return size
 }

@@ -115,15 +115,12 @@ func (zt *ZFastTrie[V]) InsertBitString(newText bits.BitString, value V) {
 				}
 			}
 
-			// make new internal znode (with previous exit node value)
 			newNode := NewNodeWithNameLength(oldExitValue, exitNodeExtent, int32(lcpLength+1))
 			swapChildren(exitNode, newNode)
 			exitNode.InsertChild(newNode, lcpLength)
 			zt.insertHandle2NodeMap(newNode)
 
-			// finally add node with newText
 			if lcpLength < newText.Size() {
-				// make new leaf znode
 				newTextNode := NewNodeWithNameLength(value, newText, int32(lcpLength+1))
 				errutil.BugOn(exitNode.Value != zt.emptyValue, "value already exists, but how?")
 				exitNode.InsertChild(newTextNode, lcpLength)
@@ -194,7 +191,6 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText bits.BitString) {
 				zt.eraseHandle2NodeMap(tarGetNode.Handle())
 
 				if parentNode.SizeChildren() == 1 && parentNode.Value == zt.emptyValue {
-					// swap parent and child znode
 					zt.eraseHandle2NodeMap(parentNode.Handle())
 					childNode := parentNode.GetChild()
 
@@ -209,7 +205,6 @@ func (zt *ZFastTrie[V]) EraseBitString(targetText bits.BitString) {
 				}
 			}
 		} else if tarGetNode.SizeChildren() == 1 {
-			// delete internal znode
 			childNode := tarGetNode.GetChild()
 			tarGetNode.EraseChild(childNode.Key())
 			zt.eraseHandle2NodeMap(tarGetNode.Handle())

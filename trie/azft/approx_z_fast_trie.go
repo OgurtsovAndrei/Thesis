@@ -14,14 +14,14 @@ type UNumber interface {
 
 // NodeData contains the packed data for a Trie node.
 type NodeData[E UNumber, S UNumber, I UNumber] struct {
-	extentLen E // Length of the extent (prefix) represented by this node,  should be (log w)
+	extentLen E
 	// should be at ((log log n) + (log log w) - (log eps)) bits
-	PSig            S // Hash signature for path verification in the probabilistic structure.
-	parent          I // Index of the first ancestor where this node is in the left subtree
+	PSig            S
+	parent          I
 	minChild        I
 	minGreaterChild I
 	rightChild      I
-	Rank            I // Index of this key in the original array (or max value if not a delimiter)
+	Rank            I
 }
 
 // ApproxZFastTrie is a compact probabilistic implementation of a Z-Fast Trie,

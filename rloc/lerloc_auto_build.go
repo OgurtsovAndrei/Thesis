@@ -25,16 +25,13 @@ type autoLocalExactRangeLocator struct {
 // It first builds a RangeLocator (which selects optimal widths), then uses the
 // selected 'E' width for the HZFastTrie component.
 func NewLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, error) {
-	// Build Z-Fast Trie first (needed for RangeLocator)
 	zt := zft.Build(keys)
 
-	// Build RangeLocator (automatically selects widths)
 	rl, err := NewRangeLocator(zt)
 	if err != nil {
 		return nil, err
 	}
 
-	// Use the selected E width for HZFastTrie
 	widths := rl.TypeWidths()
 	hzftComp, err := buildHZFastTrieWithWidth(keys, widths.E)
 	if err != nil {
