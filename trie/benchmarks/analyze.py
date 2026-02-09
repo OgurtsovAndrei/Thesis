@@ -33,7 +33,8 @@ BENCH_LABELS = {
     "BenchmarkZFTBuild": "ZFT",
     "BenchmarkHZFTBuild_Heavy": "HZFT Old (Heavy)",
     "BenchmarkHZFTBuild_Streaming": "HZFT New (Streaming)",
-    "BenchmarkAZFTBuild": "AZFT",
+    "BenchmarkAZFTBuild_Heavy": "AZFT Old (Heavy)",
+    "BenchmarkAZFTBuild_Streaming": "AZFT New (Streaming)",
     "BenchmarkRangeLocatorBuild": "RangeLocator",
     "BenchmarkLocalExactRangeLocatorBuild": "LocalExactRangeLocator",
 }

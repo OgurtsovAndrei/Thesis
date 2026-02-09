@@ -90,8 +90,8 @@ func BenchmarkZFTBuild(b *testing.B) {
 	}
 }
 
-// Benchmark AZFT construction
-func BenchmarkAZFTBuild(b *testing.B) {
+// Benchmark AZFT construction (old/heavy - builds full ZFT)
+func BenchmarkAZFTBuild_Heavy(b *testing.B) {
 	initBenchKeys()
 
 	for _, bitLen := range benchBitLengths {
@@ -103,7 +103,33 @@ func BenchmarkAZFTBuild(b *testing.B) {
 				b.ResetTimer()
 
 				for i := 0; i < b.N; i++ {
-					// Build AZFT (now all use streaming internally)
+					azft, err := azft.NewApproxZFastTrieHeavy[uint16, uint32, uint32](keys)
+					if err != nil {
+						b.Fatalf("Failed to build heavy AZFT: %v", err)
+					}
+					if azft == nil {
+						b.Fatal("Failed to build heavy AZFT")
+					}
+				}
+			})
+		}
+	}
+}
+
+// Benchmark AZFT construction (new/streaming - processes keys on-the-fly)
+func BenchmarkAZFTBuild_Streaming(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					// Build AZFT (currently reduced-overhead, soon to be true streaming)
 					azft, err := azft.NewApproxZFastTrie[uint16, uint32, uint32](keys)
 					if err != nil {
 						b.Fatalf("Failed to build AZFT: %v", err)
