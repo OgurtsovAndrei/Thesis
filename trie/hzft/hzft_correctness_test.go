@@ -1,6 +1,7 @@
 package hzft
 
 import (
+	"Thesis/bits"
 	"Thesis/trie/zft"
 	"fmt"
 	"math/rand"
@@ -34,7 +35,8 @@ func TestHZFastTrie_Correctness_AllPrefixes(t *testing.T) {
 		if hzft == nil {
 			continue
 		}
-		referenceTrie := hzft.trie
+		// Build reference trie separately for comparison
+		referenceTrie, _ := zft.BuildFromIterator(bits.NewSliceBitStringIterator(keys))
 		errorsInRun := 0
 
 		for _, key := range keys {

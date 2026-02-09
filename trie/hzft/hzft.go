@@ -42,78 +42,8 @@ func areSorted(keys []bits.BitString) bool {
 }
 
 func NewHZFastTrieFromIterator[E UNumber](iter bits.BitStringIterator) (*HZFastTrie[E], error) {
-	checkedIter := bits.NewCheckedSortedIterator(iter)
-	trie, err := zft.BuildFromIterator(checkedIter)
-	if err != nil {
-		return nil, err
-	}
-	if trie == nil || trie.Root == nil {
-		return nil, nil
-	}
-
-	kv := make(map[bits.BitString]HNodeData[E], 0)
-
-	for handle, node := range trie.Handle2NodeMap {
-		errutil.BugOn(!node.Handle().Equal(handle), "handle mismatch")
-		a := uint64(node.NameLength - 1)
-		if a == ^uint64(0) {
-			a = 0
-		}
-		b := uint64(node.ExtentLength())
-
-		original := bits.TwoFattest(a, b) // TwoFattest on (a, b]
-		errutil.BugOn(original != uint64(handle.Size()), "broken handle")
-
-		extentLen := E(node.ExtentLength())
-		errutil.BugOn(uint64(extentLen) != uint64(node.ExtentLength()), "Data loss on extent length")
-		errutil.BugOn(!node.Extent.Prefix(int(original)).Equal(handle), "handle mismatch")
-		kv[node.Extent.Prefix(int(original))] = HNodeData[E]{
-			extentLen:    extentLen,
-			originalNode: node,
-		}
-		if original == 0 {
-			continue
-		}
-		b = original - 1
-		for a < b {
-			ftst := bits.TwoFattest(a, b)
-			kv[node.Extent.Prefix(int(ftst))] = HNodeData[E]{
-				extentLen:    ^E(0), // inf
-				originalNode: node,
-			}
-			b = ftst - 1
-		}
-	}
-
-	keysForMPH := make([]bits.BitString, 0, len(kv))
-	for handle := range kv {
-		keysForMPH = append(keysForMPH, handle)
-	}
-
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
-
-	data := make([]HNodeData[E], len(keysForMPH))
-	for key, value := range kv {
-		idx := mph.Query(key) - 1
-		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
-		data[idx] = value
-	}
-
-	var rootIdx uint64
-	rootHandle := trie.Root.Handle()
-	rootQuery := mph.Query(rootHandle)
-	if rootQuery == 0 {
-		errutil.Bug("Root is empty")
-	} else {
-		rootIdx = rootQuery - 1
-	}
-
-	return &HZFastTrie[E]{
-		mph:    mph,
-		data:   data,
-		rootId: rootIdx,
-		trie:   trie,
-	}, nil
+	// Use streaming builder for reduced memory usage
+	return NewHZFastTrieFromIteratorStreaming[E](iter)
 }
 
 func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {

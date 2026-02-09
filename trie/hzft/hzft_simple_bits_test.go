@@ -2,6 +2,7 @@ package hzft
 
 import (
 	"Thesis/bits"
+	"Thesis/trie/zft"
 	"fmt"
 	"testing"
 
@@ -18,6 +19,9 @@ func TestHZFastTrie_GetExistingPrefix(t *testing.T) {
 
 	hzft := NewHZFastTrie[uint32](keys)
 	require.NotNil(t, hzft)
+
+	// Build reference trie separately for comparison
+	referenceTrie, _ := zft.BuildFromIterator(bits.NewSliceBitStringIterator(keys))
 
 	// Согласно Figure 2, корень имеет расширение длины 6 (001001) [cite: 153, 154]
 	// Любой префикс короче или равный 6 битам имеет узлом выхода корень [cite: 102]
@@ -44,9 +48,9 @@ func TestHZFastTrie_GetExistingPrefix(t *testing.T) {
 			require.Equal(t, tt.expected, result)
 
 			// Сверка с эталонным узлом выхода из ZFastTrie [cite: 176, 224]
-			expectedNode := hzft.trie.GetExitNode(p)
+			expectedNode := referenceTrie.GetExitNode(p)
 			var refExpected int64
-			if expectedNode != hzft.trie.Root {
+			if expectedNode != referenceTrie.Root {
 				// Длина имени узла в сжатом боре [cite: 101, 237]
 				refExpected = int64(expectedNode.NameLength)
 			}
@@ -74,6 +78,9 @@ func TestHZFastTrie_Simple2(t *testing.T) {
 	hzft := NewHZFastTrie[uint32](keys)
 	require.NotNil(t, hzft)
 
+	// Build reference trie separately for comparison
+	referenceTrie, _ := zft.BuildFromIterator(bits.NewSliceBitStringIterator(keys))
+
 	tests := []struct {
 		pattern  string
 		expected int64
@@ -90,9 +97,9 @@ func TestHZFastTrie_Simple2(t *testing.T) {
 			require.Equal(t, tt.expected, result)
 
 			// Сверка с эталонным узлом выхода из ZFastTrie [cite: 176, 224]
-			expectedNode := hzft.trie.GetExitNode(p)
+			expectedNode := referenceTrie.GetExitNode(p)
 			var refExpected int64
-			if expectedNode != hzft.trie.Root {
+			if expectedNode != referenceTrie.Root {
 				// Длина имени узла в сжатом боре [cite: 101, 237]
 				refExpected = int64(expectedNode.NameLength)
 			}
