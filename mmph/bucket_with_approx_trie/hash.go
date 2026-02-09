@@ -162,7 +162,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 
 		// Build trie with current attempt using delimiter indices and deterministic seed
 		var err error
-		mh.delimiterTrie, err = azft.NewApproxZFastTrieWithSeed[E, S, I](delimiters, true, trySeed)
+		mh.delimiterTrie, err = azft.NewApproxZFastTrieWithSeed[E, S, I](delimiters, false, trySeed)
 		if err != nil {
 			return err
 		}
