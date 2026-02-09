@@ -2,6 +2,7 @@ package azft
 
 import (
 	"Thesis/bits"
+	"Thesis/trie/zft"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -66,9 +67,13 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 	}
 
 	// Test Z-fast Trie construction with mixed-size strings
-	azft, err := NewApproxZFastTrie[uint16, uint8, uint8](sortedKeys, true)
+	azft, err := NewApproxZFastTrie[uint16, uint8, uint8](sortedKeys)
 	require.NoError(t, err, "failed to build Trie with mixed-size strings")
 	require.NotNil(t, azft, "Trie should not be nil")
+
+	// Build reference trie for verification
+	referenceTrie, err := zft.BuildFromIterator(bits.NewSliceBitStringIterator(sortedKeys))
+	require.NoError(t, err)
 
 	// Verify the Trie can find all keys
 	for _, key := range sortedKeys {
@@ -76,7 +81,7 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 		require.NotNil(t, node, "should find prefix for key %s", key.PrettyString())
 
 		// The node should have an extent that is a prefix of our key
-		require.True(t, key.HasPrefix(azft.Trie.GetNode(key.Prefix(int(node.extentLen))).Extent),
+		require.True(t, key.HasPrefix(referenceTrie.GetNode(key.Prefix(int(node.extentLen))).Extent),
 			"found extent should be a prefix of key %s", key.PrettyString())
 	}
 

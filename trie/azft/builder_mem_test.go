@@ -124,7 +124,7 @@ func TestMemory_AZFT_StreamingVsHeavy(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create iterator: %v", err)
 			}
-			heavyAZFT, err := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter1, true, seed)
+			heavyAZFT, err := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter1,  seed)
 			iter1.Close()
 			if err != nil {
 				t.Fatalf("Heavy builder failed: %v", err)
@@ -144,7 +144,7 @@ func TestMemory_AZFT_StreamingVsHeavy(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create iterator: %v", err)
 			}
-			streamingAZFT, err := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter2, false, seed)
+			streamingAZFT, err := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter2,  seed)
 			iter2.Close()
 			if err != nil {
 				t.Fatalf("Streaming builder failed: %v", err)
@@ -198,12 +198,12 @@ func TestMemory_AZFT_FinalStructureSize(t *testing.T) {
 
 	// Build with debug info
 	iter1, _ := newFileIterator(keyFile)
-	heavyAZFT, _ := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter1, true, seed)
+	heavyAZFT, _ := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter1,  seed)
 	iter1.Close()
 
 	// Build without debug info
 	iter2, _ := newFileIterator(keyFile)
-	streamingAZFT, _ := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter2, false, seed)
+	streamingAZFT, _ := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter2,  seed)
 	iter2.Close()
 
 	heavySize := heavyAZFT.ByteSize()
@@ -214,16 +214,7 @@ func TestMemory_AZFT_FinalStructureSize(t *testing.T) {
 	t.Logf("Streaming AZFT size: %d bytes", streamingSize)
 	t.Logf("Difference:          %d bytes", heavySize-streamingSize)
 
-	// The sizes should be similar since NodeData structure is the same
-	// The difference is that streaming doesn't keep Trie reference
-	if heavyAZFT.Trie != nil {
-		t.Logf("Heavy AZFT has Trie reference: yes")
-	}
-	if streamingAZFT.Trie != nil {
-		t.Logf("Streaming AZFT has Trie reference: yes")
-	} else {
-		t.Logf("Streaming AZFT has Trie reference: no (memory saved)")
-	}
+	// Both should have same size now (no Trie field in either)
 }
 
 // TestMemory_AZFT_ScalingWithKeyCount tests memory scaling
@@ -251,7 +242,7 @@ func TestMemory_AZFT_ScalingWithKeyCount(t *testing.T) {
 		runtime.GC()
 		memBefore := getMemStats()
 		iter1, _ := newFileIterator(keyFile)
-		heavyAZFT, _ := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter1, true, seed)
+		heavyAZFT, _ := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter1,  seed)
 		iter1.Close()
 		heavyMem := getMemStats() - memBefore
 		_ = heavyAZFT
@@ -261,7 +252,7 @@ func TestMemory_AZFT_ScalingWithKeyCount(t *testing.T) {
 		// Streaming
 		memBefore = getMemStats()
 		iter2, _ := newFileIterator(keyFile)
-		streamingAZFT, _ := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter2, false, seed)
+		streamingAZFT, _ := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter2,  seed)
 		iter2.Close()
 		streamingMem := getMemStats() - memBefore
 
@@ -291,7 +282,7 @@ func BenchmarkMemoryAlloc_AZFT_Heavy(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		iter, _ := newFileIterator(keyFile)
-		azft, _ := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter, true, seed)
+		azft, _ := NewApproxZFastTrieWithSeedFromIterator[uint16, uint32, uint32](iter,  seed)
 		iter.Close()
 		_ = azft
 	}
@@ -313,7 +304,7 @@ func BenchmarkMemoryAlloc_AZFT_Streaming(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		iter, _ := newFileIterator(keyFile)
-		azft, _ := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter, false, seed)
+		azft, _ := NewApproxZFastTrieFromIteratorStreaming[uint16, uint32, uint32](iter,  seed)
 		iter.Close()
 		_ = azft
 	}

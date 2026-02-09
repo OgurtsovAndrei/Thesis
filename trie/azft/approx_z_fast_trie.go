@@ -4,9 +4,7 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
-	"Thesis/trie/zft"
 	"math/rand"
-	"sort"
 	"unsafe"
 )
 
@@ -24,9 +22,6 @@ type NodeData[E UNumber, S UNumber, I UNumber] struct {
 	minGreaterChild I
 	rightChild      I
 	Rank            I // Index of this key in the original array (or max value if not a delimiter)
-
-	// Debug field - only populated when saveOriginalTrie is true
-	originalNode *zft.Node[bool]
 }
 
 // ApproxZFastTrie is a compact probabilistic implementation of a Z-Fast Trie,
@@ -36,198 +31,32 @@ type ApproxZFastTrie[E UNumber, S UNumber, I UNumber] struct {
 	data   []NodeData[E, S, I] // Flat array of node data, indexed via the MPH.
 	seed   uint64              // Seed used for computing PSig signatures.
 	rootId I
-
-	// Debug field - only populated when saveOriginalTrie is true
-	Trie *zft.ZFastTrie[bool]
 }
 
 // NewApproxZFastTrie initializes a compact Trie with delimiter index information.
 // This is used for bucketing where we need to map Trie nodes to bucket indices.
-// saveOriginalTrie controls whether to keep debug information (original Trie and node references).
 // Uses a random seed from the global rand package.
-func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
-	return NewApproxZFastTrieWithSeed[E, S, I](keys, saveOriginalTrie, rand.Uint64())
+func NewApproxZFastTrie[E UNumber, S UNumber, I UNumber](keys []bits.BitString) (*ApproxZFastTrie[E, S, I], error) {
+	return NewApproxZFastTrieWithSeed[E, S, I](keys, rand.Uint64())
 }
 
 // NewApproxZFastTrieFromIterator initializes a compact Trie from an iterator.
-func NewApproxZFastTrieFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
-	return NewApproxZFastTrieWithSeedFromIterator[E, S, I](iter, saveOriginalTrie, rand.Uint64())
+func NewApproxZFastTrieFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator) (*ApproxZFastTrie[E, S, I], error) {
+	return NewApproxZFastTrieWithSeedFromIterator[E, S, I](iter, rand.Uint64())
 }
 
 // NewApproxZFastTrieWithSeed initializes a compact Trie with delimiter index information using a specified seed.
 // This is used for bucketing where we need to map Trie nodes to bucket indices.
-// saveOriginalTrie controls whether to keep debug information (original Trie and node references).
 // seed is the value used for computing PSig signatures, allowing deterministic construction.
-func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
+func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.BitString, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
 	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
-	return NewApproxZFastTrieWithSeedFromIterator[E, S, I](bits.NewSliceBitStringIterator(keys), saveOriginalTrie, seed)
+	return NewApproxZFastTrieWithSeedFromIterator[E, S, I](bits.NewSliceBitStringIterator(keys), seed)
 }
 
 // NewApproxZFastTrieWithSeedFromIterator initializes a compact Trie from an iterator with a specified seed.
-func NewApproxZFastTrieWithSeedFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
-	// Use streaming builder when debug info not needed
-	if !saveOriginalTrie {
-		return NewApproxZFastTrieFromIteratorStreaming[E, S, I](iter, saveOriginalTrie, seed)
-	}
-
-	checkedIter := bits.NewCheckedSortedIterator(iter)
-	trie, err := zft.BuildFromIterator(checkedIter)
-	if err != nil {
-		return nil, err
-	}
-	if trie == nil || trie.Root == nil {
-		result := &ApproxZFastTrie[E, S, I]{seed: seed}
-		if saveOriginalTrie {
-			result.Trie = trie
-		}
-		return result, nil
-	}
-
-	keysForMPH := make([]bits.BitString, 0, len(trie.Handle2NodeMap))
-	for handle := range trie.Handle2NodeMap {
-		keysForMPH = append(keysForMPH, handle)
-	}
-	// Sort keysForMPH to ensure deterministic order (map iteration is non-deterministic)
-	sort.Slice(keysForMPH, func(i, j int) bool {
-		return keysForMPH[i].Compare(keysForMPH[j]) < 0
-	})
-
-	if len(keysForMPH) == 0 {
-		result := &ApproxZFastTrie[E, S, I]{seed: seed}
-		if saveOriginalTrie {
-			result.Trie = trie
-		}
-		return result, nil
-	}
-
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
-
-	data := make([]NodeData[E, S, I], len(keysForMPH))
-
-	// Create mapping from keys to their delimiter indices using hash for efficiency
-	keyToDelimiterIdx := make(map[bits.BitString]int)
-
-	// Reconstruct ranks by traversing Trie in-order.
-	// Since keys must be sorted, this traversal assigns ranks consistent with the sorted order.
-	trieIter := zft.NewSortedIterator(trie)
-	rank := 0
-	for trieIter.Next() {
-		node := trieIter.Node()
-		if node.Value {
-			keyToDelimiterIdx[node.Extent] = rank
-			rank++
-		}
-	}
-
-	maxDelimiterIndex := I(^I(0)) // Maximum value for I type (means "not a delimiter")
-
-	for handle, node := range trie.Handle2NodeMap {
-		idx := mph.Query(handle) - 1
-		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
-
-		mostLeft := node
-		// Find the leftmost node by always going left when possible
-		for mostLeft.LeftChild != nil {
-			mostLeft = mostLeft.LeftChild
-		}
-		// With mixed-size strings, mostLeft might have a right child (unbalanced tree)
-		// We only require that mostLeft has a value (is a valid node)
-		errutil.BugOn(!mostLeft.Value, "mostLeft should have a value")
-		minChildHandle := mostLeft.Handle()
-		minChildIdx := mph.Query(minChildHandle) - 1
-		errutil.BugOn(minChildIdx >= uint64(len(data)), "Out of bounds")
-		minChild := I(minChildIdx)
-		errutil.BugOn(uint64(minChild) != minChildIdx, "Data loss on minChild index")
-
-		var minGreaterChild = maxDelimiterIndex
-		if node.RightChild != nil {
-			mostLeft := node.RightChild
-			// Find the leftmost node in the right subtree
-			for mostLeft.LeftChild != nil {
-				mostLeft = mostLeft.LeftChild
-			}
-			// With mixed-size strings, mostLeft might have a right child (unbalanced tree)
-			// We only require that mostLeft has a value (is a valid node)
-			errutil.BugOn(!mostLeft.Value, "mostLeft in right subtree should have a value")
-			lmcHandle := mostLeft.Handle()
-			lmcIdx := mph.Query(lmcHandle) - 1
-			errutil.BugOn(lmcIdx >= uint64(len(data)), "Out of bounds")
-			minGreaterChild = I(lmcIdx)
-			errutil.BugOn(uint64(minGreaterChild) != lmcIdx, "Data loss on minGreaterChild index")
-		}
-
-		sig := S(hashBitString(node.Extent, seed))
-		extentLength := E(node.ExtentLength())
-		errutil.BugOn(uint32(extentLength) != node.ExtentLength(), "Data loss")
-
-		// Determine delimiter index for this node
-		delimiterIdx := maxDelimiterIndex
-		if delimIdx, exists := keyToDelimiterIdx[node.Extent]; exists {
-			delimiterIdx = I(delimIdx)
-		}
-
-		// Set rightChild index
-		var rightChildIdx I = maxDelimiterIndex // default: no right child
-		if node.RightChild != nil {
-			rcHandle := node.RightChild.Handle()
-			rcIdx := mph.Query(rcHandle) - 1
-			errutil.BugOn(rcIdx >= uint64(len(data)), "Out of bounds")
-			rightChildIdx = I(rcIdx)
-			errutil.BugOn(uint64(rightChildIdx) != rcIdx, "Data loss on rightChild index")
-		}
-
-		nodeData := NodeData[E, S, I]{
-			extentLen:       extentLength,
-			PSig:            sig,
-			parent:          maxDelimiterIndex, // will be set correctly in the next loop
-			minChild:        minChild,
-			minGreaterChild: minGreaterChild,
-			rightChild:      rightChildIdx,
-			Rank:            delimiterIdx,
-		}
-		if saveOriginalTrie {
-			nodeData.originalNode = node
-		}
-		data[idx] = nodeData
-	}
-
-	// Set up parent relationships - find first ancestor where node is in left subtree
-	var setParentRecursive func(*zft.Node[bool], I)
-	setParentRecursive = func(node *zft.Node[bool], leftAncestor I) {
-		if node == nil {
-			return
-		}
-
-		nodeHandle := node.Handle()
-		nodeIdx := mph.Query(nodeHandle) - 1
-		if nodeIdx < uint64(len(data)) {
-			data[nodeIdx].parent = leftAncestor
-		}
-
-		setParentRecursive(node.LeftChild, I(nodeIdx))
-		setParentRecursive(node.RightChild, leftAncestor)
-	}
-
-	var rootIdx I
-	rootHandle := trie.Root.Handle()
-	rootQuery := mph.Query(rootHandle)
-	if rootQuery == 0 {
-		errutil.Bug("Root is empty")
-	} else {
-		rootIdx = I(rootQuery - 1)
-		setParentRecursive(trie.Root, maxDelimiterIndex)
-	}
-
-	result := &ApproxZFastTrie[E, S, I]{
-		mph:    mph,
-		data:   data,
-		seed:   seed,
-		rootId: rootIdx,
-	}
-	if saveOriginalTrie {
-		result.Trie = trie
-	}
-	return result, nil
+func NewApproxZFastTrieWithSeedFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
+	// Use streaming builder (no debug references)
+	return NewApproxZFastTrieFromIteratorStreaming[E, S, I](iter, seed)
 }
 
 // GetExistingPrefix finds node the longest existing extent, which is a prefix for a given pattern.

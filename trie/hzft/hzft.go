@@ -4,7 +4,6 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
-	"Thesis/trie/zft"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -18,18 +17,12 @@ type UNumber interface {
 
 type HNodeData[E UNumber] struct {
 	extentLen E // Length of the extent (prefix) represented by this node, should be at least log w, -1 stands for inf
-
-	// Debug field - only populated when saveOriginalTrie is true
-	originalNode *zft.Node[bool]
 }
 
 type HZFastTrie[E UNumber] struct {
 	mph    *boomphf.H     // Minimal Perfect Hash function mapping prefixes to indices.
 	data   []HNodeData[E] // Flat array of node data, indexed via the MPH.
 	rootId uint64
-
-	// Debug field - only populated when saveOriginalTrie is true
-	trie *zft.ZFastTrie[bool]
 }
 
 func areSorted(keys []bits.BitString) bool {
@@ -125,18 +118,10 @@ func (hzft *HZFastTrie[E]) String() string {
 	sb.WriteString("| MPH mappings:\n")
 	for i, nodeData := range hzft.data {
 		sb.WriteString(fmt.Sprintf("  [%d] extentLen=%d", i, nodeData.extentLen))
-		if nodeData.originalNode != nil {
-			sb.WriteString(fmt.Sprintf(" extent=%q", nodeData.originalNode.Extent.PrettyString()))
-		}
 		if uint64(nodeData.extentLen) == uint64(^E(0)) {
 			sb.WriteString(" (pseudo-descriptor)")
 		}
 		sb.WriteString("\n")
-	}
-
-	if hzft.trie != nil {
-		sb.WriteString("| Original Trie:\n")
-		sb.WriteString(strings.ReplaceAll(hzft.trie.String(), "\n", "\n  "))
 	}
 
 	return sb.String()
@@ -156,15 +141,12 @@ func (hzft *HZFastTrie[E]) ByteSize() int {
 	}
 
 	// Size of the data array (HNodeData entries)
-	// Each HNodeData contains: extentLen(E) + originalNode pointer
-	nodeDataSize := len(hzft.data) * (int(unsafe.Sizeof(*new(E))) /* + int(unsafe.Sizeof((*znode[bool])(nil)))*/)
+	// Each HNodeData contains: extentLen(E)
+	nodeDataSize := len(hzft.data) * int(unsafe.Sizeof(*new(E)))
 	size += nodeDataSize
 
 	// Size of rootId (uint64)
 	size += 8
-
-	// Size of debug Trie pointer (always present in struct, but nil in production)
-	size += int(unsafe.Sizeof((*zft.ZFastTrie[bool])(nil)))
 
 	return size
 }
