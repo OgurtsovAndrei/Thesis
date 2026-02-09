@@ -1,0 +1,252 @@
+package trie
+
+import (
+	"Thesis/bits"
+	"Thesis/rloc"
+	"Thesis/trie/azft"
+	"Thesis/trie/hzft"
+	"Thesis/trie/zft"
+	"fmt"
+	"math/rand"
+	"sort"
+	"sync"
+	"testing"
+)
+
+var (
+	benchKeyCounts  = []int{1 << 10, 1 << 13, 1 << 15}
+	benchBitLengths = []int{64, 128, 256}
+	benchKeys       map[int]map[int][]bits.BitString // [bitLength][keyCount]
+	benchOnce       sync.Once
+)
+
+func initBenchKeys() {
+	benchOnce.Do(func() {
+		benchKeys = make(map[int]map[int][]bits.BitString)
+		for _, bitLen := range benchBitLengths {
+			benchKeys[bitLen] = make(map[int][]bits.BitString)
+			for _, count := range benchKeyCounts {
+				rawKeys := buildUniqueStrKeys(count, bitLen)
+
+				bsKeys := make([]bits.BitString, count)
+				for i, k := range rawKeys {
+					bsKeys[i] = bits.NewFromText(k)
+				}
+
+				sort.Sort(bitStringSorter(bsKeys))
+
+				benchKeys[bitLen][count] = bsKeys
+			}
+		}
+	})
+}
+
+func buildUniqueStrKeys(size int, bitLength int) []string {
+	keys := make([]string, size)
+	unique := make(map[string]bool, size)
+	byteLength := (bitLength + 7) / 8
+
+	r := rand.New(rand.NewSource(42)) // Fixed seed for reproducibility
+	for i := 0; i < size; i++ {
+		for {
+			b := make([]byte, byteLength)
+			r.Read(b)
+			s := string(b)
+			if !unique[s] {
+				keys[i] = s
+				unique[s] = true
+				break
+			}
+		}
+	}
+	return keys
+}
+
+type bitStringSorter []bits.BitString
+
+func (b bitStringSorter) Len() int           { return len(b) }
+func (b bitStringSorter) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b bitStringSorter) Less(i, j int) bool { return b[i].Compare(b[j]) < 0 }
+
+// Benchmark ZFT construction
+func BenchmarkZFTBuild(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					zt := zft.Build(keys)
+					if zt == nil {
+						b.Fatal("Failed to build ZFastTrie")
+					}
+				}
+			})
+		}
+	}
+}
+
+// Benchmark HZFT construction (old/heavy - builds full ZFT first)
+// Measures the cost of building ZFT which is what the old implementation required
+func BenchmarkHZFTBuild_Heavy(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					// Old path: Build full ZFT first (stores all strings in Handle2NodeMap)
+					zt := zft.Build(keys)
+					if zt == nil {
+						b.Fatal("Failed to build ZFT")
+					}
+					// Then we would extract handles from it (not included here for simplicity)
+					// The key cost is materializing the full ZFT
+				}
+			})
+		}
+	}
+}
+
+// Benchmark HZFT construction (new/streaming - processes keys on-the-fly)
+func BenchmarkHZFTBuild_Streaming(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					hzft, err := hzft.NewHZFastTrieFromIteratorStreaming[uint32](bits.NewSliceBitStringIterator(keys))
+					if err != nil {
+						b.Fatalf("Failed to build streaming HZFT: %v", err)
+					}
+					if hzft == nil {
+						b.Fatal("Failed to build streaming HZFT")
+					}
+				}
+			})
+		}
+	}
+}
+
+// Benchmark AZFT construction (old/heavy - keeps debug references)
+func BenchmarkAZFTBuild_Heavy(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					// Build with saveOriginalTrie=true (old/heavy path)
+					azft, err := azft.NewApproxZFastTrie[uint16, uint32, uint32](keys, true)
+					if err != nil {
+						b.Fatalf("Failed to build heavy AZFT: %v", err)
+					}
+					if azft == nil {
+						b.Fatal("Failed to build heavy AZFT")
+					}
+				}
+			})
+		}
+	}
+}
+
+// Benchmark AZFT construction (new/streaming - no debug references)
+func BenchmarkAZFTBuild_Streaming(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					// Build with saveOriginalTrie=false (new/streaming path)
+					azft, err := azft.NewApproxZFastTrie[uint16, uint32, uint32](keys, false)
+					if err != nil {
+						b.Fatalf("Failed to build streaming AZFT: %v", err)
+					}
+					if azft == nil {
+						b.Fatal("Failed to build streaming AZFT")
+					}
+				}
+			})
+		}
+	}
+}
+
+// Benchmark RangeLocator construction
+func BenchmarkRangeLocatorBuild(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					zt := zft.Build(keys)
+					rl, err := rloc.NewRangeLocator(zt)
+					if err != nil {
+						b.Fatalf("NewRangeLocator failed: %v", err)
+					}
+					if rl == nil {
+						b.Fatal("Failed to build RangeLocator")
+					}
+				}
+			})
+		}
+	}
+}
+
+// Benchmark LocalExactRangeLocator construction
+func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
+	initBenchKeys()
+
+	for _, bitLen := range benchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := benchKeys[bitLen][count]
+
+				b.ReportAllocs()
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					lerl, err := rloc.NewLocalExactRangeLocator(keys)
+					if err != nil {
+						b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+					}
+					if lerl == nil {
+						b.Fatal("Failed to build LocalExactRangeLocator")
+					}
+				}
+			})
+		}
+	}
+}
