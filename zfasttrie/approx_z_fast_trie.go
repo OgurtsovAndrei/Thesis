@@ -64,7 +64,8 @@ func NewApproxZFastTrieWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.Bit
 
 // NewApproxZFastTrieWithSeedFromIterator initializes a compact Trie from an iterator with a specified seed.
 func NewApproxZFastTrieWithSeedFromIterator[E UNumber, S UNumber, I UNumber](iter bits.BitStringIterator, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
-	trie, err := BuildFromIterator(iter)
+	checkedIter := bits.NewCheckedSortedIterator(iter)
+	trie, err := BuildFromIterator(checkedIter)
 	if err != nil {
 		return nil, err
 	}

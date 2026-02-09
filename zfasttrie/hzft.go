@@ -28,7 +28,8 @@ type HZFastTrie[E UNumber] struct {
 }
 
 func NewHZFastTrieFromIterator[E UNumber](iter bits.BitStringIterator) (*HZFastTrie[E], error) {
-	trie, err := BuildFromIterator(iter)
+	checkedIter := bits.NewCheckedSortedIterator(iter)
+	trie, err := BuildFromIterator(checkedIter)
 	if err != nil {
 		return nil, err
 	}

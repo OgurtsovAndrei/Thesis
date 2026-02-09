@@ -1,5 +1,7 @@
 package bits
 
+import "Thesis/errutil"
+
 // BitStringIterator iterates over a sequence of BitStrings.
 type BitStringIterator interface {
 	// Next advances the iterator to the next element.
@@ -35,4 +37,39 @@ func (it *SliceBitStringIterator) Value() BitString {
 
 func (it *SliceBitStringIterator) Error() error {
 	return nil
+}
+
+// CheckedSortedIterator wraps a BitStringIterator and verifies that the yielded
+// BitStrings are sorted in non-decreasing order. It panics via errutil.BugOn
+// if an out-of-order element is encountered.
+type CheckedSortedIterator struct {
+	iter BitStringIterator
+	prev BitString
+}
+
+func NewCheckedSortedIterator(iter BitStringIterator) *CheckedSortedIterator {
+	return &CheckedSortedIterator{
+		iter: iter,
+		prev: nil,
+	}
+}
+
+func (it *CheckedSortedIterator) Next() bool {
+	if !it.iter.Next() {
+		return false
+	}
+	val := it.iter.Value()
+	if it.prev != nil {
+		errutil.BugOn(it.prev.Compare(val) > 0, "Keys should be sorted")
+	}
+	it.prev = val
+	return true
+}
+
+func (it *CheckedSortedIterator) Value() BitString {
+	return it.iter.Value()
+}
+
+func (it *CheckedSortedIterator) Error() error {
+	return it.iter.Error()
 }
