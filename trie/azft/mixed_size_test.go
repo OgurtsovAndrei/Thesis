@@ -1,4 +1,4 @@
-package zfasttrie
+package azft
 
 import (
 	"Thesis/bits"
@@ -76,7 +76,7 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 		require.NotNil(t, node, "should find prefix for key %s", key.PrettyString())
 
 		// The node should have an extent that is a prefix of our key
-		require.True(t, key.HasPrefix(azft.Trie.getNode(key.Prefix(int(node.extentLen))).extent),
+		require.True(t, key.HasPrefix(azft.Trie.GetNode(key.Prefix(int(node.extentLen))).Extent),
 			"found extent should be a prefix of key %s", key.PrettyString())
 	}
 

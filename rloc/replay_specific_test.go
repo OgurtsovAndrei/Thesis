@@ -1,7 +1,7 @@
 package rloc
 
 import (
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestReplaySpecificFailure(t *testing.T) {
 	failCount := 0
 
 	for i := 0; i < 10; i++ {
-		zt := zfasttrie.Build(keys)
+		zt := zft.Build(keys)
 		_, err := NewRangeLocatorSeeded(zt, mmphSeed)
 
 		if err != nil {

@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import (
 	"Thesis/bits"
@@ -8,7 +8,7 @@ import (
 	iradix "github.com/hashicorp/go-immutable-radix"
 )
 
-func generateBitStringKeys(n int) []bits.BitString {
+func GenerateBitStringKeys(n int) []bits.BitString {
 	r := rand.New(rand.NewSource(42))
 	keys := make([]bits.BitString, n)
 	set := make(map[uint64]struct{}, n)
@@ -28,7 +28,7 @@ func generateBitStringKeys(n int) []bits.BitString {
 func setupBitStringTrie(b *testing.B, n int) (*ZFastTrie[bool], []bits.BitString) {
 	b.Helper()
 	b.StopTimer()
-	keys := generateBitStringKeys(n)
+	keys := GenerateBitStringKeys(n)
 	tree := NewZFastTrie[bool](false)
 	for _, s := range keys {
 		tree.InsertBitString(s, true)
@@ -40,7 +40,7 @@ func setupBitStringTrie(b *testing.B, n int) (*ZFastTrie[bool], []bits.BitString
 func setupStdMap(b *testing.B, n int) (map[bits.BitString]bool, []bits.BitString) {
 	b.Helper()
 	b.StopTimer()
-	keys := generateBitStringKeys(n)
+	keys := GenerateBitStringKeys(n)
 	m := make(map[bits.BitString]bool, n)
 	for _, s := range keys {
 		m[s] = true
@@ -52,7 +52,7 @@ func setupStdMap(b *testing.B, n int) (map[bits.BitString]bool, []bits.BitString
 func setupiradixTrie(b *testing.B, n int) (*iradix.Tree, []bits.BitString) {
 	b.Helper()
 	b.StopTimer()
-	keys := generateBitStringKeys(n)
+	keys := GenerateBitStringKeys(n)
 	r := iradix.New()
 	for _, s := range keys {
 		r, _, _ = r.Insert(s.Data(), true)
@@ -63,7 +63,7 @@ func setupiradixTrie(b *testing.B, n int) (*iradix.Tree, []bits.BitString) {
 
 func BenchmarkTrie_BitString_Insert(b *testing.B) {
 	b.StopTimer()
-	keys := generateBitStringKeys(b.N)
+	keys := GenerateBitStringKeys(b.N)
 	tree := NewZFastTrie[bool](false)
 	b.StartTimer()
 
@@ -74,7 +74,7 @@ func BenchmarkTrie_BitString_Insert(b *testing.B) {
 
 func Benchmark_StdMap_BitString_Insert(b *testing.B) {
 	b.StopTimer()
-	keys := generateBitStringKeys(b.N)
+	keys := GenerateBitStringKeys(b.N)
 	m := make(map[bits.BitString]bool, b.N)
 	b.StartTimer()
 
@@ -85,7 +85,7 @@ func Benchmark_StdMap_BitString_Insert(b *testing.B) {
 
 func Benchmark_iradix_BitString_Insert(b *testing.B) {
 	b.StopTimer()
-	keys := generateBitStringKeys(b.N)
+	keys := GenerateBitStringKeys(b.N)
 	r := iradix.New()
 	b.StartTimer()
 
@@ -125,7 +125,7 @@ func Benchmark_iradix_BitString_Contains_Hit_100k(b *testing.B) {
 func BenchmarkTrie_BitString_Contains_Miss_100k(b *testing.B) {
 	tree, _ := setupBitStringTrie(b, 100_000)
 	b.StopTimer()
-	missKeys := generateBitStringKeys(b.N)
+	missKeys := GenerateBitStringKeys(b.N)
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -136,7 +136,7 @@ func BenchmarkTrie_BitString_Contains_Miss_100k(b *testing.B) {
 func Benchmark_StdMap_BitString_Contains_Miss_100k(b *testing.B) {
 	m, _ := setupStdMap(b, 100_000)
 	b.StopTimer()
-	missKeys := generateBitStringKeys(b.N)
+	missKeys := GenerateBitStringKeys(b.N)
 	b.StartTimer()
 	var ok bool
 	for i := 0; i < b.N; i++ {
@@ -148,7 +148,7 @@ func Benchmark_StdMap_BitString_Contains_Miss_100k(b *testing.B) {
 func Benchmark_iradix_BitString_Contains_Miss_100k(b *testing.B) {
 	r, _ := setupiradixTrie(b, 100_000)
 	b.StopTimer()
-	missKeys := generateBitStringKeys(b.N)
+	missKeys := GenerateBitStringKeys(b.N)
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -159,7 +159,7 @@ func Benchmark_iradix_BitString_Contains_Miss_100k(b *testing.B) {
 func BenchmarkTrie_BitString_Erase_Hit_100k(b *testing.B) {
 	b.StopTimer()
 
-	keys := generateBitStringKeys(100_000 + b.N)
+	keys := GenerateBitStringKeys(100_000 + b.N)
 	tree := NewZFastTrie[bool](false)
 
 	for i := 0; i < 100_000; i++ {
@@ -180,7 +180,7 @@ func BenchmarkTrie_BitString_Erase_Hit_100k(b *testing.B) {
 func BenchmarkTrie_BitString_Insert_Erase_100k(b *testing.B) {
 	tree, _ := setupBitStringTrie(b, 100_000)
 	b.StopTimer()
-	keys := generateBitStringKeys(b.N)
+	keys := GenerateBitStringKeys(b.N)
 	mask := len(keys) - 1
 	b.StartTimer()
 
@@ -194,7 +194,7 @@ func BenchmarkTrie_BitString_Insert_Erase_100k(b *testing.B) {
 func Benchmark_StdMap_BitString_Insert_Erase_100k(b *testing.B) {
 	m, _ := setupStdMap(b, 100_000)
 	b.StopTimer()
-	keys := generateBitStringKeys(b.N)
+	keys := GenerateBitStringKeys(b.N)
 	mask := len(keys) - 1
 	b.StartTimer()
 
@@ -208,7 +208,7 @@ func Benchmark_StdMap_BitString_Insert_Erase_100k(b *testing.B) {
 func Benchmark_iradix_BitString_Insert_Erase_100k(b *testing.B) {
 	r, _ := setupiradixTrie(b, 100_000)
 	b.StopTimer()
-	keys := generateBitStringKeys(b.N)
+	keys := GenerateBitStringKeys(b.N)
 	mask := len(keys) - 1
 	b.StartTimer()
 

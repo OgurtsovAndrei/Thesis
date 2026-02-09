@@ -3,7 +3,8 @@ package rloc
 import (
 	"Thesis/bits"
 	"Thesis/errutil"
-	"Thesis/zfasttrie"
+	"Thesis/trie/hzft"
+	"Thesis/trie/zft"
 	"fmt"
 )
 
@@ -16,6 +17,35 @@ type autoLocalExactRangeLocator struct {
 	hzft   hzftAccessor
 	rl     RangeLocator
 	widths TypeWidths
+}
+
+// NewLocalExactRangeLocator constructs a LocalExactRangeLocator with automatically
+// selected bit-widths for internal fields to minimize memory usage.
+//
+// It first builds a RangeLocator (which selects optimal widths), then uses the
+// selected 'E' width for the HZFastTrie component.
+func NewLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, error) {
+	// Build Z-Fast Trie first (needed for RangeLocator)
+	zt := zft.Build(keys)
+
+	// Build RangeLocator (automatically selects widths)
+	rl, err := NewRangeLocator(zt)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the selected E width for HZFastTrie
+	widths := rl.TypeWidths()
+	hzftComp, err := buildHZFastTrieWithWidth(keys, widths.E)
+	if err != nil {
+		return nil, err
+	}
+
+	return &autoLocalExactRangeLocator{
+		hzft:   hzftComp,
+		rl:     rl,
+		widths: widths,
+	}, nil
 }
 
 func (lerl *autoLocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitString) (int, int, error) {
@@ -60,11 +90,11 @@ func (lerl *autoLocalExactRangeLocator) TypeWidths() TypeWidths {
 func buildHZFastTrieWithWidth(keys []bits.BitString, eWidth int) (hzftAccessor, error) {
 	switch eWidth {
 	case 8:
-		return zfasttrie.NewHZFastTrie[uint8](keys), nil
+		return hzft.NewHZFastTrie[uint8](keys), nil
 	case 16:
-		return zfasttrie.NewHZFastTrie[uint16](keys), nil
+		return hzft.NewHZFastTrie[uint16](keys), nil
 	case 32:
-		return zfasttrie.NewHZFastTrie[uint32](keys), nil
+		return hzft.NewHZFastTrie[uint32](keys), nil
 	default:
 		errutil.Bug("unsupported HZFastTrie E width %d", eWidth)
 		return nil, fmt.Errorf("unsupported HZFastTrie E width %d", eWidth)

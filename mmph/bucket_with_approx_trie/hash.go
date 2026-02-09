@@ -4,7 +4,8 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	"Thesis/mmph/go-boomphf"
-	"Thesis/zfasttrie"
+	"Thesis/trie/azft"
+	"Thesis/trie/zft"
 	"fmt"
 	"math"
 	"math/rand"
@@ -22,11 +23,11 @@ type Bucket struct {
 // approximate z-fast trie for relative ranking as described in Section 5 of the MMPH paper.
 // This approach uses a relative trie on bucket delimiters for more efficient ranking.
 // E, S, I are the type parameters for the underlying ApproxZFastTrie.
-type MonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber] struct {
+type MonotoneHashWithTrie[E zft.UNumber, S zft.UNumber, I zft.UNumber] struct {
 	bucketSize int
 
 	// Approximate Z-Fast Trie for relative ranking of bucket delimiters
-	delimiterTrie *zfasttrie.ApproxZFastTrie[E, S, I]
+	delimiterTrie *azft.ApproxZFastTrie[E, S, I]
 
 	// Efficient bucket storage with signatures instead of full keys
 	buckets []*Bucket
@@ -60,7 +61,7 @@ const maxTrieRebuilds = 100 // Maximum number of attempts to build a working tri
 //   - papers/MMPH/Section-3-Bucketing.md
 //   - papers/MMPH/Section-4-Relative-Ranking.md
 //   - papers/MMPH/Section-5-Relative-Trie.md
-func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString) (*MonotoneHashWithTrie[E, S, I], error) {
+func NewMonotoneHashWithTrie[E zft.UNumber, S zft.UNumber, I zft.UNumber](data []bits.BitString) (*MonotoneHashWithTrie[E, S, I], error) {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return NewMonotoneHashWithTrieSeeded[E, S, I](data, rng.Uint64())
 }
@@ -71,7 +72,7 @@ func NewMonotoneHashWithTrie[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttr
 // It validates that all keys work correctly with the trie and rebuilds with different derived seeds if needed.
 //
 // Type-parameter sizing notes are the same as in NewMonotoneHashWithTrie.
-func NewMonotoneHashWithTrieSeeded[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](data []bits.BitString, baseSeed uint64) (*MonotoneHashWithTrie[E, S, I], error) {
+func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](data []bits.BitString, baseSeed uint64) (*MonotoneHashWithTrie[E, S, I], error) {
 	if len(data) == 0 {
 		return &MonotoneHashWithTrie[E, S, I]{}, nil
 	}
@@ -161,7 +162,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 
 		// Build trie with current attempt using delimiter indices and deterministic seed
 		var err error
-		mh.delimiterTrie, err = zfasttrie.NewApproxZFastTrieWithSeed[E, S, I](delimiters, true, trySeed)
+		mh.delimiterTrie, err = azft.NewApproxZFastTrieWithSeed[E, S, I](delimiters, true, trySeed)
 		if err != nil {
 			return err
 		}
@@ -218,7 +219,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 		// Check if any of the candidates can lead us to the correct bucket
 		foundCorrectBucket := false
 
-		candidates := []*zfasttrie.NodeData[E, S, I]{cand1, cand2, cand3, cand4, cand5, cand6}
+		candidates := []*azft.NodeData[E, S, I]{cand1, cand2, cand3, cand4, cand5, cand6}
 		matchCounts := []*int{&cand1Matches, &cand2Matches, &cand3Matches, &cand4Matches, &cand5Matches, &cand6Matches}
 
 		for i, candidate := range candidates {
@@ -263,7 +264,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 	maxDelimiterIndex := I(^I(0)) // Max value for I
 
 	// Helper function to try a candidate with O(1) lookup
-	tryCandidate := func(candidate *zfasttrie.NodeData[E, S, I]) bool {
+	tryCandidate := func(candidate *azft.NodeData[E, S, I]) bool {
 		if candidate == nil {
 			return false
 		}

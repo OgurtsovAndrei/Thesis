@@ -2,7 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"fmt"
 	"math"
 	"math/rand"
@@ -104,7 +104,7 @@ func BenchmarkMemoryComparison(b *testing.B) {
 
 				for i := 0; i < b.N; i++ {
 					// Build both structures
-					zt := zfasttrie.Build(keys)
+					zt := zft.Build(keys)
 					rl, err := NewRangeLocator(zt)
 					if err != nil {
 						b.Fatalf("Failed to build RangeLocator: %v", err)

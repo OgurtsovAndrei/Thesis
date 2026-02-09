@@ -2,7 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -51,14 +51,14 @@ func TestRangeLocator_CaptureMMPHFailures(t *testing.T) {
 			// Use a deterministic MMPH seed for this test run
 			mmphSeed := uint64(seed) * 31337 // Derive from key seed
 
-			zt := zfasttrie.Build(keys)
+			zt := zft.Build(keys)
 			_, err := NewRangeLocatorSeeded(zt, mmphSeed)
 
 			if err != nil {
 				t.Logf("MMPH Build failed (seed: %d, mmphSeed: %d): %v", seed, mmphSeed, err)
 
 				// Immediately retry with THE SAME keys and mmphSeed to verify reproducibility
-				zt2 := zfasttrie.Build(keys)
+				zt2 := zft.Build(keys)
 				_, err2 := NewRangeLocatorSeeded(zt2, mmphSeed)
 
 				if err2 == nil {
@@ -153,7 +153,7 @@ func TestRangeLocator_LoadAndReplayFailures(t *testing.T) {
 			// BitString serialization (Data() -> hex -> NewFromUint64) is lossy.
 			// The seeds are the source of truth for perfect reproducibility.
 
-			zt := zfasttrie.Build(keys)
+			zt := zft.Build(keys)
 			rl, err := NewRangeLocatorSeeded(zt, record.MMPHSeed)
 
 			if err != nil {

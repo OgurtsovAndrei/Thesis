@@ -2,7 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"fmt"
 	"math"
 	"math/rand"
@@ -24,13 +24,13 @@ func TestRangeLocator_Correctness(t *testing.T) {
 			seed := time.Now().UnixNano()
 			keys := genUniqueBitStrings(seed)
 
-			zt := zfasttrie.Build(keys)
+			zt := zft.Build(keys)
 			rl, err := NewRangeLocator(zt)
 			if err != nil {
 				t.Fatalf("NewRangeLocator failed (seed: %d): %v", seed, err)
 			}
 
-			it := zfasttrie.NewIterator(zt)
+			it := zft.NewIterator(zt)
 			for it.Next() {
 				node := it.Node()
 				if node == nil {

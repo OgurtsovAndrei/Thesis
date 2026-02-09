@@ -2,7 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"fmt"
 	"testing"
 )
@@ -20,7 +20,7 @@ func BenchmarkRangeLocatorBuild(b *testing.B) {
 				b.ResetTimer()
 
 				for i := 0; i < b.N; i++ {
-					zt := zfasttrie.Build(keys)
+					zt := zft.Build(keys)
 					rl, err := NewRangeLocator(zt)
 					if err != nil {
 						b.Fatalf("NewRangeLocator failed: %v", err)
@@ -52,7 +52,7 @@ func BenchmarkRangeLocatorQuery(b *testing.B) {
 		for _, count := range benchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 				keys := benchKeys[bitLen][count]
-				zt := zfasttrie.Build(keys)
+				zt := zft.Build(keys)
 				rl, err := NewRangeLocator(zt)
 				if err != nil {
 					b.Fatalf("NewRangeLocator failed: %v", err)
@@ -64,7 +64,7 @@ func BenchmarkRangeLocatorQuery(b *testing.B) {
 
 				// Collect node extents from the trie
 				var nodeExtents []bits.BitString
-				it := zfasttrie.NewIterator(zt)
+				it := zft.NewIterator(zt)
 				for it.Next() {
 					node := it.Node()
 					if node != nil {

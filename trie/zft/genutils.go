@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import (
 	"Thesis/bits"
@@ -8,13 +8,13 @@ import (
 
 const benchmarkCharset = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-func generateRandomBitStrings(n, bitLen int, r *rand.Rand) []bits.BitString {
+func GenerateRandomBitStrings(n, bitLen int, r *rand.Rand) []bits.BitString {
 	if bitLen <= 0 {
 		bitLen = 1
 	}
 	keys := make([]bits.BitString, n)
 	for i := 0; i < n; i++ {
-		keys[i] = generateBitString(bitLen, r)
+		keys[i] = GenerateBitString(bitLen, r)
 	}
 	sort.Slice(keys, func(i, j int) bool {
 		return keys[i].Compare(keys[j]) < 0
@@ -22,7 +22,7 @@ func generateRandomBitStrings(n, bitLen int, r *rand.Rand) []bits.BitString {
 	return keys
 }
 
-func generateBitString(bitLen int, r *rand.Rand) bits.BitString {
+func GenerateBitString(bitLen int, r *rand.Rand) bits.BitString {
 	if bitLen <= 64 {
 		k := r.Uint64()
 		s := bits.NewFromUint64(k)

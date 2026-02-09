@@ -4,7 +4,7 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	bucket "Thesis/mmph/bucket_with_approx_trie"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -68,7 +68,7 @@ type RangeLocator interface {
 //   - papers/Fast Prefix Search.pdf (range-locator idea and space bounds)
 //   - papers/MMPH/Section-4-Relative-Ranking.md
 //   - papers/MMPH/Section-5-Relative-Trie.md
-type GenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber] struct {
+type GenericRangeLocator[E zft.UNumber, S zft.UNumber, I zft.UNumber] struct {
 	mmph        *bucket.MonotoneHashWithTrie[E, S, I]
 	bv          *rsdic.RSDic
 	totalLeaves int
@@ -84,14 +84,14 @@ type pItem struct {
 //
 // The constructor chooses the smallest practical type widths for E/S/I from
 // input data and escalates to wider types if needed.
-func NewRangeLocator(zt *zfasttrie.ZFastTrie[bool]) (RangeLocator, error) {
+func NewRangeLocator(zt *zft.ZFastTrie[bool]) (RangeLocator, error) {
 	// Use a random seed for MMPH construction
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return NewRangeLocatorSeeded(zt, rng.Uint64())
 }
 
 // NewGenericRangeLocator builds a generic RangeLocator using a random seed.
-func NewGenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](zt *zfasttrie.ZFastTrie[bool]) (*GenericRangeLocator[E, S, I], error) {
+func NewGenericRangeLocator[E zft.UNumber, S zft.UNumber, I zft.UNumber](zt *zft.ZFastTrie[bool]) (*GenericRangeLocator[E, S, I], error) {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return NewGenericRangeLocatorSeeded[E, S, I](zt, rng.Uint64())
 }
@@ -108,7 +108,7 @@ func NewGenericRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttri
 //   - I from delimiter count upper bound (2*m with m buckets);
 //   - S from relative-trie formula, with escalation only across {8,16,32} if
 //     construction still fails for the chosen seed.
-func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (RangeLocator, error) {
+func NewRangeLocatorSeeded(zt *zft.ZFastTrie[bool], mmphSeed uint64) (RangeLocator, error) {
 	if zt == nil {
 		return &GenericRangeLocator[uint8, uint8, uint8]{totalLeaves: 0}, nil
 	}
@@ -143,7 +143,7 @@ func NewRangeLocatorSeeded(zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (Rang
 
 // NewGenericRangeLocatorSeeded builds a generic RangeLocator from a compacted
 // trie and an explicit seed.
-func NewGenericRangeLocatorSeeded[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](zt *zfasttrie.ZFastTrie[bool], mmphSeed uint64) (*GenericRangeLocator[E, S, I], error) {
+func NewGenericRangeLocatorSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](zt *zft.ZFastTrie[bool], mmphSeed uint64) (*GenericRangeLocator[E, S, I], error) {
 	if zt == nil {
 		return &GenericRangeLocator[E, S, I]{totalLeaves: 0}, nil
 	}
@@ -152,7 +152,7 @@ func NewGenericRangeLocatorSeeded[E zfasttrie.UNumber, S zfasttrie.UNumber, I zf
 	return newGenericRangeLocatorFromItems[E, S, I](sortedItems, mmphSeed)
 }
 
-func collectPSortedItems(zt *zfasttrie.ZFastTrie[bool]) ([]pItem, int) {
+func collectPSortedItems(zt *zft.ZFastTrie[bool]) ([]pItem, int) {
 	pMap := make(map[bits.BitString]bool)
 	maxBitLen := 0
 
@@ -172,7 +172,7 @@ func collectPSortedItems(zt *zfasttrie.ZFastTrie[bool]) ([]pItem, int) {
 		}
 	}
 
-	it := zfasttrie.NewIterator(zt)
+	it := zft.NewIterator(zt)
 	for it.Next() {
 		node := it.Node()
 		errutil.BugOn(node == nil, "node should not be nil")
@@ -211,7 +211,7 @@ func collectPSortedItems(zt *zfasttrie.ZFastTrie[bool]) ([]pItem, int) {
 	return sortedItems, maxBitLen
 }
 
-func newGenericRangeLocatorFromItems[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](sortedItems []pItem, mmphSeed uint64) (*GenericRangeLocator[E, S, I], error) {
+func newGenericRangeLocatorFromItems[E zft.UNumber, S zft.UNumber, I zft.UNumber](sortedItems []pItem, mmphSeed uint64) (*GenericRangeLocator[E, S, I], error) {
 	bv := rsdic.New()
 	keysForMMPH := make([]bits.BitString, len(sortedItems))
 

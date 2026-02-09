@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import "Thesis/bits"
 
@@ -10,7 +10,7 @@ type NodeInfo struct {
 
 type Iterator struct {
 	trie     *ZFastTrie[bool]
-	stack    []*znode[bool]
+	stack    []*Node[bool]
 	finished bool
 }
 
@@ -20,23 +20,23 @@ func (it *Iterator) Next() bool {
 	}
 
 	if len(it.stack) == 0 {
-		if it.trie.root == nil {
+		if it.trie.Root == nil {
 			it.finished = true
 			return false
 		}
-		it.stack = append(it.stack, it.trie.root)
-		it.stack = append(it.stack, mostLeft(it.trie.root)...)
+		it.stack = append(it.stack, it.trie.Root)
+		it.stack = append(it.stack, mostLeft(it.trie.Root)...)
 		return true
 	}
 
 	node := it.stack[len(it.stack)-1]
-	if node.rightChild != nil {
-		it.stack = append(it.stack, node.rightChild)
-		it.stack = append(it.stack, mostLeft(node.rightChild)...)
+	if node.RightChild != nil {
+		it.stack = append(it.stack, node.RightChild)
+		it.stack = append(it.stack, mostLeft(node.RightChild)...)
 		return true
 	}
 
-	for len(it.stack) > 1 && it.stack[len(it.stack)-1] == it.stack[len(it.stack)-2].rightChild {
+	for len(it.stack) > 1 && it.stack[len(it.stack)-1] == it.stack[len(it.stack)-2].RightChild {
 		it.stack = it.stack[:len(it.stack)-1]
 	}
 	if len(it.stack) > 1 {
@@ -47,10 +47,10 @@ func (it *Iterator) Next() bool {
 	return false
 }
 
-func mostLeft(node *znode[bool]) (path []*znode[bool]) {
-	path = make([]*znode[bool], 0)
-	for node.leftChild != nil {
-		node = node.leftChild
+func mostLeft(node *Node[bool]) (path []*Node[bool]) {
+	path = make([]*Node[bool], 0)
+	for node.LeftChild != nil {
+		node = node.LeftChild
 		path = append(path, node)
 	}
 	return path
@@ -62,30 +62,30 @@ func (it *Iterator) Node() *NodeInfo {
 	}
 	node := it.stack[len(it.stack)-1]
 	return &NodeInfo{
-		Extent: node.extent,
-		IsLeaf: node.isLeaf(),
-		Value:  node.value,
+		Extent: node.Extent,
+		IsLeaf: node.IsLeaf(),
+		Value:  node.Value,
 	}
 }
 
 func NewIterator(zt *ZFastTrie[bool]) *Iterator {
 	return &Iterator{
 		trie:     zt,
-		stack:    []*znode[bool]{},
+		stack:    []*Node[bool]{},
 		finished: false,
 	}
 }
 
 // SortedIterator traverses the Trie in lexicographical order (Pre-Order).
 type SortedIterator struct {
-	stack []*znode[bool]
-	curr  *znode[bool]
+	stack []*Node[bool]
+	curr  *Node[bool]
 }
 
 func NewSortedIterator(zt *ZFastTrie[bool]) *SortedIterator {
-	stack := []*znode[bool]{}
-	if zt.root != nil {
-		stack = append(stack, zt.root)
+	stack := []*Node[bool]{}
+	if zt.Root != nil {
+		stack = append(stack, zt.Root)
 	}
 	return &SortedIterator{
 		stack: stack,
@@ -100,11 +100,11 @@ func (it *SortedIterator) Next() bool {
 	it.stack = it.stack[:len(it.stack)-1]
 
 	// Push Right then Left so Left is popped first
-	if node.rightChild != nil {
-		it.stack = append(it.stack, node.rightChild)
+	if node.RightChild != nil {
+		it.stack = append(it.stack, node.RightChild)
 	}
-	if node.leftChild != nil {
-		it.stack = append(it.stack, node.leftChild)
+	if node.LeftChild != nil {
+		it.stack = append(it.stack, node.LeftChild)
 	}
 
 	it.curr = node
@@ -116,8 +116,8 @@ func (it *SortedIterator) Node() *NodeInfo {
 		return nil
 	}
 	return &NodeInfo{
-		Extent: it.curr.extent,
-		IsLeaf: it.curr.isLeaf(),
-		Value:  it.curr.value,
+		Extent: it.curr.Extent,
+		IsLeaf: it.curr.IsLeaf(),
+		Value:  it.curr.Value,
 	}
 }
