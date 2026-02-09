@@ -92,7 +92,6 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 		buckets:    make([]*Bucket, numBuckets),
 	}
 
-	// Build buckets efficiently with only delimiter storage
 	var delimiters []bits.BitString
 	for i := 0; i < numBuckets; i++ {
 		start := i * bucketSize
@@ -103,7 +102,6 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 
 		bucketKeys := data[start:end]
 		if len(bucketKeys) > 0 {
-			// Build MPHF for this bucket
 			bucketHashes := make([]uint64, len(bucketKeys))
 			for j, k := range bucketKeys {
 				bucketHashes[j] = k.Hash()
@@ -111,25 +109,21 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 
 			bucketMPHF := boomphf.New(2.0, bucketHashes)
 
-			// Verify MPHF construction
 			for j, h := range bucketHashes {
 				if idx := bucketMPHF.Query(h); idx == 0 {
 					errutil.Bug("boomphf failed immediately on construction for bucket %d key %d", i, j)
 				}
 			}
 
-			// Set up local ranks within the bucket
 			bucketRanks := make([]uint8, len(bucketKeys))
 			for localRank, k := range bucketKeys {
 				phfIdx := bucketMPHF.Query(k.Hash()) - 1
 				bucketRanks[phfIdx] = uint8(localRank)
 			}
 
-			// Last key of bucket becomes delimiter
 			delimiter := bucketKeys[len(bucketKeys)-1]
 			delimiters = append(delimiters, delimiter)
 
-			// Create efficient bucket
 			mh.buckets[i] = &Bucket{
 				mphf:      bucketMPHF,
 				ranks:     bucketRanks,
@@ -138,7 +132,6 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 		}
 	}
 
-	// Build approximate z-fast trie with validation and retry logic
 	if len(delimiters) > 0 {
 		err := mh.buildValidatedTrieWithIndices(data, delimiters, baseSeed)
 		if err != nil {
@@ -156,20 +149,16 @@ func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys [
 	for attempt := 0; attempt < maxTrieRebuilds; attempt++ {
 		mh.TrieRebuildAttempts = attempt + 1
 
-		// Derive a deterministic seed for this attempt
-		// Each attempt gets a unique seed, but the same attempt will always get the same seed
 		trySeed := baseSeed + uint64(attempt)
 
-		// Build trie with current attempt using delimiter indices and deterministic seed
 		var err error
 		mh.delimiterTrie, err = azft.NewApproxZFastTrieWithSeed[E, S, I](delimiters, trySeed)
 		if err != nil {
 			return err
 		}
 
-		// Validate that all keys work correctly with this trie
 		if mh.validateAllKeys(allKeys) {
-			return nil // Success!
+			return nil
 		}
 	}
 
@@ -196,12 +185,9 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 	cand6Matches := 0
 
 	for _, key := range allKeys {
-		// Find the correct bucket using two-pointer approach
-		// Advance bucketIdx until we find a bucket where key <= bucket.delimiter
 		for bucketIdx < len(mh.buckets) {
 			bucket := mh.buckets[bucketIdx]
 			if bucket != nil && key.Compare(bucket.delimiter) <= 0 {
-				// Found the correct bucket for this key
 				break
 			}
 			bucketIdx++
@@ -213,10 +199,8 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 
 		expectedBucket := bucketIdx
 
-		// Test if trie can find this bucket using LowerBound
 		cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(key)
 
-		// Check if any of the candidates can lead us to the correct bucket
 		foundCorrectBucket := false
 
 		candidates := []*azft.NodeData[E, S, I]{cand1, cand2, cand3, cand4, cand5, cand6}
@@ -227,7 +211,6 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 				continue
 			}
 
-			// Check if this candidate has a valid delimiter index pointing to expected bucket
 			if candidate.Rank != maxDelimiterIndex {
 				candidateBucketIdx := int(candidate.Rank)
 				if candidateBucketIdx == expectedBucket {
@@ -237,8 +220,6 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 			}
 		}
 
-		// If trie failed to provide any candidate that leads to correct bucket,
-		// this is a false negative
 		if !foundCorrectBucket {
 			return false
 		}
@@ -255,29 +236,22 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 		return -1
 	}
 
-	// Use the approximate z-fast trie to get candidates for the bucket
-	// This implements the relative ranking approach from Section 4.2
 	cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(key)
 
-	// Try candidates to find the correct bucket using O(1) delimiterIndex lookup
 	bucketIdx := -1
-	maxDelimiterIndex := I(^I(0)) // Max value for I
+	maxDelimiterIndex := I(^I(0))
 
-	// Helper function to try a candidate with O(1) lookup
 	tryCandidate := func(candidate *azft.NodeData[E, S, I]) bool {
 		if candidate == nil {
 			return false
 		}
 
-		// Check if this candidate has a valid delimiter index
 		if candidate.Rank != maxDelimiterIndex {
 			candidateBucketIdx := int(candidate.Rank)
 
-			// Verify key belongs to this bucket by checking range
 			if candidateBucketIdx < len(mh.buckets) && mh.buckets[candidateBucketIdx] != nil {
 				bucket := mh.buckets[candidateBucketIdx]
 
-				// Check if key is <= delimiter and > previous bucket's delimiter
 				if key.Compare(bucket.delimiter) <= 0 {
 					if candidateBucketIdx == 0 ||
 						(candidateBucketIdx > 0 && mh.buckets[candidateBucketIdx-1] != nil &&
@@ -307,12 +281,11 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 		return -1
 	}
 
-	// Get local rank within the bucket
 	bucket := mh.buckets[bucketIdx]
 	keyHash := key.Hash()
 	localPhfIdx := bucket.mphf.Query(keyHash)
 	if localPhfIdx == 0 || int(localPhfIdx) > len(bucket.ranks) {
-		return -1 // Key not found in expected bucket
+		return -1
 	}
 
 	localOffset := int(bucket.ranks[localPhfIdx-1])
@@ -334,26 +307,20 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 //     slice headers, and alignment are ignored in the formula).
 //   - AZFT_bits is detailed in ApproxZFastTrie.ByteSize comments.
 func (mh *MonotoneHashWithTrie[E, S, I]) Size() int {
-	size := 4 // bucket size
+	size := 4
 
-	// Size of approximate z-fast trie (exact calculation)
 	if mh.delimiterTrie != nil {
 		size += mh.delimiterTrie.ByteSize()
 	}
 
-	// Size of efficient buckets
 	for _, bucket := range mh.buckets {
 		if bucket != nil {
-			// MPHF size
 			size += bucket.mphf.Size()
-			// Ranks array size
 			size += len(bucket.ranks)
-			// Delimiter size
-			size += int(bucket.delimiter.Size())/8 + 1 // Convert bits to bytes
+			size += int(bucket.delimiter.Size())/8 + 1
 		}
 	}
 
-	// Statistics overhead (int for TrieRebuildAttempts)
 	size += 4
 
 	return size

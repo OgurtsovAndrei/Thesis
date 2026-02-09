@@ -135,17 +135,13 @@ func (hzft *HZFastTrie[E]) ByteSize() int {
 
 	size := 0
 
-	// Size of the MPH (Minimal Perfect Hash function)
 	if hzft.mph != nil {
 		size += hzft.mph.Size()
 	}
 
-	// Size of the data array (HNodeData entries)
-	// Each HNodeData contains: extentLen(E)
 	nodeDataSize := len(hzft.data) * int(unsafe.Sizeof(*new(E)))
 	size += nodeDataSize
 
-	// Size of rootId (uint64)
 	size += 8
 
 	return size
