@@ -30,10 +30,12 @@ func TestApproxZFastTrie_Properties(t *testing.T) {
 
 		keys := zft.GenerateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err, "failed to build Trie")
 
-		referenceTrie := azft.Trie
+		// Build reference trie separately for verification
+		referenceTrie, err := zft.BuildFromIterator(bits.NewSliceBitStringIterator(keys))
+		require.NoError(t, err)
 
 		for _, key := range keys {
 			node := azft.GetExistingPrefix(key)
@@ -79,10 +81,12 @@ func TestApproxZFastTrie_FalseNegatives(t *testing.T) {
 
 		keys := zft.GenerateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err)
 
-		referenceTrie := azft.Trie
+		// Build reference trie separately for verification
+		referenceTrie, err := zft.BuildFromIterator(bits.NewSliceBitStringIterator(keys))
+		require.NoError(t, err)
 
 		for i := 0; i < iterations; i++ {
 			randomKey := keys[r.Intn(len(keys))]
@@ -125,7 +129,7 @@ func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		keys := zft.GenerateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err)
 
 		for i := 0; i < iterations; i++ {
@@ -147,9 +151,26 @@ func TestApproxZFastTrie_LowerBound_FP(t *testing.T) {
 
 			c1, c2, c3, c4, c5, c6 := azft.LowerBound(pattern)
 
-			if c1 == nil || c2 == nil || c3 == nil || c4 == nil || c5 == nil || c6 == nil ||
-				(!c1.originalNode.Extent.Equal(expectedKey) && !c2.originalNode.Extent.Equal(expectedKey) && !c3.originalNode.Extent.Equal(expectedKey) && !c4.originalNode.Extent.Equal(expectedKey) && !c5.originalNode.Extent.Equal(expectedKey) && !c6.originalNode.Extent.Equal(expectedKey)) {
-				c1, c2, c3, c4, c5, c6 = azft.LowerBound(pattern)
+			// Check if any candidate has the expected rank
+			expectedRank := -1
+			for idx, k := range keys {
+				if k.Equal(expectedKey) {
+					expectedRank = idx
+					break
+				}
+			}
+
+			maxIdx := uint8(^uint8(0))
+			foundMatch := false
+			candidates := []*NodeData[uint16, uint8, uint8]{c1, c2, c3, c4, c5, c6}
+			for _, cand := range candidates {
+				if cand != nil && cand.Rank != maxIdx && int(cand.Rank) == expectedRank {
+					foundMatch = true
+					break
+				}
+			}
+
+			if !foundMatch {
 				fpCount++
 			}
 		}
@@ -171,7 +192,7 @@ func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		keys := zft.GenerateRandomBitStrings(n, bitLen, r)
 
-		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys, true)
+		azft, err := NewApproxZFastTrie[uint16, uint8, uint8](keys)
 		require.NoError(t, err)
 
 		errRun := 0
@@ -200,12 +221,26 @@ func TestApproxZFastTrie_LowerBound_FN(t *testing.T) {
 					continue
 				}
 
-				if (c1 == nil || !c1.originalNode.Extent.Equal(expectedKey)) &&
-					(c2 == nil || !c2.originalNode.Extent.Equal(expectedKey)) &&
-					(c3 == nil || !c3.originalNode.Extent.Equal(expectedKey)) &&
-					(c4 == nil || !c4.originalNode.Extent.Equal(expectedKey)) &&
-					(c5 == nil || !c5.originalNode.Extent.Equal(expectedKey)) &&
-					(c6 == nil || !c6.originalNode.Extent.Equal(expectedKey)) {
+				// Check if any candidate has the expected rank
+				expectedRank := -1
+				for idx, k := range keys {
+					if k.Equal(expectedKey) {
+						expectedRank = idx
+						break
+					}
+				}
+
+				maxIdx := uint8(^uint8(0))
+				foundMatch := false
+				candidates := []*NodeData[uint16, uint8, uint8]{c1, c2, c3, c4, c5, c6}
+				for _, cand := range candidates {
+					if cand != nil && cand.Rank != maxIdx && int(cand.Rank) == expectedRank {
+						foundMatch = true
+						break
+					}
+				}
+
+				if !foundMatch {
 					errCount++
 					errRun = 1
 				}

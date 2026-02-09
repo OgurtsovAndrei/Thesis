@@ -5,7 +5,6 @@ import (
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/trie/zft"
-	"math/rand"
 	"sort"
 )
 
@@ -18,19 +17,13 @@ import (
 // Note: This still builds a ZFT temporarily, but:
 // 1. We don't keep debug references to nodes
 // 2. We discard the ZFT as soon as we extract the data
-// 3. The trie field is always nil (no debug reference kept)
 //
 // For truly streaming construction that avoids the ZFT entirely, see the HZFT
 // streaming builder which only needs extentLen per node.
 func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 	iter bits.BitStringIterator,
-	saveOriginalTrie bool,
 	seed uint64,
 ) (*ApproxZFastTrie[E, S, I], error) {
-	if saveOriginalTrie {
-		// Fall back to original implementation if debug info needed
-		return NewApproxZFastTrieWithSeedFromIterator[E, S, I](iter, saveOriginalTrie, seed)
-	}
 
 	checkedIter := bits.NewCheckedSortedIterator(iter)
 	trie, err := zft.BuildFromIterator(checkedIter)
@@ -123,7 +116,6 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 			errutil.BugOn(uint64(rightChildIdx) != rcIdx, "Data loss on rightChild index")
 		}
 
-		// Note: originalNode is NOT set (nil) - this is the key memory saving
 		data[idx] = NodeData[E, S, I]{
 			extentLen:       extentLength,
 			PSig:            sig,
@@ -168,20 +160,5 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 		data:   data,
 		seed:   seed,
 		rootId: rootIdx,
-		// Trie: nil - explicitly not keeping reference
 	}, nil
-}
-
-// NewApproxZFastTrieStreaming creates AZFT from sorted keys.
-// Does not keep debug references to the underlying ZFT.
-func NewApproxZFastTrieStreaming[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool) (*ApproxZFastTrie[E, S, I], error) {
-	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
-	return NewApproxZFastTrieFromIteratorStreaming[E, S, I](bits.NewSliceBitStringIterator(keys), saveOriginalTrie, rand.Uint64())
-}
-
-// NewApproxZFastTrieStreamingWithSeed creates AZFT with specified seed.
-// Does not keep debug references to the underlying ZFT.
-func NewApproxZFastTrieStreamingWithSeed[E UNumber, S UNumber, I UNumber](keys []bits.BitString, saveOriginalTrie bool, seed uint64) (*ApproxZFastTrie[E, S, I], error) {
-	errutil.BugOn(!areSorted(keys), "Keys should be sorted")
-	return NewApproxZFastTrieFromIteratorStreaming[E, S, I](bits.NewSliceBitStringIterator(keys), saveOriginalTrie, seed)
 }
