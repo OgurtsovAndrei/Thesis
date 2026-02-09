@@ -4,7 +4,6 @@ import (
 	"Thesis/bits"
 	"Thesis/rloc"
 	"Thesis/trie/azft"
-	"Thesis/trie/hzft"
 	"Thesis/trie/zft"
 	"fmt"
 	"math/rand"
@@ -84,59 +83,6 @@ func BenchmarkZFTBuild(b *testing.B) {
 					zt := zft.Build(keys)
 					if zt == nil {
 						b.Fatal("Failed to build ZFastTrie")
-					}
-				}
-			})
-		}
-	}
-}
-
-// Benchmark HZFT construction (old/heavy - builds full ZFT first)
-// Measures the cost of building ZFT which is what the old implementation required
-func BenchmarkHZFTBuild_Heavy(b *testing.B) {
-	initBenchKeys()
-
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
-			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
-
-				b.ReportAllocs()
-				b.ResetTimer()
-
-				for i := 0; i < b.N; i++ {
-					// Old path: Build full ZFT first (stores all strings in Handle2NodeMap)
-					zt := zft.Build(keys)
-					if zt == nil {
-						b.Fatal("Failed to build ZFT")
-					}
-					// Then we would extract handles from it (not included here for simplicity)
-					// The key cost is materializing the full ZFT
-				}
-			})
-		}
-	}
-}
-
-// Benchmark HZFT construction (new/streaming - processes keys on-the-fly)
-func BenchmarkHZFTBuild_Streaming(b *testing.B) {
-	initBenchKeys()
-
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
-			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
-
-				b.ReportAllocs()
-				b.ResetTimer()
-
-				for i := 0; i < b.N; i++ {
-					hzft, err := hzft.NewHZFastTrieFromIteratorStreaming[uint32](bits.NewSliceBitStringIterator(keys))
-					if err != nil {
-						b.Fatalf("Failed to build streaming HZFT: %v", err)
-					}
-					if hzft == nil {
-						b.Fatal("Failed to build streaming HZFT")
 					}
 				}
 			})

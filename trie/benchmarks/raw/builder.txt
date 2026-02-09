@@ -1,0 +1,2062 @@
+goos: darwin
+goarch: arm64
+pkg: Thesis/trie
+cpu: Apple M4 Max
+BenchmarkZFTBuild/KeySize=64/Keys=1024-16  	    1453	    810296 ns/op	  642132 B/op	   21401 allocs/op
+BenchmarkZFTBuild/KeySize=64/Keys=8192-16  	     165	   7014210 ns/op	 5185106 B/op	  190281 allocs/op
+BenchmarkZFTBuild/KeySize=64/Keys=32768-16 	      39	  30619338 ns/op	20787767 B/op	  774526 allocs/op
+BenchmarkZFTBuild/KeySize=128/Keys=1024-16 	    1384	    863602 ns/op	  695378 B/op	   23449 allocs/op
+BenchmarkZFTBuild/KeySize=128/Keys=8192-16 	     163	   7358123 ns/op	 5611206 B/op	  206655 allocs/op
+BenchmarkZFTBuild/KeySize=128/Keys=32768-16         	      37	  31858453 ns/op	22496451 B/op	  840564 allocs/op
+BenchmarkZFTBuild/KeySize=256/Keys=1024-16          	    1299	    924255 ns/op	  777397 B/op	   25498 allocs/op
+BenchmarkZFTBuild/KeySize=256/Keys=8192-16          	     152	   7861184 ns/op	 6264431 B/op	  222804 allocs/op
+BenchmarkZFTBuild/KeySize=256/Keys=32768-16         	      34	  34531037 ns/op	25115821 B/op	  905887 allocs/op
+BenchmarkAZFTBuild/KeySize=64/Keys=1024-16          	     596	   2001430 ns/op	 1101893 B/op	   37129 allocs/op
+BenchmarkAZFTBuild/KeySize=64/Keys=8192-16          	      67	  17611172 ns/op	 8944649 B/op	  320720 allocs/op
+BenchmarkAZFTBuild/KeySize=64/Keys=32768-16         	      14	  76427857 ns/op	36489049 B/op	 1298377 allocs/op
+BenchmarkAZFTBuild/KeySize=128/Keys=1024-16         	     566	   2108729 ns/op	 1214381 B/op	   39180 allocs/op
+BenchmarkAZFTBuild/KeySize=128/Keys=8192-16         	      67	  18471857 ns/op	 9844198 B/op	  337092 allocs/op
+BenchmarkAZFTBuild/KeySize=128/Keys=32768-16        	      13	  83001465 ns/op	40092894 B/op	 1364418 allocs/op
+BenchmarkAZFTBuild/KeySize=256/Keys=1024-16         	     518	   2341069 ns/op	 1420189 B/op	   41229 allocs/op
+BenchmarkAZFTBuild/KeySize=256/Keys=8192-16         	      58	  20452915 ns/op	11480387 B/op	  353243 allocs/op
+BenchmarkAZFTBuild/KeySize=256/Keys=32768-16        	      12	  91103323 ns/op	46643977 B/op	 1429739 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=1024-16  	     303	   3992069 ns/op	 2141825 B/op	   76769 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=8192-16  	      31	  39281575 ns/op	18992279 B/op	  736776 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32768-16 	       6	 184777882 ns/op	82154205 B/op	 3532893 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=1024-16 	     283	   4222879 ns/op	 2343778 B/op	   84165 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=8192-16 	      30	  40532126 ns/op	19897711 B/op	  760526 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32768-16         	       5	 212279000 ns/op	95986209 B/op	 4153697 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=1024-16          	     254	   4731880 ns/op	 2851570 B/op	   95847 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=8192-16          	      26	  46893184 ns/op	25185502 B/op	  897323 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32768-16         	       4	 269829021 ns/op	133123172 B/op	 5442036 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=1024-16 	     220	   5265432 ns/op	 2960053 B/op	   88527 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=8192-16 	      24	  48574148 ns/op	24931278 B/op	  784444 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=64/Keys=32768-16         	       4	 254082802 ns/op	119691084 B/op	 4447180 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=1024-16         	     204	   5898431 ns/op	 3487597 B/op	   98357 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=8192-16         	      19	  53002171 ns/op	27837832 B/op	  879644 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=128/Keys=32768-16        	       5	 256145108 ns/op	123070696 B/op	 4331643 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=1024-16         	     175	   6781765 ns/op	 4327032 B/op	  112223 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=8192-16         	      18	  66023623 ns/op	38192101 B/op	 1059252 allocs/op
+BenchmarkLocalExactRangeLocatorBuild/KeySize=256/Keys=32768-16        	       3	 352358431 ns/op	184245613 B/op	 6018011 allocs/op
+PASS
+ok  	Thesis/trie	55.559s
+
+   0% |                                             | (0/1000, 0 it/hr) [0s:0s]
+   0% |                                             | (0/1000, 0 it/hr) [0s:0s]
+   0% |                                             | (0/1000, 0 it/hr) [0s:0s]
+   0% |                                             | (0/1000, 0 it/hr) [0s:0s]
+                                                                               
+
+   5% |██                                         | (55/1000, 708 it/s) [0s:1s]
+                                                                               
+
+                                                                               
+
+   5% |██                                         | (56/1000, 654 it/s) [0s:1s]
+   6% |██                                         | (63/1000, 701 it/s) [0s:1s]
+                                                                               
+
+   4% |█                                          | (46/1000, 453 it/s) [0s:2s]
+                                                                               
+
+  10% |████                                      | (102/1000, 677 it/s) [0s:1s]
+                                                                               
+
+  10% |████                                      | (108/1000, 664 it/s) [0s:1s]
+                                                                               
+
+  11% |████                                      | (119/1000, 693 it/s) [0s:1s]
+                                                                               
+
+   8% |███                                        | (85/1000, 473 it/s) [0s:1s]
+                                                                               
+
+  14% |█████                                     | (147/1000, 657 it/s) [0s:1s]
+                                                                               
+
+  15% |██████                                    | (154/1000, 651 it/s) [0s:1s]
+                                                                               
+
+  17% |███████                                   | (171/1000, 696 it/s) [0s:1s]
+                                                                               
+
+  12% |█████                                     | (121/1000, 477 it/s) [0s:1s]
+                                                                               
+
+  19% |███████                                   | (194/1000, 652 it/s) [0s:1s]
+                                                                               
+
+  20% |████████                                  | (203/1000, 656 it/s) [0s:1s]
+                                                                               
+
+  22% |█████████                                 | (221/1000, 691 it/s) [0s:1s]
+                                                                               
+
+  15% |██████                                    | (157/1000, 479 it/s) [0s:1s]
+                                                                               
+
+  24% |██████████                                | (247/1000, 664 it/s) [0s:1s]
+                                                                               
+
+  25% |██████████                                | (258/1000, 672 it/s) [0s:1s]
+                                                                               
+
+  27% |███████████                               | (277/1000, 705 it/s) [0s:1s]
+                                                                               
+
+  19% |███████                                   | (193/1000, 480 it/s) [0s:1s]
+                                                                               
+
+  29% |████████████                              | (298/1000, 669 it/s) [0s:1s]
+                                                                               
+
+  30% |████████████                              | (308/1000, 674 it/s) [0s:1s]
+                                                                               
+
+  33% |█████████████                             | (330/1000, 708 it/s) [0s:0s]
+                                                                               
+
+  22% |█████████                                 | (228/1000, 479 it/s) [0s:1s]
+                                                                               
+
+  34% |██████████████                            | (343/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  35% |██████████████                            | (354/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  38% |███████████████                           | (384/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  26% |██████████                                | (267/1000, 515 it/s) [0s:1s]
+                                                                               
+
+  39% |████████████████                          | (391/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  40% |████████████████                          | (404/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  43% |██████████████████                        | (439/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  30% |████████████                              | (306/1000, 515 it/s) [0s:1s]
+                                                                               
+
+  44% |██████████████████                        | (443/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  45% |██████████████████                        | (457/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  49% |████████████████████                      | (498/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  34% |██████████████                            | (348/1000, 515 it/s) [0s:1s]
+                                                                               
+
+  49% |████████████████████                      | (494/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  50% |█████████████████████                     | (509/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  55% |███████████████████████                   | (552/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  38% |███████████████                           | (385/1000, 515 it/s) [0s:1s]
+                                                                               
+
+  54% |██████████████████████                    | (544/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  55% |███████████████████████                   | (559/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  61% |█████████████████████████                 | (610/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  42% |█████████████████                         | (425/1000, 515 it/s) [0s:1s]
+                                                                               
+
+  59% |████████████████████████                  | (596/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  61% |█████████████████████████                 | (610/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  66% |███████████████████████████               | (661/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  46% |███████████████████                       | (463/1000, 515 it/s) [0s:1s]
+                                                                               
+
+  64% |██████████████████████████                | (644/1000, 675 it/s) [0s:0s]
+                                                                               
+
+  66% |███████████████████████████               | (660/1000, 700 it/s) [0s:0s]
+                                                                               
+
+  71% |█████████████████████████████             | (714/1000, 751 it/s) [0s:0s]
+                                                                               
+
+  50% |█████████████████████                     | (502/1000, 515 it/s) [0s:0s]
+                                                                               
+
+  69% |████████████████████████████              | (691/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  70% |█████████████████████████████             | (706/1000, 697 it/s) [1s:0s]
+                                                                               
+
+  76% |███████████████████████████████           | (768/1000, 751 it/s) [1s:0s]
+                                                                               
+
+  54% |██████████████████████                    | (540/1000, 522 it/s) [1s:0s]
+                                                                               
+
+  73% |██████████████████████████████            | (739/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  75% |███████████████████████████████           | (750/1000, 697 it/s) [1s:0s]
+                                                                               
+
+  81% |██████████████████████████████████        | (819/1000, 751 it/s) [1s:0s]
+                                                                               
+
+  57% |███████████████████████                   | (575/1000, 522 it/s) [1s:0s]
+                                                                               
+
+  79% |█████████████████████████████████         | (790/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  79% |█████████████████████████████████         | (797/1000, 697 it/s) [1s:0s]
+                                                                               
+
+  86% |████████████████████████████████████      | (869/1000, 751 it/s) [1s:0s]
+                                                                               
+
+  60% |█████████████████████████                 | (608/1000, 522 it/s) [1s:0s]
+                                                                               
+
+  83% |██████████████████████████████████        | (833/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  84% |███████████████████████████████████       | (841/1000, 697 it/s) [1s:0s]
+                                                                               
+
+  92% |██████████████████████████████████████    | (920/1000, 751 it/s) [1s:0s]
+                                                                               
+
+  64% |██████████████████████████                | (645/1000, 522 it/s) [1s:0s]
+                                                                               
+
+  88% |████████████████████████████████████      | (880/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  89% |█████████████████████████████████████     | (893/1000, 697 it/s) [1s:0s]
+                                                                               
+
+  97% |████████████████████████████████████████  | (976/1000, 751 it/s) [1s:0s]
+                                                                               
+
+  68% |████████████████████████████              | (685/1000, 522 it/s) [1s:0s]
+                                                                               
+
+ 100% |█████████████████████████████████████████| (1000/1000, 723 it/s)
+
+                                                                               
+
+  92% |██████████████████████████████████████    | (924/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  93% |███████████████████████████████████████   | (936/1000, 697 it/s) [1s:0s]
+                                                                               
+
+  72% |██████████████████████████████            | (727/1000, 522 it/s) [1s:0s]
+                                                                               
+
+  98% |█████████████████████████████████████████ | (982/1000, 672 it/s) [1s:0s]
+                                                                               
+
+  99% |█████████████████████████████████████████ | (994/1000, 697 it/s) [1s:0s]
+                                                                               
+
+ 100% |█████████████████████████████████████████| (1000/1000, 667 it/s)
+
+                                                                               
+
+                                                                               
+
+  76% |███████████████████████████████           | (769/1000, 522 it/s) [1s:0s]
+ 100% |█████████████████████████████████████████| (1000/1000, 661 it/s)
+
+                                                                               
+
+  82% |██████████████████████████████████        | (825/1000, 515 it/s) [1s:0s]
+                                                                               
+
+  88% |████████████████████████████████████      | (884/1000, 515 it/s) [1s:0s]
+                                                                               
+
+  94% |███████████████████████████████████████   | (942/1000, 515 it/s) [1s:0s]
+                                                                               
+
+ 100% |█████████████████████████████████████████| (1000/1000, 553 it/s)
+PASS
+ok  	Thesis/trie/azft	2.297s
+HZFastTrie:
+| rootId: 1
+| data length: 9
+| MPH mappings:
+  [0] extentLen=4294967295 (pseudo-descriptor)
+  [1] extentLen=1
+  [2] extentLen=4
+  [3] extentLen=4
+  [4] extentLen=4294967295 (pseudo-descriptor)
+  [5] extentLen=4
+  [6] extentLen=3
+  [7] extentLen=4
+  [8] extentLen=2
+
+goos: darwin
+goarch: arm64
+pkg: Thesis/trie/hzft
+cpu: Apple M4 Max
+BenchmarkHZFTBuild_Heavy/KeySize=64/Keys=1024-16         	     598	   2012855 ns/op	 1479176 B/op	   33196 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=64/Keys=8192-16         	      72	  17075770 ns/op	12080028 B/op	  280056 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=64/Keys=32768-16        	      15	  78952272 ns/op	49168473 B/op	 1133725 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=128/Keys=1024-16        	     492	   2439676 ns/op	 1849802 B/op	   37350 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=128/Keys=8192-16        	      63	  19341607 ns/op	13424886 B/op	  312811 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=128/Keys=32768-16       	      13	  86078215 ns/op	54476809 B/op	 1264590 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=256/Keys=1024-16        	     409	   2954966 ns/op	 2269263 B/op	   41572 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=256/Keys=8192-16        	      46	  24813051 ns/op	18543092 B/op	  345341 allocs/op
+BenchmarkHZFTBuild_Heavy/KeySize=256/Keys=32768-16       	       9	 111857343 ns/op	75033807 B/op	 1396565 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=64/Keys=1024-16     	     980	   1192291 ns/op	  837644 B/op	   11800 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=64/Keys=8192-16     	     100	  10141109 ns/op	 6897063 B/op	   89780 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=64/Keys=32768-16    	      26	  44543712 ns/op	28373243 B/op	  359204 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=128/Keys=1024-16    	     764	   1565661 ns/op	 1154478 B/op	   13906 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=128/Keys=8192-16    	      94	  11644807 ns/op	 7802593 B/op	  106159 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=128/Keys=32768-16   	      20	  52332465 ns/op	31982176 B/op	  424031 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=256/Keys=1024-16    	     601	   1995447 ns/op	 1492374 B/op	   16079 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=256/Keys=8192-16    	      73	  16647023 ns/op	12271723 B/op	  122542 allocs/op
+BenchmarkHZFTBuild_Streaming/KeySize=256/Keys=32768-16   	      15	  75299892 ns/op	49852511 B/op	  490679 allocs/op
+PASS
+ok  	Thesis/trie/hzft	23.341s
+TestTrie_BitString_Exhaustive8Bit iteration: 0
+TestTrie_HeavyRandom_BitString_Ops iteration: 0
+TestTrie_HeavyRandom_BitString_Get iteration: 0
+ZFastTrie:
+| size: 7
+| emptyValue: false
+| Root:
+| | value: true
+| | extent: "00001100: (8 bits)"
+| | NameLength: 0
+| | leftChild:
+| | | value: false
+| | | extent: "000011000: (9 bits)"
+| | | NameLength: 9
+| | | leftChild:
+| | | | value: true
+| | | | extent: "0000110000100110: (16 bits)"
+| | | | NameLength: 10
+| | | | leftChild: nil
+| | | | rightChild: nil
+| | | rightChild:
+| | | | value: false
+| | | | extent: "0000110001: (10 bits)"
+| | | | NameLength: 10
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "0000110001000110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "0000110001100110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | rightChild:
+| | | value: false
+| | | extent: "000011001: (9 bits)"
+| | | NameLength: 9
+| | | leftChild:
+| | | | value: false
+| | | | extent: "0000110010: (10 bits)"
+| | | | NameLength: 10
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "0000110010000110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "0000110010100110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "0000110011000110: (16 bits)"
+| | | | NameLength: 10
+| | | | leftChild: nil
+| | | | rightChild: nil
+0000110010000110: (16 bits): Node{Value: true, Extent: "{0a 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110001: (10 bits): Node{Value: false, Extent: "{0 10}", NameLength: 10, ExtentLen: 10,  LeftChild: true, RightChild: true}
+000011001: (9 bits): Node{Value: false, Extent: "{0 9}", NameLength: 9, ExtentLen: 9,  LeftChild: true, RightChild: true}
+000011000: (9 bits): Node{Value: false, Extent: "{0  9}", NameLength: 9, ExtentLen: 9,  LeftChild: true, RightChild: true}
+0000110011000110: (16 bits): Node{Value: true, Extent: "{0c 16}", NameLength: 10, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110001000110: (16 bits): Node{Value: true, Extent: "{0b 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110000100110: (16 bits): Node{Value: true, Extent: "{0d 16}", NameLength: 10, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110010100110: (16 bits): Node{Value: true, Extent: "{0e 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110001100110: (16 bits): Node{Value: true, Extent: "{0f 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+00001100: (8 bits): Node{Value: true, Extent: "{0 8}", NameLength: 0, ExtentLen: 8,  LeftChild: true, RightChild: true}
+0000110010: (10 bits): Node{Value: false, Extent: "{0 10}", NameLength: 10, ExtentLen: 10,  LeftChild: true, RightChild: true}
+
+
+ZFastTrie:
+| size: 7
+| emptyValue: false
+| Root:
+| | value: true
+| | extent: "00001100: (8 bits)"
+| | NameLength: 0
+| | leftChild:
+| | | value: false
+| | | extent: "000011000: (9 bits)"
+| | | NameLength: 9
+| | | leftChild:
+| | | | value: true
+| | | | extent: "0000110000100110: (16 bits)"
+| | | | NameLength: 10
+| | | | leftChild: nil
+| | | | rightChild: nil
+| | | rightChild:
+| | | | value: false
+| | | | extent: "0000110001: (10 bits)"
+| | | | NameLength: 10
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "0000110001000110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "0000110001100110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | rightChild:
+| | | value: false
+| | | extent: "000011001: (9 bits)"
+| | | NameLength: 9
+| | | leftChild:
+| | | | value: false
+| | | | extent: "0000110010: (10 bits)"
+| | | | NameLength: 10
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "0000110010000110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "0000110010100110: (16 bits)"
+| | | | | NameLength: 11
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "0000110011000110: (16 bits)"
+| | | | NameLength: 10
+| | | | leftChild: nil
+| | | | rightChild: nil
+0000110001: (10 bits): Node{Value: false, Extent: "{0 10}", NameLength: 10, ExtentLen: 10,  LeftChild: true, RightChild: true}
+0000110001100110: (16 bits): Node{Value: true, Extent: "{0f 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+00001100: (8 bits): Node{Value: true, Extent: "{0 8}", NameLength: 0, ExtentLen: 8,  LeftChild: true, RightChild: true}
+000011001: (9 bits): Node{Value: false, Extent: "{0 9}", NameLength: 9, ExtentLen: 9,  LeftChild: true, RightChild: true}
+0000110011000110: (16 bits): Node{Value: true, Extent: "{0c 16}", NameLength: 10, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110001000110: (16 bits): Node{Value: true, Extent: "{0b 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110000100110: (16 bits): Node{Value: true, Extent: "{0d 16}", NameLength: 10, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110010000110: (16 bits): Node{Value: true, Extent: "{0a 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+0000110010100110: (16 bits): Node{Value: true, Extent: "{0e 16}", NameLength: 11, ExtentLen: 16,  LeftChild: false, RightChild: false}
+000011000: (9 bits): Node{Value: false, Extent: "{0  9}", NameLength: 9, ExtentLen: 9,  LeftChild: true, RightChild: true}
+0000110010: (10 bits): Node{Value: false, Extent: "{0 10}", NameLength: 10, ExtentLen: 10,  LeftChild: true, RightChild: true}
+
+
+ZFastTrie:
+| size: 4
+| emptyValue: false
+| Root:
+| | value: true
+| | extent: "0000110000001100000011000000110000001100: (40 bits)"
+| | NameLength: 0
+| | leftChild:
+| | | value: true
+| | | extent: "0000110000001100000011000000110000001100000011000000110010001100: (64 bits)"
+| | | NameLength: 41
+| | | leftChild:
+| | | | value: true
+| | | | extent: "000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100: (96 bits)"
+| | | | NameLength: 65
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits)"
+| | | | | NameLength: 97
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild: nil
+| | | rightChild: nil
+| | rightChild: nil
+000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100: (96 bits): Node{Value: true, Extent: "{000000010000 96}", NameLength: 65, ExtentLen: 96,  LeftChild: true, RightChild: false}
+00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits): Node{Value: true, Extent: "{0000000100000011 128}", NameLength: 97, ExtentLen: 128,  LeftChild: false, RightChild: false}
+0000110000001100000011000000110000001100000011000000110010001100: (64 bits): Node{Value: true, Extent: "{00000001 64}", NameLength: 41, ExtentLen: 64,  LeftChild: true, RightChild: false}
+00001100000011000000110000001100: (32 bits): Node{Value: true, Extent: "{00000 40}", NameLength: 0, ExtentLen: 40,  LeftChild: true, RightChild: false}
+
+
+ZFastTrie:
+| size: 4
+| emptyValue: false
+| Root:
+| | value: true
+| | extent: "0000110000001100000011000000110000001100: (40 bits)"
+| | NameLength: 0
+| | leftChild:
+| | | value: true
+| | | extent: "0000110000001100000011000000110000001100000011000000110010001100: (64 bits)"
+| | | NameLength: 41
+| | | leftChild:
+| | | | value: true
+| | | | extent: "000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100: (96 bits)"
+| | | | NameLength: 65
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits)"
+| | | | | NameLength: 97
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild: nil
+| | | rightChild: nil
+| | rightChild: nil
+0000110000001100000011000000110000001100000011000000110010001100: (64 bits): Node{Value: true, Extent: "{00000001 64}", NameLength: 41, ExtentLen: 64,  LeftChild: true, RightChild: false}
+00001100000011000000110000001100: (32 bits): Node{Value: true, Extent: "{00000 40}", NameLength: 0, ExtentLen: 40,  LeftChild: true, RightChild: false}
+000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100: (96 bits): Node{Value: true, Extent: "{000000010000 96}", NameLength: 65, ExtentLen: 96,  LeftChild: true, RightChild: false}
+00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits): Node{Value: true, Extent: "{0000000100000011 128}", NameLength: 97, ExtentLen: 128,  LeftChild: false, RightChild: false}
+
+
+ZFastTrie:
+| size: 4
+| emptyValue: false
+| Root:
+| | value: false
+| | extent: "<empty>"
+| | NameLength: 0
+| | leftChild:
+| | | value: true
+| | | extent: "01000110: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "0100011010000110: (16 bits)"
+| | | | NameLength: 9
+| | | | leftChild: nil
+| | | | rightChild: nil
+| | rightChild:
+| | | value: true
+| | | extent: "10000110: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "1000011010000110: (16 bits)"
+| | | | NameLength: 9
+| | | | leftChild: nil
+| | | | rightChild: nil
+10000110: (8 bits): Node{Value: true, Extent: "{a 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: true}
+01000110: (8 bits): Node{Value: true, Extent: "{b 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: true}
+0100011010000110: (16 bits): Node{Value: true, Extent: "{ba 16}", NameLength: 9, ExtentLen: 16,  LeftChild: false, RightChild: false}
+<empty>: Node{Value: false, Extent: "{ 0}", NameLength: 0, ExtentLen: 0,  LeftChild: true, RightChild: true}
+1000011010000110: (16 bits): Node{Value: true, Extent: "{aa 16}", NameLength: 9, ExtentLen: 16,  LeftChild: false, RightChild: false}
+
+
+ZFastTrie:
+| size: 9
+| emptyValue: false
+| Root:
+| | value: false
+| | extent: "<empty>"
+| | NameLength: 0
+| | leftChild:
+| | | value: true
+| | | extent: "01000010: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild: nil
+| | rightChild:
+| | | value: true
+| | | extent: "10000010: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "1000001010000010: (16 bits)"
+| | | | NameLength: 9
+| | | | leftChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "100000101000001010000010: (24 bits)"
+| | | | | NameLength: 17
+| | | | | leftChild: nil
+| | | | | rightChild:
+| | | | | | value: true
+| | | | | | extent: "10000010100000101000001010000010: (32 bits)"
+| | | | | | NameLength: 25
+| | | | | | leftChild: nil
+| | | | | | rightChild:
+| | | | | | | value: true
+| | | | | | | extent: "1000001010000010100000101000001010000010: (40 bits)"
+| | | | | | | NameLength: 33
+| | | | | | | leftChild: nil
+| | | | | | | rightChild:
+| | | | | | | | value: true
+| | | | | | | | extent: "100000101000001010000010100000101000001010000010: (48 bits)"
+| | | | | | | | NameLength: 41
+| | | | | | | | leftChild: nil
+| | | | | | | | rightChild:
+| | | | | | | | | value: true
+| | | | | | | | | extent: "10000010100000101000001010000010100000101000001010000010: (56 bits)"
+| | | | | | | | | NameLength: 49
+| | | | | | | | | leftChild: nil
+| | | | | | | | | rightChild:
+| | | | | | | | | | value: true
+| | | | | | | | | | extent: "1000001010000010100000101000001010000010100000101000001010000010: (64 bits)"
+| | | | | | | | | | NameLength: 57
+| | | | | | | | | | leftChild: nil
+| | | | | | | | | | rightChild: nil
+10000010: (8 bits): Node{Value: true, Extent: "{A 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: true}
+1000001010000010: (16 bits): Node{Value: true, Extent: "{AA 16}", NameLength: 9, ExtentLen: 16,  LeftChild: false, RightChild: true}
+100000101000001010000010: (24 bits): Node{Value: true, Extent: "{AAA 24}", NameLength: 17, ExtentLen: 24,  LeftChild: false, RightChild: true}
+10000010100000101000001010000010: (32 bits): Node{Value: true, Extent: "{AAAA 32}", NameLength: 25, ExtentLen: 32,  LeftChild: false, RightChild: true}
+100000101000001010000010100000101000001010000010: (48 bits): Node{Value: true, Extent: "{AAAAAA 48}", NameLength: 41, ExtentLen: 48,  LeftChild: false, RightChild: true}
+10000010100000101000001010000010100000101000001010000010: (56 bits): Node{Value: true, Extent: "{AAAAAAA 56}", NameLength: 49, ExtentLen: 56,  LeftChild: false, RightChild: true}
+1000001010000010100000101000001010000010100000101000001010000010: (64 bits): Node{Value: true, Extent: "{AAAAAAAA 64}", NameLength: 57, ExtentLen: 64,  LeftChild: false, RightChild: false}
+01000010: (8 bits): Node{Value: true, Extent: "{B 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: false}
+<empty>: Node{Value: false, Extent: "{ 0}", NameLength: 0, ExtentLen: 0,  LeftChild: true, RightChild: true}
+1000001010000010100000101000001010000010: (40 bits): Node{Value: true, Extent: "{AAAAA 40}", NameLength: 33, ExtentLen: 40,  LeftChild: false, RightChild: true}
+
+
+ZFastTrie:
+| size: 4
+| emptyValue: false
+| Root:
+| | value: false
+| | extent: "<empty>"
+| | NameLength: 0
+| | leftChild:
+| | | value: true
+| | | extent: "01000110: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "0100011010000110: (16 bits)"
+| | | | NameLength: 9
+| | | | leftChild: nil
+| | | | rightChild: nil
+| | rightChild:
+| | | value: true
+| | | extent: "10000110: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "1000011010000110: (16 bits)"
+| | | | NameLength: 9
+| | | | leftChild: nil
+| | | | rightChild: nil
+<empty>: Node{Value: false, Extent: "{ 0}", NameLength: 0, ExtentLen: 0,  LeftChild: true, RightChild: true}
+1000011010000110: (16 bits): Node{Value: true, Extent: "{aa 16}", NameLength: 9, ExtentLen: 16,  LeftChild: false, RightChild: false}
+10000110: (8 bits): Node{Value: true, Extent: "{a 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: true}
+01000110: (8 bits): Node{Value: true, Extent: "{b 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: true}
+0100011010000110: (16 bits): Node{Value: true, Extent: "{ba 16}", NameLength: 9, ExtentLen: 16,  LeftChild: false, RightChild: false}
+
+
+ZFastTrie:
+| size: 5
+| emptyValue: false
+| Root:
+| | value: true
+| | extent: "00001100000011000000110000001100: (32 bits)"
+| | NameLength: 0
+| | leftChild:
+| | | value: false
+| | | extent: "00001100000011000000110000001100000011000000110000001100: (56 bits)"
+| | | NameLength: 33
+| | | leftChild:
+| | | | value: true
+| | | | extent: "0000110000001100000011000000110000001100000011000000110001001100: (64 bits)"
+| | | | NameLength: 57
+| | | | leftChild: nil
+| | | | rightChild: nil
+| | | rightChild:
+| | | | value: false
+| | | | extent: "000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100000011000000110010001100: (120 bits)"
+| | | | NameLength: 57
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110001001100: (128 bits)"
+| | | | | NameLength: 121
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits)"
+| | | | | NameLength: 121
+| | | | | leftChild:
+| | | | | | value: true
+| | | | | | extent: "000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100000011000000110010001100100011000000110000001100000011000000110000001100000011000100110010001100: (192 bits)"
+| | | | | | NameLength: 129
+| | | | | | leftChild: nil
+| | | | | | rightChild: nil
+| | | | | rightChild: nil
+| | rightChild: nil
+0000110000001100000011000000110000001100000011000000110010001100: (64 bits): Node{Value: false, Extent: "{000000010000001 120}", NameLength: 57, ExtentLen: 120,  LeftChild: true, RightChild: true}
+0000110000001100000011000000110000001100000011000000110001001100: (64 bits): Node{Value: true, Extent: "{00000002 64}", NameLength: 57, ExtentLen: 64,  LeftChild: false, RightChild: false}
+00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits): Node{Value: true, Extent: "{0000000100000011 128}", NameLength: 121, ExtentLen: 128,  LeftChild: true, RightChild: false}
+00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110001001100: (128 bits): Node{Value: true, Extent: "{0000000100000012 128}", NameLength: 121, ExtentLen: 128,  LeftChild: false, RightChild: false}
+000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100000011000000110010001100100011000000110000001100000011000000110000001100000011000100110010001100: (192 bits): Node{Value: true, Extent: "{000000010000001100000021 192}", NameLength: 129, ExtentLen: 192,  LeftChild: false, RightChild: false}
+00001100000011000000110000001100: (32 bits): Node{Value: true, Extent: "{0000 32}", NameLength: 0, ExtentLen: 32,  LeftChild: true, RightChild: false}
+000011000000110000001100000011000000110000001100: (48 bits): Node{Value: false, Extent: "{0000000 56}", NameLength: 33, ExtentLen: 56,  LeftChild: true, RightChild: true}
+
+
+ZFastTrie:
+| size: 9
+| emptyValue: false
+| Root:
+| | value: false
+| | extent: "<empty>"
+| | NameLength: 0
+| | leftChild:
+| | | value: true
+| | | extent: "01000010: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild: nil
+| | rightChild:
+| | | value: true
+| | | extent: "10000010: (8 bits)"
+| | | NameLength: 1
+| | | leftChild: nil
+| | | rightChild:
+| | | | value: true
+| | | | extent: "1000001010000010: (16 bits)"
+| | | | NameLength: 9
+| | | | leftChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "100000101000001010000010: (24 bits)"
+| | | | | NameLength: 17
+| | | | | leftChild: nil
+| | | | | rightChild:
+| | | | | | value: true
+| | | | | | extent: "10000010100000101000001010000010: (32 bits)"
+| | | | | | NameLength: 25
+| | | | | | leftChild: nil
+| | | | | | rightChild:
+| | | | | | | value: true
+| | | | | | | extent: "1000001010000010100000101000001010000010: (40 bits)"
+| | | | | | | NameLength: 33
+| | | | | | | leftChild: nil
+| | | | | | | rightChild:
+| | | | | | | | value: true
+| | | | | | | | extent: "100000101000001010000010100000101000001010000010: (48 bits)"
+| | | | | | | | NameLength: 41
+| | | | | | | | leftChild: nil
+| | | | | | | | rightChild:
+| | | | | | | | | value: true
+| | | | | | | | | extent: "10000010100000101000001010000010100000101000001010000010: (56 bits)"
+| | | | | | | | | NameLength: 49
+| | | | | | | | | leftChild: nil
+| | | | | | | | | rightChild:
+| | | | | | | | | | value: true
+| | | | | | | | | | extent: "1000001010000010100000101000001010000010100000101000001010000010: (64 bits)"
+| | | | | | | | | | NameLength: 57
+| | | | | | | | | | leftChild: nil
+| | | | | | | | | | rightChild: nil
+10000010100000101000001010000010100000101000001010000010: (56 bits): Node{Value: true, Extent: "{AAAAAAA 56}", NameLength: 49, ExtentLen: 56,  LeftChild: false, RightChild: true}
+10000010: (8 bits): Node{Value: true, Extent: "{A 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: true}
+01000010: (8 bits): Node{Value: true, Extent: "{B 8}", NameLength: 1, ExtentLen: 8,  LeftChild: false, RightChild: false}
+1000001010000010: (16 bits): Node{Value: true, Extent: "{AA 16}", NameLength: 9, ExtentLen: 16,  LeftChild: false, RightChild: true}
+1000001010000010100000101000001010000010: (40 bits): Node{Value: true, Extent: "{AAAAA 40}", NameLength: 33, ExtentLen: 40,  LeftChild: false, RightChild: true}
+100000101000001010000010100000101000001010000010: (48 bits): Node{Value: true, Extent: "{AAAAAA 48}", NameLength: 41, ExtentLen: 48,  LeftChild: false, RightChild: true}
+1000001010000010100000101000001010000010100000101000001010000010: (64 bits): Node{Value: true, Extent: "{AAAAAAAA 64}", NameLength: 57, ExtentLen: 64,  LeftChild: false, RightChild: false}
+<empty>: Node{Value: false, Extent: "{ 0}", NameLength: 0, ExtentLen: 0,  LeftChild: true, RightChild: true}
+100000101000001010000010: (24 bits): Node{Value: true, Extent: "{AAA 24}", NameLength: 17, ExtentLen: 24,  LeftChild: false, RightChild: true}
+10000010100000101000001010000010: (32 bits): Node{Value: true, Extent: "{AAAA 32}", NameLength: 25, ExtentLen: 32,  LeftChild: false, RightChild: true}
+
+
+ZFastTrie:
+| size: 5
+| emptyValue: false
+| Root:
+| | value: true
+| | extent: "00001100000011000000110000001100: (32 bits)"
+| | NameLength: 0
+| | leftChild:
+| | | value: false
+| | | extent: "00001100000011000000110000001100000011000000110000001100: (56 bits)"
+| | | NameLength: 33
+| | | leftChild:
+| | | | value: true
+| | | | extent: "0000110000001100000011000000110000001100000011000000110001001100: (64 bits)"
+| | | | NameLength: 57
+| | | | leftChild: nil
+| | | | rightChild: nil
+| | | rightChild:
+| | | | value: false
+| | | | extent: "000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100000011000000110010001100: (120 bits)"
+| | | | NameLength: 57
+| | | | leftChild:
+| | | | | value: true
+| | | | | extent: "00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110001001100: (128 bits)"
+| | | | | NameLength: 121
+| | | | | leftChild: nil
+| | | | | rightChild: nil
+| | | | rightChild:
+| | | | | value: true
+| | | | | extent: "00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits)"
+| | | | | NameLength: 121
+| | | | | leftChild:
+| | | | | | value: true
+| | | | | | extent: "000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100000011000000110010001100100011000000110000001100000011000000110000001100000011000100110010001100: (192 bits)"
+| | | | | | NameLength: 129
+| | | | | | leftChild: nil
+| | | | | | rightChild: nil
+| | | | | rightChild: nil
+| | rightChild: nil
+00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110010001100: (128 bits): Node{Value: true, Extent: "{0000000100000011 128}", NameLength: 121, ExtentLen: 128,  LeftChild: true, RightChild: false}
+00001100000011000000110000001100000011000000110000001100100011000000110000001100000011000000110000001100000011001000110001001100: (128 bits): Node{Value: true, Extent: "{0000000100000012 128}", NameLength: 121, ExtentLen: 128,  LeftChild: false, RightChild: false}
+000011000000110000001100000011000000110000001100000011001000110000001100000011000000110000001100000011000000110010001100100011000000110000001100000011000000110000001100000011000100110010001100: (192 bits): Node{Value: true, Extent: "{000000010000001100000021 192}", NameLength: 129, ExtentLen: 192,  LeftChild: false, RightChild: false}
+00001100000011000000110000001100: (32 bits): Node{Value: true, Extent: "{0000 32}", NameLength: 0, ExtentLen: 32,  LeftChild: true, RightChild: false}
+000011000000110000001100000011000000110000001100: (48 bits): Node{Value: false, Extent: "{0000000 56}", NameLength: 33, ExtentLen: 56,  LeftChild: true, RightChild: true}
+0000110000001100000011000000110000001100000011000000110010001100: (64 bits): Node{Value: false, Extent: "{000000010000001 120}", NameLength: 57, ExtentLen: 120,  LeftChild: true, RightChild: true}
+0000110000001100000011000000110000001100000011000000110001001100: (64 bits): Node{Value: true, Extent: "{00000002 64}", NameLength: 57, ExtentLen: 64,  LeftChild: false, RightChild: false}
+
+
+TestTrie_BitString_Exhaustive8Bit iteration: 1
+TestTrie_HeavyRandom_BitString_Ops iteration: 1
+TestTrie_BitString_Exhaustive8Bit iteration: 2
+TestTrie_HeavyRandom_BitString_Ops iteration: 2
+TestTrie_BitString_Exhaustive8Bit iteration: 3
+TestTrie_HeavyRandom_BitString_Ops iteration: 3
+TestTrie_BitString_Exhaustive8Bit iteration: 4
+TestTrie_HeavyRandom_BitString_Ops iteration: 4
+TestTrie_BitString_Exhaustive8Bit iteration: 5
+TestTrie_HeavyRandom_BitString_Ops iteration: 5
+TestTrie_BitString_Exhaustive8Bit iteration: 6
+TestTrie_HeavyRandom_BitString_Ops iteration: 6
+TestTrie_BitString_Exhaustive8Bit iteration: 7
+TestTrie_BitString_Exhaustive8Bit iteration: 8
+TestTrie_HeavyRandom_BitString_Ops iteration: 7
+TestTrie_BitString_Exhaustive8Bit iteration: 9
+TestTrie_HeavyRandom_BitString_Ops iteration: 8
+TestTrie_BitString_Exhaustive8Bit iteration: 10
+TestTrie_HeavyRandom_BitString_Ops iteration: 9
+TestTrie_BitString_Exhaustive8Bit iteration: 11
+TestTrie_HeavyRandom_BitString_Ops iteration: 10
+TestTrie_BitString_Exhaustive8Bit iteration: 12
+TestTrie_HeavyRandom_BitString_Get iteration: 1
+TestTrie_HeavyRandom_BitString_Ops iteration: 11
+TestTrie_BitString_Exhaustive8Bit iteration: 13
+TestTrie_HeavyRandom_BitString_Ops iteration: 12
+TestTrie_BitString_Exhaustive8Bit iteration: 14
+TestTrie_HeavyRandom_BitString_Ops iteration: 13
+TestTrie_BitString_Exhaustive8Bit iteration: 15
+TestTrie_HeavyRandom_BitString_Ops iteration: 14
+TestTrie_BitString_Exhaustive8Bit iteration: 16
+TestTrie_BitString_Exhaustive8Bit iteration: 17
+TestTrie_HeavyRandom_BitString_Ops iteration: 15
+TestTrie_BitString_Exhaustive8Bit iteration: 18
+TestTrie_HeavyRandom_BitString_Ops iteration: 16
+TestTrie_BitString_Exhaustive8Bit iteration: 19
+TestTrie_HeavyRandom_BitString_Ops iteration: 17
+TestTrie_BitString_Exhaustive8Bit iteration: 20
+TestTrie_HeavyRandom_BitString_Ops iteration: 18
+TestTrie_BitString_Exhaustive8Bit iteration: 21
+TestTrie_HeavyRandom_BitString_Ops iteration: 19
+TestTrie_BitString_Exhaustive8Bit iteration: 22
+TestTrie_HeavyRandom_BitString_Ops iteration: 20
+TestTrie_BitString_Exhaustive8Bit iteration: 23
+TestTrie_HeavyRandom_BitString_Ops iteration: 21
+TestTrie_BitString_Exhaustive8Bit iteration: 24
+TestTrie_HeavyRandom_BitString_Get iteration: 2
+TestTrie_BitString_Exhaustive8Bit iteration: 25
+TestTrie_HeavyRandom_BitString_Ops iteration: 22
+TestTrie_BitString_Exhaustive8Bit iteration: 26
+TestTrie_HeavyRandom_BitString_Ops iteration: 23
+TestTrie_BitString_Exhaustive8Bit iteration: 27
+TestTrie_HeavyRandom_BitString_Ops iteration: 24
+TestTrie_BitString_Exhaustive8Bit iteration: 28
+TestTrie_HeavyRandom_BitString_Ops iteration: 25
+TestTrie_BitString_Exhaustive8Bit iteration: 29
+TestTrie_HeavyRandom_BitString_Ops iteration: 26
+TestTrie_BitString_Exhaustive8Bit iteration: 30
+TestTrie_HeavyRandom_BitString_Ops iteration: 27
+TestTrie_BitString_Exhaustive8Bit iteration: 31
+TestTrie_BitString_Exhaustive8Bit iteration: 32
+TestTrie_HeavyRandom_BitString_Ops iteration: 28
+TestTrie_BitString_Exhaustive8Bit iteration: 33
+TestTrie_HeavyRandom_BitString_Ops iteration: 29
+TestTrie_BitString_Exhaustive8Bit iteration: 34
+TestTrie_HeavyRandom_BitString_Ops iteration: 30
+TestTrie_BitString_Exhaustive8Bit iteration: 35
+TestTrie_HeavyRandom_BitString_Ops iteration: 31
+TestTrie_BitString_Exhaustive8Bit iteration: 36
+TestTrie_HeavyRandom_BitString_Ops iteration: 32
+TestTrie_BitString_Exhaustive8Bit iteration: 37
+TestTrie_HeavyRandom_BitString_Get iteration: 3
+TestTrie_HeavyRandom_BitString_Ops iteration: 33
+TestTrie_BitString_Exhaustive8Bit iteration: 38
+TestTrie_HeavyRandom_BitString_Ops iteration: 34
+TestTrie_BitString_Exhaustive8Bit iteration: 39
+TestTrie_BitString_Exhaustive8Bit iteration: 40
+TestTrie_HeavyRandom_BitString_Ops iteration: 35
+TestTrie_BitString_Exhaustive8Bit iteration: 41
+TestTrie_HeavyRandom_BitString_Ops iteration: 36
+TestTrie_BitString_Exhaustive8Bit iteration: 42
+TestTrie_HeavyRandom_BitString_Ops iteration: 37
+TestTrie_BitString_Exhaustive8Bit iteration: 43
+TestTrie_HeavyRandom_BitString_Ops iteration: 38
+TestTrie_BitString_Exhaustive8Bit iteration: 44
+TestTrie_HeavyRandom_BitString_Ops iteration: 39
+TestTrie_BitString_Exhaustive8Bit iteration: 45
+TestTrie_HeavyRandom_BitString_Ops iteration: 40
+TestTrie_BitString_Exhaustive8Bit iteration: 46
+TestTrie_HeavyRandom_BitString_Ops iteration: 41
+TestTrie_BitString_Exhaustive8Bit iteration: 47
+TestTrie_BitString_Exhaustive8Bit iteration: 48
+TestTrie_HeavyRandom_BitString_Ops iteration: 42
+TestTrie_BitString_Exhaustive8Bit iteration: 49
+TestTrie_HeavyRandom_BitString_Ops iteration: 43
+TestTrie_HeavyRandom_BitString_Get iteration: 4
+TestTrie_BitString_Exhaustive8Bit iteration: 50
+TestTrie_HeavyRandom_BitString_Ops iteration: 44
+TestTrie_BitString_Exhaustive8Bit iteration: 51
+TestTrie_HeavyRandom_BitString_Ops iteration: 45
+TestTrie_BitString_Exhaustive8Bit iteration: 52
+TestTrie_HeavyRandom_BitString_Ops iteration: 46
+TestTrie_BitString_Exhaustive8Bit iteration: 53
+TestTrie_HeavyRandom_BitString_Ops iteration: 47
+TestTrie_BitString_Exhaustive8Bit iteration: 54
+TestTrie_HeavyRandom_BitString_Ops iteration: 48
+TestTrie_BitString_Exhaustive8Bit iteration: 55
+TestTrie_BitString_Exhaustive8Bit iteration: 56
+TestTrie_HeavyRandom_BitString_Ops iteration: 49
+TestTrie_BitString_Exhaustive8Bit iteration: 57
+TestTrie_HeavyRandom_BitString_Ops iteration: 50
+TestTrie_BitString_Exhaustive8Bit iteration: 58
+TestTrie_HeavyRandom_BitString_Ops iteration: 51
+TestTrie_BitString_Exhaustive8Bit iteration: 59
+TestTrie_HeavyRandom_BitString_Ops iteration: 52
+TestTrie_BitString_Exhaustive8Bit iteration: 60
+TestTrie_HeavyRandom_BitString_Ops iteration: 53
+TestTrie_BitString_Exhaustive8Bit iteration: 61
+TestTrie_HeavyRandom_BitString_Get iteration: 5
+TestTrie_HeavyRandom_BitString_Ops iteration: 54
+TestTrie_BitString_Exhaustive8Bit iteration: 62
+TestTrie_BitString_Exhaustive8Bit iteration: 63
+TestTrie_HeavyRandom_BitString_Ops iteration: 55
+TestTrie_BitString_Exhaustive8Bit iteration: 64
+TestTrie_HeavyRandom_BitString_Ops iteration: 56
+TestTrie_BitString_Exhaustive8Bit iteration: 65
+TestTrie_HeavyRandom_BitString_Ops iteration: 57
+TestTrie_BitString_Exhaustive8Bit iteration: 66
+TestTrie_HeavyRandom_BitString_Ops iteration: 58
+TestTrie_BitString_Exhaustive8Bit iteration: 67
+TestTrie_HeavyRandom_BitString_Ops iteration: 59
+TestTrie_BitString_Exhaustive8Bit iteration: 68
+TestTrie_HeavyRandom_BitString_Ops iteration: 60
+TestTrie_BitString_Exhaustive8Bit iteration: 69
+TestTrie_BitString_Exhaustive8Bit iteration: 70
+TestTrie_HeavyRandom_BitString_Ops iteration: 61
+TestTrie_BitString_Exhaustive8Bit iteration: 71
+TestTrie_HeavyRandom_BitString_Ops iteration: 62
+TestTrie_BitString_Exhaustive8Bit iteration: 72
+TestTrie_HeavyRandom_BitString_Ops iteration: 63
+TestTrie_BitString_Exhaustive8Bit iteration: 73
+TestTrie_HeavyRandom_BitString_Ops iteration: 64
+TestTrie_BitString_Exhaustive8Bit iteration: 74
+TestTrie_HeavyRandom_BitString_Ops iteration: 65
+TestTrie_BitString_Exhaustive8Bit iteration: 75
+TestTrie_HeavyRandom_BitString_Get iteration: 6
+TestTrie_HeavyRandom_BitString_Ops iteration: 66
+TestTrie_BitString_Exhaustive8Bit iteration: 76
+TestTrie_HeavyRandom_BitString_Ops iteration: 67
+TestTrie_BitString_Exhaustive8Bit iteration: 77
+TestTrie_BitString_Exhaustive8Bit iteration: 78
+TestTrie_HeavyRandom_BitString_Ops iteration: 68
+TestTrie_BitString_Exhaustive8Bit iteration: 79
+TestTrie_HeavyRandom_BitString_Ops iteration: 69
+TestTrie_BitString_Exhaustive8Bit iteration: 80
+TestTrie_HeavyRandom_BitString_Ops iteration: 70
+TestTrie_BitString_Exhaustive8Bit iteration: 81
+TestTrie_HeavyRandom_BitString_Ops iteration: 71
+TestTrie_BitString_Exhaustive8Bit iteration: 82
+TestTrie_HeavyRandom_BitString_Ops iteration: 72
+TestTrie_BitString_Exhaustive8Bit iteration: 83
+TestTrie_HeavyRandom_BitString_Ops iteration: 73
+TestTrie_BitString_Exhaustive8Bit iteration: 84
+TestTrie_BitString_Exhaustive8Bit iteration: 85
+TestTrie_HeavyRandom_BitString_Ops iteration: 74
+TestTrie_BitString_Exhaustive8Bit iteration: 86
+TestTrie_HeavyRandom_BitString_Ops iteration: 75
+TestTrie_BitString_Exhaustive8Bit iteration: 87
+TestTrie_HeavyRandom_BitString_Ops iteration: 76
+TestTrie_BitString_Exhaustive8Bit iteration: 88
+TestTrie_HeavyRandom_BitString_Ops iteration: 77
+TestTrie_HeavyRandom_BitString_Get iteration: 7
+TestTrie_BitString_Exhaustive8Bit iteration: 89
+TestTrie_HeavyRandom_BitString_Ops iteration: 78
+TestTrie_BitString_Exhaustive8Bit iteration: 90
+TestTrie_HeavyRandom_BitString_Ops iteration: 79
+TestTrie_BitString_Exhaustive8Bit iteration: 91
+TestTrie_HeavyRandom_BitString_Ops iteration: 80
+TestTrie_BitString_Exhaustive8Bit iteration: 92
+TestTrie_BitString_Exhaustive8Bit iteration: 93
+TestTrie_HeavyRandom_BitString_Ops iteration: 81
+TestTrie_BitString_Exhaustive8Bit iteration: 94
+TestTrie_HeavyRandom_BitString_Ops iteration: 82
+TestTrie_BitString_Exhaustive8Bit iteration: 95
+TestTrie_HeavyRandom_BitString_Ops iteration: 83
+TestTrie_BitString_Exhaustive8Bit iteration: 96
+TestTrie_HeavyRandom_BitString_Ops iteration: 84
+TestTrie_BitString_Exhaustive8Bit iteration: 97
+TestTrie_HeavyRandom_BitString_Ops iteration: 85
+TestTrie_BitString_Exhaustive8Bit iteration: 98
+TestTrie_HeavyRandom_BitString_Ops iteration: 86
+TestTrie_BitString_Exhaustive8Bit iteration: 99
+TestTrie_BitString_Exhaustive8Bit iteration: 100
+TestTrie_HeavyRandom_BitString_Ops iteration: 87
+TestTrie_BitString_Exhaustive8Bit iteration: 101
+TestTrie_HeavyRandom_BitString_Ops iteration: 88
+TestTrie_HeavyRandom_BitString_Get iteration: 8
+TestTrie_BitString_Exhaustive8Bit iteration: 102
+TestTrie_HeavyRandom_BitString_Ops iteration: 89
+TestTrie_BitString_Exhaustive8Bit iteration: 103
+TestTrie_HeavyRandom_BitString_Ops iteration: 90
+TestTrie_BitString_Exhaustive8Bit iteration: 104
+TestTrie_HeavyRandom_BitString_Ops iteration: 91
+TestTrie_BitString_Exhaustive8Bit iteration: 105
+TestTrie_HeavyRandom_BitString_Ops iteration: 92
+TestTrie_BitString_Exhaustive8Bit iteration: 106
+TestTrie_HeavyRandom_BitString_Ops iteration: 93
+TestTrie_BitString_Exhaustive8Bit iteration: 107
+TestTrie_BitString_Exhaustive8Bit iteration: 108
+TestTrie_HeavyRandom_BitString_Ops iteration: 94
+TestTrie_BitString_Exhaustive8Bit iteration: 109
+TestTrie_HeavyRandom_BitString_Ops iteration: 95
+TestTrie_BitString_Exhaustive8Bit iteration: 110
+TestTrie_HeavyRandom_BitString_Ops iteration: 96
+TestTrie_BitString_Exhaustive8Bit iteration: 111
+TestTrie_HeavyRandom_BitString_Ops iteration: 97
+TestTrie_BitString_Exhaustive8Bit iteration: 112
+TestTrie_HeavyRandom_BitString_Ops iteration: 98
+TestTrie_BitString_Exhaustive8Bit iteration: 113
+TestTrie_BitString_Exhaustive8Bit iteration: 114
+TestTrie_HeavyRandom_BitString_Ops iteration: 99
+TestTrie_HeavyRandom_BitString_Get iteration: 9
+TestTrie_BitString_Exhaustive8Bit iteration: 115
+TestTrie_BitString_Exhaustive8Bit iteration: 116
+TestTrie_BitString_Exhaustive8Bit iteration: 117
+TestTrie_BitString_Exhaustive8Bit iteration: 118
+TestTrie_BitString_Exhaustive8Bit iteration: 119
+TestTrie_BitString_Exhaustive8Bit iteration: 120
+TestTrie_BitString_Exhaustive8Bit iteration: 121
+TestTrie_BitString_Exhaustive8Bit iteration: 122
+TestTrie_BitString_Exhaustive8Bit iteration: 123
+TestTrie_BitString_Exhaustive8Bit iteration: 124
+TestTrie_BitString_Exhaustive8Bit iteration: 125
+TestTrie_BitString_Exhaustive8Bit iteration: 126
+TestTrie_HeavyRandom_BitString_Get iteration: 10
+TestTrie_BitString_Exhaustive8Bit iteration: 127
+TestTrie_BitString_Exhaustive8Bit iteration: 128
+TestTrie_BitString_Exhaustive8Bit iteration: 129
+TestTrie_BitString_Exhaustive8Bit iteration: 130
+TestTrie_BitString_Exhaustive8Bit iteration: 131
+TestTrie_BitString_Exhaustive8Bit iteration: 132
+TestTrie_BitString_Exhaustive8Bit iteration: 133
+TestTrie_BitString_Exhaustive8Bit iteration: 134
+TestTrie_BitString_Exhaustive8Bit iteration: 135
+TestTrie_BitString_Exhaustive8Bit iteration: 136
+TestTrie_BitString_Exhaustive8Bit iteration: 137
+TestTrie_BitString_Exhaustive8Bit iteration: 138
+TestTrie_BitString_Exhaustive8Bit iteration: 139
+TestTrie_HeavyRandom_BitString_Get iteration: 11
+TestTrie_BitString_Exhaustive8Bit iteration: 140
+TestTrie_BitString_Exhaustive8Bit iteration: 141
+TestTrie_BitString_Exhaustive8Bit iteration: 142
+TestTrie_BitString_Exhaustive8Bit iteration: 143
+TestTrie_BitString_Exhaustive8Bit iteration: 144
+TestTrie_BitString_Exhaustive8Bit iteration: 145
+TestTrie_BitString_Exhaustive8Bit iteration: 146
+TestTrie_BitString_Exhaustive8Bit iteration: 147
+TestTrie_BitString_Exhaustive8Bit iteration: 148
+TestTrie_BitString_Exhaustive8Bit iteration: 149
+TestTrie_BitString_Exhaustive8Bit iteration: 150
+TestTrie_BitString_Exhaustive8Bit iteration: 151
+TestTrie_HeavyRandom_BitString_Get iteration: 12
+TestTrie_BitString_Exhaustive8Bit iteration: 152
+TestTrie_BitString_Exhaustive8Bit iteration: 153
+TestTrie_BitString_Exhaustive8Bit iteration: 154
+TestTrie_BitString_Exhaustive8Bit iteration: 155
+TestTrie_BitString_Exhaustive8Bit iteration: 156
+TestTrie_BitString_Exhaustive8Bit iteration: 157
+TestTrie_BitString_Exhaustive8Bit iteration: 158
+TestTrie_BitString_Exhaustive8Bit iteration: 159
+TestTrie_BitString_Exhaustive8Bit iteration: 160
+TestTrie_BitString_Exhaustive8Bit iteration: 161
+TestTrie_BitString_Exhaustive8Bit iteration: 162
+TestTrie_BitString_Exhaustive8Bit iteration: 163
+TestTrie_BitString_Exhaustive8Bit iteration: 164
+TestTrie_HeavyRandom_BitString_Get iteration: 13
+TestTrie_BitString_Exhaustive8Bit iteration: 165
+TestTrie_BitString_Exhaustive8Bit iteration: 166
+TestTrie_BitString_Exhaustive8Bit iteration: 167
+TestTrie_BitString_Exhaustive8Bit iteration: 168
+TestTrie_BitString_Exhaustive8Bit iteration: 169
+TestTrie_BitString_Exhaustive8Bit iteration: 170
+TestTrie_BitString_Exhaustive8Bit iteration: 171
+TestTrie_BitString_Exhaustive8Bit iteration: 172
+TestTrie_BitString_Exhaustive8Bit iteration: 173
+TestTrie_BitString_Exhaustive8Bit iteration: 174
+TestTrie_BitString_Exhaustive8Bit iteration: 175
+TestTrie_BitString_Exhaustive8Bit iteration: 176
+TestTrie_BitString_Exhaustive8Bit iteration: 177
+TestTrie_HeavyRandom_BitString_Get iteration: 14
+TestTrie_BitString_Exhaustive8Bit iteration: 178
+TestTrie_BitString_Exhaustive8Bit iteration: 179
+TestTrie_BitString_Exhaustive8Bit iteration: 180
+TestTrie_BitString_Exhaustive8Bit iteration: 181
+TestTrie_BitString_Exhaustive8Bit iteration: 182
+TestTrie_BitString_Exhaustive8Bit iteration: 183
+TestTrie_BitString_Exhaustive8Bit iteration: 184
+TestTrie_BitString_Exhaustive8Bit iteration: 185
+TestTrie_BitString_Exhaustive8Bit iteration: 186
+TestTrie_BitString_Exhaustive8Bit iteration: 187
+TestTrie_BitString_Exhaustive8Bit iteration: 188
+TestTrie_BitString_Exhaustive8Bit iteration: 189
+TestTrie_HeavyRandom_BitString_Get iteration: 15
+TestTrie_BitString_Exhaustive8Bit iteration: 190
+TestTrie_BitString_Exhaustive8Bit iteration: 191
+TestTrie_BitString_Exhaustive8Bit iteration: 192
+TestTrie_BitString_Exhaustive8Bit iteration: 193
+TestTrie_BitString_Exhaustive8Bit iteration: 194
+TestTrie_BitString_Exhaustive8Bit iteration: 195
+TestTrie_BitString_Exhaustive8Bit iteration: 196
+TestTrie_BitString_Exhaustive8Bit iteration: 197
+TestTrie_BitString_Exhaustive8Bit iteration: 198
+TestTrie_BitString_Exhaustive8Bit iteration: 199
+TestTrie_BitString_Exhaustive8Bit iteration: 200
+TestTrie_BitString_Exhaustive8Bit iteration: 201
+TestTrie_BitString_Exhaustive8Bit iteration: 202
+TestTrie_HeavyRandom_BitString_Get iteration: 16
+TestTrie_BitString_Exhaustive8Bit iteration: 203
+TestTrie_BitString_Exhaustive8Bit iteration: 204
+TestTrie_BitString_Exhaustive8Bit iteration: 205
+TestTrie_BitString_Exhaustive8Bit iteration: 206
+TestTrie_BitString_Exhaustive8Bit iteration: 207
+TestTrie_BitString_Exhaustive8Bit iteration: 208
+TestTrie_BitString_Exhaustive8Bit iteration: 209
+TestTrie_BitString_Exhaustive8Bit iteration: 210
+TestTrie_BitString_Exhaustive8Bit iteration: 211
+TestTrie_BitString_Exhaustive8Bit iteration: 212
+TestTrie_BitString_Exhaustive8Bit iteration: 213
+TestTrie_BitString_Exhaustive8Bit iteration: 214
+TestTrie_BitString_Exhaustive8Bit iteration: 215
+TestTrie_HeavyRandom_BitString_Get iteration: 17
+TestTrie_BitString_Exhaustive8Bit iteration: 216
+TestTrie_BitString_Exhaustive8Bit iteration: 217
+TestTrie_BitString_Exhaustive8Bit iteration: 218
+TestTrie_BitString_Exhaustive8Bit iteration: 219
+TestTrie_BitString_Exhaustive8Bit iteration: 220
+TestTrie_BitString_Exhaustive8Bit iteration: 221
+TestTrie_BitString_Exhaustive8Bit iteration: 222
+TestTrie_BitString_Exhaustive8Bit iteration: 223
+TestTrie_BitString_Exhaustive8Bit iteration: 224
+TestTrie_BitString_Exhaustive8Bit iteration: 225
+TestTrie_BitString_Exhaustive8Bit iteration: 226
+TestTrie_BitString_Exhaustive8Bit iteration: 227
+TestTrie_BitString_Exhaustive8Bit iteration: 228
+TestTrie_HeavyRandom_BitString_Get iteration: 18
+TestTrie_BitString_Exhaustive8Bit iteration: 229
+TestTrie_BitString_Exhaustive8Bit iteration: 230
+TestTrie_BitString_Exhaustive8Bit iteration: 231
+TestTrie_BitString_Exhaustive8Bit iteration: 232
+TestTrie_BitString_Exhaustive8Bit iteration: 233
+TestTrie_BitString_Exhaustive8Bit iteration: 234
+TestTrie_BitString_Exhaustive8Bit iteration: 235
+TestTrie_BitString_Exhaustive8Bit iteration: 236
+TestTrie_BitString_Exhaustive8Bit iteration: 237
+TestTrie_BitString_Exhaustive8Bit iteration: 238
+TestTrie_BitString_Exhaustive8Bit iteration: 239
+TestTrie_BitString_Exhaustive8Bit iteration: 240
+TestTrie_HeavyRandom_BitString_Get iteration: 19
+TestTrie_BitString_Exhaustive8Bit iteration: 241
+TestTrie_BitString_Exhaustive8Bit iteration: 242
+TestTrie_BitString_Exhaustive8Bit iteration: 243
+TestTrie_BitString_Exhaustive8Bit iteration: 244
+TestTrie_BitString_Exhaustive8Bit iteration: 245
+TestTrie_BitString_Exhaustive8Bit iteration: 246
+TestTrie_BitString_Exhaustive8Bit iteration: 247
+TestTrie_BitString_Exhaustive8Bit iteration: 248
+TestTrie_BitString_Exhaustive8Bit iteration: 249
+TestTrie_BitString_Exhaustive8Bit iteration: 250
+TestTrie_BitString_Exhaustive8Bit iteration: 251
+TestTrie_BitString_Exhaustive8Bit iteration: 252
+TestTrie_BitString_Exhaustive8Bit iteration: 253
+TestTrie_HeavyRandom_BitString_Get iteration: 20
+TestTrie_BitString_Exhaustive8Bit iteration: 254
+TestTrie_BitString_Exhaustive8Bit iteration: 255
+TestTrie_BitString_Exhaustive8Bit iteration: 256
+TestTrie_BitString_Exhaustive8Bit iteration: 257
+TestTrie_BitString_Exhaustive8Bit iteration: 258
+TestTrie_BitString_Exhaustive8Bit iteration: 259
+TestTrie_BitString_Exhaustive8Bit iteration: 260
+TestTrie_BitString_Exhaustive8Bit iteration: 261
+TestTrie_BitString_Exhaustive8Bit iteration: 262
+TestTrie_BitString_Exhaustive8Bit iteration: 263
+TestTrie_BitString_Exhaustive8Bit iteration: 264
+TestTrie_BitString_Exhaustive8Bit iteration: 265
+TestTrie_HeavyRandom_BitString_Get iteration: 21
+TestTrie_BitString_Exhaustive8Bit iteration: 266
+TestTrie_BitString_Exhaustive8Bit iteration: 267
+TestTrie_BitString_Exhaustive8Bit iteration: 268
+TestTrie_BitString_Exhaustive8Bit iteration: 269
+TestTrie_BitString_Exhaustive8Bit iteration: 270
+TestTrie_BitString_Exhaustive8Bit iteration: 271
+TestTrie_BitString_Exhaustive8Bit iteration: 272
+TestTrie_BitString_Exhaustive8Bit iteration: 273
+TestTrie_BitString_Exhaustive8Bit iteration: 274
+TestTrie_BitString_Exhaustive8Bit iteration: 275
+TestTrie_BitString_Exhaustive8Bit iteration: 276
+TestTrie_BitString_Exhaustive8Bit iteration: 277
+TestTrie_HeavyRandom_BitString_Get iteration: 22
+TestTrie_BitString_Exhaustive8Bit iteration: 278
+TestTrie_BitString_Exhaustive8Bit iteration: 279
+TestTrie_BitString_Exhaustive8Bit iteration: 280
+TestTrie_BitString_Exhaustive8Bit iteration: 281
+TestTrie_BitString_Exhaustive8Bit iteration: 282
+TestTrie_BitString_Exhaustive8Bit iteration: 283
+TestTrie_BitString_Exhaustive8Bit iteration: 284
+TestTrie_BitString_Exhaustive8Bit iteration: 285
+TestTrie_BitString_Exhaustive8Bit iteration: 286
+TestTrie_BitString_Exhaustive8Bit iteration: 287
+TestTrie_BitString_Exhaustive8Bit iteration: 288
+TestTrie_BitString_Exhaustive8Bit iteration: 289
+TestTrie_BitString_Exhaustive8Bit iteration: 290
+TestTrie_BitString_Exhaustive8Bit iteration: 291
+TestTrie_HeavyRandom_BitString_Get iteration: 23
+TestTrie_BitString_Exhaustive8Bit iteration: 292
+TestTrie_BitString_Exhaustive8Bit iteration: 293
+TestTrie_BitString_Exhaustive8Bit iteration: 294
+TestTrie_BitString_Exhaustive8Bit iteration: 295
+TestTrie_BitString_Exhaustive8Bit iteration: 296
+TestTrie_BitString_Exhaustive8Bit iteration: 297
+TestTrie_BitString_Exhaustive8Bit iteration: 298
+TestTrie_BitString_Exhaustive8Bit iteration: 299
+TestTrie_BitString_Exhaustive8Bit iteration: 300
+TestTrie_BitString_Exhaustive8Bit iteration: 301
+TestTrie_BitString_Exhaustive8Bit iteration: 302
+TestTrie_BitString_Exhaustive8Bit iteration: 303
+TestTrie_HeavyRandom_BitString_Get iteration: 24
+TestTrie_BitString_Exhaustive8Bit iteration: 304
+TestTrie_BitString_Exhaustive8Bit iteration: 305
+TestTrie_BitString_Exhaustive8Bit iteration: 306
+TestTrie_BitString_Exhaustive8Bit iteration: 307
+TestTrie_BitString_Exhaustive8Bit iteration: 308
+TestTrie_BitString_Exhaustive8Bit iteration: 309
+TestTrie_BitString_Exhaustive8Bit iteration: 310
+TestTrie_BitString_Exhaustive8Bit iteration: 311
+TestTrie_BitString_Exhaustive8Bit iteration: 312
+TestTrie_BitString_Exhaustive8Bit iteration: 313
+TestTrie_BitString_Exhaustive8Bit iteration: 314
+TestTrie_BitString_Exhaustive8Bit iteration: 315
+TestTrie_HeavyRandom_BitString_Get iteration: 25
+TestTrie_BitString_Exhaustive8Bit iteration: 316
+TestTrie_BitString_Exhaustive8Bit iteration: 317
+TestTrie_BitString_Exhaustive8Bit iteration: 318
+TestTrie_BitString_Exhaustive8Bit iteration: 319
+TestTrie_BitString_Exhaustive8Bit iteration: 320
+TestTrie_BitString_Exhaustive8Bit iteration: 321
+TestTrie_BitString_Exhaustive8Bit iteration: 322
+TestTrie_BitString_Exhaustive8Bit iteration: 323
+TestTrie_BitString_Exhaustive8Bit iteration: 324
+TestTrie_BitString_Exhaustive8Bit iteration: 325
+TestTrie_BitString_Exhaustive8Bit iteration: 326
+TestTrie_BitString_Exhaustive8Bit iteration: 327
+TestTrie_BitString_Exhaustive8Bit iteration: 328
+TestTrie_BitString_Exhaustive8Bit iteration: 329
+TestTrie_HeavyRandom_BitString_Get iteration: 26
+TestTrie_BitString_Exhaustive8Bit iteration: 330
+TestTrie_BitString_Exhaustive8Bit iteration: 331
+TestTrie_BitString_Exhaustive8Bit iteration: 332
+TestTrie_BitString_Exhaustive8Bit iteration: 333
+TestTrie_BitString_Exhaustive8Bit iteration: 334
+TestTrie_BitString_Exhaustive8Bit iteration: 335
+TestTrie_BitString_Exhaustive8Bit iteration: 336
+TestTrie_BitString_Exhaustive8Bit iteration: 337
+TestTrie_BitString_Exhaustive8Bit iteration: 338
+TestTrie_BitString_Exhaustive8Bit iteration: 339
+TestTrie_BitString_Exhaustive8Bit iteration: 340
+TestTrie_BitString_Exhaustive8Bit iteration: 341
+TestTrie_HeavyRandom_BitString_Get iteration: 27
+TestTrie_BitString_Exhaustive8Bit iteration: 342
+TestTrie_BitString_Exhaustive8Bit iteration: 343
+TestTrie_BitString_Exhaustive8Bit iteration: 344
+TestTrie_BitString_Exhaustive8Bit iteration: 345
+TestTrie_BitString_Exhaustive8Bit iteration: 346
+TestTrie_BitString_Exhaustive8Bit iteration: 347
+TestTrie_BitString_Exhaustive8Bit iteration: 348
+TestTrie_BitString_Exhaustive8Bit iteration: 349
+TestTrie_BitString_Exhaustive8Bit iteration: 350
+TestTrie_BitString_Exhaustive8Bit iteration: 351
+TestTrie_BitString_Exhaustive8Bit iteration: 352
+TestTrie_BitString_Exhaustive8Bit iteration: 353
+TestTrie_HeavyRandom_BitString_Get iteration: 28
+TestTrie_BitString_Exhaustive8Bit iteration: 354
+TestTrie_BitString_Exhaustive8Bit iteration: 355
+TestTrie_BitString_Exhaustive8Bit iteration: 356
+TestTrie_BitString_Exhaustive8Bit iteration: 357
+TestTrie_BitString_Exhaustive8Bit iteration: 358
+TestTrie_BitString_Exhaustive8Bit iteration: 359
+TestTrie_BitString_Exhaustive8Bit iteration: 360
+TestTrie_BitString_Exhaustive8Bit iteration: 361
+TestTrie_BitString_Exhaustive8Bit iteration: 362
+TestTrie_BitString_Exhaustive8Bit iteration: 363
+TestTrie_BitString_Exhaustive8Bit iteration: 364
+TestTrie_BitString_Exhaustive8Bit iteration: 365
+TestTrie_BitString_Exhaustive8Bit iteration: 366
+TestTrie_BitString_Exhaustive8Bit iteration: 367
+TestTrie_HeavyRandom_BitString_Get iteration: 29
+TestTrie_BitString_Exhaustive8Bit iteration: 368
+TestTrie_BitString_Exhaustive8Bit iteration: 369
+TestTrie_BitString_Exhaustive8Bit iteration: 370
+TestTrie_BitString_Exhaustive8Bit iteration: 371
+TestTrie_BitString_Exhaustive8Bit iteration: 372
+TestTrie_BitString_Exhaustive8Bit iteration: 373
+TestTrie_BitString_Exhaustive8Bit iteration: 374
+TestTrie_BitString_Exhaustive8Bit iteration: 375
+TestTrie_BitString_Exhaustive8Bit iteration: 376
+TestTrie_BitString_Exhaustive8Bit iteration: 377
+TestTrie_BitString_Exhaustive8Bit iteration: 378
+TestTrie_BitString_Exhaustive8Bit iteration: 379
+TestTrie_BitString_Exhaustive8Bit iteration: 380
+TestTrie_BitString_Exhaustive8Bit iteration: 381
+TestTrie_HeavyRandom_BitString_Get iteration: 30
+TestTrie_BitString_Exhaustive8Bit iteration: 382
+TestTrie_BitString_Exhaustive8Bit iteration: 383
+TestTrie_BitString_Exhaustive8Bit iteration: 384
+TestTrie_BitString_Exhaustive8Bit iteration: 385
+TestTrie_BitString_Exhaustive8Bit iteration: 386
+TestTrie_BitString_Exhaustive8Bit iteration: 387
+TestTrie_BitString_Exhaustive8Bit iteration: 388
+TestTrie_BitString_Exhaustive8Bit iteration: 389
+TestTrie_BitString_Exhaustive8Bit iteration: 390
+TestTrie_BitString_Exhaustive8Bit iteration: 391
+TestTrie_BitString_Exhaustive8Bit iteration: 392
+TestTrie_BitString_Exhaustive8Bit iteration: 393
+TestTrie_HeavyRandom_BitString_Get iteration: 31
+TestTrie_BitString_Exhaustive8Bit iteration: 394
+TestTrie_BitString_Exhaustive8Bit iteration: 395
+TestTrie_BitString_Exhaustive8Bit iteration: 396
+TestTrie_BitString_Exhaustive8Bit iteration: 397
+TestTrie_BitString_Exhaustive8Bit iteration: 398
+TestTrie_BitString_Exhaustive8Bit iteration: 399
+TestTrie_BitString_Exhaustive8Bit iteration: 400
+TestTrie_BitString_Exhaustive8Bit iteration: 401
+TestTrie_BitString_Exhaustive8Bit iteration: 402
+TestTrie_BitString_Exhaustive8Bit iteration: 403
+TestTrie_BitString_Exhaustive8Bit iteration: 404
+TestTrie_BitString_Exhaustive8Bit iteration: 405
+TestTrie_HeavyRandom_BitString_Get iteration: 32
+TestTrie_BitString_Exhaustive8Bit iteration: 406
+TestTrie_BitString_Exhaustive8Bit iteration: 407
+TestTrie_BitString_Exhaustive8Bit iteration: 408
+TestTrie_BitString_Exhaustive8Bit iteration: 409
+TestTrie_BitString_Exhaustive8Bit iteration: 410
+TestTrie_BitString_Exhaustive8Bit iteration: 411
+TestTrie_BitString_Exhaustive8Bit iteration: 412
+TestTrie_BitString_Exhaustive8Bit iteration: 413
+TestTrie_BitString_Exhaustive8Bit iteration: 414
+TestTrie_BitString_Exhaustive8Bit iteration: 415
+TestTrie_BitString_Exhaustive8Bit iteration: 416
+TestTrie_BitString_Exhaustive8Bit iteration: 417
+TestTrie_BitString_Exhaustive8Bit iteration: 418
+TestTrie_HeavyRandom_BitString_Get iteration: 33
+TestTrie_BitString_Exhaustive8Bit iteration: 419
+TestTrie_BitString_Exhaustive8Bit iteration: 420
+TestTrie_BitString_Exhaustive8Bit iteration: 421
+TestTrie_BitString_Exhaustive8Bit iteration: 422
+TestTrie_BitString_Exhaustive8Bit iteration: 423
+TestTrie_BitString_Exhaustive8Bit iteration: 424
+TestTrie_BitString_Exhaustive8Bit iteration: 425
+TestTrie_BitString_Exhaustive8Bit iteration: 426
+TestTrie_BitString_Exhaustive8Bit iteration: 427
+TestTrie_BitString_Exhaustive8Bit iteration: 428
+TestTrie_BitString_Exhaustive8Bit iteration: 429
+TestTrie_BitString_Exhaustive8Bit iteration: 430
+TestTrie_HeavyRandom_BitString_Get iteration: 34
+TestTrie_BitString_Exhaustive8Bit iteration: 431
+TestTrie_BitString_Exhaustive8Bit iteration: 432
+TestTrie_BitString_Exhaustive8Bit iteration: 433
+TestTrie_BitString_Exhaustive8Bit iteration: 434
+TestTrie_BitString_Exhaustive8Bit iteration: 435
+TestTrie_BitString_Exhaustive8Bit iteration: 436
+TestTrie_BitString_Exhaustive8Bit iteration: 437
+TestTrie_BitString_Exhaustive8Bit iteration: 438
+TestTrie_BitString_Exhaustive8Bit iteration: 439
+TestTrie_BitString_Exhaustive8Bit iteration: 440
+TestTrie_BitString_Exhaustive8Bit iteration: 441
+TestTrie_BitString_Exhaustive8Bit iteration: 442
+TestTrie_HeavyRandom_BitString_Get iteration: 35
+TestTrie_BitString_Exhaustive8Bit iteration: 443
+TestTrie_BitString_Exhaustive8Bit iteration: 444
+TestTrie_BitString_Exhaustive8Bit iteration: 445
+TestTrie_BitString_Exhaustive8Bit iteration: 446
+TestTrie_BitString_Exhaustive8Bit iteration: 447
+TestTrie_BitString_Exhaustive8Bit iteration: 448
+TestTrie_BitString_Exhaustive8Bit iteration: 449
+TestTrie_BitString_Exhaustive8Bit iteration: 450
+TestTrie_BitString_Exhaustive8Bit iteration: 451
+TestTrie_BitString_Exhaustive8Bit iteration: 452
+TestTrie_BitString_Exhaustive8Bit iteration: 453
+TestTrie_BitString_Exhaustive8Bit iteration: 454
+TestTrie_HeavyRandom_BitString_Get iteration: 36
+TestTrie_BitString_Exhaustive8Bit iteration: 455
+TestTrie_BitString_Exhaustive8Bit iteration: 456
+TestTrie_BitString_Exhaustive8Bit iteration: 457
+TestTrie_BitString_Exhaustive8Bit iteration: 458
+TestTrie_BitString_Exhaustive8Bit iteration: 459
+TestTrie_BitString_Exhaustive8Bit iteration: 460
+TestTrie_BitString_Exhaustive8Bit iteration: 461
+TestTrie_BitString_Exhaustive8Bit iteration: 462
+TestTrie_BitString_Exhaustive8Bit iteration: 463
+TestTrie_BitString_Exhaustive8Bit iteration: 464
+TestTrie_BitString_Exhaustive8Bit iteration: 465
+TestTrie_BitString_Exhaustive8Bit iteration: 466
+TestTrie_HeavyRandom_BitString_Get iteration: 37
+TestTrie_BitString_Exhaustive8Bit iteration: 467
+TestTrie_BitString_Exhaustive8Bit iteration: 468
+TestTrie_BitString_Exhaustive8Bit iteration: 469
+TestTrie_BitString_Exhaustive8Bit iteration: 470
+TestTrie_BitString_Exhaustive8Bit iteration: 471
+TestTrie_BitString_Exhaustive8Bit iteration: 472
+TestTrie_BitString_Exhaustive8Bit iteration: 473
+TestTrie_BitString_Exhaustive8Bit iteration: 474
+TestTrie_BitString_Exhaustive8Bit iteration: 475
+TestTrie_BitString_Exhaustive8Bit iteration: 476
+TestTrie_BitString_Exhaustive8Bit iteration: 477
+TestTrie_BitString_Exhaustive8Bit iteration: 478
+TestTrie_BitString_Exhaustive8Bit iteration: 479
+TestTrie_BitString_Exhaustive8Bit iteration: 480
+TestTrie_HeavyRandom_BitString_Get iteration: 38
+TestTrie_BitString_Exhaustive8Bit iteration: 481
+TestTrie_BitString_Exhaustive8Bit iteration: 482
+TestTrie_BitString_Exhaustive8Bit iteration: 483
+TestTrie_BitString_Exhaustive8Bit iteration: 484
+TestTrie_BitString_Exhaustive8Bit iteration: 485
+TestTrie_BitString_Exhaustive8Bit iteration: 486
+TestTrie_BitString_Exhaustive8Bit iteration: 487
+TestTrie_BitString_Exhaustive8Bit iteration: 488
+TestTrie_BitString_Exhaustive8Bit iteration: 489
+TestTrie_BitString_Exhaustive8Bit iteration: 490
+TestTrie_BitString_Exhaustive8Bit iteration: 491
+TestTrie_BitString_Exhaustive8Bit iteration: 492
+TestTrie_BitString_Exhaustive8Bit iteration: 493
+TestTrie_HeavyRandom_BitString_Get iteration: 39
+TestTrie_BitString_Exhaustive8Bit iteration: 494
+TestTrie_BitString_Exhaustive8Bit iteration: 495
+TestTrie_BitString_Exhaustive8Bit iteration: 496
+TestTrie_BitString_Exhaustive8Bit iteration: 497
+TestTrie_BitString_Exhaustive8Bit iteration: 498
+TestTrie_BitString_Exhaustive8Bit iteration: 499
+TestTrie_BitString_Exhaustive8Bit iteration: 500
+TestTrie_BitString_Exhaustive8Bit iteration: 501
+TestTrie_BitString_Exhaustive8Bit iteration: 502
+TestTrie_BitString_Exhaustive8Bit iteration: 503
+TestTrie_BitString_Exhaustive8Bit iteration: 504
+TestTrie_BitString_Exhaustive8Bit iteration: 505
+TestTrie_HeavyRandom_BitString_Get iteration: 40
+TestTrie_BitString_Exhaustive8Bit iteration: 506
+TestTrie_BitString_Exhaustive8Bit iteration: 507
+TestTrie_BitString_Exhaustive8Bit iteration: 508
+TestTrie_BitString_Exhaustive8Bit iteration: 509
+TestTrie_BitString_Exhaustive8Bit iteration: 510
+TestTrie_BitString_Exhaustive8Bit iteration: 511
+TestTrie_BitString_Exhaustive8Bit iteration: 512
+TestTrie_BitString_Exhaustive8Bit iteration: 513
+TestTrie_BitString_Exhaustive8Bit iteration: 514
+TestTrie_BitString_Exhaustive8Bit iteration: 515
+TestTrie_BitString_Exhaustive8Bit iteration: 516
+TestTrie_BitString_Exhaustive8Bit iteration: 517
+TestTrie_BitString_Exhaustive8Bit iteration: 518
+TestTrie_HeavyRandom_BitString_Get iteration: 41
+TestTrie_BitString_Exhaustive8Bit iteration: 519
+TestTrie_BitString_Exhaustive8Bit iteration: 520
+TestTrie_BitString_Exhaustive8Bit iteration: 521
+TestTrie_BitString_Exhaustive8Bit iteration: 522
+TestTrie_BitString_Exhaustive8Bit iteration: 523
+TestTrie_BitString_Exhaustive8Bit iteration: 524
+TestTrie_BitString_Exhaustive8Bit iteration: 525
+TestTrie_BitString_Exhaustive8Bit iteration: 526
+TestTrie_BitString_Exhaustive8Bit iteration: 527
+TestTrie_BitString_Exhaustive8Bit iteration: 528
+TestTrie_BitString_Exhaustive8Bit iteration: 529
+TestTrie_BitString_Exhaustive8Bit iteration: 530
+TestTrie_HeavyRandom_BitString_Get iteration: 42
+TestTrie_BitString_Exhaustive8Bit iteration: 531
+TestTrie_BitString_Exhaustive8Bit iteration: 532
+TestTrie_BitString_Exhaustive8Bit iteration: 533
+TestTrie_BitString_Exhaustive8Bit iteration: 534
+TestTrie_BitString_Exhaustive8Bit iteration: 535
+TestTrie_BitString_Exhaustive8Bit iteration: 536
+TestTrie_BitString_Exhaustive8Bit iteration: 537
+TestTrie_BitString_Exhaustive8Bit iteration: 538
+TestTrie_BitString_Exhaustive8Bit iteration: 539
+TestTrie_BitString_Exhaustive8Bit iteration: 540
+TestTrie_BitString_Exhaustive8Bit iteration: 541
+TestTrie_BitString_Exhaustive8Bit iteration: 542
+TestTrie_BitString_Exhaustive8Bit iteration: 543
+TestTrie_HeavyRandom_BitString_Get iteration: 43
+TestTrie_BitString_Exhaustive8Bit iteration: 544
+TestTrie_BitString_Exhaustive8Bit iteration: 545
+TestTrie_BitString_Exhaustive8Bit iteration: 546
+TestTrie_BitString_Exhaustive8Bit iteration: 547
+TestTrie_BitString_Exhaustive8Bit iteration: 548
+TestTrie_BitString_Exhaustive8Bit iteration: 549
+TestTrie_BitString_Exhaustive8Bit iteration: 550
+TestTrie_BitString_Exhaustive8Bit iteration: 551
+TestTrie_BitString_Exhaustive8Bit iteration: 552
+TestTrie_BitString_Exhaustive8Bit iteration: 553
+TestTrie_BitString_Exhaustive8Bit iteration: 554
+TestTrie_BitString_Exhaustive8Bit iteration: 555
+TestTrie_BitString_Exhaustive8Bit iteration: 556
+TestTrie_HeavyRandom_BitString_Get iteration: 44
+TestTrie_BitString_Exhaustive8Bit iteration: 557
+TestTrie_BitString_Exhaustive8Bit iteration: 558
+TestTrie_BitString_Exhaustive8Bit iteration: 559
+TestTrie_BitString_Exhaustive8Bit iteration: 560
+TestTrie_BitString_Exhaustive8Bit iteration: 561
+TestTrie_BitString_Exhaustive8Bit iteration: 562
+TestTrie_BitString_Exhaustive8Bit iteration: 563
+TestTrie_BitString_Exhaustive8Bit iteration: 564
+TestTrie_BitString_Exhaustive8Bit iteration: 565
+TestTrie_BitString_Exhaustive8Bit iteration: 566
+TestTrie_BitString_Exhaustive8Bit iteration: 567
+TestTrie_BitString_Exhaustive8Bit iteration: 568
+TestTrie_BitString_Exhaustive8Bit iteration: 569
+TestTrie_BitString_Exhaustive8Bit iteration: 570
+TestTrie_HeavyRandom_BitString_Get iteration: 45
+TestTrie_BitString_Exhaustive8Bit iteration: 571
+TestTrie_BitString_Exhaustive8Bit iteration: 572
+TestTrie_BitString_Exhaustive8Bit iteration: 573
+TestTrie_BitString_Exhaustive8Bit iteration: 574
+TestTrie_BitString_Exhaustive8Bit iteration: 575
+TestTrie_BitString_Exhaustive8Bit iteration: 576
+TestTrie_BitString_Exhaustive8Bit iteration: 577
+TestTrie_BitString_Exhaustive8Bit iteration: 578
+TestTrie_BitString_Exhaustive8Bit iteration: 579
+TestTrie_BitString_Exhaustive8Bit iteration: 580
+TestTrie_BitString_Exhaustive8Bit iteration: 581
+TestTrie_BitString_Exhaustive8Bit iteration: 582
+TestTrie_HeavyRandom_BitString_Get iteration: 46
+TestTrie_BitString_Exhaustive8Bit iteration: 583
+TestTrie_BitString_Exhaustive8Bit iteration: 584
+TestTrie_BitString_Exhaustive8Bit iteration: 585
+TestTrie_BitString_Exhaustive8Bit iteration: 586
+TestTrie_BitString_Exhaustive8Bit iteration: 587
+TestTrie_BitString_Exhaustive8Bit iteration: 588
+TestTrie_BitString_Exhaustive8Bit iteration: 589
+TestTrie_BitString_Exhaustive8Bit iteration: 590
+TestTrie_BitString_Exhaustive8Bit iteration: 591
+TestTrie_BitString_Exhaustive8Bit iteration: 592
+TestTrie_BitString_Exhaustive8Bit iteration: 593
+TestTrie_BitString_Exhaustive8Bit iteration: 594
+TestTrie_HeavyRandom_BitString_Get iteration: 47
+TestTrie_BitString_Exhaustive8Bit iteration: 595
+TestTrie_BitString_Exhaustive8Bit iteration: 596
+TestTrie_BitString_Exhaustive8Bit iteration: 597
+TestTrie_BitString_Exhaustive8Bit iteration: 598
+TestTrie_BitString_Exhaustive8Bit iteration: 599
+TestTrie_BitString_Exhaustive8Bit iteration: 600
+TestTrie_BitString_Exhaustive8Bit iteration: 601
+TestTrie_BitString_Exhaustive8Bit iteration: 602
+TestTrie_BitString_Exhaustive8Bit iteration: 603
+TestTrie_BitString_Exhaustive8Bit iteration: 604
+TestTrie_BitString_Exhaustive8Bit iteration: 605
+TestTrie_HeavyRandom_BitString_Get iteration: 48
+TestTrie_BitString_Exhaustive8Bit iteration: 606
+TestTrie_BitString_Exhaustive8Bit iteration: 607
+TestTrie_BitString_Exhaustive8Bit iteration: 608
+TestTrie_BitString_Exhaustive8Bit iteration: 609
+TestTrie_BitString_Exhaustive8Bit iteration: 610
+TestTrie_BitString_Exhaustive8Bit iteration: 611
+TestTrie_BitString_Exhaustive8Bit iteration: 612
+TestTrie_BitString_Exhaustive8Bit iteration: 613
+TestTrie_BitString_Exhaustive8Bit iteration: 614
+TestTrie_BitString_Exhaustive8Bit iteration: 615
+TestTrie_BitString_Exhaustive8Bit iteration: 616
+TestTrie_BitString_Exhaustive8Bit iteration: 617
+TestTrie_BitString_Exhaustive8Bit iteration: 618
+TestTrie_BitString_Exhaustive8Bit iteration: 619
+TestTrie_HeavyRandom_BitString_Get iteration: 49
+TestTrie_BitString_Exhaustive8Bit iteration: 620
+TestTrie_BitString_Exhaustive8Bit iteration: 621
+TestTrie_BitString_Exhaustive8Bit iteration: 622
+TestTrie_BitString_Exhaustive8Bit iteration: 623
+TestTrie_BitString_Exhaustive8Bit iteration: 624
+TestTrie_BitString_Exhaustive8Bit iteration: 625
+TestTrie_BitString_Exhaustive8Bit iteration: 626
+TestTrie_BitString_Exhaustive8Bit iteration: 627
+TestTrie_BitString_Exhaustive8Bit iteration: 628
+TestTrie_BitString_Exhaustive8Bit iteration: 629
+TestTrie_BitString_Exhaustive8Bit iteration: 630
+TestTrie_BitString_Exhaustive8Bit iteration: 631
+TestTrie_BitString_Exhaustive8Bit iteration: 632
+TestTrie_HeavyRandom_BitString_Get iteration: 50
+TestTrie_BitString_Exhaustive8Bit iteration: 633
+TestTrie_BitString_Exhaustive8Bit iteration: 634
+TestTrie_BitString_Exhaustive8Bit iteration: 635
+TestTrie_BitString_Exhaustive8Bit iteration: 636
+TestTrie_BitString_Exhaustive8Bit iteration: 637
+TestTrie_BitString_Exhaustive8Bit iteration: 638
+TestTrie_BitString_Exhaustive8Bit iteration: 639
+TestTrie_BitString_Exhaustive8Bit iteration: 640
+TestTrie_BitString_Exhaustive8Bit iteration: 641
+TestTrie_BitString_Exhaustive8Bit iteration: 642
+TestTrie_BitString_Exhaustive8Bit iteration: 643
+TestTrie_BitString_Exhaustive8Bit iteration: 644
+TestTrie_HeavyRandom_BitString_Get iteration: 51
+TestTrie_BitString_Exhaustive8Bit iteration: 645
+TestTrie_BitString_Exhaustive8Bit iteration: 646
+TestTrie_BitString_Exhaustive8Bit iteration: 647
+TestTrie_BitString_Exhaustive8Bit iteration: 648
+TestTrie_BitString_Exhaustive8Bit iteration: 649
+TestTrie_BitString_Exhaustive8Bit iteration: 650
+TestTrie_BitString_Exhaustive8Bit iteration: 651
+TestTrie_BitString_Exhaustive8Bit iteration: 652
+TestTrie_BitString_Exhaustive8Bit iteration: 653
+TestTrie_BitString_Exhaustive8Bit iteration: 654
+TestTrie_BitString_Exhaustive8Bit iteration: 655
+TestTrie_BitString_Exhaustive8Bit iteration: 656
+TestTrie_HeavyRandom_BitString_Get iteration: 52
+TestTrie_BitString_Exhaustive8Bit iteration: 657
+TestTrie_BitString_Exhaustive8Bit iteration: 658
+TestTrie_BitString_Exhaustive8Bit iteration: 659
+TestTrie_BitString_Exhaustive8Bit iteration: 660
+TestTrie_BitString_Exhaustive8Bit iteration: 661
+TestTrie_BitString_Exhaustive8Bit iteration: 662
+TestTrie_BitString_Exhaustive8Bit iteration: 663
+TestTrie_BitString_Exhaustive8Bit iteration: 664
+TestTrie_BitString_Exhaustive8Bit iteration: 665
+TestTrie_BitString_Exhaustive8Bit iteration: 666
+TestTrie_BitString_Exhaustive8Bit iteration: 667
+TestTrie_BitString_Exhaustive8Bit iteration: 668
+TestTrie_BitString_Exhaustive8Bit iteration: 669
+TestTrie_HeavyRandom_BitString_Get iteration: 53
+TestTrie_BitString_Exhaustive8Bit iteration: 670
+TestTrie_BitString_Exhaustive8Bit iteration: 671
+TestTrie_BitString_Exhaustive8Bit iteration: 672
+TestTrie_BitString_Exhaustive8Bit iteration: 673
+TestTrie_BitString_Exhaustive8Bit iteration: 674
+TestTrie_BitString_Exhaustive8Bit iteration: 675
+TestTrie_BitString_Exhaustive8Bit iteration: 676
+TestTrie_BitString_Exhaustive8Bit iteration: 677
+TestTrie_BitString_Exhaustive8Bit iteration: 678
+TestTrie_BitString_Exhaustive8Bit iteration: 679
+TestTrie_BitString_Exhaustive8Bit iteration: 680
+TestTrie_HeavyRandom_BitString_Get iteration: 54
+TestTrie_BitString_Exhaustive8Bit iteration: 681
+TestTrie_BitString_Exhaustive8Bit iteration: 682
+TestTrie_BitString_Exhaustive8Bit iteration: 683
+TestTrie_BitString_Exhaustive8Bit iteration: 684
+TestTrie_BitString_Exhaustive8Bit iteration: 685
+TestTrie_BitString_Exhaustive8Bit iteration: 686
+TestTrie_BitString_Exhaustive8Bit iteration: 687
+TestTrie_BitString_Exhaustive8Bit iteration: 688
+TestTrie_BitString_Exhaustive8Bit iteration: 689
+TestTrie_BitString_Exhaustive8Bit iteration: 690
+TestTrie_BitString_Exhaustive8Bit iteration: 691
+TestTrie_BitString_Exhaustive8Bit iteration: 692
+TestTrie_HeavyRandom_BitString_Get iteration: 55
+TestTrie_BitString_Exhaustive8Bit iteration: 693
+TestTrie_BitString_Exhaustive8Bit iteration: 694
+TestTrie_BitString_Exhaustive8Bit iteration: 695
+TestTrie_BitString_Exhaustive8Bit iteration: 696
+TestTrie_BitString_Exhaustive8Bit iteration: 697
+TestTrie_BitString_Exhaustive8Bit iteration: 698
+TestTrie_BitString_Exhaustive8Bit iteration: 699
+TestTrie_BitString_Exhaustive8Bit iteration: 700
+TestTrie_BitString_Exhaustive8Bit iteration: 701
+TestTrie_BitString_Exhaustive8Bit iteration: 702
+TestTrie_BitString_Exhaustive8Bit iteration: 703
+TestTrie_BitString_Exhaustive8Bit iteration: 704
+TestTrie_BitString_Exhaustive8Bit iteration: 705
+TestTrie_BitString_Exhaustive8Bit iteration: 706
+TestTrie_HeavyRandom_BitString_Get iteration: 56
+TestTrie_BitString_Exhaustive8Bit iteration: 707
+TestTrie_BitString_Exhaustive8Bit iteration: 708
+TestTrie_BitString_Exhaustive8Bit iteration: 709
+TestTrie_BitString_Exhaustive8Bit iteration: 710
+TestTrie_BitString_Exhaustive8Bit iteration: 711
+TestTrie_BitString_Exhaustive8Bit iteration: 712
+TestTrie_BitString_Exhaustive8Bit iteration: 713
+TestTrie_BitString_Exhaustive8Bit iteration: 714
+TestTrie_BitString_Exhaustive8Bit iteration: 715
+TestTrie_BitString_Exhaustive8Bit iteration: 716
+TestTrie_BitString_Exhaustive8Bit iteration: 717
+TestTrie_BitString_Exhaustive8Bit iteration: 718
+TestTrie_BitString_Exhaustive8Bit iteration: 719
+TestTrie_HeavyRandom_BitString_Get iteration: 57
+TestTrie_BitString_Exhaustive8Bit iteration: 720
+TestTrie_BitString_Exhaustive8Bit iteration: 721
+TestTrie_BitString_Exhaustive8Bit iteration: 722
+TestTrie_BitString_Exhaustive8Bit iteration: 723
+TestTrie_BitString_Exhaustive8Bit iteration: 724
+TestTrie_BitString_Exhaustive8Bit iteration: 725
+TestTrie_BitString_Exhaustive8Bit iteration: 726
+TestTrie_BitString_Exhaustive8Bit iteration: 727
+TestTrie_BitString_Exhaustive8Bit iteration: 728
+TestTrie_BitString_Exhaustive8Bit iteration: 729
+TestTrie_BitString_Exhaustive8Bit iteration: 730
+TestTrie_BitString_Exhaustive8Bit iteration: 731
+TestTrie_HeavyRandom_BitString_Get iteration: 58
+TestTrie_BitString_Exhaustive8Bit iteration: 732
+TestTrie_BitString_Exhaustive8Bit iteration: 733
+TestTrie_BitString_Exhaustive8Bit iteration: 734
+TestTrie_BitString_Exhaustive8Bit iteration: 735
+TestTrie_BitString_Exhaustive8Bit iteration: 736
+TestTrie_BitString_Exhaustive8Bit iteration: 737
+TestTrie_BitString_Exhaustive8Bit iteration: 738
+TestTrie_BitString_Exhaustive8Bit iteration: 739
+TestTrie_BitString_Exhaustive8Bit iteration: 740
+TestTrie_BitString_Exhaustive8Bit iteration: 741
+TestTrie_BitString_Exhaustive8Bit iteration: 742
+TestTrie_BitString_Exhaustive8Bit iteration: 743
+TestTrie_HeavyRandom_BitString_Get iteration: 59
+TestTrie_BitString_Exhaustive8Bit iteration: 744
+TestTrie_BitString_Exhaustive8Bit iteration: 745
+TestTrie_BitString_Exhaustive8Bit iteration: 746
+TestTrie_BitString_Exhaustive8Bit iteration: 747
+TestTrie_BitString_Exhaustive8Bit iteration: 748
+TestTrie_BitString_Exhaustive8Bit iteration: 749
+TestTrie_BitString_Exhaustive8Bit iteration: 750
+TestTrie_BitString_Exhaustive8Bit iteration: 751
+TestTrie_BitString_Exhaustive8Bit iteration: 752
+TestTrie_BitString_Exhaustive8Bit iteration: 753
+TestTrie_BitString_Exhaustive8Bit iteration: 754
+TestTrie_BitString_Exhaustive8Bit iteration: 755
+TestTrie_HeavyRandom_BitString_Get iteration: 60
+TestTrie_BitString_Exhaustive8Bit iteration: 756
+TestTrie_BitString_Exhaustive8Bit iteration: 757
+TestTrie_BitString_Exhaustive8Bit iteration: 758
+TestTrie_BitString_Exhaustive8Bit iteration: 759
+TestTrie_BitString_Exhaustive8Bit iteration: 760
+TestTrie_BitString_Exhaustive8Bit iteration: 761
+TestTrie_BitString_Exhaustive8Bit iteration: 762
+TestTrie_BitString_Exhaustive8Bit iteration: 763
+TestTrie_BitString_Exhaustive8Bit iteration: 764
+TestTrie_BitString_Exhaustive8Bit iteration: 765
+TestTrie_BitString_Exhaustive8Bit iteration: 766
+TestTrie_BitString_Exhaustive8Bit iteration: 767
+TestTrie_BitString_Exhaustive8Bit iteration: 768
+TestTrie_HeavyRandom_BitString_Get iteration: 61
+TestTrie_BitString_Exhaustive8Bit iteration: 769
+TestTrie_BitString_Exhaustive8Bit iteration: 770
+TestTrie_BitString_Exhaustive8Bit iteration: 771
+TestTrie_BitString_Exhaustive8Bit iteration: 772
+TestTrie_BitString_Exhaustive8Bit iteration: 773
+TestTrie_BitString_Exhaustive8Bit iteration: 774
+TestTrie_BitString_Exhaustive8Bit iteration: 775
+TestTrie_BitString_Exhaustive8Bit iteration: 776
+TestTrie_BitString_Exhaustive8Bit iteration: 777
+TestTrie_BitString_Exhaustive8Bit iteration: 778
+TestTrie_BitString_Exhaustive8Bit iteration: 779
+TestTrie_BitString_Exhaustive8Bit iteration: 780
+TestTrie_HeavyRandom_BitString_Get iteration: 62
+TestTrie_BitString_Exhaustive8Bit iteration: 781
+TestTrie_BitString_Exhaustive8Bit iteration: 782
+TestTrie_BitString_Exhaustive8Bit iteration: 783
+TestTrie_BitString_Exhaustive8Bit iteration: 784
+TestTrie_BitString_Exhaustive8Bit iteration: 785
+TestTrie_BitString_Exhaustive8Bit iteration: 786
+TestTrie_BitString_Exhaustive8Bit iteration: 787
+TestTrie_BitString_Exhaustive8Bit iteration: 788
+TestTrie_BitString_Exhaustive8Bit iteration: 789
+TestTrie_BitString_Exhaustive8Bit iteration: 790
+TestTrie_BitString_Exhaustive8Bit iteration: 791
+TestTrie_BitString_Exhaustive8Bit iteration: 792
+TestTrie_HeavyRandom_BitString_Get iteration: 63
+TestTrie_BitString_Exhaustive8Bit iteration: 793
+TestTrie_BitString_Exhaustive8Bit iteration: 794
+TestTrie_BitString_Exhaustive8Bit iteration: 795
+TestTrie_BitString_Exhaustive8Bit iteration: 796
+TestTrie_BitString_Exhaustive8Bit iteration: 797
+TestTrie_BitString_Exhaustive8Bit iteration: 798
+TestTrie_BitString_Exhaustive8Bit iteration: 799
+TestTrie_BitString_Exhaustive8Bit iteration: 800
+TestTrie_BitString_Exhaustive8Bit iteration: 801
+TestTrie_BitString_Exhaustive8Bit iteration: 802
+TestTrie_BitString_Exhaustive8Bit iteration: 803
+TestTrie_BitString_Exhaustive8Bit iteration: 804
+TestTrie_BitString_Exhaustive8Bit iteration: 805
+TestTrie_HeavyRandom_BitString_Get iteration: 64
+TestTrie_BitString_Exhaustive8Bit iteration: 806
+TestTrie_BitString_Exhaustive8Bit iteration: 807
+TestTrie_BitString_Exhaustive8Bit iteration: 808
+TestTrie_BitString_Exhaustive8Bit iteration: 809
+TestTrie_BitString_Exhaustive8Bit iteration: 810
+TestTrie_BitString_Exhaustive8Bit iteration: 811
+TestTrie_BitString_Exhaustive8Bit iteration: 812
+TestTrie_BitString_Exhaustive8Bit iteration: 813
+TestTrie_BitString_Exhaustive8Bit iteration: 814
+TestTrie_BitString_Exhaustive8Bit iteration: 815
+TestTrie_BitString_Exhaustive8Bit iteration: 816
+TestTrie_BitString_Exhaustive8Bit iteration: 817
+TestTrie_BitString_Exhaustive8Bit iteration: 818
+TestTrie_HeavyRandom_BitString_Get iteration: 65
+TestTrie_BitString_Exhaustive8Bit iteration: 819
+TestTrie_BitString_Exhaustive8Bit iteration: 820
+TestTrie_BitString_Exhaustive8Bit iteration: 821
+TestTrie_BitString_Exhaustive8Bit iteration: 822
+TestTrie_BitString_Exhaustive8Bit iteration: 823
+TestTrie_BitString_Exhaustive8Bit iteration: 824
+TestTrie_BitString_Exhaustive8Bit iteration: 825
+TestTrie_BitString_Exhaustive8Bit iteration: 826
+TestTrie_BitString_Exhaustive8Bit iteration: 827
+TestTrie_BitString_Exhaustive8Bit iteration: 828
+TestTrie_BitString_Exhaustive8Bit iteration: 829
+TestTrie_BitString_Exhaustive8Bit iteration: 830
+TestTrie_HeavyRandom_BitString_Get iteration: 66
+TestTrie_BitString_Exhaustive8Bit iteration: 831
+TestTrie_BitString_Exhaustive8Bit iteration: 832
+TestTrie_BitString_Exhaustive8Bit iteration: 833
+TestTrie_BitString_Exhaustive8Bit iteration: 834
+TestTrie_BitString_Exhaustive8Bit iteration: 835
+TestTrie_BitString_Exhaustive8Bit iteration: 836
+TestTrie_BitString_Exhaustive8Bit iteration: 837
+TestTrie_BitString_Exhaustive8Bit iteration: 838
+TestTrie_BitString_Exhaustive8Bit iteration: 839
+TestTrie_BitString_Exhaustive8Bit iteration: 840
+TestTrie_BitString_Exhaustive8Bit iteration: 841
+TestTrie_BitString_Exhaustive8Bit iteration: 842
+TestTrie_BitString_Exhaustive8Bit iteration: 843
+TestTrie_HeavyRandom_BitString_Get iteration: 67
+TestTrie_BitString_Exhaustive8Bit iteration: 844
+TestTrie_BitString_Exhaustive8Bit iteration: 845
+TestTrie_BitString_Exhaustive8Bit iteration: 846
+TestTrie_BitString_Exhaustive8Bit iteration: 847
+TestTrie_BitString_Exhaustive8Bit iteration: 848
+TestTrie_BitString_Exhaustive8Bit iteration: 849
+TestTrie_BitString_Exhaustive8Bit iteration: 850
+TestTrie_BitString_Exhaustive8Bit iteration: 851
+TestTrie_BitString_Exhaustive8Bit iteration: 852
+TestTrie_BitString_Exhaustive8Bit iteration: 853
+TestTrie_BitString_Exhaustive8Bit iteration: 854
+TestTrie_BitString_Exhaustive8Bit iteration: 855
+TestTrie_BitString_Exhaustive8Bit iteration: 856
+TestTrie_HeavyRandom_BitString_Get iteration: 68
+TestTrie_BitString_Exhaustive8Bit iteration: 857
+TestTrie_BitString_Exhaustive8Bit iteration: 858
+TestTrie_BitString_Exhaustive8Bit iteration: 859
+TestTrie_BitString_Exhaustive8Bit iteration: 860
+TestTrie_BitString_Exhaustive8Bit iteration: 861
+TestTrie_BitString_Exhaustive8Bit iteration: 862
+TestTrie_BitString_Exhaustive8Bit iteration: 863
+TestTrie_BitString_Exhaustive8Bit iteration: 864
+TestTrie_BitString_Exhaustive8Bit iteration: 865
+TestTrie_BitString_Exhaustive8Bit iteration: 866
+TestTrie_BitString_Exhaustive8Bit iteration: 867
+TestTrie_BitString_Exhaustive8Bit iteration: 868
+TestTrie_BitString_Exhaustive8Bit iteration: 869
+TestTrie_HeavyRandom_BitString_Get iteration: 69
+TestTrie_BitString_Exhaustive8Bit iteration: 870
+TestTrie_BitString_Exhaustive8Bit iteration: 871
+TestTrie_BitString_Exhaustive8Bit iteration: 872
+TestTrie_BitString_Exhaustive8Bit iteration: 873
+TestTrie_BitString_Exhaustive8Bit iteration: 874
+TestTrie_BitString_Exhaustive8Bit iteration: 875
+TestTrie_BitString_Exhaustive8Bit iteration: 876
+TestTrie_BitString_Exhaustive8Bit iteration: 877
+TestTrie_BitString_Exhaustive8Bit iteration: 878
+TestTrie_BitString_Exhaustive8Bit iteration: 879
+TestTrie_BitString_Exhaustive8Bit iteration: 880
+TestTrie_BitString_Exhaustive8Bit iteration: 881
+TestTrie_HeavyRandom_BitString_Get iteration: 70
+TestTrie_BitString_Exhaustive8Bit iteration: 882
+TestTrie_BitString_Exhaustive8Bit iteration: 883
+TestTrie_BitString_Exhaustive8Bit iteration: 884
+TestTrie_BitString_Exhaustive8Bit iteration: 885
+TestTrie_BitString_Exhaustive8Bit iteration: 886
+TestTrie_BitString_Exhaustive8Bit iteration: 887
+TestTrie_BitString_Exhaustive8Bit iteration: 888
+TestTrie_BitString_Exhaustive8Bit iteration: 889
+TestTrie_BitString_Exhaustive8Bit iteration: 890
+TestTrie_BitString_Exhaustive8Bit iteration: 891
+TestTrie_BitString_Exhaustive8Bit iteration: 892
+TestTrie_BitString_Exhaustive8Bit iteration: 893
+TestTrie_HeavyRandom_BitString_Get iteration: 71
+TestTrie_BitString_Exhaustive8Bit iteration: 894
+TestTrie_BitString_Exhaustive8Bit iteration: 895
+TestTrie_BitString_Exhaustive8Bit iteration: 896
+TestTrie_BitString_Exhaustive8Bit iteration: 897
+TestTrie_BitString_Exhaustive8Bit iteration: 898
+TestTrie_BitString_Exhaustive8Bit iteration: 899
+TestTrie_BitString_Exhaustive8Bit iteration: 900
+TestTrie_BitString_Exhaustive8Bit iteration: 901
+TestTrie_BitString_Exhaustive8Bit iteration: 902
+TestTrie_BitString_Exhaustive8Bit iteration: 903
+TestTrie_BitString_Exhaustive8Bit iteration: 904
+TestTrie_BitString_Exhaustive8Bit iteration: 905
+TestTrie_HeavyRandom_BitString_Get iteration: 72
+TestTrie_BitString_Exhaustive8Bit iteration: 906
+TestTrie_BitString_Exhaustive8Bit iteration: 907
+TestTrie_BitString_Exhaustive8Bit iteration: 908
+TestTrie_BitString_Exhaustive8Bit iteration: 909
+TestTrie_BitString_Exhaustive8Bit iteration: 910
+TestTrie_BitString_Exhaustive8Bit iteration: 911
+TestTrie_BitString_Exhaustive8Bit iteration: 912
+TestTrie_BitString_Exhaustive8Bit iteration: 913
+TestTrie_BitString_Exhaustive8Bit iteration: 914
+TestTrie_BitString_Exhaustive8Bit iteration: 915
+TestTrie_BitString_Exhaustive8Bit iteration: 916
+TestTrie_BitString_Exhaustive8Bit iteration: 917
+TestTrie_BitString_Exhaustive8Bit iteration: 918
+TestTrie_BitString_Exhaustive8Bit iteration: 919
+TestTrie_HeavyRandom_BitString_Get iteration: 73
+TestTrie_BitString_Exhaustive8Bit iteration: 920
+TestTrie_BitString_Exhaustive8Bit iteration: 921
+TestTrie_BitString_Exhaustive8Bit iteration: 922
+TestTrie_BitString_Exhaustive8Bit iteration: 923
+TestTrie_BitString_Exhaustive8Bit iteration: 924
+TestTrie_BitString_Exhaustive8Bit iteration: 925
+TestTrie_BitString_Exhaustive8Bit iteration: 926
+TestTrie_BitString_Exhaustive8Bit iteration: 927
+TestTrie_BitString_Exhaustive8Bit iteration: 928
+TestTrie_BitString_Exhaustive8Bit iteration: 929
+TestTrie_BitString_Exhaustive8Bit iteration: 930
+TestTrie_BitString_Exhaustive8Bit iteration: 931
+TestTrie_BitString_Exhaustive8Bit iteration: 932
+TestTrie_HeavyRandom_BitString_Get iteration: 74
+TestTrie_BitString_Exhaustive8Bit iteration: 933
+TestTrie_BitString_Exhaustive8Bit iteration: 934
+TestTrie_BitString_Exhaustive8Bit iteration: 935
+TestTrie_BitString_Exhaustive8Bit iteration: 936
+TestTrie_BitString_Exhaustive8Bit iteration: 937
+TestTrie_BitString_Exhaustive8Bit iteration: 938
+TestTrie_BitString_Exhaustive8Bit iteration: 939
+TestTrie_BitString_Exhaustive8Bit iteration: 940
+TestTrie_BitString_Exhaustive8Bit iteration: 941
+TestTrie_BitString_Exhaustive8Bit iteration: 942
+TestTrie_BitString_Exhaustive8Bit iteration: 943
+TestTrie_BitString_Exhaustive8Bit iteration: 944
+TestTrie_BitString_Exhaustive8Bit iteration: 945
+TestTrie_HeavyRandom_BitString_Get iteration: 75
+TestTrie_BitString_Exhaustive8Bit iteration: 946
+TestTrie_BitString_Exhaustive8Bit iteration: 947
+TestTrie_BitString_Exhaustive8Bit iteration: 948
+TestTrie_BitString_Exhaustive8Bit iteration: 949
+TestTrie_BitString_Exhaustive8Bit iteration: 950
+TestTrie_BitString_Exhaustive8Bit iteration: 951
+TestTrie_BitString_Exhaustive8Bit iteration: 952
+TestTrie_BitString_Exhaustive8Bit iteration: 953
+TestTrie_BitString_Exhaustive8Bit iteration: 954
+TestTrie_BitString_Exhaustive8Bit iteration: 955
+TestTrie_BitString_Exhaustive8Bit iteration: 956
+TestTrie_BitString_Exhaustive8Bit iteration: 957
+TestTrie_BitString_Exhaustive8Bit iteration: 958
+TestTrie_HeavyRandom_BitString_Get iteration: 76
+TestTrie_BitString_Exhaustive8Bit iteration: 959
+TestTrie_BitString_Exhaustive8Bit iteration: 960
+TestTrie_BitString_Exhaustive8Bit iteration: 961
+TestTrie_BitString_Exhaustive8Bit iteration: 962
+TestTrie_BitString_Exhaustive8Bit iteration: 963
+TestTrie_BitString_Exhaustive8Bit iteration: 964
+TestTrie_BitString_Exhaustive8Bit iteration: 965
+TestTrie_BitString_Exhaustive8Bit iteration: 966
+TestTrie_BitString_Exhaustive8Bit iteration: 967
+TestTrie_BitString_Exhaustive8Bit iteration: 968
+TestTrie_BitString_Exhaustive8Bit iteration: 969
+TestTrie_BitString_Exhaustive8Bit iteration: 970
+TestTrie_HeavyRandom_BitString_Get iteration: 77
+TestTrie_BitString_Exhaustive8Bit iteration: 971
+TestTrie_BitString_Exhaustive8Bit iteration: 972
+TestTrie_BitString_Exhaustive8Bit iteration: 973
+TestTrie_BitString_Exhaustive8Bit iteration: 974
+TestTrie_BitString_Exhaustive8Bit iteration: 975
+TestTrie_BitString_Exhaustive8Bit iteration: 976
+TestTrie_BitString_Exhaustive8Bit iteration: 977
+TestTrie_BitString_Exhaustive8Bit iteration: 978
+TestTrie_BitString_Exhaustive8Bit iteration: 979
+TestTrie_BitString_Exhaustive8Bit iteration: 980
+TestTrie_BitString_Exhaustive8Bit iteration: 981
+TestTrie_BitString_Exhaustive8Bit iteration: 982
+TestTrie_HeavyRandom_BitString_Get iteration: 78
+TestTrie_BitString_Exhaustive8Bit iteration: 983
+TestTrie_BitString_Exhaustive8Bit iteration: 984
+TestTrie_BitString_Exhaustive8Bit iteration: 985
+TestTrie_BitString_Exhaustive8Bit iteration: 986
+TestTrie_BitString_Exhaustive8Bit iteration: 987
+TestTrie_BitString_Exhaustive8Bit iteration: 988
+TestTrie_BitString_Exhaustive8Bit iteration: 989
+TestTrie_BitString_Exhaustive8Bit iteration: 990
+TestTrie_BitString_Exhaustive8Bit iteration: 991
+TestTrie_BitString_Exhaustive8Bit iteration: 992
+TestTrie_BitString_Exhaustive8Bit iteration: 993
+TestTrie_BitString_Exhaustive8Bit iteration: 994
+TestTrie_HeavyRandom_BitString_Get iteration: 79
+TestTrie_BitString_Exhaustive8Bit iteration: 995
+TestTrie_BitString_Exhaustive8Bit iteration: 996
+TestTrie_BitString_Exhaustive8Bit iteration: 997
+TestTrie_BitString_Exhaustive8Bit iteration: 998
+TestTrie_BitString_Exhaustive8Bit iteration: 999
+TestTrie_HeavyRandom_BitString_Get iteration: 80
+TestTrie_HeavyRandom_BitString_Get iteration: 81
+TestTrie_HeavyRandom_BitString_Get iteration: 82
+TestTrie_HeavyRandom_BitString_Get iteration: 83
+TestTrie_HeavyRandom_BitString_Get iteration: 84
+TestTrie_HeavyRandom_BitString_Get iteration: 85
+TestTrie_HeavyRandom_BitString_Get iteration: 86
+TestTrie_HeavyRandom_BitString_Get iteration: 87
+TestTrie_HeavyRandom_BitString_Get iteration: 88
+TestTrie_HeavyRandom_BitString_Get iteration: 89
+TestTrie_HeavyRandom_BitString_Get iteration: 90
+TestTrie_HeavyRandom_BitString_Get iteration: 91
+TestTrie_HeavyRandom_BitString_Get iteration: 92
+TestTrie_HeavyRandom_BitString_Get iteration: 93
+TestTrie_HeavyRandom_BitString_Get iteration: 94
+TestTrie_HeavyRandom_BitString_Get iteration: 95
+TestTrie_HeavyRandom_BitString_Get iteration: 96
+TestTrie_HeavyRandom_BitString_Get iteration: 97
+TestTrie_HeavyRandom_BitString_Get iteration: 98
+TestTrie_HeavyRandom_BitString_Get iteration: 99
+goos: darwin
+goarch: arm64
+pkg: Thesis/trie/zft
+cpu: Apple M4 Max
+BenchmarkCompressedTrie_Build_Text-16           	     619	   1875338 ns/op	 6479027 B/op	   22867 allocs/op
+BenchmarkZFastTrie_MemoryUsage_Build/Size_100-16         	    4246	    282613 ns/op	   65442 B/op	    2606 allocs/op
+BenchmarkZFastTrie_MemoryUsage_Build/Size_1000-16        	    1150	   1043044 ns/op	  770416 B/op	   27704 allocs/op
+BenchmarkZFastTrie_MemoryUsage_Build/Size_10000-16       	     100	  11350684 ns/op	 7494727 B/op	  280907 allocs/op
+BenchmarkCompressedTrie_MemoryUsage_Build/Size_100-16    	    3936	    301859 ns/op	  593298 B/op	    2651 allocs/op
+BenchmarkCompressedTrie_MemoryUsage_Build/Size_1000-16   	     637	   1932706 ns/op	 6799328 B/op	   22896 allocs/op
+BenchmarkCompressedTrie_MemoryUsage_Build/Size_10000-16  	      70	  16649331 ns/op	60337522 B/op	  206105 allocs/op
+PASS
+ok  	Thesis/trie/zft	21.925s

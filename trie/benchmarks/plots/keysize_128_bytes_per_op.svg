@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Build (KeySize=128): Bytes per Op</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">10^5</text>
+<line class="grid" x1="90.0" y1="362.50" x2="920.0" y2="362.50" />
+<text class="label" x="82.0" y="366.50" text-anchor="end">10^6</text>
+<line class="grid" x1="90.0" y1="260.00" x2="920.0" y2="260.00" />
+<text class="label" x="82.0" y="264.00" text-anchor="end">10^7</text>
+<line class="grid" x1="90.0" y1="157.50" x2="920.0" y2="157.50" />
+<text class="label" x="82.0" y="161.50" text-anchor="end">10^8</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">10^9</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">1024.0</text>
+<line class="grid" x1="588.00" y1="55.0" x2="588.00" y2="465.0" />
+<text class="label" x="588.00" y="485.0" text-anchor="middle">8192.0</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">32768.0</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,378.67 588.00,285.72 920.00,223.91" />
+<circle cx="90.00" cy="378.67" r="3.5" fill="#2a7fff" />
+<circle cx="588.00" cy="285.72" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="223.91" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">ZFT</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,353.85 588.00,260.70 920.00,198.19" />
+<circle cx="90.00" cy="353.85" r="3.5" fill="#e4572e" />
+<circle cx="588.00" cy="260.70" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="198.19" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">AZFT</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,324.58 588.00,229.37 920.00,159.32" />
+<circle cx="90.00" cy="324.58" r="3.5" fill="#22a06b" />
+<circle cx="588.00" cy="229.37" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="159.32" r="3.5" fill="#22a06b" />
+<line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122.0" y="107.0">RangeLocator</text>
+<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" points="90.00,306.89 588.00,214.42 920.00,148.26" />
+<circle cx="90.00" cy="306.89" r="3.5" fill="#7c3aed" />
+<circle cx="588.00" cy="214.42" r="3.5" fill="#7c3aed" />
+<circle cx="920.00" cy="148.26" r="3.5" fill="#7c3aed" />
+<line x1="100.0" y1="121.0" x2="116.0" y2="121.0" stroke="#7c3aed" stroke-width="2.5" />
+<text class="label" x="122.0" y="125.0">LocalExactRangeLocator</text>
+<polyline fill="none" stroke="#a16207" stroke-width="2.5" points="90.00,335.12 588.00,246.89 920.00,184.54" />
+<circle cx="90.00" cy="335.12" r="3.5" fill="#a16207" />
+<circle cx="588.00" cy="246.89" r="3.5" fill="#a16207" />
+<circle cx="920.00" cy="184.54" r="3.5" fill="#a16207" />
+<line x1="100.0" y1="139.0" x2="116.0" y2="139.0" stroke="#a16207" stroke-width="2.5" />
+<text class="label" x="122.0" y="143.0">HZFT Old (Heavy)</text>
+<polyline fill="none" stroke="#d946ef" stroke-width="2.5" points="90.00,356.11 588.00,271.05 920.00,208.25" />
+<circle cx="90.00" cy="356.11" r="3.5" fill="#d946ef" />
+<circle cx="588.00" cy="271.05" r="3.5" fill="#d946ef" />
+<circle cx="920.00" cy="208.25" r="3.5" fill="#d946ef" />
+<line x1="100.0" y1="157.0" x2="116.0" y2="157.0" stroke="#d946ef" stroke-width="2.5" />
+<text class="label" x="122.0" y="161.0">HZFT New (Streaming)</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Number of Keys</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">bytes</text>
+</svg>
