@@ -166,22 +166,6 @@ func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *Nod
 }
 
 // ByteSize returns the resident size estimate of ApproxZFastTrie in bytes.
-//
-// Approximate memory model (bits):
-//   - Let u be the number of trie nodes materialized in data[] (typically u=O(m),
-//     and for a binary trie with m leaves, u <= 2m-1).
-//   - AZFT_bits ~= O(1) + MPH_u_bits + u*(E + S + 5*I).
-//   - Current implementation keeps originalNode pointer in NodeData layout, so
-//     practical model is:
-//     AZFT_bits ~= O(1) + MPH_u_bits + u*(E + S + 5*I + 64).
-//
-// It includes:
-//   - top-level struct header (pointers/slice header/scalars),
-//   - backing storage of MPH (via mph.Size()),
-//   - backing storage of data[] (len * sizeof(NodeData)).
-//
-// Note: NodeData always includes originalNode pointer field in layout (nil in
-// production mode). The debug Trie object itself is not included.
 func (azft *ApproxZFastTrie[E, S, I]) ByteSize() int {
 	if azft == nil {
 		return 0

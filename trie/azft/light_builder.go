@@ -4,16 +4,14 @@ import (
 	"Thesis/bits"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/trie/zft"
-	"math/rand"
 	"sort"
 )
 
-// NewApproxZFastTrieHeavy creates an AZFT by keeping the original ZFT in memory.
-//
-// Deprecated: This represents the "old" implementation used for performance comparison.
-func NewApproxZFastTrieHeavy[E UNumber, S UNumber, I UNumber](keys []bits.BitString) (*ApproxZFastTrie[E, S, I], error) {
-	seed := rand.Uint64()
-	iter := bits.NewSliceBitStringIterator(keys)
+// NewApproxZFastTrieFromIteratorLight creates AZFT by building a temporary heavy ZFT.
+func NewApproxZFastTrieFromIteratorLight[E UNumber, S UNumber, I UNumber](
+	iter bits.BitStringIterator,
+	seed uint64,
+) (*ApproxZFastTrie[E, S, I], error) {
 	checkedIter := bits.NewCheckedSortedIterator(iter)
 	trie, err := zft.BuildFromIterator(checkedIter)
 	if err != nil {
@@ -23,7 +21,7 @@ func NewApproxZFastTrieHeavy[E UNumber, S UNumber, I UNumber](keys []bits.BitStr
 		return &ApproxZFastTrie[E, S, I]{seed: seed}, nil
 	}
 
-	// Collect all handles (real and pseudo)
+	// Collect ALL handles (real and pseudo)
 	handleMap := make(map[string]bits.BitString)
 	
 	var collectHandles func(n *zft.Node[bool])

@@ -80,6 +80,15 @@ func TestApproxZFastTrieWithMixedSizeStrings(t *testing.T) {
 		node := azft.GetExistingPrefix(key)
 		require.NotNil(t, node, "should find prefix for key %s", key.PrettyString())
 
+		// Debug info
+		if !key.HasPrefix(referenceTrie.GetNode(key.Prefix(int(node.extentLen))).Extent) {
+			t.Errorf("Mismatch for key %s: got node with extentLen %d", key.PrettyString(), node.extentLen)
+			refNode := referenceTrie.GetExistingPrefix(key)
+			if refNode != nil {
+				t.Errorf("Reference ZFT says extentLen should be %d", refNode.ExtentLength())
+			}
+		}
+
 		// The node should have an extent that is a prefix of our key
 		require.True(t, key.HasPrefix(referenceTrie.GetNode(key.Prefix(int(node.extentLen))).Extent),
 			"found extent should be a prefix of key %s", key.PrettyString())
