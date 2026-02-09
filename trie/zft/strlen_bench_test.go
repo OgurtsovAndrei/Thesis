@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import (
 	"Thesis/bits"
@@ -22,7 +22,7 @@ func BenchmarkTrie_ByStrLen_Insert(b *testing.B) {
 		skipTestLTooBig(L, b)
 		b.Run(fmt.Sprintf("Len%d", L), func(b *testing.B) {
 			b.StopTimer()
-			keys := generateRandomBitStrings(b.N, L, r)
+			keys := GenerateRandomBitStrings(b.N, L, r)
 			tree := NewZFastTrie[bool](false)
 			b.StartTimer()
 
@@ -41,7 +41,7 @@ func BenchmarkTrie_ByStrLen_GetExitNode_Hit(b *testing.B) {
 		skipTestLTooBig(L, b)
 		b.Run(fmt.Sprintf("Len%d", L), func(b *testing.B) {
 			b.StopTimer()
-			keys := generateRandomBitStrings(numSetupKeys, L, r)
+			keys := GenerateRandomBitStrings(numSetupKeys, L, r)
 			tree := NewZFastTrie[bool](false)
 			for _, k := range keys {
 				tree.InsertBitString(k, true)
@@ -50,9 +50,9 @@ func BenchmarkTrie_ByStrLen_GetExitNode_Hit(b *testing.B) {
 			b.StartTimer()
 
 			for i := 0; i < b.N; i++ {
-				exitNode := tree.getExitNode(keys[i&mask])
+				exitNode := tree.GetExitNode(keys[i&mask])
 				if exitNode == nil {
-					b.Fatalf("getExitNode returned nil for existing key")
+					b.Fatalf("GetExitNode returned nil for existing key")
 				}
 			}
 		})
@@ -68,16 +68,16 @@ func BenchmarkTrie_ByStrLen_GetExitNode_Miss(b *testing.B) {
 		skipTestLTooBig(L, b)
 		b.Run(fmt.Sprintf("Len%d", L), func(b *testing.B) {
 			b.StopTimer()
-			keys := generateRandomBitStrings(numSetupKeys, L, r)
+			keys := GenerateRandomBitStrings(numSetupKeys, L, r)
 			tree := NewZFastTrie[bool](false)
 			for _, k := range keys {
 				tree.InsertBitString(k, true)
 			}
-			missKeys := generateRandomBitStrings(b.N, L, rMiss)
+			missKeys := GenerateRandomBitStrings(b.N, L, rMiss)
 			b.StartTimer()
 
 			for i := 0; i < b.N; i++ {
-				exitNode := tree.getExitNode(missKeys[i])
+				exitNode := tree.GetExitNode(missKeys[i])
 				_ = exitNode
 			}
 		})

@@ -4,7 +4,7 @@ import (
 	"Thesis/bits"
 	bucket "Thesis/mmph/bucket_with_approx_trie"
 	"Thesis/mmph/paramselect"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -254,7 +254,7 @@ func buildByWidths(keys []bits.BitString, eBits int, sBits int, iBits int, seed 
 	}
 }
 
-func buildByWidthsE[E zfasttrie.UNumber](keys []bits.BitString, sBits int, iBits int, seed uint64) (int, int, error) {
+func buildByWidthsE[E zft.UNumber](keys []bits.BitString, sBits int, iBits int, seed uint64) (int, int, error) {
 	switch sBits {
 	case 8:
 		return buildByWidthsES[E, uint8](keys, iBits, seed)
@@ -266,7 +266,7 @@ func buildByWidthsE[E zfasttrie.UNumber](keys []bits.BitString, sBits int, iBits
 	return 0, 0, fmt.Errorf("unsupported sBits=%d", sBits)
 }
 
-func buildByWidthsES[E zfasttrie.UNumber, S zfasttrie.UNumber](keys []bits.BitString, iBits int, seed uint64) (int, int, error) {
+func buildByWidthsES[E zft.UNumber, S zft.UNumber](keys []bits.BitString, iBits int, seed uint64) (int, int, error) {
 	switch iBits {
 	case 8:
 		mh, err := bucket.NewMonotoneHashWithTrieSeeded[E, S, uint8](keys, seed)

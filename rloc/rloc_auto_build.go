@@ -3,7 +3,7 @@ package rloc
 import (
 	"Thesis/errutil"
 	"Thesis/mmph/paramselect"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"fmt"
 )
 
@@ -111,7 +111,7 @@ func buildWithFixedWidthsE32(sortedItems []pItem, mmphSeed uint64, sBits int, iB
 	}
 }
 
-func buildWithFixedWidthsSI[E zfasttrie.UNumber, I zfasttrie.UNumber](sortedItems []pItem, mmphSeed uint64, sBits int) (RangeLocator, error) {
+func buildWithFixedWidthsSI[E zft.UNumber, I zft.UNumber](sortedItems []pItem, mmphSeed uint64, sBits int) (RangeLocator, error) {
 	switch sBits {
 	case 8:
 		return safeBuildGenericRangeLocatorFromItems[E, uint8, I](sortedItems, mmphSeed)
@@ -125,7 +125,7 @@ func buildWithFixedWidthsSI[E zfasttrie.UNumber, I zfasttrie.UNumber](sortedItem
 	}
 }
 
-func safeBuildGenericRangeLocatorFromItems[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](sortedItems []pItem, mmphSeed uint64) (rl *GenericRangeLocator[E, S, I], err error) {
+func safeBuildGenericRangeLocatorFromItems[E zft.UNumber, S zft.UNumber, I zft.UNumber](sortedItems []pItem, mmphSeed uint64) (rl *GenericRangeLocator[E, S, I], err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic during generic build: %v", r)

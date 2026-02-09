@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import (
 	"Thesis/bits"
@@ -21,11 +21,11 @@ func TestStatistics_GetExitNode(t *testing.T) {
 
 		const n = 50
 		for i := 0; i < n; i++ {
-			zt.getExitNode(key)
+			zt.GetExitNode(key)
 		}
 
-		if zt.stat.getExitNodeCnt != n {
-			t.Errorf("Expected getExitNodeCnt to be %d, got %d", n, zt.stat.getExitNodeCnt)
+		if zt.stat.GetExitNodeCnt != n {
+			t.Errorf("Expected GetExitNodeCnt to be %d, got %d", n, zt.stat.GetExitNodeCnt)
 		}
 	})
 
@@ -45,8 +45,8 @@ func TestStatistics_GetExitNode(t *testing.T) {
 			upperBound := expectedLog + 1.0
 
 			zt.stat = statistics{}
-			zt.getExitNode(key)
-			loops := zt.stat.getExitNodeInnerLoopCnt
+			zt.GetExitNode(key)
+			loops := zt.stat.GetExitNodeInnerLoopCnt
 
 			if float64(loops) > upperBound {
 				t.Errorf("Size %d: loops=%d. Expected approx %.2f (logarithmic). Growth check failed.", s, loops, expectedLog)

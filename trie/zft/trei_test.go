@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import (
 	"Thesis/bits"

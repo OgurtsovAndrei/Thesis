@@ -2,7 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/zft"
 	"testing"
 )
 
@@ -20,10 +20,10 @@ func TestDeterministicMMPHConstruction(t *testing.T) {
 	seed := uint64(12345)
 
 	// Build twice with same seed
-	zt1 := zfasttrie.Build(keys)
+	zt1 := zft.Build(keys)
 	rl1, err1 := NewRangeLocatorSeeded(zt1, seed)
 
-	zt2 := zfasttrie.Build(keys)
+	zt2 := zft.Build(keys)
 	rl2, err2 := NewRangeLocatorSeeded(zt2, seed)
 
 	// Both should succeed or both should fail

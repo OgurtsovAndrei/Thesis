@@ -1,6 +1,7 @@
-package zfasttrie
+package hzft
 
 import (
+	"Thesis/trie/zft"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -27,7 +28,7 @@ func TestHZFastTrie_Correctness_AllPrefixes(t *testing.T) {
 
 		numKeys := r.Intn(hzftMaxKeys-1) + 2
 		bitLen := r.Intn(hzftMaxBitLen-8) + 8
-		keys := generateRandomBitStrings(numKeys, bitLen, r)
+		keys := zft.GenerateRandomBitStrings(numKeys, bitLen, r)
 
 		hzft := NewHZFastTrie[uint32](keys)
 		if hzft == nil {
@@ -43,14 +44,14 @@ func TestHZFastTrie_Correctness_AllPrefixes(t *testing.T) {
 
 				hzftResult := hzft.GetExistingPrefix(prefix)
 
-				expectedNode := referenceTrie.getExitNode(prefix)
+				expectedNode := referenceTrie.GetExitNode(prefix)
 
 				var expectedLength int64
-				if expectedNode == referenceTrie.root {
+				if expectedNode == referenceTrie.Root {
 					expectedLength = 0
 				} else {
 					// Имя узла выхода n_alpha имеет длину |e_parent| + 1
-					expectedLength = int64(expectedNode.nameLength)
+					expectedLength = int64(expectedNode.NameLength)
 				}
 
 				if hzftResult != expectedLength {

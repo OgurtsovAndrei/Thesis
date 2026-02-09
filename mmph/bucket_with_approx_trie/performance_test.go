@@ -2,7 +2,7 @@ package bucket
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/azft"
 	"fmt"
 	"sort"
 	"testing"
@@ -38,17 +38,21 @@ func TestO1BucketLookup(t *testing.T) {
 
 	// Test that the rank field is properly set in trie nodes
 	if mh.delimiterTrie != nil {
+		// Use the approximate z-fast trie to get candidates for the bucket
 		cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(bitKeys[len(bitKeys)/2])
 
 		maxDelimiterIndex := uint16(^uint16(0))
 		foundValidIndex := false
 
-		for _, candidate := range []*zfasttrie.NodeData[uint8, uint16, uint16]{cand1, cand2, cand3, cand4, cand5, cand6} {
+		// Check if any candidate has a valid rank
+		candidates := []*azft.NodeData[uint8, uint16, uint16]{cand1, cand2, cand3, cand4, cand5, cand6}
+
+		for _, candidate := range candidates {
 			if candidate != nil && candidate.Rank != maxDelimiterIndex {
 				foundValidIndex = true
 				bucketIdx := int(candidate.Rank)
 				t.Logf("Found candidate with rank: %d (max possible: %d)",
-					candidate.Rank, maxDelimiterIndex-1)
+					candidate.Rank, maxDelimiterIndex)
 
 				// Verify the bucket index is valid
 				if bucketIdx >= len(mh.buckets) {
@@ -97,3 +101,6 @@ func BenchmarkBucketLookupScaling(b *testing.B) {
 		})
 	}
 }
+
+// Helpers (buildUniqueStrKeys, bitStringSorter) assumed to be in other files in package bucket
+// ... they are likely in prop_test.go or similar.

@@ -1,4 +1,4 @@
-package zfasttrie
+package hzft
 
 import (
 	"Thesis/bits"
@@ -44,11 +44,11 @@ func TestHZFastTrie_GetExistingPrefix(t *testing.T) {
 			require.Equal(t, tt.expected, result)
 
 			// Сверка с эталонным узлом выхода из ZFastTrie [cite: 176, 224]
-			expectedNode := hzft.trie.getExitNode(p)
+			expectedNode := hzft.trie.GetExitNode(p)
 			var refExpected int64
-			if expectedNode != hzft.trie.root {
+			if expectedNode != hzft.trie.Root {
 				// Длина имени узла в сжатом боре [cite: 101, 237]
-				refExpected = int64(expectedNode.nameLength)
+				refExpected = int64(expectedNode.NameLength)
 			}
 			require.Equal(t, refExpected, result)
 		})
@@ -90,11 +90,11 @@ func TestHZFastTrie_Simple2(t *testing.T) {
 			require.Equal(t, tt.expected, result)
 
 			// Сверка с эталонным узлом выхода из ZFastTrie [cite: 176, 224]
-			expectedNode := hzft.trie.getExitNode(p)
+			expectedNode := hzft.trie.GetExitNode(p)
 			var refExpected int64
-			if expectedNode != hzft.trie.root {
+			if expectedNode != hzft.trie.Root {
 				// Длина имени узла в сжатом боре [cite: 101, 237]
-				refExpected = int64(expectedNode.nameLength)
+				refExpected = int64(expectedNode.NameLength)
 			}
 			require.Equal(t, refExpected, result)
 		})

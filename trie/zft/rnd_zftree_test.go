@@ -1,4 +1,4 @@
-package zfasttrie
+package zft
 
 import (
 	"Thesis/bits"
@@ -91,7 +91,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 			genLen := r.Intn(maxBitLen) + 1
 
 			if op < 45 {
-				s := generateBitString(genLen, r)
+				s := GenerateBitString(genLen, r)
 				mk := toMapKey(s)
 
 				history = append(history, testOperation{Op: "InsertBitString", Key: s.PrettyString(), Size: s.Size(), Value: true})
@@ -127,7 +127,7 @@ func TestTrie_HeavyRandom_BitString_Ops(t *testing.T) {
 					saveHistoryAndFail(t, seed, history, "Found just-deleted key: %s", s.PrettyString())
 				}
 			} else {
-				s := generateBitString(genLen, r)
+				s := GenerateBitString(genLen, r)
 				mk := toMapKey(s)
 				expected, _ := groundTruth[mk]
 
@@ -182,7 +182,7 @@ func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
 			genLen := r.Intn(maxBitLen) + 1
 
 			if op < 50 {
-				s := generateBitString(genLen, r)
+				s := GenerateBitString(genLen, r)
 				mk := toMapKey(s)
 				v := r.Intn(1000000)
 
@@ -198,7 +198,7 @@ func TestTrie_HeavyRandom_BitString_Get(t *testing.T) {
 				if len(insertedKeys) > 0 && r.Float64() < 0.7 {
 					s = insertedKeys[r.Intn(len(insertedKeys))]
 				} else {
-					s = generateBitString(genLen, r)
+					s = GenerateBitString(genLen, r)
 				}
 				mk := toMapKey(s)
 

@@ -2,7 +2,8 @@ package rloc
 
 import (
 	"Thesis/bits"
-	"Thesis/zfasttrie"
+	"Thesis/trie/hzft"
+	"Thesis/trie/zft"
 	"unsafe"
 )
 
@@ -45,57 +46,38 @@ type LocalExactRangeLocator interface {
 //   - papers/Fast Prefix Search.pdf (Local Exact Range Locator decomposition)
 //   - papers/Hollow-Z-Fast-Trie (Fast Prefix Search)/Section-5.md
 //   - papers/Hollow-Z-Fast-Trie (Fast Prefix Search)/Section-6.md
-type GenericLocalExactRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber] struct {
-	hzft *zfasttrie.HZFastTrie[E]
+type GenericLocalExactRangeLocator[E zft.UNumber, S zft.UNumber, I zft.UNumber] struct {
+	hzft *hzft.HZFastTrie[E]
 	rl   *GenericRangeLocator[E, S, I]
 }
 
-// NewLocalExactRangeLocator builds a local-exact weak-prefix search structure.
-//
+// NewGenericLocalExactRangeLocator creates a new GenericLocalExactRangeLocator.
 // It composes an HZFastTrie (to map a query prefix to an exit node) with a
-// RangeLocator (to convert that node into a leaf-rank interval).
+// GenericRangeLocator (to map that exit node to a rank interval).
 //
-// The constructor chooses the smallest practical type widths for E/S/I from
-// input data and reuses the chosen E for HZFastTrie.
-func NewLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, error) {
-	if len(keys) == 0 {
-		return &autoLocalExactRangeLocator{
-			widths: TypeWidths{E: 8, S: 8, I: 8},
-		}, nil
-	}
-
-	zt := zfasttrie.Build(keys)
-	rl, err := NewRangeLocator(zt)
-	if err != nil {
-		return nil, err
-	}
-
-	widths := rl.TypeWidths()
-	hzft, err := buildHZFastTrieWithWidth(keys, widths.E)
-	if err != nil {
-		return nil, err
-	}
-
-	return &autoLocalExactRangeLocator{
-		hzft:   hzft,
-		rl:     rl,
-		widths: widths,
-	}, nil
-}
-
-// NewGenericLocalExactRangeLocator builds a generic local-exact weak-prefix
-// search structure.
-func NewGenericLocalExactRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, I zfasttrie.UNumber](keys []bits.BitString) (*GenericLocalExactRangeLocator[E, S, I], error) {
-	if len(keys) == 0 {
-		return &GenericLocalExactRangeLocator[E, S, I]{}, nil
-	}
-
-	zt := zfasttrie.Build(keys)
-	hzft := zfasttrie.NewHZFastTrie[E](keys)
+// The type parameters E, S, I determine the bit-widths used for internal
+// storage. E is used for both HZFastTrie and RangeLocator.
+//
+// It assumes the keys provided are sorted. If not, HZFastTrie construction
+// will panic.
+//
+// Note: This constructor does not perform automatic parameter selection. It uses
+// the provided types E, S, I directly. For automatic selection, use
+// NewLocalExactRangeLocator.
+func NewGenericLocalExactRangeLocator[E zft.UNumber, S zft.UNumber, I zft.UNumber](keys []bits.BitString) (*GenericLocalExactRangeLocator[E, S, I], error) {
+	// Build RangeLocator first
+	// We need to build a ZFastTrie to pass to NewGenericRangeLocator
+	zt := zft.Build(keys)
 	rl, err := NewGenericRangeLocator[E, S, I](zt)
 	if err != nil {
 		return nil, err
 	}
+
+	// Build HZFastTrie
+	// Note: We could reuse zt if HZFastTrie supported construction from ZFastTrie directly,
+	// but currently NewHZFastTrie takes keys.
+	// Actually NewHZFastTrie builds its own internal trie anyway.
+	hzft := hzft.NewHZFastTrie[E](keys)
 
 	return &GenericLocalExactRangeLocator[E, S, I]{
 		hzft: hzft,
@@ -103,13 +85,14 @@ func NewGenericLocalExactRangeLocator[E zfasttrie.UNumber, S zfasttrie.UNumber, 
 	}, nil
 }
 
-// WeakPrefixSearch returns the [start, end) rank interval for keys matching
-// prefix.
 func (lerl *GenericLocalExactRangeLocator[E, S, I]) WeakPrefixSearch(prefix bits.BitString) (int, int, error) {
-	if lerl.hzft == nil || lerl.rl == nil {
+	if lerl == nil || lerl.hzft == nil || lerl.rl == nil {
 		return 0, 0, nil
 	}
 
+	// 1. Find the exit node using HZFastTrie
+	// The paper says: "Let u be the node of T that is the exit node of P."
+	// HZFastTrie returns the length of the exit node extent.
 	exitNodeLength := lerl.hzft.GetExistingPrefix(prefix)
 
 	var exitNode bits.BitString
@@ -119,19 +102,23 @@ func (lerl *GenericLocalExactRangeLocator[E, S, I]) WeakPrefixSearch(prefix bits
 		exitNode = prefix.Prefix(int(exitNodeLength))
 	}
 
+	// 2. Query the Range Locator with the exit node name
+	// The paper says: "Locate(u)"
 	return lerl.rl.Query(exitNode)
 }
 
-// ByteSize returns the estimated resident size of LocalExactRangeLocator.
-//
-// It is the sum of HZFastTrie and RangeLocator sizes and excludes temporary
-// allocations made during construction.
 func (lerl *GenericLocalExactRangeLocator[E, S, I]) ByteSize() int {
 	if lerl == nil {
 		return 0
 	}
 
 	size := 0
+
+	// Size of the struct itself
+	size += int(unsafe.Sizeof(*lerl))
+
+	// It is the sum of HZFastTrie and RangeLocator sizes and excludes temporary
+	// structures used during construction.
 
 	// Size of the HZFastTrie
 	if lerl.hzft != nil {
@@ -146,12 +133,14 @@ func (lerl *GenericLocalExactRangeLocator[E, S, I]) ByteSize() int {
 	return size
 }
 
-// TypeWidths returns bit-widths of generic integer parameters used by this
-// concrete instance.
 func (lerl *GenericLocalExactRangeLocator[E, S, I]) TypeWidths() TypeWidths {
+	// Reconstruct TypeWidths from the type parameters
+	var e E
+	var s S
+	var i I
 	return TypeWidths{
-		E: int(unsafe.Sizeof(*new(E))) * 8,
-		S: int(unsafe.Sizeof(*new(S))) * 8,
-		I: int(unsafe.Sizeof(*new(I))) * 8,
+		E: int(unsafe.Sizeof(e)) * 8,
+		S: int(unsafe.Sizeof(s)) * 8,
+		I: int(unsafe.Sizeof(i)) * 8,
 	}
 }

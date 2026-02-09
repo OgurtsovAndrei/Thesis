@@ -17,7 +17,7 @@
 //
 // Test Data: Random alphanumeric strings with prefixes/suffixes (now using 1B number range)
 
-package zfasttrie
+package zft
 
 import (
 	"fmt"

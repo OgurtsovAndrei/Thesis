@@ -1,9 +1,10 @@
-package zfasttrie
+package hzft
 
 import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
+	"Thesis/trie/zft"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -11,11 +12,15 @@ import (
 
 // see https://arxiv.org/abs/1804.04720
 
+type UNumber interface {
+	~uint8 | ~uint16 | ~uint32 | ~uint64
+}
+
 type HNodeData[E UNumber] struct {
 	extentLen E // Length of the extent (prefix) represented by this node, should be at least log w, -1 stands for inf
 
 	// Debug field - only populated when saveOriginalTrie is true
-	originalNode *znode[bool]
+	originalNode *zft.Node[bool]
 }
 
 type HZFastTrie[E UNumber] struct {
@@ -24,36 +29,45 @@ type HZFastTrie[E UNumber] struct {
 	rootId uint64
 
 	// Debug field - only populated when saveOriginalTrie is true
-	trie *ZFastTrie[bool]
+	trie *zft.ZFastTrie[bool]
+}
+
+func areSorted(keys []bits.BitString) bool {
+	for i := 0; i < len(keys)-1; i++ {
+		if keys[i].Compare(keys[i+1]) > 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func NewHZFastTrieFromIterator[E UNumber](iter bits.BitStringIterator) (*HZFastTrie[E], error) {
 	checkedIter := bits.NewCheckedSortedIterator(iter)
-	trie, err := BuildFromIterator(checkedIter)
+	trie, err := zft.BuildFromIterator(checkedIter)
 	if err != nil {
 		return nil, err
 	}
-	if trie == nil || trie.root == nil {
+	if trie == nil || trie.Root == nil {
 		return nil, nil
 	}
 
 	kv := make(map[bits.BitString]HNodeData[E], 0)
 
-	for handle, node := range trie.handle2NodeMap {
-		errutil.BugOn(node.handle() != handle, "handle")
-		a := uint64(node.nameLength - 1)
+	for handle, node := range trie.Handle2NodeMap {
+		errutil.BugOn(!node.Handle().Equal(handle), "handle mismatch")
+		a := uint64(node.NameLength - 1)
 		if a == ^uint64(0) {
 			a = 0
 		}
-		b := uint64(node.extentLength())
+		b := uint64(node.ExtentLength())
 
 		original := bits.TwoFattest(a, b) // TwoFattest on (a, b]
 		errutil.BugOn(original != uint64(handle.Size()), "broken handle")
 
-		extentLen := E(node.extentLength())
-		errutil.BugOn(uint64(extentLen) != uint64(node.extentLength()), "Data loss on extent length")
-		errutil.BugOn(node.extent.Prefix(int(original)) != handle, "handle")
-		kv[node.extent.Prefix(int(original))] = HNodeData[E]{
+		extentLen := E(node.ExtentLength())
+		errutil.BugOn(uint64(extentLen) != uint64(node.ExtentLength()), "Data loss on extent length")
+		errutil.BugOn(!node.Extent.Prefix(int(original)).Equal(handle), "handle mismatch")
+		kv[node.Extent.Prefix(int(original))] = HNodeData[E]{
 			extentLen:    extentLen,
 			originalNode: node,
 		}
@@ -63,7 +77,7 @@ func NewHZFastTrieFromIterator[E UNumber](iter bits.BitStringIterator) (*HZFastT
 		b = original - 1
 		for a < b {
 			ftst := bits.TwoFattest(a, b)
-			kv[node.extent.Prefix(int(ftst))] = HNodeData[E]{
+			kv[node.Extent.Prefix(int(ftst))] = HNodeData[E]{
 				extentLen:    ^E(0), // inf
 				originalNode: node,
 			}
@@ -86,7 +100,7 @@ func NewHZFastTrieFromIterator[E UNumber](iter bits.BitStringIterator) (*HZFastT
 	}
 
 	var rootIdx uint64
-	rootHandle := trie.root.handle()
+	rootHandle := trie.Root.Handle()
 	rootQuery := mph.Query(rootHandle)
 	if rootQuery == 0 {
 		errutil.Bug("Root is empty")
@@ -112,51 +126,20 @@ func NewHZFastTrie[E UNumber](keys []bits.BitString) *HZFastTrie[E] {
 	return hzft
 }
 
-/*
-Algorithm 1
-Input: a prefix p of some string in S.
-
-i ← floor(log|p|)
-l,r ← 0, |p|
-while r - l > 1 do
-
-	if exists b such that 2^i * b in (l..r) then
-	    // 2^i * b is 2-fattest number in (l..r)
-	    g ← T(p[0..2^i * b))
-	    if g >= |p| then
-	        r ← 2^i * b
-	    else
-	        l ← g
-	    end if
-	end if
-	i ← i - 1
-
-end while
-if l = 0 then
-
-	return ε
-
-else
-
-	return p[0..l+1)
-
-end if
-*/
-
 func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) int64 {
-	if len(hzft.data) == 0 || pattern.IsEmpty() {
+	if hzft == nil || len(hzft.data) == 0 || pattern.IsEmpty() {
 		return 0
 	}
 
 	patternLength := uint32(pattern.Size())
 	rootData := hzft.data[hzft.rootId]
-	rootExtentLen := uint32(rootData.extentLen)
+	rootextentLen := uint32(rootData.extentLen)
 
-	if rootExtentLen >= patternLength {
+	if rootextentLen >= patternLength {
 		return 0
 	}
 
-	l := uint64(rootExtentLen)
+	l := uint64(rootextentLen)
 	r := uint64(patternLength)
 	maxI := bits.MostSignificantBit(uint64(patternLength))
 
@@ -166,6 +149,7 @@ func (hzft *HZFastTrie[E]) GetExistingPrefix(pattern bits.BitString) int64 {
 		}
 		f := uint64((r-1)>>uint(i)) << uint(i)
 
+		// Check if f is in (l, r)
 		if f > l && f < r {
 			g := hzft.queryT(pattern.Prefix(int(f)))
 			if g >= patternLength {
@@ -212,7 +196,7 @@ func (hzft *HZFastTrie[E]) String() string {
 	for i, nodeData := range hzft.data {
 		sb.WriteString(fmt.Sprintf("  [%d] extentLen=%d", i, nodeData.extentLen))
 		if nodeData.originalNode != nil {
-			sb.WriteString(fmt.Sprintf(" extent=%q", nodeData.originalNode.extent.PrettyString()))
+			sb.WriteString(fmt.Sprintf(" extent=%q", nodeData.originalNode.Extent.PrettyString()))
 		}
 		if uint64(nodeData.extentLen) == uint64(^E(0)) {
 			sb.WriteString(" (pseudo-descriptor)")
@@ -250,7 +234,7 @@ func (hzft *HZFastTrie[E]) ByteSize() int {
 	size += 8
 
 	// Size of debug Trie pointer (always present in struct, but nil in production)
-	size += int(unsafe.Sizeof((*ZFastTrie[bool])(nil)))
+	size += int(unsafe.Sizeof((*zft.ZFastTrie[bool])(nil)))
 
 	return size
 }
