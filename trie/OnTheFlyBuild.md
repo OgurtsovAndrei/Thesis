@@ -35,24 +35,24 @@ The Hollow Z-Fast Trie only needs to store `extentLen` per node (a small integer
 
 ### AZFT: Reduced-Overhead Construction
 
-AZFT requires more complex per-node data:
-- `extentLen` - length of extent
-- `PSig` - hash signature of extent (requires full extent content)
-- `parent` - first left-ancestor index
-- `minChild`, `minGreaterChild` - leftmost nodes in subtrees
-- `rightChild` - right child index
-- `Rank` - delimiter index
-
-These relationships depend on tree structure, making truly streaming construction complex.
+Currently, AZFT uses a "reduced-overhead" approach. It still builds a temporary heavy ZFT, but discards it immediately after construction.
 
 **Solution** (`NewApproxZFastTrieFromIteratorStreaming`):
+1. Builds ZFT temporarily.
+2. Discards ZFT immediately after extracting needed data.
+3. `Trie` field is always nil.
 
-Still builds ZFT temporarily, but:
-1. Does NOT keep `originalNode` debug references in NodeData
-2. Discards ZFT immediately after extracting needed data
-3. `Trie` field is always nil
+### AZFT: Two-Pass Light Build (Planned)
 
-This reduces long-term memory retention after construction.
+To achieve true streaming for AZFT (similar to HZFT), a two-pass approach is used to avoid materializing the full ZFastTrie.
+
+**Algorithm**:
+1. **Pass 1 (Topology)**: Process sorted keys using a stack-based approach to build a lightweight tree of handles and basic parent/child pointers. This determines the trie structure without storing full keys.
+2. **MPH Construction**: Build the Minimal Perfect Hash from the collected handles.
+3. **Pass 2 (Resolution)**: Traverse the lightweight tree to resolve complex attributes (`minChild`, `minGreaterChild`, `parent` indices) and populate the final compact `NodeData` array.
+
+This approach reduces peak memory from $O(n \times L)$ to $O(n \times \log L)$.
+
 
 ## Complexity Analysis
 
