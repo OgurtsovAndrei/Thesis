@@ -131,9 +131,7 @@ $$
 - `summary_by_margin.csv` shows behavior grouped by `s_margin_bits = S - S_required`.
 - Positive margin improves success rate but does not guarantee `~1.0` success for largest `n`.
 
-## Memory Snapshot (from `/Users/andrei.ogurtsov/Thesis/mmph/bucket_with_approx_trie/study/memory_bench_v2.txt`)
-- RLOC bits/key: min=51.27, median=56.04, max=106.00.
-- LERLOC bits/key: min=115.30, median=212.40, max=320.00.
+## Memory Snapshot (from `mmph/bucket_with_approx_trie/study/memory_bench_v2.txt`)
 - Stable regime (`keys>=8192`): RLOC avg=54.33 bits/key, LERLOC avg=182.43 bits/key.
 - MMPH baseline from paper chart: ~14 bits/key (for large n).
 

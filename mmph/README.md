@@ -2,7 +2,8 @@
 
 ## 1. Problem overview
 
-**Monotone Minimal Perfect Hash Function (MMPH)** is a function $h$ that maps a set of $n$ keys $S$ into the integer range
+**Monotone Minimal Perfect Hash Function (MMPH)** is a function $h$ that maps a set of $n$ keys $S$ into the integer
+range
 $[0, n-1]$ while preserving lexicographic order.
 
 If $key_1 < key_2$, then $h(key_1) < h(key_2)$. In essence, it returns the rank (order index) of a key in the sorted set
@@ -20,21 +21,25 @@ The structure provides a minimalistic interface:
 ### `Build(sorted_keys)`
 
 Builds an index over the given set of unique sorted keys.
+
 - **Input**: Array of keys (static sorted list)
 - **Complexity**: $O(n \log w)$
 
 ### `Rank(key) -> int`
 
 Returns the order index (rank) of a key in the original set.
+
 - **Input**: Key $x$
 - **Output**: Integer $i \in [0, n-1]$
 - **Complexity**: $O(1)$ for LCP Bucketing, $O(\log w)$ for Probabilistic Trie
 
-**Important**: If $key \notin S$, the result is undefined. Membership validation must be done externally (e.g., Bloom Filter).
+**Important**: If $key \notin S$, the result is undefined. Membership validation must be done externally (e.g., Bloom
+Filter).
 
 ## 3. Theoretical methods (based on the 2009 paper)
 
-According to ["Monotone Minimal Perfect Hashing"](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf),
+According
+to ["Monotone Minimal Perfect Hashing"](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf),
 there are two main theoretical approaches that optimize memory usage. Here $n$ is the number of keys, $w$ is the machine
 word size (e.g., 64 bits).
 
@@ -77,7 +82,8 @@ Uses probabilistic trees (z-fast trie) and relative ranking.
 
 A modern method (introduced in 2023) using learned indexes instead of classical data structures.
 
-**Idea**: Uses a PGM-index (Piecewise Geometric Model) to build a piecewise-linear function approximating the key-to-rank
+**Idea**: Uses a PGM-index (Piecewise Geometric Model) to build a piecewise-linear function approximating the
+key-to-rank
 mapping. Collisions and prediction errors are resolved via an auxiliary BuRR structure.
 
 **Pros**:
@@ -85,26 +91,28 @@ mapping. Collisions and prediction errors are resolved via an auxiliary BuRR str
 - **Compact**: 1.3 - 3 bits per key, often beating trie-based theoretical methods
 - **Fast**: "Flat" structure (math instead of pointer chasing) gives strong read performance and CPU prefetch behavior
 
-**Status**: Reference C++ implementation exists ([GitHub: ByteHamster/LeMonHash](https://github.com/ByteHamster/LeMonHash)).
+**Status**: Reference C++ implementation
+exists ([GitHub: ByteHamster/LeMonHash](https://github.com/ByteHamster/LeMonHash)).
 No Go ports yet.
 
 ## 4. Asymptotic comparison
 
 Below is a comparison of theoretical methods, modern approaches, and a standard workaround.
 
-| Method                                 | Query time            | Space                         |
-|----------------------------------------|-----------------------|-------------------------------|
-| MMPH: LCP Bucketing                    | $O(1)$                | $O(n \log w)$                |
-| MMPH: Hash Displace and Compress (hdc) | $O(1)$                | $O(n \log n)$                |
-| MMPH: Relative Trie                    | $O(\log w)$           | $O(n \log \log w)$           |
-| MMPH: Relative Trie (impl)             | $O(\log w)$           | $O(n \log \log w)$ + constants |
-| LeMonHash (Learned)                    | Fast (Math + Lookup)  | $? O(n) but how ? $           |
+| Method                                 | Query time           | Space                          |
+|----------------------------------------|----------------------|--------------------------------|
+| MMPH: LCP Bucketing                    | $O(1)$               | $O(n \log w)$                  |
+| MMPH: Hash Displace and Compress (hdc) | $O(1)$               | $O(n \log n)$                  |
+| MMPH: Relative Trie                    | $O(\log w)$          | $O(n \log \log w)$             |
+| MMPH: Relative Trie (impl)             | $O(\log w)$          | $O(n \log \log w)$ + constants |
+| LeMonHash (Learned)                    | Fast (Math + Lookup) | $? O(n) but how ? $            |
 
 **Note**: $n$ is the number of keys, $w$ is key length in bits (typically 64).
 
 ## 5. Application
 
-In the Range Filter architecture (Approximate Range Emptiness), MMPH is used as a low-level building block to speed up navigation.
+In the Range Filter architecture (Approximate Range Emptiness), MMPH is used as a low-level building block to speed up
+navigation.
 
 ### Usage hierarchy
 
@@ -120,7 +128,8 @@ Range Locator (Map tree node to index interval)
 MMPH (Compute range boundaries in O(1))
 ```
 
-MMPH replaces binary search ($O(\log n)$) with constant-time address computation, which is critical for overall filter performance.
+MMPH replaces binary search ($O(\log n)$) with constant-time address computation, which is critical for overall filter
+performance.
 
 ## 6. Experimental comparison (bench pipeline)
 
@@ -130,36 +139,45 @@ Results are parsed and normalized by `benchmarks/analyze.py`. Note that key dist
 
 ### Performance Summary (Bits per Key)
 
-| Key Count | bucket-mmph | bucket_with_approx_trie | rbtz-mmph |
-|-----------|-------------|-------------------------|-----------|
-| 32        | 88.00       | 58.25                   | 44.00     |
-| 1,024     | 51.38       | 15.41                   | 40.12     |
-| 32,768    | 46.60       | 15.24                   | 40.00     |
-| 1,048,576 | 43.56       | 15.31                   | 40.00     |
-| 16,777,216| 41.95       | -                       | 40.00     |
+| Key Count  | bucket-mmph | bucket_with_approx_trie | rbtz-mmph |
+|------------|-------------|-------------------------|-----------|
+| 32         | 88.00       | 58.25                   | 44.00     |
+| 1,024      | 51.38       | 15.41                   | 40.12     |
+| 32,768     | 46.60       | 15.24                   | 40.00     |
+| 1,048,576  | 43.56       | 15.31                   | 40.00     |
+| 16,777,216 | 41.95       | -                       | 40.00     |
 
 ### Visualizations
 
 #### 1. Space Efficiency (Memory)
+
 ![Bits per Key](benchmarks/plots/bits_per_key_in_mem.svg)
-*Figure 1: `bucket_with_approx_trie` is significantly more compact (~15 bits/key) compared to classical bucketing (~40-42 bits/key).*
+*Figure 1: `bucket_with_approx_trie` is significantly more compact (~15 bits/key) compared to classical bucketing (~
+40-42 bits/key).*
 
 #### 2. Query Performance
+
 ![Lookup Time](benchmarks/plots/lookup_time_ns.svg)
-*Figure 2: `bucket-mmph` and `rbtz-mmph` provide $O(1)$ lookup. `bucket_with_approx_trie` is $O(\log w)$ but remains competitive at small-to-medium scales.*
+*Figure 2: `bucket-mmph` and `rbtz-mmph` provide $O(1)$ lookup. `bucket_with_approx_trie` is $O(\log w)$ but remains
+competitive at small-to-medium scales.*
 
 #### 3. Build Scalability
+
 ![Build Time](benchmarks/plots/build_time_ns.svg)
 *Figure 3: Build time scaling across implementations. `bucket-mmph` shows higher allocation overhead.*
 
 #### 4. Allocation Overhead
+
 ![Allocs per Op](benchmarks/plots/allocs_per_op.svg)
 *Figure 4: `bucket-mmph` performs significantly more allocations during build than `rbtz-mmph`.*
 
 ### Analysis
-1. **Memory King**: `bucket_with_approx_trie` lives up to its theoretical promise, achieving ~15 bits per key, which is 2.6x better than `rbtz-mmph`.
+
+1. **Memory King**: `bucket_with_approx_trie` lives up to its theoretical promise, achieving ~15 bits per key, which is
+   2.6x better than `rbtz-mmph`.
 2. **Stability**: `rbtz-mmph` is remarkably stable at exactly 40 bits per key (using two `uint32` arrays) for large $n$.
-3. **Build Cost**: `bucket-mmph` is currently the most "expensive" to build in terms of memory allocations, suggesting optimization potential in its bucket management logic.
+3. **Build Cost**: `bucket-mmph` is currently the most "expensive" to build in terms of memory allocations, suggesting
+   optimization potential in its bucket management logic.
 
 ## Addendum: `bucket_with_approx_trie` (Relative Trie)
 
@@ -175,8 +193,11 @@ pessimistic theoretical bounds.
 
 ## References
 
-- [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) - Belazzougui D., Boldi P., Pagh R., Vigna S.
+- [Monotone Minimal Perfect Hashing: Searching a Sorted Table with O(1) Accesses](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf) -
+  Belazzougui D., Boldi P., Pagh R., Vigna S.
 - [Hash, displace, and compress](https://cmph.sourceforge.net/papers/esa09.pdf)
 - [LeMonHash: Learned Monotone Minimal Perfect Hashing](https://github.com/ByteHamster/LeMonHash) - GitHub repository
-- [Fast Prefix Search in Little Space, with Applications](https://arxiv.org/abs/1804.04720) - Belazzougui D., Boldi P., Pagh R., Vigna S.
-- [Approximate Range Emptiness in Constant Time and Optimal Space](https://arxiv.org/pdf/1407.2907) - Goswami M., Gronlund A., Larsen K. G., Pagh R.
+- [Fast Prefix Search in Little Space, with Applications](https://arxiv.org/abs/1804.04720) - Belazzougui D., Boldi P.,
+  Pagh R., Vigna S.
+- [Approximate Range Emptiness in Constant Time and Optimal Space](https://arxiv.org/pdf/1407.2907) - Goswami M.,
+  Gronlund A., Larsen K. G., Pagh R.
