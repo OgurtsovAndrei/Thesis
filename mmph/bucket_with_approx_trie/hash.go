@@ -69,7 +69,8 @@ func NewMonotoneHashWithTrie[E zft.UNumber, S zft.UNumber, I zft.UNumber](data [
 // NewMonotoneHashWithTrieSeeded creates a new monotone hash function using approximate z-fast trie
 // with a specified seed for deterministic trie construction.
 // The buckets are divided based on lexicographic order, with delimiters being the last key in each bucket.
-// It validates that all keys work correctly with the trie and rebuilds with different derived seeds if needed.
+// It validates that all keys work correctly with the trie and rebuilds with different derived seeds if needed
+// (Las Vegas approach to ensure 100% correctness for the input set).
 //
 // Type-parameter sizing notes are the same as in NewMonotoneHashWithTrie.
 func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](data []bits.BitString, baseSeed uint64) (*MonotoneHashWithTrie[E, S, I], error) {
@@ -144,6 +145,9 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 
 // buildValidatedTrieWithIndices builds the approximate z-fast trie with bucket indices and validates it works for all keys.
 // It retries with different derived seeds if validation fails.
+// This is a Las Vegas approach to handle the probabilistic nature of the AZFT (FPs and FNs).
+// Since MMPH only needs to be correct for its build set, we ensure 100% runtime correctness
+// by validating at build time. See mmph/bucket_with_approx_trie/README.md for details.
 func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys []bits.BitString, delimiters []bits.BitString, baseSeed uint64) error {
 
 	for attempt := 0; attempt < maxTrieRebuilds; attempt++ {
