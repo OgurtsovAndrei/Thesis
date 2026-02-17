@@ -45,7 +45,7 @@
 Поскольку MMPH (Вариант B) использует AZFT как «навигатор» для определения ранга, ошибка в дереве напрямую транслируется в ошибку хеш-функции:
 
 - **Неверный узел:** Если AZFT выдал ложный узел или не нашел ничего, у MMPH нет данных для вычисления корректного диапазона индексов $[i, j]$
-- **Провал валидации:** Даже если в конце выполняется проверка двух ключей в массиве ($S[i]$ и $S[j]$), они не совпадут с искомым ключом, так как мы пришли в случайную область массива
+- **Провал валидации:** Даже если в конце выполняется проверка двух ключей в массиве ($S[i]$ и $S[j]$), они не совпадут с искомым клюгом, так как мы пришли в случайную область массива
 
 **Итог:** MMPH возвращает признак «ключ не найден» (или некорректный ранг), что нарушает свойство детерминизма для существующих элементов.
 
@@ -74,3 +74,13 @@ At the current moment trie cannot solve the weak prefix search issue.
 Now it can only return the node with the biggest extent which has a common prefix.
 To solve the weak prefix search issue, trie has to return the correct child of this node.
 So we need to store links to children somehow.
+
+## 7. Mitigation in MMPH
+
+Since MMPH is a static structure that must work correctly only for the set of keys it was built on, we can use a **Las Vegas** approach to handle the probabilistic nature of the AZFT:
+
+1. **Validation:** After building an `ApproxZFastTrie` on the bucket delimiters, the MMPH builder performs a full validation pass. It checks that every key from the input set resolves to the correct bucket using the trie.
+2. **Deterministic retry:** If validation fails for even a single key (either due to a False Positive or a False Negative in the trie), the entire trie is discarded and rebuilt with a new seed.
+3. **Guarantee:** This process repeats until a working trie is found (or a limit like `maxTrieRebuilds = 100` is reached). When construction succeeds, the resulting MMPH is guaranteed to be 100% correct for the original key set.
+
+This strategy converts the Monte Carlo error probability described in the paper into a construction-time overhead, ensuring runtime correctness without needing the explicit correction sets mentioned in Section 5.2 of the MMPH paper. Detailed documentation can be found in `mmph/bucket_with_approx_trie/README.md`.
