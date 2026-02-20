@@ -1,0 +1,33 @@
+func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
+	// HERE WE HAVE SOME MAGIC
+	// todo: !!! DOC is REALLY REQUIRED !!!
+
+	node := azft.GetExistingPrefix(pattern)
+	if node == nil {
+		return nil, nil, nil, nil, nil, nil
+	}
+
+	parentNode := (*NodeData[E, S, I])(nil)
+	if node.parent != I(^I(0)) {
+		parentNode = &azft.data[node.parent]
+	}
+
+	cand1 := &azft.data[node.minChild]
+
+	cand2 := (*NodeData[E, S, I])(nil)
+	if node.minGreaterChild != I(^I(0)) {
+		cand2 = &azft.data[node.minGreaterChild]
+	}
+
+	cand3 := azft.getMinGreaterFromParent(parentNode)
+	cand4 := azft.getGreaterFromParent(parentNode)
+
+	cand5 := (*NodeData[E, S, I])(nil)
+	if node.rightChild != I(^I(0)) {
+		cand5 = &azft.data[node.rightChild]
+	}
+
+	cand6 := (*NodeData[E, S, I])(node)
+
+	return cand1, cand2, cand3, cand4, cand5, cand6
+}
