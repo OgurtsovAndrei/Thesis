@@ -6,8 +6,8 @@ import (
 	"Thesis/mmph/go-boomphf"
 	"Thesis/trie/azft"
 	"Thesis/trie/zft"
+	"Thesis/utils"
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 )
@@ -78,14 +78,12 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 		return &MonotoneHashWithTrie[E, S, I]{}, nil
 	}
 
-	// Choose bucket size as log n (as suggested in the paper)
-	minBucketSize := max(int(math.Ceil(math.Log2(float64(len(data))))), 1)
-	if minBucketSize > 256 {
-		errutil.Bug("bucketSize must be <= 256 when using uint8 optimization")
-	}
-	bucketSize := 256 // max value of uint8
-
+	// Choose bucket size to ensure numBuckets fits in uint8 (max 255)
 	n := len(data)
+	bucketSize := 256
+	if (n+bucketSize-1)/bucketSize > 255 {
+		bucketSize = (n + 254) / 255
+	}
 	numBuckets := (n + bucketSize - 1) / bucketSize
 
 	mh := &MonotoneHashWithTrie[E, S, I]{
@@ -178,14 +176,12 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 	}
 
 	bucketIdx := 0
-	maxDelimiterIndex := I(^I(0))
+	const maxDelimiterIndex uint8 = 255
 
 	// Statistics tracking
 	cand1Matches := 0
 	cand2Matches := 0
 	cand3Matches := 0
-	cand4Matches := 0
-	cand5Matches := 0
 	cand6Matches := 0
 
 	for _, key := range allKeys {
@@ -203,23 +199,24 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 
 		expectedBucket := bucketIdx
 
-		cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(key)
+		cand1, cand2, cand3, cand6 := mh.delimiterTrie.LowerBound(key)
 
 		foundCorrectBucket := false
 
-		candidates := []*azft.NodeData[E, S, I]{cand1, cand2, cand3, cand4, cand5, cand6}
-		matchCounts := []*int{&cand1Matches, &cand2Matches, &cand3Matches, &cand4Matches, &cand5Matches, &cand6Matches}
+		candidates := []*azft.NodeData[E, S, I]{cand1, cand2, cand3, cand6}
+		matchCounts := []*int{&cand1Matches, &cand2Matches, &cand3Matches, &cand6Matches}
 
 		for i, candidate := range candidates {
 			if candidate == nil {
 				continue
 			}
 
-			if candidate.Rank != maxDelimiterIndex {
+			if candidate.Rank != 255 {
 				candidateBucketIdx := int(candidate.Rank)
 				if candidateBucketIdx == expectedBucket {
 					foundCorrectBucket = true
 					*matchCounts[i]++
+					break
 				}
 			}
 		}
@@ -228,6 +225,8 @@ func (mh *MonotoneHashWithTrie[E, S, I]) validateAllKeys(allKeys []bits.BitStrin
 			return false
 		}
 	}
+
+	utils.LogCandidateMatch("MMPH.validateAllKeys", []int{cand1Matches, cand2Matches, cand3Matches, cand6Matches})
 
 	return true
 }
@@ -240,17 +239,18 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 		return -1
 	}
 
-	cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(key)
+	cand1, cand2, cand3, cand6 := mh.delimiterTrie.LowerBound(key)
 
 	bucketIdx := -1
-	maxDelimiterIndex := I(^I(0))
+	const maxDelimiterRank uint8 = 255
 
-	tryCandidate := func(candidate *azft.NodeData[E, S, I]) bool {
+	matchIdx := -1
+	tryCandidate := func(candidate *azft.NodeData[E, S, I], idx int) bool {
 		if candidate == nil {
 			return false
 		}
 
-		if candidate.Rank != maxDelimiterIndex {
+		if candidate.Rank != maxDelimiterRank {
 			candidateBucketIdx := int(candidate.Rank)
 
 			if candidateBucketIdx < len(mh.buckets) && mh.buckets[candidateBucketIdx] != nil {
@@ -261,6 +261,7 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 						(candidateBucketIdx > 0 && mh.buckets[candidateBucketIdx-1] != nil &&
 							key.Compare(mh.buckets[candidateBucketIdx-1].delimiter) > 0) {
 						bucketIdx = candidateBucketIdx
+						matchIdx = idx
 						return true
 					}
 				}
@@ -269,16 +270,18 @@ func (mh *MonotoneHashWithTrie[E, S, I]) GetRank(key bits.BitString) int {
 		return false
 	}
 
-	if !tryCandidate(cand1) {
-		if !tryCandidate(cand2) {
-			if !tryCandidate(cand3) {
-				if !tryCandidate(cand4) {
-					if !tryCandidate(cand5) {
-						tryCandidate(cand6)
-					}
-				}
+	if !tryCandidate(cand1, 0) {
+		if !tryCandidate(cand2, 1) {
+			if !tryCandidate(cand3, 2) {
+				tryCandidate(cand6, 3)
 			}
 		}
+	}
+
+	if matchIdx != -1 {
+		counts := make([]int, 4)
+		counts[matchIdx] = 1
+		utils.LogCandidateMatch("MMPH.GetRank", counts)
 	}
 
 	if bucketIdx == -1 || bucketIdx >= len(mh.buckets) || mh.buckets[bucketIdx] == nil {

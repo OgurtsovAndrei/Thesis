@@ -14,14 +14,12 @@ type UNumber interface {
 
 // NodeData contains the packed data for a Trie node.
 type NodeData[E UNumber, S UNumber, I UNumber] struct {
-	extentLen E
-	// should be at ((log log n) + (log log w) - (log eps)) bits
+	extentLen       E
 	PSig            S
 	parent          I
 	minChild        I
 	minGreaterChild I
-	rightChild      I
-	Rank            I
+	Rank            uint8
 }
 
 // ApproxZFastTrie is a compact probabilistic implementation of a Z-Fast Trie,
@@ -94,13 +92,20 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 	return result
 }
 
-func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
-	// HERE WE HAVE SOME MAGIC
-	// todo: !!! DOC is REALLY REQUIRED !!!
+// LowerBound finds the node with the smallest rank greater than or equal to the pattern.
+// Since it is an approximate trie, it returns several potential candidates.
+// LowerBound finds the node with the smallest rank greater than or equal to the pattern.
+// Since it is an approximate trie, it returns several potential candidates.
+// LowerBound finds the node with the smallest rank greater than or equal to the pattern.
+// Since it is an approximate trie, it returns several potential candidates.
+func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
+	if azft.rootId == I(^I(0)) {
+		return nil, nil, nil, nil
+	}
 
 	node := azft.GetExistingPrefix(pattern)
 	if node == nil {
-		return nil, nil, nil, nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
 	parentNode := (*NodeData[E, S, I])(nil)
@@ -108,21 +113,21 @@ func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeD
 		parentNode = &azft.data[node.parent]
 	}
 
+	cand1 := (*NodeData[E, S, I])(nil)
+	if node.minChild != I(^I(0)) {
+		cand1 = &azft.data[node.minChild]
+	}
+
 	cand2 := (*NodeData[E, S, I])(nil)
 	if node.minGreaterChild != I(^I(0)) {
 		cand2 = &azft.data[node.minGreaterChild]
 	}
-	cand5 := (*NodeData[E, S, I])(nil)
-	if node.rightChild != I(^I(0)) {
-		cand5 = &azft.data[node.rightChild]
-	}
 
-	// work with parents
 	cand3 := azft.getMinGreaterFromParent(parentNode)
-	cand4 := azft.getGreaterFromParent(parentNode)
 
 	cand6 := (*NodeData[E, S, I])(node)
-	return &azft.data[node.minChild], cand2, cand3, cand4, cand5, cand6
+
+	return cand1, cand2, cand3, cand6
 }
 
 func (azft *ApproxZFastTrie[E, S, I]) getMinGreaterFromParent(parentNode *NodeData[E, S, I]) *NodeData[E, S, I] {
@@ -138,21 +143,6 @@ func (azft *ApproxZFastTrie[E, S, I]) getMinGreaterFromParent(parentNode *NodeDa
 		cand = &azft.data[parentNode.minGreaterChild]
 	}
 	return cand
-}
-
-func (azft *ApproxZFastTrie[E, S, I]) getGreaterFromParent(parentNode *NodeData[E, S, I]) *NodeData[E, S, I] {
-	if parentNode == nil {
-		return nil
-	}
-	for parentNode.rightChild == I(^I(0)) && parentNode.parent != I(^I(0)) {
-		parentId := parentNode.parent
-		parentNode = &azft.data[parentId]
-	}
-	cand4 := (*NodeData[E, S, I])(nil)
-	if parentNode.rightChild != I(^I(0)) {
-		cand4 = &azft.data[parentNode.rightChild]
-	}
-	return cand4
 }
 
 func (azft *ApproxZFastTrie[E, S, I]) getNodeData(bitString bits.BitString) *NodeData[E, S, I] {

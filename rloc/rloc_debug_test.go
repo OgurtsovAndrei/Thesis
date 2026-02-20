@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	debugTestRuns  = 10_000 // Fewer runs for faster debugging
+	debugTestRuns  = 1_000 // Fewer runs for faster debugging
 	debugMaxKeys   = 1024
 	debugMaxBitLen = 16
 )

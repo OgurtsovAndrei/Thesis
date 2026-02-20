@@ -39,13 +39,13 @@ func TestO1BucketLookup(t *testing.T) {
 	// Test that the rank field is properly set in trie nodes
 	if mh.delimiterTrie != nil {
 		// Use the approximate z-fast trie to get candidates for the bucket
-		cand1, cand2, cand3, cand4, cand5, cand6 := mh.delimiterTrie.LowerBound(bitKeys[len(bitKeys)/2])
+		cand1, cand2, cand3, cand6 := mh.delimiterTrie.LowerBound(bitKeys[len(bitKeys)/2])
 
-		maxDelimiterIndex := uint16(^uint16(0))
+		const maxDelimiterIndex uint8 = 255
 		foundValidIndex := false
 
 		// Check if any candidate has a valid rank
-		candidates := []*azft.NodeData[uint8, uint16, uint16]{cand1, cand2, cand3, cand4, cand5, cand6}
+		candidates := []*azft.NodeData[uint8, uint16, uint16]{cand1, cand2, cand3, cand6}
 
 		for _, candidate := range candidates {
 			if candidate != nil && candidate.Rank != maxDelimiterIndex {

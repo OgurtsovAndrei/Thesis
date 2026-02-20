@@ -36,8 +36,10 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 
 	// Extract handles for MPH
 	keysForMPH := make([]bits.BitString, 0, len(trie.Handle2NodeMap))
-	for handle := range trie.Handle2NodeMap {
+	nodeToHandle := make(map[*zft.Node[bool]]bits.BitString)
+	for handle, node := range trie.Handle2NodeMap {
 		keysForMPH = append(keysForMPH, handle)
+		nodeToHandle[node] = handle
 	}
 	// Sort keysForMPH to ensure deterministic order
 	sort.Slice(keysForMPH, func(i, j int) bool {
@@ -51,80 +53,158 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 
-	// Create mapping from keys to their delimiter indices
-	keyToDelimiterIdx := make(map[string]int)
-
 	// Reconstruct ranks by traversing Trie in-order
-	trieIter := zft.NewSortedIterator(trie)
+	nodeRanks := make([]I, len(keysForMPH))
+	maxDelimiterIndex := I(^I(0))
+	for i := range nodeRanks {
+		nodeRanks[i] = maxDelimiterIndex
+	}
+
 	rank := 0
-	for trieIter.Next() {
-		node := trieIter.Node()
-		if node.Value {
-			keyToDelimiterIdx[string(node.Extent.Data())] = rank
-			rank++
+	if trie.Root != nil {
+		stack := []*zft.Node[bool]{trie.Root}
+		for len(stack) > 0 {
+			node := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+
+			if node.Value {
+				handle := nodeToHandle[node]
+				nodeIdx := mph.Query(handle) - 1
+				errutil.BugOn(nodeIdx >= uint64(len(nodeRanks)), "MPH out of bounds")
+				nodeRanks[nodeIdx] = I(rank)
+				rank++
+			}
+
+			if node.RightChild != nil {
+				stack = append(stack, node.RightChild)
+			}
+			if node.LeftChild != nil {
+				stack = append(stack, node.LeftChild)
+			}
 		}
 	}
 
-	maxDelimiterIndex := I(^I(0))
+	// Helper to find the node with the smallest rank in a subtree (leftmost with value)
 
-	for handle, node := range trie.Handle2NodeMap {
+	findSmallestRankNode := func(root *zft.Node[bool]) *zft.Node[bool] {
+
+		if root == nil {
+
+			return nil
+
+		}
+
+		// Pre-order traversal to find the first node with a value
+
+		stack := []*zft.Node[bool]{root}
+
+		for len(stack) > 0 {
+
+			node := stack[len(stack)-1]
+
+			stack = stack[:len(stack)-1]
+
+			if node.Value {
+
+				return node
+
+			}
+
+			if node.RightChild != nil {
+
+				stack = append(stack, node.RightChild)
+
+			}
+
+			if node.LeftChild != nil {
+
+				stack = append(stack, node.LeftChild)
+
+			}
+
+		}
+
+		return nil
+
+	}
+
+	for _, node := range trie.Handle2NodeMap {
+
+		handle := nodeToHandle[node]
+
 		idx := mph.Query(handle) - 1
+
 		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
 
-		mostLeft := node
-		for mostLeft.LeftChild != nil {
-			mostLeft = mostLeft.LeftChild
+		// minChild points to the smallest rank in the LEFT subtree
+
+		var minChild = maxDelimiterIndex
+
+		if node.LeftChild != nil {
+
+			smallest := findSmallestRankNode(node.LeftChild)
+
+			if smallest != nil {
+
+				sHandle := nodeToHandle[smallest]
+
+				minChildIdx := mph.Query(sHandle) - 1
+
+				minChild = I(minChildIdx)
+
+			}
+
 		}
-		errutil.BugOn(!mostLeft.Value, "mostLeft should have a value")
-		minChildHandle := mostLeft.Handle()
-		minChildIdx := mph.Query(minChildHandle) - 1
-		errutil.BugOn(minChildIdx >= uint64(len(data)), "Out of bounds")
-		minChild := I(minChildIdx)
-		errutil.BugOn(uint64(minChild) != minChildIdx, "Data loss on minChild index")
+
+		// minGreaterChild points to the smallest rank in the RIGHT subtree
 
 		var minGreaterChild = maxDelimiterIndex
+
 		if node.RightChild != nil {
-			mostLeft := node.RightChild
-			for mostLeft.LeftChild != nil {
-				mostLeft = mostLeft.LeftChild
+
+			smallestGreater := findSmallestRankNode(node.RightChild)
+
+			if smallestGreater != nil {
+
+				lmcHandle := nodeToHandle[smallestGreater]
+
+				lmcIdx := mph.Query(lmcHandle) - 1
+
+				minGreaterChild = I(lmcIdx)
+
 			}
-			errutil.BugOn(!mostLeft.Value, "mostLeft in right subtree should have a value")
-			lmcHandle := mostLeft.Handle()
-			lmcIdx := mph.Query(lmcHandle) - 1
-			errutil.BugOn(lmcIdx >= uint64(len(data)), "Out of bounds")
-			minGreaterChild = I(lmcIdx)
-			errutil.BugOn(uint64(minGreaterChild) != lmcIdx, "Data loss on minGreaterChild index")
+
 		}
 
 		sig := S(hashBitString(node.Extent, seed))
+
 		extentLength := E(node.ExtentLength())
+
 		errutil.BugOn(uint32(extentLength) != node.ExtentLength(), "Data loss")
 
 		// Determine delimiter index for this node
-		delimiterIdx := maxDelimiterIndex
-		if delimIdx, exists := keyToDelimiterIdx[string(node.Extent.Data())]; exists {
-			delimiterIdx = I(delimIdx)
-		}
 
-		// Set rightChild index
-		var rightChildIdx I = maxDelimiterIndex
-		if node.RightChild != nil {
-			rcHandle := node.RightChild.Handle()
-			rcIdx := mph.Query(rcHandle) - 1
-			errutil.BugOn(rcIdx >= uint64(len(data)), "Out of bounds")
-			rightChildIdx = I(rcIdx)
-			errutil.BugOn(uint64(rightChildIdx) != rcIdx, "Data loss on rightChild index")
-		}
+		delimiterIdx := nodeRanks[idx]
+
+		errutil.BugOn(delimiterIdx != maxDelimiterIndex && delimiterIdx > 255, "Rank overflow for uint8: %d", delimiterIdx)
+
+		// Set up NodeData
 
 		data[idx] = NodeData[E, S, I]{
-			extentLen:       extentLength,
-			PSig:            sig,
-			parent:          maxDelimiterIndex, // will be set correctly in the next loop
-			minChild:        minChild,
+
+			extentLen: extentLength,
+
+			PSig: sig,
+
+			parent: maxDelimiterIndex, // will be set correctly in the next loop
+
+			minChild: minChild,
+
 			minGreaterChild: minGreaterChild,
-			rightChild:      rightChildIdx,
-			Rank:            delimiterIdx,
+
+			Rank: uint8(delimiterIdx),
 		}
+
 	}
 
 	// Set up parent relationships - find first ancestor where node is in left subtree

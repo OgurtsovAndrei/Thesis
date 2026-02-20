@@ -3,6 +3,7 @@ package rloc
 import (
 	"Thesis/bits"
 	"Thesis/trie/zft"
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -18,8 +19,17 @@ const (
 )
 
 func TestRangeLocator_Correctness(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	for run := 0; run < testRuns; run++ {
 		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
+			select {
+			case <-ctx.Done():
+				t.Skip("Stopping due to failure in another run")
+			default:
+			}
+
 			t.Parallel()
 			seed := time.Now().UnixNano()
 			keys := genUniqueBitStrings(seed)
@@ -27,6 +37,7 @@ func TestRangeLocator_Correctness(t *testing.T) {
 			zt := zft.Build(keys)
 			rl, err := NewRangeLocator(zt)
 			if err != nil {
+				cancel()
 				t.Fatalf("NewRangeLocator failed (seed: %d): %v", seed, err)
 			}
 
@@ -39,6 +50,7 @@ func TestRangeLocator_Correctness(t *testing.T) {
 
 				start, end, err := rl.Query(node.Extent)
 				if err != nil {
+					cancel()
 					t.Fatalf("Query failed for existing node (seed: %d): %v", seed, err)
 				}
 
@@ -47,6 +59,7 @@ func TestRangeLocator_Correctness(t *testing.T) {
 				if start != expectedStart || end != expectedEnd {
 					t.Errorf("Mismatch for node %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
 						node.Extent.PrettyString(), seed, start, end, expectedStart, expectedEnd)
+					cancel()
 					t.FailNow()
 				}
 			}
