@@ -104,7 +104,7 @@ When analyzing failures in `/tmp/mmph_failures.json`:
 
 - Run `go test ./rloc -v` to see all the existing tests pass
 - Modify `debugTestRuns` in `rloc_test_debug.go` to run more/fewer iterations
-- Check `/Users/andrei.ogurtsov/Thesis/mmph/bucket_with_approx_trie/hash.go` for the MMPH implementation
+- Check `/Users/andrei.ogurtsov/Thesis/mmph/relative_trie/hash.go` for the MMPH implementation
 - The issue is likely in `buildValidatedTrieWithIndices` or `validateAllKeys`
 
 ## JSON Structure Example

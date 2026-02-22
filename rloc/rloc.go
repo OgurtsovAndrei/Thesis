@@ -3,7 +3,7 @@ package rloc
 import (
 	"Thesis/bits"
 	"Thesis/errutil"
-	bucket "Thesis/mmph/bucket_with_approx_trie"
+	bucket "Thesis/mmph/relative_trie"
 	"Thesis/trie/zft"
 	"fmt"
 	"math/rand"
@@ -60,7 +60,7 @@ type RangeLocator interface {
 //     24 + mmph.ByteSize() + 200 + bv.AllocSize() bytes.
 //
 //   - Empirical resident-size range from recent BenchmarkMemoryComparison runs
-//     (see mmph/bucket_with_approx_trie/study/memory_bench_v2.txt):
+//     (see mmph/relative_trie/study/memory_bench_v2.txt):
 //     about 51.27..106.00 bits/key, with ~51..59 bits/key in the larger-key
 //     regime (keys >= 8192 in that run).
 //

@@ -15,15 +15,15 @@ This results in a structure that uses only $O(m (\log \log n + \log \log w))$ bi
 
 The implementation includes several subtle "hacks" and optimizations to handle its probabilistic nature:
 
-- **[Lower Bound Candidates](lower_bound_candidates.md)**: Explains why `LowerBound()` returns 6 candidates and how they are used by MMPH to identify bucket delimiters.
-- **[Length-Consistency Filter](getexistingprefix_collision_filter.md)**: Describes a correctness-preserving check in `GetExistingPrefix` that significantly reduces the false positive rate.
-- **[False Positives & False Negatives](FP&FN%20in%20AZFT.md)**: A theoretical analysis of how collisions in the MPH and signatures can lead to both types of errors, and how the MMPH builder mitigates this using a Las Vegas approach.
+- **[Lower Bound Candidates](azft_lower_bound.md)**: Explains why `LowerBound()` returns 6 candidates and how they are used by MMPH to identify bucket delimiters.
+- **[Length-Consistency Filter](collision_filter.md)**: Describes a correctness-preserving check in `GetExistingPrefix` that significantly reduces the false positive rate.
+- **[False Positives & False Negatives](fp_fn_analysis.md)**: A theoretical analysis of how collisions in the MPH and signatures can lead to both types of errors, and how the MMPH builder mitigates this using a Las Vegas approach.
 
 ## Key Features
 
 - **Generic Implementation**: Supports different bit-widths for extent lengths (`E`), signatures (`S`), and node indices (`I`) to tune space vs. precision.
-- **Memory-Efficient Builder**: Includes a builder (`builder.go`) that constructs the trie from sorted iterators with reduced memory overhead (`NewApproxZFastTrieFromIteratorStreaming`). See [On-The-Fly Building](../OnTheFlyBuild.md) for theoretical background and performance analysis.
-- **Property-Based Testing**: Extensive tests in `approx_bs_property_test.go` verify the error rates against theoretical bounds.
+- **Memory-Efficient Builder**: Includes a builder (`azft_builder.go`) that constructs the trie from sorted iterators with reduced memory overhead (`NewApproxZFastTrieFromIteratorStreaming`). See [On-The-Fly Building](../OnTheFlyBuild.md) for theoretical background and performance analysis.
+- **Property-Based Testing**: Extensive tests in `azft_property_test.go` verify the error rates against theoretical bounds.
 
 ## References
 

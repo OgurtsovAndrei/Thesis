@@ -48,7 +48,7 @@
 <circle cx="832.63" cy="99.43" r="3.5" fill="#2a7fff" />
 <circle cx="920.00" cy="58.80" r="3.5" fill="#2a7fff" />
 <line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
-<text class="label" x="122.0" y="71.0">bucket-mmph</text>
+<text class="label" x="122.0" y="71.0">bucket_mmph</text>
 <polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,448.22 221.05,388.97 308.42,348.11 439.47,286.48 526.84,245.35 657.89,183.64 745.26,142.50 832.63,101.36 920.00,60.21" />
 <circle cx="90.00" cy="448.22" r="3.5" fill="#e4572e" />
 <circle cx="221.05" cy="388.97" r="3.5" fill="#e4572e" />
@@ -60,7 +60,7 @@
 <circle cx="832.63" cy="101.36" r="3.5" fill="#e4572e" />
 <circle cx="920.00" cy="60.21" r="3.5" fill="#e4572e" />
 <line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
-<text class="label" x="122.0" y="89.0">rbtz-mmph</text>
+<text class="label" x="122.0" y="89.0">rbtz_mmph</text>
 <polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,439.90 221.05,413.40 308.42,376.51 439.47,314.79 526.84,273.99 657.89,212.13 745.26,170.99 876.32,109.31" />
 <circle cx="90.00" cy="439.90" r="3.5" fill="#22a06b" />
 <circle cx="221.05" cy="413.40" r="3.5" fill="#22a06b" />
@@ -71,7 +71,7 @@
 <circle cx="745.26" cy="170.99" r="3.5" fill="#22a06b" />
 <circle cx="876.32" cy="109.31" r="3.5" fill="#22a06b" />
 <line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
-<text class="label" x="122.0" y="107.0">bucket_with_approx_trie</text>
+<text class="label" x="122.0" y="107.0">relative_trie</text>
 <text class="label" x="480.0" y="522.0" text-anchor="middle">Key count</text>
 <text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">bytes</text>
 </svg>

@@ -46,4 +46,4 @@ By returning 6 candidates, we complement the $O(\log w)$ bitwise search with a s
 
 - Paper: `papers/MonotoneMinimalPerfectHashing.pdf` (Section 5: A relative trie).
 - Implementation: `trie/azft/approx_z_fast_trie.go` (`LowerBound`).
-- Context: `mmph/bucket_with_approx_trie/hash.go` (how candidates are used).
+- Context: `mmph/relative_trie/hash.go` (how candidates are used).

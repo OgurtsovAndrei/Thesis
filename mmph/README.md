@@ -45,7 +45,7 @@ word size (e.g., 64 bits).
 
 ### Method A: Bucketing with LCP (Speed)
 
-see [bucket-mmph](bucket-mmph)
+see [bucket_mmph](bucket_mmph)
 
 Uses segmentation based on longest common prefixes.
 
@@ -55,7 +55,7 @@ Uses segmentation based on longest common prefixes.
 
 ### Method B: Hash Displace and Compress (MMPH)
 
-see [rbtz-mmph](rbtz-mmph/)
+see [rbtz_mmph](rbtz_mmph/)
 
 Uses two-level hashing with displacement and compression, as described in
 [Hash, displace, and compress](https://cmph.sourceforge.net/papers/esa09.pdf). Since the main cost is storing indices,
@@ -72,8 +72,8 @@ Uses probabilistic trees (z-fast trie) and relative ranking.
 - **Query time**: $O(\log w)$ (independent of $n$, only key bit-width)
 - **Space**: $O(n \log \log w)$ bits
 - **Notes**: Extremely compact (theoretically 2-3 bits/key), but harder to implement
-- **In this repo**: prototype `bucket_with_approx_trie/` with an approximate z-fast trie and full-key validation;
-  details and plots in `bucket_with_approx_trie/analysis_summary.md` and the collision-filter note
+- **In this repo**: prototype `relative_trie/` with an approximate z-fast trie and full-key validation;
+  details and plots in `relative_trie/analysis_summary.md` and the collision-filter note
   `zfasttrie/getexistingprefix_collision_filter.md`.
 
 ## 3. Modern approaches (State-of-the-Art)
@@ -139,7 +139,7 @@ Results are parsed and normalized by `benchmarks/analyze.py`. Note that key dist
 
 ### Performance Summary (Bits per Key)
 
-| Key Count  | bucket-mmph | bucket_with_approx_trie | rbtz-mmph |
+| Key Count  | bucket_mmph | relative_trie | rbtz_mmph |
 |------------|-------------|-------------------------|-----------|
 | 32         | 88.00       | 58.25                   | 44.00     |
 | 1,024      | 51.38       | 15.41                   | 40.12     |
@@ -152,40 +152,40 @@ Results are parsed and normalized by `benchmarks/analyze.py`. Note that key dist
 #### 1. Space Efficiency (Memory)
 
 ![Bits per Key](benchmarks/plots/bits_per_key_in_mem.svg)
-*Figure 1: `bucket_with_approx_trie` is significantly more compact (~15 bits/key) compared to classical bucketing (~
+*Figure 1: `relative_trie` is significantly more compact (~15 bits/key) compared to classical bucketing (~
 40-42 bits/key).*
 
 #### 2. Query Performance
 
 ![Lookup Time](benchmarks/plots/lookup_time_ns.svg)
-*Figure 2: `bucket-mmph` and `rbtz-mmph` provide $O(1)$ lookup. `bucket_with_approx_trie` is $O(\log w)$ but remains
+*Figure 2: `bucket_mmph` and `rbtz_mmph` provide $O(1)$ lookup. `relative_trie` is $O(\log w)$ but remains
 competitive at small-to-medium scales.*
 
 #### 3. Build Scalability
 
 ![Build Time](benchmarks/plots/build_time_ns.svg)
-*Figure 3: Build time scaling across implementations. `bucket-mmph` shows higher allocation overhead.*
+*Figure 3: Build time scaling across implementations. `bucket_mmph` shows higher allocation overhead.*
 
 #### 4. Allocation Overhead
 
 ![Allocs per Op](benchmarks/plots/allocs_per_op.svg)
-*Figure 4: `bucket-mmph` performs significantly more allocations during build than `rbtz-mmph`.*
+*Figure 4: `bucket_mmph` performs significantly more allocations during build than `rbtz_mmph`.*
 
 ### Analysis
 
-1. **Memory King**: `bucket_with_approx_trie` lives up to its theoretical promise, achieving ~15 bits per key, which is
-   2.6x better than `rbtz-mmph`.
-2. **Stability**: `rbtz-mmph` is remarkably stable at exactly 40 bits per key (using two `uint32` arrays) for large $n$.
-3. **Build Cost**: `bucket-mmph` is currently the most "expensive" to build in terms of memory allocations, suggesting
+1. **Memory King**: `relative_trie` lives up to its theoretical promise, achieving ~15 bits per key, which is
+   2.6x better than `rbtz_mmph`.
+2. **Stability**: `rbtz_mmph` is remarkably stable at exactly 40 bits per key (using two `uint32` arrays) for large $n$.
+3. **Build Cost**: `bucket_mmph` is currently the most "expensive" to build in terms of memory allocations, suggesting
    optimization potential in its bucket management logic.
 
-## Addendum: `bucket_with_approx_trie` (Relative Trie)
+## Addendum: `relative_trie` (Relative Trie)
 
 For the probabilistic-trie approach, there is a separate study with build-success plots and theoretical curves.
-See `bucket_with_approx_trie/analysis_summary.md` and the overlays:
+See `relative_trie/analysis_summary.md` and the overlays:
 
-- `bucket_with_approx_trie/study/plots/s8_success_vs_n_overlay.svg`
-- `bucket_with_approx_trie/study/plots/s16_success_vs_n_overlay.svg`
+- `relative_trie/study/plots/s8_success_vs_n_overlay.svg`
+- `relative_trie/study/plots/s16_success_vs_n_overlay.svg`
 
 A key difference from the paper: the implementation includes a length-consistency filter for MPH false hits
 (`zfasttrie/getexistingprefix_collision_filter.md`), which makes empirical success rates notably higher than the

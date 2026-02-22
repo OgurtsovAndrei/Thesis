@@ -7,5 +7,5 @@ files = [
     "scripts/bench_lib",
     "rloc/benchmarks/analyze.py",
     "mmph/benchmarks/analyze.py",
-    "mmph/bucket_with_approx_trie/study/analyze.py"
+    "mmph/relative_trie/study/analyze.py"
 ]
