@@ -94,10 +94,19 @@ func (azft *ApproxZFastTrie[E, S, I]) GetExistingPrefix(pattern bits.BitString) 
 	return result
 }
 
+// LowerBound returns a set of 6 candidate nodes that might be the lexicographical lower bound
+// (the smallest delimiter >= pattern) for the given pattern.
+//
+// In a compacted Z-Fast Trie, the Exit Node (longest existing prefix) is insufficient to
+// determine the exact lower bound because the trie lacks full keys. For MMPH, we need to
+// identify the bucket delimiter that follows the query key.
+//
+// todo: !!! DOC with pictures is REALLY REQUIRED !!!
+// We return all possible nodes where the lower bound could reside relative to the Exit Node (6 candidates).
+//
+// The caller (e.g., MonotoneHashWithTrie) must verify these candidates against actual keys.
+// See trie/azft/lower_bound_candidates.md for a detailed theoretical explanation.
 func (azft *ApproxZFastTrie[E, S, I]) LowerBound(pattern bits.BitString) (*NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I], *NodeData[E, S, I]) {
-	// HERE WE HAVE SOME MAGIC
-	// todo: !!! DOC is REALLY REQUIRED !!!
-
 	node := azft.GetExistingPrefix(pattern)
 	if node == nil {
 		return nil, nil, nil, nil, nil, nil
