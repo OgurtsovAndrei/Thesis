@@ -1,6 +1,6 @@
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashBuild/Keys=32-16         	   41607	     28340 ns/op	        80.00 bits/key_in_mem	       320.0 bytes_in_mem	    6656 B/op	     116 allocs/op
 BenchmarkMonotoneHashBuild/Keys=256-16        	   10000	    216337 ns/op	        59.38 bits/key_in_mem	      1900 bytes_in_mem	   46848 B/op	     693 allocs/op
@@ -12,10 +12,10 @@ BenchmarkMonotoneHashBuild/Keys=1048576-16    	       2	2341101000 ns/op	       
 BenchmarkMonotoneHashBuild/Keys=4194304-16    	       1	6523786959 ns/op	        42.68 bits/key_in_mem	  22376816 bytes_in_mem	931056056 B/op	10493009 allocs/op
 BenchmarkMonotoneHashBuild/Keys=16777216-16   	       1	34028823833 ns/op	        41.96 bits/key_in_mem	  87995008 bytes_in_mem	4040752824 B/op	41713013 allocs/op
 PASS
-ok  	Thesis/mmph/bucket-mmph	190.736s
+ok  	Thesis/mmph/bucket_mmph	190.736s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashBuild/Keys=32-16         	   47809	     21927 ns/op	        76.00 bits/key_in_mem	       304.0 bytes_in_mem	    6536 B/op	     110 allocs/op
 BenchmarkMonotoneHashBuild/Keys=256-16        	   10000	    218224 ns/op	        56.12 bits/key_in_mem	      1796 bytes_in_mem	   46616 B/op	     683 allocs/op
@@ -27,10 +27,10 @@ BenchmarkMonotoneHashBuild/Keys=1048576-16    	       1	1492238250 ns/op	       
 BenchmarkMonotoneHashBuild/Keys=4194304-16    	       1	4470360583 ns/op	        42.67 bits/key_in_mem	  22372768 bytes_in_mem	930961128 B/op	10491776 allocs/op
 BenchmarkMonotoneHashBuild/Keys=16777216-16   	       1	32466460208 ns/op	        41.95 bits/key_in_mem	  87982232 bytes_in_mem	4040678392 B/op	41711101 allocs/op
 PASS
-ok  	Thesis/mmph/bucket-mmph	251.145s
+ok  	Thesis/mmph/bucket_mmph	251.145s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashBuild/Keys=32-16         	  119361	     15279 ns/op	        72.00 bits/key_in_mem	       288.0 bytes_in_mem	    6336 B/op	     108 allocs/op
 BenchmarkMonotoneHashBuild/Keys=256-16        	   10000	    185714 ns/op	        54.62 bits/key_in_mem	      1748 bytes_in_mem	   45736 B/op	     670 allocs/op
@@ -42,10 +42,10 @@ BenchmarkMonotoneHashBuild/Keys=1048576-16    	       2	1425837250 ns/op	       
 BenchmarkMonotoneHashBuild/Keys=4194304-16    	       1	6139969250 ns/op	        42.67 bits/key_in_mem	  22371520 bytes_in_mem	930943072 B/op	10491696 allocs/op
 BenchmarkMonotoneHashBuild/Keys=16777216-16   	       1	31958460916 ns/op	        41.96 bits/key_in_mem	  88000712 bytes_in_mem	4040834168 B/op	41714712 allocs/op
 PASS
-ok  	Thesis/mmph/bucket-mmph	267.889s
+ok  	Thesis/mmph/bucket_mmph	267.889s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashBuild/Keys=32-16         	  124780	     12641 ns/op	        84.00 bits/key_in_mem	       336.0 bytes_in_mem	    6768 B/op	     120 allocs/op
 BenchmarkMonotoneHashBuild/Keys=256-16        	   13688	     81567 ns/op	        56.12 bits/key_in_mem	      1796 bytes_in_mem	   46288 B/op	     665 allocs/op
@@ -57,10 +57,10 @@ BenchmarkMonotoneHashBuild/Keys=1048576-16    	       1	1416978792 ns/op	       
 BenchmarkMonotoneHashBuild/Keys=4194304-16    	       1	5579305833 ns/op	        42.69 bits/key_in_mem	  22379288 bytes_in_mem	947552992 B/op	10492791 allocs/op
 BenchmarkMonotoneHashBuild/Keys=16777216-16   	       1	29999720584 ns/op	        41.95 bits/key_in_mem	  87980376 bytes_in_mem	4040631256 B/op	41710803 allocs/op
 PASS
-ok  	Thesis/mmph/bucket-mmph	219.836s
+ok  	Thesis/mmph/bucket_mmph	219.836s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashBuild/Keys=32-16         	  153411	     30632 ns/op	        80.00 bits/key_in_mem	       320.0 bytes_in_mem	    6648 B/op	     115 allocs/op
 BenchmarkMonotoneHashBuild/Keys=256-16        	   10000	    219115 ns/op	        55.12 bits/key_in_mem	      1764 bytes_in_mem	   46096 B/op	     672 allocs/op
@@ -72,10 +72,10 @@ BenchmarkMonotoneHashBuild/Keys=1048576-16    	       1	1565890292 ns/op	       
 BenchmarkMonotoneHashBuild/Keys=4194304-16    	       1	6523128916 ns/op	        42.68 bits/key_in_mem	  22378440 bytes_in_mem	947567864 B/op	10492982 allocs/op
 BenchmarkMonotoneHashBuild/Keys=16777216-16   	       1	29714039500 ns/op	        41.95 bits/key_in_mem	  87977792 bytes_in_mem	4040502968 B/op	41709031 allocs/op
 PASS
-ok  	Thesis/mmph/bucket-mmph	223.467s
+ok  	Thesis/mmph/bucket_mmph	223.467s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashLookup/Keys=32-16         	 4063550	       374.5 ns/op	      24 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=256-16        	 9536329	       267.8 ns/op	      24 B/op	       1 allocs/op
@@ -87,7 +87,7 @@ BenchmarkMonotoneHashLookup/Keys=1048576-16    	 1950223	       614.9 ns/op	    
 BenchmarkMonotoneHashLookup/Keys=4194304-16    	 1234166	      1054 ns/op	      28 B/op	       1 allocs/op
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashLookup/Keys=32-16         	 7774606	       289.4 ns/op	      24 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=256-16        	 7232529	       203.1 ns/op	      24 B/op	       1 allocs/op
@@ -98,7 +98,7 @@ BenchmarkMonotoneHashLookup/Keys=262144-16     	 1881060	       682.5 ns/op	    
 BenchmarkMonotoneHashLookup/Keys=1048576-16    	 1885904	       722.8 ns/op	      27 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=4194304-16    	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashLookup/Keys=32-16         	 7537578	       196.6 ns/op	      24 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=256-16        	14501736	       181.3 ns/op	      24 B/op	       1 allocs/op
@@ -110,7 +110,7 @@ BenchmarkMonotoneHashLookup/Keys=1048576-16    	 1716012	      1173 ns/op	      
 BenchmarkMonotoneHashLookup/Keys=4194304-16    	 1418158	       926.5 ns/op	      28 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashLookup/Keys=32-16         	 5747143	       196.6 ns/op	      24 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=256-16        	12300264	       118.3 ns/op	      24 B/op	       1 allocs/op
@@ -122,7 +122,7 @@ BenchmarkMonotoneHashLookup/Keys=1048576-16    	 2497281	       595.8 ns/op	    
 BenchmarkMonotoneHashLookup/Keys=4194304-16    	 1334383	      1001 ns/op	      28 B/op	       1 allocs/op
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket-mmph
+pkg: Thesis/mmph/bucket_mmph
 cpu: Apple M4 Max
 BenchmarkMonotoneHashLookup/Keys=32-16         	 5493962	       207.8 ns/op	      24 B/op	       1 allocs/op
 BenchmarkMonotoneHashLookup/Keys=256-16        	10936818	       159.9 ns/op	      24 B/op	       1 allocs/op

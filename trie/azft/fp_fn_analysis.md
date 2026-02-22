@@ -83,4 +83,4 @@ Since MMPH is a static structure that must work correctly only for the set of ke
 2. **Deterministic retry:** If validation fails for even a single key (either due to a False Positive or a False Negative in the trie), the entire trie is discarded and rebuilt with a new seed.
 3. **Guarantee:** This process repeats until a working trie is found (or a limit like `maxTrieRebuilds = 100` is reached). When construction succeeds, the resulting MMPH is guaranteed to be 100% correct for the original key set.
 
-This strategy converts the Monte Carlo error probability described in the paper into a construction-time overhead, ensuring runtime correctness without needing the explicit correction sets mentioned in Section 5.2 of the MMPH paper. Detailed documentation can be found in `mmph/bucket_with_approx_trie/README.md`.
+This strategy converts the Monte Carlo error probability described in the paper into a construction-time overhead, ensuring runtime correctness without needing the explicit correction sets mentioned in Section 5.2 of the MMPH paper. Detailed documentation can be found in `mmph/relative_trie/README.md`.

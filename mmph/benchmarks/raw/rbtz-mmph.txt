@@ -1,6 +1,6 @@
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkBuild/Keys=32-16         	   60345	     20202 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
 BenchmarkBuild/Keys=256-16        	   15840	    107442 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
@@ -12,10 +12,10 @@ BenchmarkBuild/Keys=1048576-16    	       2	 679742812 ns/op	        40.00 bits/
 BenchmarkBuild/Keys=4194304-16    	       1	3346115333 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
 BenchmarkBuild/Keys=16777216-16   	       1	33297948750 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
 PASS
-ok  	Thesis/mmph/rbtz-mmph	54.455s
+ok  	Thesis/mmph/rbtz_mmph	54.455s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkBuild/Keys=32-16         	   55548	     19067 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
 BenchmarkBuild/Keys=256-16        	   18685	    112267 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
@@ -27,10 +27,10 @@ BenchmarkBuild/Keys=1048576-16    	       2	 638070917 ns/op	        40.00 bits/
 BenchmarkBuild/Keys=4194304-16    	       1	3270548000 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
 BenchmarkBuild/Keys=16777216-16   	       1	38849789958 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
 PASS
-ok  	Thesis/mmph/rbtz-mmph	60.916s
+ok  	Thesis/mmph/rbtz_mmph	60.916s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkBuild/Keys=32-16         	   56325	     20244 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
 BenchmarkBuild/Keys=256-16        	   16671	    115977 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
@@ -42,10 +42,10 @@ BenchmarkBuild/Keys=1048576-16    	       2	 709486958 ns/op	        40.00 bits/
 BenchmarkBuild/Keys=4194304-16    	       1	3300703541 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
 BenchmarkBuild/Keys=16777216-16   	       1	37330311041 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
 PASS
-ok  	Thesis/mmph/rbtz-mmph	58.714s
+ok  	Thesis/mmph/rbtz_mmph	58.714s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkBuild/Keys=32-16         	   64701	     20397 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
 BenchmarkBuild/Keys=256-16        	   16588	    110430 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
@@ -57,10 +57,10 @@ BenchmarkBuild/Keys=1048576-16    	       2	 665607042 ns/op	        40.00 bits/
 BenchmarkBuild/Keys=4194304-16    	       1	3349655667 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
 BenchmarkBuild/Keys=16777216-16   	       1	39445643709 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576912 B/op	12769353 allocs/op
 PASS
-ok  	Thesis/mmph/rbtz-mmph	62.620s
+ok  	Thesis/mmph/rbtz_mmph	62.620s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkBuild/Keys=32-16         	   55413	     21421 ns/op	        44.00 bits/key_in_mem	       176.0 bytes_in_mem	    1504 B/op	      34 allocs/op
 BenchmarkBuild/Keys=256-16        	   18308	    110873 ns/op	        40.50 bits/key_in_mem	      1296 bytes_in_mem	   12728 B/op	     206 allocs/op
@@ -72,10 +72,10 @@ BenchmarkBuild/Keys=1048576-16    	       2	 745266000 ns/op	        40.00 bits/
 BenchmarkBuild/Keys=4194304-16    	       1	3256798500 ns/op	        40.00 bits/key_in_mem	  20971536 bytes_in_mem	299588304 B/op	 3192151 allocs/op
 BenchmarkBuild/Keys=16777216-16   	       1	34015713125 ns/op	        40.00 bits/key_in_mem	  83886096 bytes_in_mem	1169576896 B/op	12769353 allocs/op
 PASS
-ok  	Thesis/mmph/rbtz-mmph	54.966s
+ok  	Thesis/mmph/rbtz_mmph	54.966s
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkDeserialize/Keys=32-16         	16897134	       102.1 ns/op	     160 B/op	       2 allocs/op
 BenchmarkDeserialize/Keys=256-16        	 1965796	       544.0 ns/op	    1280 B/op	       2 allocs/op
@@ -86,7 +86,7 @@ BenchmarkDeserialize/Keys=262144-16     	    5766	    227334 ns/op	 1310720 B/op
 BenchmarkDeserialize/Keys=1048576-16    	    1059	    969711 ns/op	 5242880 B/op	       2 allocs/op
 BenchmarkDeserialize/Keys=4194304-16    	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkLookup/Keys=32-16         	198585244	         6.560 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=256-16        	130140757	         9.375 ns/op	       0 B/op	       0 allocs/op
@@ -98,7 +98,7 @@ BenchmarkLookup/Keys=1048576-16    	122757918	        10.33 ns/op	       0 B/op	
 BenchmarkLookup/Keys=4194304-16    	27271538	        45.32 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkLookup/Keys=32-16         	100000000	        14.66 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=256-16        	57172123	        18.29 ns/op	       0 B/op	       0 allocs/op
@@ -110,7 +110,7 @@ BenchmarkLookup/Keys=1048576-16    	49884429	        33.84 ns/op	       0 B/op	 
 BenchmarkLookup/Keys=4194304-16    	22820322	        78.24 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkLookup/Keys=32-16         	71395724	        16.48 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=256-16        	100000000	        10.26 ns/op	       0 B/op	       0 allocs/op
@@ -122,7 +122,7 @@ BenchmarkLookup/Keys=1048576-16    	54779096	        18.74 ns/op	       0 B/op	 
 BenchmarkLookup/Keys=4194304-16    	24387517	        81.96 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkLookup/Keys=32-16         	100000000	        10.54 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=256-16        	170260240	         9.391 ns/op	       0 B/op	       0 allocs/op
@@ -134,7 +134,7 @@ BenchmarkLookup/Keys=1048576-16    	86309250	        17.70 ns/op	       0 B/op	 
 BenchmarkLookup/Keys=4194304-16    	27391839	       126.4 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkLookup/Keys=32-16         	216239263	        12.31 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=256-16        	100000000	        18.02 ns/op	       0 B/op	       0 allocs/op
@@ -146,7 +146,7 @@ BenchmarkLookup/Keys=1048576-16    	30360914	       108.3 ns/op	       0 B/op	  
 BenchmarkLookup/Keys=4194304-16    	26759530	        88.06 ns/op	       0 B/op	       0 allocs/op
 BenchmarkLookup/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkSerialize/Keys=32-16         	 7732660	       140.6 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=256-16        	 2451810	       759.3 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
@@ -158,7 +158,7 @@ BenchmarkSerialize/Keys=1048576-16    	    1429	    968115 ns/op	        40.00 b
 BenchmarkSerialize/Keys=4194304-16    	     291	   6497703 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkSerialize/Keys=32-16         	 6519086	       208.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=256-16        	 2797329	       476.3 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
@@ -170,7 +170,7 @@ BenchmarkSerialize/Keys=1048576-16    	    1072	    937219 ns/op	        40.00 b
 BenchmarkSerialize/Keys=4194304-16    	     234	   6812008 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=16777216-16   	goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkSerialize/Keys=32-16         	 9275179	       198.7 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=256-16        	 3574075	       463.9 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
@@ -182,7 +182,7 @@ BenchmarkSerialize/Keys=1048576-16    	    1125	   1029293 ns/op	        40.00 b
 BenchmarkSerialize/Keys=4194304-16    	     314	   5567156 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkSerialize/Keys=32-16         	 8650568	       194.8 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=256-16        	 2181460	       616.4 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op
@@ -194,7 +194,7 @@ BenchmarkSerialize/Keys=1048576-16    	     879	   1334998 ns/op	        40.00 b
 BenchmarkSerialize/Keys=4194304-16    	     310	   3809854 ns/op	        40.00 bits/key_serialized	  20971536 bytes_serialized	20979712 B/op	       1 allocs/op
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/rbtz-mmph
+pkg: Thesis/mmph/rbtz_mmph
 cpu: Apple M4 Max
 BenchmarkSerialize/Keys=32-16         	10197136	       174.3 ns/op	        44.00 bits/key_serialized	       176.0 bytes_serialized	     176 B/op	       1 allocs/op
 BenchmarkSerialize/Keys=256-16        	 2426814	       463.3 ns/op	        40.50 bits/key_serialized	      1296 bytes_serialized	    1408 B/op	       1 allocs/op

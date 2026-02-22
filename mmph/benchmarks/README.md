@@ -20,9 +20,9 @@ python3 /Users/andrei.ogurtsov/Thesis/mmph/benchmarks/analyze.py
 ## Outputs
 
 - Raw benchmark logs:
-  - `raw/bucket-mmph.txt`
-  - `raw/rbtz-mmph.txt`
-  - `raw/bucket_with_approx_trie.txt`
+  - `raw/bucket_mmph.txt`
+  - `raw/rbtz_mmph.txt`
+  - `raw/relative_trie.txt`
 - Parsed CSVs:
   - `parsed/bench_long.csv`
   - `parsed/bench_agg.csv`

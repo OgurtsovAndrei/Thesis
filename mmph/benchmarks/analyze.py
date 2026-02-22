@@ -22,33 +22,33 @@ PLOTS_DIR = os.path.join(current_dir, "plots")
 
 MODULES = [
     {
-        "name": "bucket-mmph",
-        "dir": os.path.join(project_root, "mmph/bucket-mmph"),
-        "out": os.path.join(RAW_DIR, "bucket-mmph.txt"),
+        "name": "bucket_mmph",
+        "dir": os.path.join(project_root, "mmph/bucket_mmph"),
+        "out": os.path.join(RAW_DIR, "bucket_mmph.txt"),
     },
     {
-        "name": "rbtz-mmph",
-        "dir": os.path.join(project_root, "mmph/rbtz-mmph"),
-        "out": os.path.join(RAW_DIR, "rbtz-mmph.txt"),
+        "name": "rbtz_mmph",
+        "dir": os.path.join(project_root, "mmph/rbtz_mmph"),
+        "out": os.path.join(RAW_DIR, "rbtz_mmph.txt"),
     },
     {
-        "name": "bucket_with_approx_trie",
-        "dir": os.path.join(project_root, "mmph/bucket_with_approx_trie"),
-        "out": os.path.join(RAW_DIR, "bucket_with_approx_trie.txt"),
+        "name": "relative_trie",
+        "dir": os.path.join(project_root, "mmph/relative_trie"),
+        "out": os.path.join(RAW_DIR, "relative_trie.txt"),
     },
 ]
 
 # Mapping for aggregation
 BUILD_BENCH = {
-    "bucket-mmph": {"BenchmarkMonotoneHashBuild"},
-    "rbtz-mmph": {"BenchmarkBuild"},
-    "bucket_with_approx_trie": {"BenchmarkMonotoneHashWithTrieBuild"},
+    "bucket_mmph": {"BenchmarkMonotoneHashBuild"},
+    "rbtz_mmph": {"BenchmarkBuild"},
+    "relative_trie": {"BenchmarkMonotoneHashWithTrieBuild"},
 }
 
 LOOKUP_BENCH = {
-    "bucket-mmph": {"BenchmarkMonotoneHashLookup"},
-    "rbtz-mmph": {"BenchmarkLookup"},
-    "bucket_with_approx_trie": {"BenchmarkMonotoneHashWithTrieLookup"},
+    "bucket_mmph": {"BenchmarkMonotoneHashLookup"},
+    "rbtz_mmph": {"BenchmarkLookup"},
+    "relative_trie": {"BenchmarkMonotoneHashWithTrieLookup"},
 }
 
 def main() -> int:

@@ -1,14 +1,14 @@
 # PSig / Memory Study Summary
 
 ## Inputs
-- `mmph/bucket_with_approx_trie/study/data/grid_main_v2.csv`
-- `mmph/bucket_with_approx_trie/study/data/grid_focus_v2.csv`
-- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s16.csv`
-- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s8.csv`
-- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s32.csv`
-- `mmph/bucket_with_approx_trie/study/data/grid_focus_big_s32.csv`
-- `mmph/bucket_with_approx_trie/study/data/grid_focus_small_s8.csv`
-- `/Users/andrei.ogurtsov/Thesis/mmph/bucket_with_approx_trie/study/memory_bench_v2.txt`
+- `mmph/relative_trie/study/data/grid_main_v2.csv`
+- `mmph/relative_trie/study/data/grid_focus_v2.csv`
+- `mmph/relative_trie/study/data/grid_focus_extra_s16.csv`
+- `mmph/relative_trie/study/data/grid_focus_extra_s8.csv`
+- `mmph/relative_trie/study/data/grid_focus_extra_s32.csv`
+- `mmph/relative_trie/study/data/grid_focus_big_s32.csv`
+- `mmph/relative_trie/study/data/grid_focus_small_s8.csv`
+- `/Users/andrei.ogurtsov/Thesis/mmph/relative_trie/study/memory_bench_v2.txt`
 
 ## Main Findings
 - On `grid_main_v2` (144 scenarios, 64 trials each): mean success by S is S=8: 0.166, S=16: 0.893, S=32: 1.000.
@@ -131,7 +131,7 @@ $$
 - `summary_by_margin.csv` shows behavior grouped by `s_margin_bits = S - S_required`.
 - Positive margin improves success rate but does not guarantee `~1.0` success for largest `n`.
 
-## Memory Snapshot (from `mmph/bucket_with_approx_trie/study/memory_bench_v2.txt`)
+## Memory Snapshot (from `mmph/relative_trie/study/memory_bench_v2.txt`)
 - Stable regime (`keys>=8192`): RLOC avg=54.33 bits/key, LERLOC avg=182.43 bits/key.
 - MMPH baseline from paper chart: ~14 bits/key (for large n).
 

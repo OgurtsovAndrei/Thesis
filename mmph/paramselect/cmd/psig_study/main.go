@@ -2,7 +2,7 @@ package main
 
 import (
 	"Thesis/bits"
-	bucket "Thesis/mmph/bucket_with_approx_trie"
+	bucket "Thesis/mmph/relative_trie"
 	"Thesis/mmph/paramselect"
 	"Thesis/trie/zft"
 	"encoding/csv"
@@ -51,7 +51,7 @@ type scenarioResult struct {
 
 func main() {
 	var (
-		outPath    = flag.String("out", "mmph/bucket_with_approx_trie/study/data/results.csv", "Output CSV path")
+		outPath    = flag.String("out", "mmph/relative_trie/study/data/results.csv", "Output CSV path")
 		nsArg      = flag.String("n", "1024,8192,32768", "Comma-separated key counts")
 		wsArg      = flag.String("w", "64,128,256,512,1024", "Comma-separated key lengths in bits (prefer multiples of 8)")
 		sArg       = flag.String("s", "8,16,32", "Comma-separated PSig widths in bits")

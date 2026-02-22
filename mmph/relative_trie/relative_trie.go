@@ -147,7 +147,7 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 // It retries with different derived seeds if validation fails.
 // This is a Las Vegas approach to handle the probabilistic nature of the AZFT (FPs and FNs).
 // Since MMPH only needs to be correct for its build set, we ensure 100% runtime correctness
-// by validating at build time. See mmph/bucket_with_approx_trie/README.md for details.
+// by validating at build time. See mmph/relative_trie/README.md for details.
 func (mh *MonotoneHashWithTrie[E, S, I]) buildValidatedTrieWithIndices(allKeys []bits.BitString, delimiters []bits.BitString, baseSeed uint64) error {
 
 	for attempt := 0; attempt < maxTrieRebuilds; attempt++ {

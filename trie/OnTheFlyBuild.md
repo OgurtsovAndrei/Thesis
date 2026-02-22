@@ -85,13 +85,10 @@ This approach reduces peak memory from $O(n \times L)$ to $O(n \times \log L)$.
 | Memory (working) | O(log L)     | Stack depth bounded by max key length      |
 | Memory (output)  | O(n × log L) | Handles are O(log L) bits on average       |
 
-**Memory savings**: From O(n × L) to O(n × log L) for handle storage.
+**Theoretical memory savings (analytical estimate)**:
+From $O(n \times L)$ to $O(n \times \log L)$ for handle storage.
 
-For example, with n = 1M keys of 64-bit length:
-
-- Heavy: ~64M bits for strings
-- Streaming: ~6M bits for handles (assuming log L ≈ 6)
-- **~10x reduction** in handle/string storage
+For a theoretical set of $n$ keys of $L$-bit length, this represents an order-of-magnitude reduction in peak memory required for string/handle storage during construction (e.g., from $L$ bits per key to $\approx \log L$ bits per key).
 
 ### AZFT Streaming Construction (New)
 
@@ -232,7 +229,7 @@ assert(heavy.GetExistingPrefix(prefix) == streaming.GetExistingPrefix(prefix))
 
 ## Files
 
-- `trie/hzft/builder.go` - Streaming HZFT builder
-- `trie/hzft/builder_test.go` - Tests
-- `trie/azft/builder.go` - Reduced-overhead AZFT builder
-- `trie/azft/builder_test.go` - Tests
+- `trie/hzft/hzft_builder.go` - Streaming HZFT builder
+- `trie/hzft/hzft_builder_test.go` - Tests
+- `trie/azft/azft_builder.go` - Reduced-overhead AZFT builder
+- `trie/azft/azft_builder_test.go` - Tests

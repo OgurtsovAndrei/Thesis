@@ -1,6 +1,6 @@
 goos: darwin
 goarch: arm64
-pkg: Thesis/mmph/bucket_with_approx_trie
+pkg: Thesis/mmph/relative_trie
 cpu: Apple M4 Max
 BenchmarkMonotoneHashWithTrieBuild/Keys=32-16 	   47498	     26553 ns/op	         1.000 avg_trie_attempts	        58.25 bits/key_in_mem	       233.0 bytes_in_mem	         1.000 max_trie_attempts	   13368 B/op	     366 allocs/op
 BenchmarkMonotoneHashWithTrieBuild/Keys=32-16 	   45129	     26836 ns/op	         1.000 avg_trie_attempts	        58.25 bits/key_in_mem	       233.0 bytes_in_mem	         1.000 max_trie_attempts	   13368 B/op	     366 allocs/op
@@ -193,4 +193,4 @@ BenchmarkBucketLookupScaling/Keys=10000-16                      	 2319264	      
 BenchmarkBucketLookupScaling/Keys=10000-16                      	 1925049	       654.3 ns/op	     328 B/op	      17 allocs/op
 BenchmarkBucketLookupScaling/Keys=10000-16                      	 1946928	       650.8 ns/op	     336 B/op	      18 allocs/op
 PASS
-ok  	Thesis/mmph/bucket_with_approx_trie	1036.466s
+ok  	Thesis/mmph/relative_trie	1036.466s

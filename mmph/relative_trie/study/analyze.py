@@ -707,18 +707,18 @@ def main() -> None:
     lines.append("# PSig / Memory Study Summary")
     lines.append("")
     lines.append("## Inputs")
-    lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_main_v2.csv`")
-    lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_focus_v2.csv`")
+    lines.append("- `mmph/relative_trie/study/data/grid_main_v2.csv`")
+    lines.append("- `mmph/relative_trie/study/data/grid_focus_v2.csv`")
     if focus_rows_extra_s16:
-        lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s16.csv`")
+        lines.append("- `mmph/relative_trie/study/data/grid_focus_extra_s16.csv`")
     if focus_rows_extra_s8:
-        lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s8.csv`")
+        lines.append("- `mmph/relative_trie/study/data/grid_focus_extra_s8.csv`")
     if focus_rows_extra_s32:
-        lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_focus_extra_s32.csv`")
+        lines.append("- `mmph/relative_trie/study/data/grid_focus_extra_s32.csv`")
     if focus_rows_big_s32:
-        lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_focus_big_s32.csv`")
+        lines.append("- `mmph/relative_trie/study/data/grid_focus_big_s32.csv`")
     if focus_rows_small_s8:
-        lines.append("- `mmph/bucket_with_approx_trie/study/data/grid_focus_small_s8.csv`")
+        lines.append("- `mmph/relative_trie/study/data/grid_focus_small_s8.csv`")
     lines.append(f"- `{mem_source}`")
     lines.append("")
     lines.append("## Main Findings")
