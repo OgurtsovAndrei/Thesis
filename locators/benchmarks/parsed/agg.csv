@@ -1,7 +1,7 @@
 allocs_per_op,benchmark,bytes_per_op,keys,keysize,ns_per_op,prefixlen,samples
-2223.0,BenchmarkMemoryDetailed,94034.0,32.0,,257266.0,,1
-18827.0,BenchmarkMemoryDetailed,691385.0,256.0,,1935582.0,,1
-89280.0,BenchmarkMemoryDetailed,2989239.0,1024.0,,8542557.0,,1
-828399.0,BenchmarkMemoryDetailed,25813490.0,8192.0,,84059713.0,,1
-4684964.0,BenchmarkMemoryDetailed,124519282.0,32768.0,,456567054.0,,1
-374509005.0,BenchmarkMemoryDetailed,6076868240.0,262144.0,,22632150197.0,,1
+2273.0,BenchmarkMemoryDetailed,95315.0,32.0,,209347.0,,1
+18755.0,BenchmarkMemoryDetailed,707057.0,256.0,,1695278.0,,1
+87821.0,BenchmarkMemoryDetailed,2967218.0,1024.0,,8410857.0,,1
+789246.0,BenchmarkMemoryDetailed,25076539.0,8192.0,,76073179.0,,1
+4794717.0,BenchmarkMemoryDetailed,126284117.0,32768.0,,430426501.0,,1
+337406563.0,BenchmarkMemoryDetailed,5530563296.0,262144.0,,19355552161.0,,1
