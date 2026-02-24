@@ -340,3 +340,31 @@ func BenchmarkScalingBehavior(b *testing.B) {
 		}
 	}
 }
+
+// Benchmark detailed memory breakdown
+func BenchmarkMemoryDetailed(b *testing.B) {
+	rloc.InitBenchKeys()
+
+	bitLen := 64 // Focus on 64-bit keys for the breakdown study
+	for _, count := range rloc.BenchKeyCounts {
+		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
+			keys := rloc.BenchKeys[bitLen][count]
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				lerl, err := NewLocalExactRangeLocator(keys)
+				if err != nil {
+					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
+				}
+
+				// Log the detailed report for the analyzer
+				if i == 0 {
+					report := lerl.MemDetailed()
+					b.Logf("JSON_MEM_REPORT: %s", report.JSON())
+				}
+			}
+		})
+	}
+}

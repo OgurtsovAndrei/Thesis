@@ -5,6 +5,7 @@ import (
 	"Thesis/locators/rloc"
 	"Thesis/trie/hzft"
 	"Thesis/trie/zft"
+	"Thesis/utils"
 	"unsafe"
 )
 
@@ -16,6 +17,7 @@ import (
 type LocalExactRangeLocator interface {
 	WeakPrefixSearch(prefix bits.BitString) (int, int, error)
 	ByteSize() int
+	MemDetailed() utils.MemReport
 	TypeWidths() rloc.TypeWidths
 }
 
@@ -132,6 +134,30 @@ func (lerl *GenericLocalExactRangeLocator[E, S, I]) ByteSize() int {
 	}
 
 	return size
+}
+
+// MemDetailed returns a detailed memory usage report for GenericLocalExactRangeLocator.
+func (lerl *GenericLocalExactRangeLocator[E, S, I]) MemDetailed() utils.MemReport {
+	if lerl == nil {
+		return utils.MemReport{Name: "GenericLocalExactRangeLocator", TotalBytes: 0}
+	}
+
+	headerSize := int(unsafe.Sizeof(*lerl))
+	hzftSize := 0
+	if lerl.hzft != nil {
+		hzftSize = lerl.hzft.ByteSize()
+	}
+	rlReport := lerl.rl.MemDetailed()
+
+	return utils.MemReport{
+		Name:       "GenericLocalExactRangeLocator",
+		TotalBytes: lerl.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "header", TotalBytes: headerSize},
+			{Name: "hzft", TotalBytes: hzftSize},
+			rlReport,
+		},
+	}
 }
 
 func (lerl *GenericLocalExactRangeLocator[E, S, I]) TypeWidths() rloc.TypeWidths {

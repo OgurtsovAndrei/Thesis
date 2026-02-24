@@ -5,6 +5,7 @@ import (
 	"Thesis/errutil"
 	bucket "Thesis/mmph/relative_trie"
 	"Thesis/trie/zft"
+	"Thesis/utils"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -24,10 +25,11 @@ type TypeWidths struct {
 // RangeLocator maps trie node names to leaf-rank intervals.
 //
 // This is the runtime-facing interface. The generic implementation is
-// GenericRangeLocator[E, S, I].
+// GenericLocalExactRangeLocator[E, S, I].
 type RangeLocator interface {
 	Query(nodeName bits.BitString) (int, int, error)
 	ByteSize() int
+	MemDetailed() utils.MemReport
 	TypeWidths() TypeWidths
 }
 
@@ -307,6 +309,30 @@ func (rl *GenericRangeLocator[E, S, I]) ByteSize() int {
 	size += 8
 
 	return size
+}
+
+// MemDetailed returns a detailed memory usage report for GenericRangeLocator.
+func (rl *GenericRangeLocator[E, S, I]) MemDetailed() utils.MemReport {
+	if rl == nil {
+		return utils.MemReport{Name: "GenericRangeLocator", TotalBytes: 0}
+	}
+
+	headerSize := int(unsafe.Sizeof(*rl))
+	mmphReport := rl.mmph.MemDetailed()
+	bvSize := 0
+	if rl.bv != nil {
+		bvSize = rl.bv.AllocSize()
+	}
+
+	return utils.MemReport{
+		Name:       "GenericRangeLocator",
+		TotalBytes: rl.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "header", TotalBytes: headerSize},
+			mmphReport,
+			{Name: "rsdic_bv", TotalBytes: bvSize},
+		},
+	}
 }
 
 // TypeWidths returns bit-widths of generic integer parameters used by this

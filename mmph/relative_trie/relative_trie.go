@@ -6,10 +6,12 @@ import (
 	"Thesis/mmph/go-boomphf"
 	"Thesis/trie/azft"
 	"Thesis/trie/zft"
+	"Thesis/utils"
 	"fmt"
 	"math"
 	"math/rand"
 	"time"
+	"unsafe"
 )
 
 // Bucket represents a single bucket in the hash structure
@@ -333,4 +335,49 @@ func (mh *MonotoneHashWithTrie[E, S, I]) Size() int {
 // ByteSize returns the total size of the structure in bytes (same as Size for consistency).
 func (mh *MonotoneHashWithTrie[E, S, I]) ByteSize() int {
 	return mh.Size()
+}
+
+// MemDetailed returns a detailed memory usage report for MonotoneHashWithTrie.
+func (mh *MonotoneHashWithTrie[E, S, I]) MemDetailed() utils.MemReport {
+	if mh == nil {
+		return utils.MemReport{Name: "MonotoneHashWithTrie", TotalBytes: 0}
+	}
+
+	headerSize := int(unsafe.Sizeof(*mh))
+	trieReport := mh.delimiterTrie.MemDetailed()
+
+	bucketsReport := utils.MemReport{Name: "buckets", TotalBytes: 0}
+	for i, bucket := range mh.buckets {
+		if bucket == nil {
+			continue
+		}
+		bucketSize := int(unsafe.Sizeof(*bucket))
+		mphSize := bucket.mphf.Size()
+		ranksSize := len(bucket.ranks)
+		delimSize := int(bucket.delimiter.Size())/8 + 1
+
+		totalBucketSize := bucketSize + mphSize + ranksSize + delimSize
+		bucketsReport.TotalBytes += totalBucketSize
+
+		bucketsReport.Children = append(bucketsReport.Children, utils.MemReport{
+			Name:       fmt.Sprintf("bucket_%d", i),
+			TotalBytes: totalBucketSize,
+			Children: []utils.MemReport{
+				{Name: "header", TotalBytes: bucketSize},
+				{Name: "mphf", TotalBytes: mphSize},
+				{Name: "ranks", TotalBytes: ranksSize},
+				{Name: "delimiter", TotalBytes: delimSize},
+			},
+		})
+	}
+
+	return utils.MemReport{
+		Name:       "MonotoneHashWithTrie",
+		TotalBytes: mh.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "header", TotalBytes: headerSize},
+			trieReport,
+			bucketsReport,
+		},
+	}
 }

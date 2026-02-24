@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import json
 import os
 import sys
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Setup path to import shared library
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +35,76 @@ MODULES = [
         "out": os.path.join(RAW_DIR, "lerloc.txt"),
     }
 ]
+
+# --- Helpers ---
+
+def parse_mem_reports(path: str) -> Dict[int, Dict[str, int]]:
+    """
+    Parses JSON_MEM_REPORT lines from benchmark output.
+    Returns mapping: n_keys -> {component_name: bytes}
+    """
+    reports = {}
+    if not os.path.exists(path):
+        return reports
+
+    current_keys = 0
+    with open(path, "r") as f:
+        for line in f:
+            # Detect key count from Benchmark line
+            if "BenchmarkMemoryDetailed/Keys=" in line:
+                parts = line.split("/")
+                for p in parts:
+                    if p.startswith("Keys="):
+                        current_keys = int(p.split("=")[1].split("-")[0])
+            
+            if "JSON_MEM_REPORT:" in line:
+                json_str = line.split("JSON_MEM_REPORT:")[1].strip()
+                try:
+                    data = json.loads(json_str)
+                    reports[current_keys] = flatten_report(data)
+                except Exception as e:
+                    print(f"Failed to parse JSON report for N={current_keys}: {e}")
+    return reports
+
+def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
+    """Flattens hierarchical MemReport into key components for LERLOC."""
+    out = {}
+    
+    # Root level is usually autoLocalExactRangeLocator
+    out["header"] = data.get("total_bytes", 0)
+    
+    # We want to identify specific sub-components
+    children = data.get("children", [])
+    for child in children:
+        name = child["name"]
+        if name == "hzft":
+            out["HZFastTrie"] = child["total_bytes"]
+        elif name == "GenericRangeLocator":
+            # Breakdown RangeLocator
+            rl_children = child.get("children", [])
+            for rlc in rl_children:
+                rlc_name = rlc["name"]
+                if rlc_name == "MonotoneHashWithTrie":
+                    # Breakdown MMPH
+                    mmph_children = rlc.get("children", [])
+                    for mc in mmph_children:
+                        mc_name = mc["name"]
+                        if mc_name == "ApproxZFastTrie":
+                            out["MMPH_Trie"] = mc["total_bytes"]
+                        elif mc_name == "buckets":
+                            out["MMPH_Buckets"] = mc["total_bytes"]
+                elif rlc_name == "rsdic_bv":
+                    out["Leaf_BitVector"] = rlc["total_bytes"]
+        elif name == "header":
+            out["Top_Level_Header"] = child["total_bytes"]
+
+    # Calculate 'other' if needed to match total_bytes
+    known_sum = sum(v for k, v in out.items() if k != "header")
+    out["Other"] = max(0, data.get("total_bytes", 0) - known_sum)
+    # Remove the root 'header' which was total_bytes
+    if "header" in out: del out["header"]
+    
+    return out
 
 # --- Main Logic ---
 
@@ -143,10 +214,6 @@ def main() -> int:
         )
 
     # --- Plot 3: RLOC vs LERLOC Comparison (Bits/Key) ---
-    # From BenchmarkMemoryComparison, we have rl_bits_per_key and lerl_bits_per_key in the same row
-    # We will pick one KeySize (e.g., 64 or 128) or plot all if not too messy.
-    # Let's plot for KeySize=64 and KeySize=128 separately if available.
-    
     for ksize in [64, 128, 256]:
         series_k: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
         rows_k = [r for r in mem_rows if int(r.get("keysize", 0)) == ksize]
@@ -168,6 +235,30 @@ def main() -> int:
                 log_x=True,
                 log_y=False
             )
+
+    # --- Plot 4: Detailed Memory Breakdown (Stacked Area) ---
+    for mod in MODULES:
+        if mod["name"] == "lerloc":
+            detailed_reports = parse_mem_reports(mod["out"])
+            if detailed_reports:
+                series_breakdown: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+                # Sort components for consistent stacking (bottom to top)
+                components = ["Top_Level_Header", "HZFastTrie", "Leaf_BitVector", "MMPH_Trie", "MMPH_Buckets", "Other"]
+                
+                sorted_n = sorted(detailed_reports.keys())
+                for n in sorted_n:
+                    comp_data = detailed_reports[n]
+                    for comp in components:
+                        series_breakdown[comp].append((float(n), float(comp_data.get(comp, 0))))
+                
+                plotter.draw_stacked_area_chart(
+                    os.path.join(PLOTS_DIR, "lerloc_memory_breakdown.svg"),
+                    "LERLOC Memory Usage Breakdown (KeySize=64)",
+                    "Keys (N)",
+                    "Bytes",
+                    series_breakdown,
+                    log_x=True
+                )
 
     print("Plots generated in locators/benchmarks/plots/")
     return 0

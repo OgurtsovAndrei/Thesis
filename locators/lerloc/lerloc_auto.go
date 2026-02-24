@@ -6,7 +6,9 @@ import (
 	"Thesis/locators/rloc"
 	"Thesis/trie/hzft"
 	"Thesis/trie/zft"
+	"Thesis/utils"
 	"fmt"
+	"unsafe"
 )
 
 type hzftAccessor interface {
@@ -76,6 +78,30 @@ func (lerl *autoLocalExactRangeLocator) ByteSize() int {
 		size += lerl.rl.ByteSize()
 	}
 	return size
+}
+
+// MemDetailed returns a detailed memory usage report for autoLocalExactRangeLocator.
+func (lerl *autoLocalExactRangeLocator) MemDetailed() utils.MemReport {
+	if lerl == nil {
+		return utils.MemReport{Name: "autoLocalExactRangeLocator", TotalBytes: 0}
+	}
+
+	headerSize := int(unsafe.Sizeof(*lerl))
+	hzftSize := 0
+	if lerl.hzft != nil {
+		hzftSize = lerl.hzft.ByteSize()
+	}
+	rlReport := lerl.rl.MemDetailed()
+
+	return utils.MemReport{
+		Name:       "autoLocalExactRangeLocator",
+		TotalBytes: lerl.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "header", TotalBytes: headerSize},
+			{Name: "hzft", TotalBytes: hzftSize},
+			rlReport,
+		},
+	}
 }
 
 func (lerl *autoLocalExactRangeLocator) TypeWidths() rloc.TypeWidths {
