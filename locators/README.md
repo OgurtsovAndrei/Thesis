@@ -35,7 +35,7 @@ RLOC is used in the following hierarchy:
 To reproduce these results or run new studies, use the automated pipeline:
 
 ```bash
-pipenv run python3 rloc/benchmarks/analyze.py --run --count 5 --split
+pipenv run python3 locators/benchmarks/analyze.py --run --count 5 --split
 ```
 
-See `rloc/benchmarks/README.md` for more details on the benchmarking infrastructure.
+See `locators/benchmarks/README.md` for more details on the benchmarking infrastructure.

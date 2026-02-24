@@ -2,7 +2,8 @@ package trie
 
 import (
 	"Thesis/bits"
-	"Thesis/rloc"
+	"Thesis/locators/lerloc"
+	"Thesis/locators/rloc"
 	"Thesis/trie/azft"
 	"Thesis/trie/zft"
 	"fmt"
@@ -158,7 +159,7 @@ func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 				b.ResetTimer()
 
 				for i := 0; i < b.N; i++ {
-					lerl, err := rloc.NewLocalExactRangeLocator(keys)
+					lerl, err := lerloc.NewLocalExactRangeLocator(keys)
 					if err != nil {
 						b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
 					}
