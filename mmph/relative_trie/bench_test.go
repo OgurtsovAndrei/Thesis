@@ -203,3 +203,30 @@ func BenchmarkMonotoneHashWithTrieMemory(b *testing.B) {
 		})
 	}
 }
+
+// Benchmark detailed memory breakdown for MMPH
+func BenchmarkMemoryDetailed(b *testing.B) {
+	initBenchKeys()
+
+	for _, count := range benchKeyCounts {
+		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
+			keys := benchKeys[count]
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				table, err := NewMonotoneHashWithTrie[uint8, uint32, uint16](keys)
+				if err != nil {
+					b.Fatalf("Failed to build: %v", err)
+				}
+
+				// Log the detailed report for the analyzer
+				if i == 0 {
+					report := table.MemDetailed()
+					b.Logf("JSON_MEM_REPORT: %s", report.JSON())
+				}
+			}
+		})
+	}
+}
