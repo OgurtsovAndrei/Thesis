@@ -17,8 +17,8 @@ from bench_lib import runner, parser, plotter
 
 # --- Configuration ---
 
-RLOC_DIR = os.path.join(os.path.dirname(current_dir), "rloc")
-LERLOC_DIR = os.path.join(os.path.dirname(current_dir), "lerloc")
+LOCATORS_DIR = os.path.dirname(current_dir)
+MMPH_DIR = os.path.join(project_root, "mmph", "relative_trie")
 RAW_DIR = os.path.join(current_dir, "raw")
 PARSED_DIR = os.path.join(current_dir, "parsed")
 PLOTS_DIR = os.path.join(current_dir, "plots")
@@ -26,13 +26,18 @@ PLOTS_DIR = os.path.join(current_dir, "plots")
 MODULES = [
     {
         "name": "rloc",
-        "dir": RLOC_DIR,
+        "dir": os.path.join(LOCATORS_DIR, "rloc"),
         "out": os.path.join(RAW_DIR, "rloc.txt"),
     },
     {
         "name": "lerloc",
-        "dir": LERLOC_DIR,
+        "dir": os.path.join(LOCATORS_DIR, "lerloc"),
         "out": os.path.join(RAW_DIR, "lerloc.txt"),
+    },
+    {
+        "name": "mmph",
+        "dir": MMPH_DIR,
+        "out": os.path.join(RAW_DIR, "mmph.txt"),
     }
 ]
 
@@ -67,42 +72,42 @@ def parse_mem_reports(path: str) -> Dict[int, Dict[str, int]]:
     return reports
 
 def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
-    """Flattens hierarchical MemReport into key components for LERLOC."""
-    out = {}
+    """
+    Flattens hierarchical MemReport into key components.
+    Handles both LERLOC and standalone MMPH.
+    """
+    out = {
+        "HZFastTrie": 0,
+        "Leaf_BitVector": 0,
+        "MMPH_Trie": 0,
+        "MMPH_Buckets": 0,
+        "Other": 0
+    }
     
-    # Root level is usually autoLocalExactRangeLocator
-    out["header"] = data.get("total_bytes", 0)
+    total = data.get("total_bytes", 0)
     
-    # We want to identify specific sub-components
-    children = data.get("children", [])
-    for child in children:
-        name = child["name"]
+    def walk(node):
+        name = node["name"]
         if name == "hzft":
-            out["HZFastTrie"] = child["total_bytes"]
-        elif name == "GenericRangeLocator":
-            # Breakdown RangeLocator
-            rl_children = child.get("children", [])
-            for rlc in rl_children:
-                rlc_name = rlc["name"]
-                if rlc_name == "MonotoneHashWithTrie":
-                    # Breakdown MMPH
-                    mmph_children = rlc.get("children", [])
-                    for mc in mmph_children:
-                        mc_name = mc["name"]
-                        if mc_name == "ApproxZFastTrie":
-                            out["MMPH_Trie"] = mc["total_bytes"]
-                        elif mc_name == "buckets":
-                            out["MMPH_Buckets"] = mc["total_bytes"]
-                elif rlc_name == "rsdic_bv":
-                    out["Leaf_BitVector"] = rlc["total_bytes"]
-        elif name == "header":
-            out["Top_Level_Header"] = child["total_bytes"]
+            out["HZFastTrie"] += node["total_bytes"]
+        elif name == "rsdic_bv":
+            out["Leaf_BitVector"] += node["total_bytes"]
+        elif name == "ApproxZFastTrie":
+            out["MMPH_Trie"] += node["total_bytes"]
+        elif name == "buckets":
+            out["MMPH_Buckets"] += node["total_bytes"]
+        elif name in ["header", "Top_Level_Header"]:
+            out["Other"] += node["total_bytes"]
+        
+        for child in node.get("children", []):
+            walk(child)
 
-    # Calculate 'other' if needed to match total_bytes
-    known_sum = sum(v for k, v in out.items() if k != "header")
-    out["Other"] = max(0, data.get("total_bytes", 0) - known_sum)
-    # Remove the root 'header' which was total_bytes
-    if "header" in out: del out["header"]
+    walk(data)
+
+    # Calculate final 'Other' by ensuring sum matches total (handling any missed pieces)
+    known_sum = sum(v for k, v in out.items() if k != "Other") + out["Other"]
+    if known_sum < total:
+        out["Other"] += (total - known_sum)
     
     return out
 
@@ -178,11 +183,10 @@ def main() -> int:
     mem_rows = [r for r in agg_rows if "MemoryComparison" in str(r["benchmark"])]
 
     # --- Plot 1: Build Time vs N (Log-Log) ---
-    # Series by KeySize
     series_build_time: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
     for r in build_rows:
         if r.get("keysize") and r.get("keys"):
-            series_build_time[f"KeySize={int(r['keysize'])}"].append((float(r["keys"]), float(r.get("ns_per_op", 0))))
+            series_build_time[f"{r['module'].upper()} KeySize={int(r['keysize'])}"].append((float(r["keys"]), float(r.get("ns_per_op", 0))))
             
     plotter.draw_line_chart(
         os.path.join(PLOTS_DIR, "build_time_ns.svg"),
@@ -197,10 +201,9 @@ def main() -> int:
     # --- Plot 2: Bits/Key vs N (Log-X) ---
     series_bits: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
     for r in build_rows:
-        # Check for bits_per_key metric
-        bpk = r.get("bits_per_key")
-        if bpk and r.get("keysize") and r.get("keys"):
-             series_bits[f"KeySize={int(r['keysize'])}"].append((float(r["keys"]), float(bpk)))
+        bpk = r.get("bits_per_key") or r.get("bits_key_in_mem")
+        if bpk and r.get("keys"):
+             series_bits[f"{r['module'].upper()}"].append((float(r["keys"]), float(bpk)))
 
     if series_bits:
         plotter.draw_line_chart(
@@ -210,7 +213,7 @@ def main() -> int:
             "bits/key",
             series_bits,
             log_x=True,
-            log_y=False # Usually linear is fine for bits/key
+            log_y=False
         )
 
     # --- Plot 3: RLOC vs LERLOC Comparison (Bits/Key) ---
@@ -236,64 +239,66 @@ def main() -> int:
                 log_y=False
             )
 
-    # --- Plot 4: Detailed Memory Breakdown (Stacked Area) ---
+    # --- Plot 4 & 5: Detailed Memory Breakdown (Stacked Area) ---
+    detailed_components = ["Other", "HZFastTrie", "Leaf_BitVector", "MMPH_Trie", "MMPH_Buckets"]
+    
     for mod in MODULES:
-        if mod["name"] == "lerloc":
-            detailed_reports = parse_mem_reports(mod["out"])
-            if detailed_reports:
-                series_breakdown: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
-                # Sort components for consistent stacking (bottom to top)
-                components = ["Top_Level_Header", "HZFastTrie", "Leaf_BitVector", "MMPH_Trie", "MMPH_Buckets", "Other"]
-                
-                sorted_n = sorted(detailed_reports.keys())
-                for n in sorted_n:
-                    comp_data = detailed_reports[n]
-                    for comp in components:
-                        series_breakdown[comp].append((float(n), float(comp_data.get(comp, 0))))
-                
-                plotter.draw_stacked_area_chart(
-                    os.path.join(PLOTS_DIR, "lerloc_memory_breakdown.svg"),
-                    "LERLOC Memory Usage Breakdown (KeySize=64)",
-                    "Keys (N)",
-                    "Bytes",
-                    series_breakdown,
-                    log_x=True
-                )
+        detailed_reports = parse_mem_reports(mod["out"])
+        if not detailed_reports:
+            continue
+            
+        m_name = mod["name"].upper()
+        sorted_n = sorted(detailed_reports.keys())
+        
+        # Bytes Plot
+        series_bytes: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+        for n in sorted_n:
+            comp_data = detailed_reports[n]
+            for comp in detailed_components:
+                series_bytes[comp].append((float(n), float(comp_data.get(comp, 0))))
+        
+        plotter.draw_stacked_area_chart(
+            os.path.join(PLOTS_DIR, f"{mod['name']}_mem_breakdown_bytes.svg"),
+            f"{m_name} Memory Usage Breakdown",
+            "Keys (N)",
+            "Bytes",
+            series_bytes,
+            log_x=True
+        )
 
-                # --- Plot 5: Detailed Memory Breakdown (Bits/Key Stacked Area) ---
-                series_bits_breakdown: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
-                for n in sorted_n:
-                    comp_data = detailed_reports[n]
-                    for comp in components:
-                        # Convert bytes to bits and divide by n
-                        bits_per_key = (float(comp_data.get(comp, 0)) * 8.0) / float(n)
-                        series_bits_breakdown[comp].append((float(n), bits_per_key))
-                
-                plotter.draw_stacked_area_chart(
-                    os.path.join(PLOTS_DIR, "lerloc_memory_bits_breakdown.svg"),
-                    "LERLOC Memory Efficiency Breakdown (KeySize=64)",
-                    "Keys (N)",
-                    "bits/key",
-                    series_bits_breakdown,
-                    log_x=True
-                )
+        # Bits/Key Plot
+        series_bits_breakdown: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+        for n in sorted_n:
+            comp_data = detailed_reports[n]
+            for comp in detailed_components:
+                bits_per_key = (float(comp_data.get(comp, 0)) * 8.0) / float(n)
+                series_bits_breakdown[comp].append((float(n), bits_per_key))
+        
+        plotter.draw_stacked_area_chart(
+            os.path.join(PLOTS_DIR, f"{mod['name']}_mem_breakdown_bits.svg"),
+            f"{m_name} Memory Efficiency Breakdown",
+            "Keys (N)",
+            "bits/key",
+            series_bits_breakdown,
+            log_x=True
+        )
 
-                # --- Export CSV: Detailed Memory Breakdown (Bits/Key) ---
-                csv_path = os.path.join(PARSED_DIR, "lerloc_mem_breakdown.csv")
-                with open(csv_path, "w", newline="") as f:
-                    fieldnames = ["Keys"] + components + ["Total_Bits_Per_Key"]
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    for n in sorted_n:
-                        row = {"Keys": n}
-                        total_bpk = 0.0
-                        for comp in components:
-                            bpk = (float(detailed_reports[n].get(comp, 0)) * 8.0) / float(n)
-                            row[comp] = round(bpk, 4)
-                            total_bpk += bpk
-                        row["Total_Bits_Per_Key"] = round(total_bpk, 4)
-                        writer.writerow(row)
-                print(f"Detailed CSV breakdown saved to {csv_path}")
+        # Export CSV
+        csv_path = os.path.join(PARSED_DIR, f"{mod['name']}_mem_breakdown.csv")
+        with open(csv_path, "w", newline="") as f:
+            fieldnames = ["Keys"] + detailed_components + ["Total_Bits_Per_Key"]
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for n in sorted_n:
+                row = {"Keys": n}
+                total_bpk = 0.0
+                for comp in detailed_components:
+                    bpk = (float(detailed_reports[n].get(comp, 0)) * 8.0) / float(n)
+                    row[comp] = round(bpk, 4)
+                    total_bpk += bpk
+                row["Total_Bits_Per_Key"] = round(total_bpk, 4)
+                writer.writerow(row)
+        print(f"Detailed CSV breakdown for {mod['name']} saved to {csv_path}")
 
     print("Plots generated in locators/benchmarks/plots/")
     return 0
