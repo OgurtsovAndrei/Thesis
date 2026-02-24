@@ -4,6 +4,7 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
+	"Thesis/utils"
 	"math/rand"
 	"unsafe"
 )
@@ -208,6 +209,30 @@ func (azft *ApproxZFastTrie[E, S, I]) ByteSize() int {
 	size += len(azft.data) * int(unsafe.Sizeof(NodeData[E, S, I]{}))
 
 	return size
+}
+
+// MemDetailed returns a detailed memory usage report for ApproxZFastTrie.
+func (azft *ApproxZFastTrie[E, S, I]) MemDetailed() utils.MemReport {
+	if azft == nil {
+		return utils.MemReport{Name: "ApproxZFastTrie", TotalBytes: 0}
+	}
+
+	headerSize := int(unsafe.Sizeof(*azft))
+	mphSize := 0
+	if azft.mph != nil {
+		mphSize = azft.mph.Size()
+	}
+	dataSize := len(azft.data) * int(unsafe.Sizeof(NodeData[E, S, I]{}))
+
+	return utils.MemReport{
+		Name:       "ApproxZFastTrie",
+		TotalBytes: azft.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "header", TotalBytes: headerSize},
+			{Name: "mph", TotalBytes: mphSize},
+			{Name: "data", TotalBytes: dataSize},
+		},
+	}
 }
 
 func hashBitString(bs bits.BitString, seed uint64) uint64 {
