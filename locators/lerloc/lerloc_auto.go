@@ -5,29 +5,48 @@ import (
 	"Thesis/errutil"
 	"Thesis/locators/rloc"
 	"Thesis/trie/hzft"
+	"Thesis/trie/shzft"
 	"Thesis/trie/zft"
 	"Thesis/utils"
 	"fmt"
 	"unsafe"
 )
 
+type TrieType int
+
+const (
+	FastTrie    TrieType = iota // Standard HZFT (Fast)
+	CompactTrie                 // Succinct HZFT (Compact)
+)
+
 type hzftAccessor interface {
 	GetExistingPrefix(pattern bits.BitString) int64
 	ByteSize() int
+	MemDetailed() utils.MemReport
 }
 
 type autoLocalExactRangeLocator struct {
-	hzft   hzftAccessor
-	rl     rloc.RangeLocator
-	widths rloc.TypeWidths
+	hzft     hzftAccessor
+	rl       rloc.RangeLocator
+	widths   rloc.TypeWidths
+	trieType TrieType
 }
 
-// NewLocalExactRangeLocator constructs a LocalExactRangeLocator with automatically
-// selected bit-widths for internal fields to minimize memory usage.
-//
-// It first builds a RangeLocator (which selects optimal widths), then uses the
-// selected 'E' width for the HZFastTrie component.
+// NewLocalExactRangeLocator constructs a LocalExactRangeLocator with standard
+// HZFT (Fast mode) and automatically selected bit-widths.
 func NewLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, error) {
+	return NewLocalExactRangeLocatorWithType(keys, FastTrie)
+}
+
+// NewCompactLocalExactRangeLocator constructs a LocalExactRangeLocator with
+// Succinct HZFT (Compact mode) and automatically selected bit-widths.
+func NewCompactLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, error) {
+	return NewLocalExactRangeLocatorWithType(keys, CompactTrie)
+}
+
+// NewLocalExactRangeLocatorWithType constructs a LocalExactRangeLocator with
+// the specified Trie type and automatically selected bit-widths.
+func NewLocalExactRangeLocatorWithType(keys []bits.BitString, trieType TrieType) (LocalExactRangeLocator, error) {
 	zt := zft.Build(keys)
 
 	rl, err := rloc.NewRangeLocator(zt)
@@ -36,15 +55,16 @@ func NewLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, e
 	}
 
 	widths := rl.TypeWidths()
-	hzftComp, err := buildHZFastTrieWithWidth(keys, widths.E)
+	hzftComp, err := buildHZFastTrieWithWidth(keys, widths.E, trieType)
 	if err != nil {
 		return nil, err
 	}
 
 	return &autoLocalExactRangeLocator{
-		hzft:   hzftComp,
-		rl:     rl,
-		widths: widths,
+		hzft:     hzftComp,
+		rl:       rl,
+		widths:   widths,
+		trieType: trieType,
 	}, nil
 }
 
@@ -87,10 +107,7 @@ func (lerl *autoLocalExactRangeLocator) MemDetailed() utils.MemReport {
 	}
 
 	headerSize := int(unsafe.Sizeof(*lerl))
-	hzftSize := 0
-	if lerl.hzft != nil {
-		hzftSize = lerl.hzft.ByteSize()
-	}
+	hzftReport := lerl.hzft.MemDetailed()
 	rlReport := lerl.rl.MemDetailed()
 
 	return utils.MemReport{
@@ -98,7 +115,7 @@ func (lerl *autoLocalExactRangeLocator) MemDetailed() utils.MemReport {
 		TotalBytes: lerl.ByteSize(),
 		Children: []utils.MemReport{
 			{Name: "header", TotalBytes: headerSize},
-			{Name: "hzft", TotalBytes: hzftSize},
+			hzftReport,
 			rlReport,
 		},
 	}
@@ -111,7 +128,13 @@ func (lerl *autoLocalExactRangeLocator) TypeWidths() rloc.TypeWidths {
 	return lerl.widths
 }
 
-func buildHZFastTrieWithWidth(keys []bits.BitString, eWidth int) (hzftAccessor, error) {
+func buildHZFastTrieWithWidth(keys []bits.BitString, eWidth int, trieType TrieType) (hzftAccessor, error) {
+	if trieType == CompactTrie {
+		// SHZFT uses E width internally for delta calculation,
+		// but its interface is non-generic.
+		return shzft.NewSuccinctHZFastTrie(keys), nil
+	}
+
 	switch eWidth {
 	case 8:
 		return hzft.NewHZFastTrie[uint8](keys), nil

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">LERLOC (Compact) Memory Usage Breakdown</text>
+<line class="axis" x1="90.0" y1="465.0" x2="780.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="780.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">0</text>
+<line class="grid" x1="90.0" y1="383.00" x2="780.0" y2="383.00" />
+<text class="label" x="82.0" y="387.00" text-anchor="end">676,691</text>
+<line class="grid" x1="90.0" y1="301.00" x2="780.0" y2="301.00" />
+<text class="label" x="82.0" y="305.00" text-anchor="end">1,353,383</text>
+<line class="grid" x1="90.0" y1="219.00" x2="780.0" y2="219.00" />
+<text class="label" x="82.0" y="223.00" text-anchor="end">2,030,074</text>
+<line class="grid" x1="90.0" y1="137.00" x2="780.0" y2="137.00" />
+<text class="label" x="82.0" y="141.00" text-anchor="end">2,706,766</text>
+<line class="grid" x1="90.0" y1="55.00" x2="780.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">3,383,457</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">32</text>
+<line class="grid" x1="249.23" y1="55.0" x2="249.23" y2="465.0" />
+<text class="label" x="249.23" y="485.0" text-anchor="middle">256</text>
+<line class="grid" x1="355.38" y1="55.0" x2="355.38" y2="465.0" />
+<text class="label" x="355.38" y="485.0" text-anchor="middle">1,024</text>
+<line class="grid" x1="514.62" y1="55.0" x2="514.62" y2="465.0" />
+<text class="label" x="514.62" y="485.0" text-anchor="middle">8,192</text>
+<line class="grid" x1="620.77" y1="55.0" x2="620.77" y2="465.0" />
+<text class="label" x="620.77" y="485.0" text-anchor="middle">32,768</text>
+<line class="grid" x1="780.00" y1="55.0" x2="780.00" y2="465.0" />
+<text class="label" x="780.00" y="485.0" text-anchor="middle">262,144</text>
+<polygon fill="#a16207" fill-opacity="0.8" points="90.00,464.88 249.23,464.61 355.38,463.55 514.62,454.02 620.77,419.77 780.00,92.27 780.00,285.46 620.77,443.90 514.62,460.04 355.38,464.31 249.23,464.80 90.00,464.91" />
+<polygon fill="#7c3aed" fill-opacity="0.8" points="90.00,464.91 249.23,464.80 355.38,464.31 514.62,460.04 620.77,443.90 780.00,285.46 780.00,298.99 620.77,445.41 514.62,460.30 355.38,464.34 249.23,464.82 90.00,464.92" />
+<polygon fill="#22a06b" fill-opacity="0.8" points="90.00,464.92 249.23,464.82 355.38,464.34 514.62,460.30 620.77,445.41 780.00,298.99 780.00,315.62 620.77,447.50 514.62,460.82 355.38,464.41 249.23,464.83 90.00,464.93" />
+<polygon fill="#e4572e" fill-opacity="0.8" points="90.00,464.93 249.23,464.83 355.38,464.41 514.62,460.82 620.77,447.50 780.00,315.62 780.00,464.98 620.77,464.98 514.62,464.98 355.38,464.98 249.23,464.98 90.00,464.98" />
+<polygon fill="#2a7fff" fill-opacity="0.8" points="90.00,464.98 249.23,464.98 355.38,464.98 514.62,464.98 620.77,464.98 780.00,464.98 780.00,465.00 90.00,465.00" />
+<rect x="790.0" y="59.0" width="12" height="12" fill="#a16207" />
+<text class="label" x="808.0" y="69.0">MMPH_Buckets</text>
+<rect x="790.0" y="79.0" width="12" height="12" fill="#7c3aed" />
+<text class="label" x="808.0" y="89.0">MMPH_Trie</text>
+<rect x="790.0" y="99.0" width="12" height="12" fill="#22a06b" />
+<text class="label" x="808.0" y="109.0">Leaf_BitVector</text>
+<rect x="790.0" y="119.0" width="12" height="12" fill="#e4572e" />
+<text class="label" x="808.0" y="129.0">HZFastTrie</text>
+<rect x="790.0" y="139.0" width="12" height="12" fill="#2a7fff" />
+<text class="label" x="808.0" y="149.0">Other</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Keys (N)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">Bytes</text>
+</svg>
