@@ -154,7 +154,7 @@ func (shzft *SuccinctHZFastTrie) ByteSize() int {
 // MemDetailed returns a detailed memory usage report for SuccinctHZFastTrie.
 func (shzft *SuccinctHZFastTrie) MemDetailed() utils.MemReport {
 	if shzft == nil {
-		return utils.MemReport{Name: "SuccinctHZFastTrie", TotalBytes: 0}
+		return utils.MemReport{Name: "hzft", TotalBytes: 0}
 	}
 
 	headerSize := int(unsafe.Sizeof(*shzft))
@@ -169,12 +169,12 @@ func (shzft *SuccinctHZFastTrie) MemDetailed() utils.MemReport {
 	deltaSize := len(shzft.deltas) * 8
 
 	return utils.MemReport{
-		Name:       "SuccinctHZFastTrie",
+		Name:       "hzft",
 		TotalBytes: shzft.ByteSize(),
 		Children: []utils.MemReport{
 			{Name: "header", TotalBytes: headerSize},
 			{Name: "mph", TotalBytes: mphSize},
-			{Name: "rsdic_bv", TotalBytes: bvSize},
+			{Name: "shzft_bv", TotalBytes: bvSize},
 			{Name: "deltas_array", TotalBytes: deltaSize},
 		},
 	}

@@ -92,3 +92,44 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 		})
 	}
 }
+
+func TestCompactLocalExactRangeLocator_AllPrefixes(t *testing.T) {
+	// Run fewer iterations for the compact version as a basic correctness check
+	for run := 0; run < 100; run++ {
+		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
+			t.Parallel()
+			seed := time.Now().UnixNano() + 1000
+			keys := rloc.GenUniqueBitStrings(seed, 256, 32)
+
+			lerl, err := NewCompactLocalExactRangeLocator(keys)
+			if err != nil {
+				t.Fatalf("NewCompactLocalExactRangeLocator failed (seed: %d): %v", seed, err)
+			}
+
+			for _, key := range keys {
+				for prefixLen := uint32(0); prefixLen <= key.Size(); prefixLen++ {
+					var prefix bits.BitString
+					if prefixLen == 0 {
+						prefix = bits.NewFromText("")
+					} else {
+						prefix = key.Prefix(int(prefixLen))
+					}
+
+					start, end, err := lerl.WeakPrefixSearch(prefix)
+					if err != nil {
+						t.Fatalf("WeakPrefixSearch failed for prefix %s of key %s (seed: %d): %v",
+							prefix.PrettyString(), key.PrettyString(), seed, err)
+					}
+
+					expectedStart, expectedEnd := rloc.FindRange(keys, prefix)
+
+					if start != expectedStart || end != expectedEnd {
+						t.Errorf("Mismatch for prefix %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",
+							prefix.PrettyString(), seed, start, end, expectedStart, expectedEnd)
+						t.FailNow()
+					}
+				}
+			}
+		})
+	}
+}

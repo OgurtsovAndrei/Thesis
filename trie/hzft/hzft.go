@@ -4,6 +4,7 @@ import (
 	"Thesis/bits"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
+	"Thesis/utils"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -145,4 +146,28 @@ func (hzft *HZFastTrie[E]) ByteSize() int {
 	size += 8
 
 	return size
+}
+
+// MemDetailed returns a detailed memory usage report for HZFastTrie.
+func (hzft *HZFastTrie[E]) MemDetailed() utils.MemReport {
+	if hzft == nil {
+		return utils.MemReport{Name: "HZFastTrie", TotalBytes: 0}
+	}
+
+	headerSize := int(unsafe.Sizeof(*hzft))
+	mphSize := 0
+	if hzft.mph != nil {
+		mphSize = hzft.mph.Size()
+	}
+	dataSize := len(hzft.data) * int(unsafe.Sizeof(*new(E)))
+
+	return utils.MemReport{
+		Name:       "hzft",
+		TotalBytes: hzft.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "header", TotalBytes: headerSize},
+			{Name: "mph", TotalBytes: mphSize},
+			{Name: "data", TotalBytes: dataSize},
+		},
+	}
 }
