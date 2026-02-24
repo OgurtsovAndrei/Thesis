@@ -95,7 +95,8 @@ def draw_line_chart(path: str, title: str, x_label: str, y_label: str, series: D
     for x in x_vals:
         px = x_pos(x)
         parts.append(f'<line class="grid" x1="{px:.2f}" y1="{top}" x2="{px:.2f}" y2="{top+ph}" />')
-        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{x}</text>')
+        label = f"{x:,.0f}" if x < 1000000 else f"{x:.1e}"
+        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{label}</text>')
 
     # Data
     palette = ["#2a7fff", "#e4572e", "#22a06b", "#7c3aed", "#a16207", "#d946ef", "#0ea5e9"]
@@ -173,13 +174,15 @@ def draw_stacked_area_chart(path: str, title: str, x_label: str, y_label: str, s
         yv = y_max * i / 5
         py = y_pos(yv)
         parts.append(f'<line class="grid" x1="{left}" y1="{py:.2f}" x2="{left+pw}" y2="{py:.2f}" />')
-        parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{yv:,.0f}</text>')
+        label = f"{yv:,.1f}" if y_max < 100 else f"{yv:,.0f}"
+        parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{label}</text>')
 
     # X Grid
     for x in all_x:
         px = x_pos(x)
         parts.append(f'<line class="grid" x1="{px:.2f}" y1="{top}" x2="{px:.2f}" y2="{top+ph}" />')
-        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{x:,.0f}</text>')
+        label = f"{x:,.0f}" if x < 1000000 else f"{x:.1e}"
+        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{label}</text>')
 
     # Data - Draw areas (reverse order to get correct stacking visual if transparency used, 
     # but here we draw full polygons from top to bottom or bottom to top)

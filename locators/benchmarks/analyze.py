@@ -260,6 +260,24 @@ def main() -> int:
                     log_x=True
                 )
 
+                # --- Plot 5: Detailed Memory Breakdown (Bits/Key Stacked Area) ---
+                series_bits_breakdown: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+                for n in sorted_n:
+                    comp_data = detailed_reports[n]
+                    for comp in components:
+                        # Convert bytes to bits and divide by n
+                        bits_per_key = (float(comp_data.get(comp, 0)) * 8.0) / float(n)
+                        series_bits_breakdown[comp].append((float(n), bits_per_key))
+                
+                plotter.draw_stacked_area_chart(
+                    os.path.join(PLOTS_DIR, "lerloc_memory_bits_breakdown.svg"),
+                    "LERLOC Memory Efficiency Breakdown (KeySize=64)",
+                    "Keys (N)",
+                    "bits/key",
+                    series_bits_breakdown,
+                    log_x=True
+                )
+
     print("Plots generated in locators/benchmarks/plots/")
     return 0
 

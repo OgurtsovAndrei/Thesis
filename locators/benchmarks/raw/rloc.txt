@@ -1,2 +1,2 @@
 PASS
-ok  	Thesis/locators/rloc	60.071s
+ok  	Thesis/locators/rloc	61.459s
