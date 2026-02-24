@@ -16,7 +16,8 @@ from bench_lib import runner, parser, plotter
 
 # --- Configuration ---
 
-RLOC_DIR = os.path.dirname(current_dir)
+RLOC_DIR = os.path.join(os.path.dirname(current_dir), "rloc")
+LERLOC_DIR = os.path.join(os.path.dirname(current_dir), "lerloc")
 RAW_DIR = os.path.join(current_dir, "raw")
 PARSED_DIR = os.path.join(current_dir, "parsed")
 PLOTS_DIR = os.path.join(current_dir, "plots")
@@ -26,6 +27,11 @@ MODULES = [
         "name": "rloc",
         "dir": RLOC_DIR,
         "out": os.path.join(RAW_DIR, "rloc.txt"),
+    },
+    {
+        "name": "lerloc",
+        "dir": LERLOC_DIR,
+        "out": os.path.join(RAW_DIR, "lerloc.txt"),
     }
 ]
 
@@ -163,7 +169,7 @@ def main() -> int:
                 log_y=False
             )
 
-    print("Plots generated in rloc/benchmarks/plots/")
+    print("Plots generated in locators/benchmarks/plots/")
     return 0
 
 if __name__ == "__main__":

@@ -63,8 +63,8 @@ This tests if your fixes resolve the previously-failing key sets.
 
 ## File Locations
 
-- **Test file**: `/Users/andrei.ogurtsov/Thesis/rloc/rloc_test_debug.go`
-- **Debug guide**: `/Users/andrei.ogurtsov/Thesis/rloc/DEBUG_GUIDE.md`
+- **Test file**: `/Users/andrei.ogurtsov/Thesis/locators/rloc_test_debug.go`
+- **Debug guide**: `/Users/andrei.ogurtsov/Thesis/locators/DEBUG_GUIDE.md`
 - **Failure output**: `/tmp/mmph_failures.json` (created by tests)
 
 ## Data Flow

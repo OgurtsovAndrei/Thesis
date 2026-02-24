@@ -1,11 +1,18 @@
-package rloc
+package lerloc
 
 import (
 	"Thesis/bits"
+	"Thesis/locators/rloc"
 	"fmt"
 	"sort"
 	"testing"
 	"time"
+)
+
+const (
+	testRuns  = 10_000
+	maxKeys   = 1024
+	maxBitLen = 16
 )
 
 func TestLocalExactRangeLocator_EmptyKeys(t *testing.T) {
@@ -51,7 +58,7 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
 			t.Parallel()
 			seed := time.Now().UnixNano()
-			keys := genUniqueBitStrings(seed)
+			keys := rloc.GenUniqueBitStrings(seed, maxKeys, maxBitLen)
 
 			lerl, err := NewLocalExactRangeLocator(keys)
 			if err != nil {
@@ -73,7 +80,7 @@ func TestLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 							prefix.PrettyString(), key.PrettyString(), seed, err)
 					}
 
-					expectedStart, expectedEnd := findRange(keys, prefix)
+					expectedStart, expectedEnd := rloc.FindRange(keys, prefix)
 
 					if start != expectedStart || end != expectedEnd {
 						t.Errorf("Mismatch for prefix %s (seed: %d). Got: [%d, %d), Exp: [%d, %d)",

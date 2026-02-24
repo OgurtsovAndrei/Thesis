@@ -1,7 +1,8 @@
-package rloc
+package lerloc
 
 import (
 	"Thesis/bits"
+	"Thesis/locators/rloc"
 	"Thesis/trie/hzft"
 	"Thesis/trie/zft"
 	"unsafe"
@@ -15,7 +16,7 @@ import (
 type LocalExactRangeLocator interface {
 	WeakPrefixSearch(prefix bits.BitString) (int, int, error)
 	ByteSize() int
-	TypeWidths() TypeWidths
+	TypeWidths() rloc.TypeWidths
 }
 
 // GenericLocalExactRangeLocator supports weak prefix search and returns exact
@@ -48,7 +49,7 @@ type LocalExactRangeLocator interface {
 //   - papers/Hollow-Z-Fast-Trie (Fast Prefix Search)/Section-6.md
 type GenericLocalExactRangeLocator[E zft.UNumber, S zft.UNumber, I zft.UNumber] struct {
 	hzft *hzft.HZFastTrie[E]
-	rl   *GenericRangeLocator[E, S, I]
+	rl   *rloc.GenericRangeLocator[E, S, I]
 }
 
 // NewGenericLocalExactRangeLocator creates a new GenericLocalExactRangeLocator.
@@ -68,7 +69,7 @@ func NewGenericLocalExactRangeLocator[E zft.UNumber, S zft.UNumber, I zft.UNumbe
 	// Build RangeLocator first
 	// We need to build a ZFastTrie to pass to NewGenericRangeLocator
 	zt := zft.Build(keys)
-	rl, err := NewGenericRangeLocator[E, S, I](zt)
+	rl, err := rloc.NewGenericRangeLocator[E, S, I](zt)
 	if err != nil {
 		return nil, err
 	}
@@ -133,12 +134,12 @@ func (lerl *GenericLocalExactRangeLocator[E, S, I]) ByteSize() int {
 	return size
 }
 
-func (lerl *GenericLocalExactRangeLocator[E, S, I]) TypeWidths() TypeWidths {
+func (lerl *GenericLocalExactRangeLocator[E, S, I]) TypeWidths() rloc.TypeWidths {
 	// Reconstruct TypeWidths from the type parameters
 	var e E
 	var s S
 	var i I
-	return TypeWidths{
+	return rloc.TypeWidths{
 		E: int(unsafe.Sizeof(e)) * 8,
 		S: int(unsafe.Sizeof(s)) * 8,
 		I: int(unsafe.Sizeof(i)) * 8,

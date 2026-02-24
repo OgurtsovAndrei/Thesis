@@ -150,5 +150,5 @@ Once you've identified and fixed the issue:
 
 For questions about the implementation, see:
 - `/Users/andrei.ogurtsov/Thesis/mmph/relative_trie/hash.go` - MMPH implementation
-- `/Users/andrei.ogurtsov/Thesis/rloc/rloc.go` - RangeLocator implementation
+- `/Users/andrei.ogurtsov/Thesis/locators/locators.go` - RangeLocator implementation
 - `/Users/andrei.ogurtsov/Thesis/zfasttrie/` - Z-Fast Trie implementation

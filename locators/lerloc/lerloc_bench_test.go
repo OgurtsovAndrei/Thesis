@@ -1,7 +1,8 @@
-package rloc
+package lerloc
 
 import (
 	"Thesis/bits"
+	"Thesis/locators/rloc"
 	"Thesis/trie/zft"
 	"fmt"
 	"math"
@@ -11,12 +12,12 @@ import (
 
 // Benchmark LocalExactRangeLocator construction
 func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
+				keys := rloc.BenchKeys[bitLen][count]
 
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -47,12 +48,12 @@ func BenchmarkLocalExactRangeLocatorBuild(b *testing.B) {
 
 // Benchmark LocalExactRangeLocator query performance
 func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
+				keys := rloc.BenchKeys[bitLen][count]
 				lerl, err := NewLocalExactRangeLocator(keys)
 				if err != nil {
 					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
@@ -92,12 +93,12 @@ func BenchmarkLocalExactRangeLocatorWeakPrefixSearch(b *testing.B) {
 
 // Benchmark memory usage comparison
 func BenchmarkMemoryComparison(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
+				keys := rloc.BenchKeys[bitLen][count]
 
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -105,7 +106,7 @@ func BenchmarkMemoryComparison(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					// Build both structures
 					zt := zft.Build(keys)
-					rl, err := NewRangeLocator(zt)
+					rl, err := rloc.NewRangeLocator(zt)
 					if err != nil {
 						b.Fatalf("Failed to build RangeLocator: %v", err)
 					}
@@ -152,12 +153,12 @@ func BenchmarkMemoryComparison(b *testing.B) {
 
 // Benchmark empty prefix queries (should return all keys)
 func BenchmarkEmptyPrefixQuery(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
+				keys := rloc.BenchKeys[bitLen][count]
 				lerl, err := NewLocalExactRangeLocator(keys)
 				if err != nil {
 					b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
@@ -188,11 +189,11 @@ func BenchmarkEmptyPrefixQuery(b *testing.B) {
 
 // Benchmark with different prefix lengths
 func BenchmarkPrefixLengthVariation(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		count := benchKeyCounts[3] // Use medium-sized dataset
-		keys := benchKeys[bitLen][count]
+	for _, bitLen := range rloc.BenchBitLengths {
+		count := rloc.BenchKeyCounts[3] // Use medium-sized dataset
+		keys := rloc.BenchKeys[bitLen][count]
 		lerl, err := NewLocalExactRangeLocator(keys)
 		if err != nil {
 			b.Fatalf("Failed to build LocalExactRangeLocator: %v", err)
@@ -237,11 +238,11 @@ func BenchmarkPrefixLengthVariation(b *testing.B) {
 
 // Benchmark miss queries (prefixes not matching any key)
 func BenchmarkMissQueries(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		count := benchKeyCounts[3] // Use medium-sized dataset
-		keys := benchKeys[bitLen][count]
+	for _, bitLen := range rloc.BenchBitLengths {
+		count := rloc.BenchKeyCounts[3] // Use medium-sized dataset
+		keys := rloc.BenchKeys[bitLen][count]
 
 		b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 			lerl, err := NewLocalExactRangeLocator(keys)
@@ -292,12 +293,12 @@ func BenchmarkMissQueries(b *testing.B) {
 
 // Benchmark scaling behavior
 func BenchmarkScalingBehavior(b *testing.B) {
-	initBenchKeys()
+	rloc.InitBenchKeys()
 
-	for _, bitLen := range benchBitLengths {
-		for _, count := range benchKeyCounts {
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := benchKeys[bitLen][count]
+				keys := rloc.BenchKeys[bitLen][count]
 
 				lerl, err := NewLocalExactRangeLocator(keys)
 				if err != nil {

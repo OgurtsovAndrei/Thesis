@@ -11,7 +11,7 @@ func TestReplaySpecificFailure(t *testing.T) {
 	mmphSeed := uint64(4010545232912815505)
 
 	// Generate keys with the exact same seed
-	keys := genUniqueBitStringsDebug(seed)
+	keys := GenUniqueBitStringsDebug(seed, maxKeys, maxBitLen)
 	t.Logf("Generated %d keys", len(keys))
 
 	// Try building 10 times with same keys and same mmphSeed
@@ -41,4 +41,3 @@ func TestReplaySpecificFailure(t *testing.T) {
 		t.Logf("DETERMINISTIC: All attempts failed (this is the expected behavior for this seed)")
 	}
 }
-

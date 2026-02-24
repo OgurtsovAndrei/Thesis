@@ -1,8 +1,9 @@
-package rloc
+package lerloc
 
 import (
 	"Thesis/bits"
 	"Thesis/errutil"
+	"Thesis/locators/rloc"
 	"Thesis/trie/hzft"
 	"Thesis/trie/zft"
 	"fmt"
@@ -15,8 +16,8 @@ type hzftAccessor interface {
 
 type autoLocalExactRangeLocator struct {
 	hzft   hzftAccessor
-	rl     RangeLocator
-	widths TypeWidths
+	rl     rloc.RangeLocator
+	widths rloc.TypeWidths
 }
 
 // NewLocalExactRangeLocator constructs a LocalExactRangeLocator with automatically
@@ -27,7 +28,7 @@ type autoLocalExactRangeLocator struct {
 func NewLocalExactRangeLocator(keys []bits.BitString) (LocalExactRangeLocator, error) {
 	zt := zft.Build(keys)
 
-	rl, err := NewRangeLocator(zt)
+	rl, err := rloc.NewRangeLocator(zt)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +78,9 @@ func (lerl *autoLocalExactRangeLocator) ByteSize() int {
 	return size
 }
 
-func (lerl *autoLocalExactRangeLocator) TypeWidths() TypeWidths {
+func (lerl *autoLocalExactRangeLocator) TypeWidths() rloc.TypeWidths {
 	if lerl == nil {
-		return TypeWidths{}
+		return rloc.TypeWidths{}
 	}
 	return lerl.widths
 }
