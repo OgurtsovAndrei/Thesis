@@ -43,32 +43,48 @@ MODULES = [
 
 # --- Helpers ---
 
-def parse_mem_reports(path: str) -> Dict[int, Dict[str, int]]:
+def parse_mem_reports(path: str) -> Dict[str, Dict[int, Dict[str, int]]]:
     """
     Parses JSON_MEM_REPORT lines from benchmark output.
-    Returns mapping: n_keys -> {component_name: bytes}
+    Returns mapping: mode -> n_keys -> {component_name: bytes}
     """
-    reports = {}
+    reports = defaultdict(dict)
     if not os.path.exists(path):
         return reports
 
     current_keys = 0
+    current_mode = "default"
     with open(path, "r") as f:
         for line in f:
-            # Detect key count from Benchmark line
-            if "BenchmarkMemoryDetailed/Keys=" in line:
-                parts = line.split("/")
+            # Detect mode and key count from Benchmark line
+            if line.startswith("BenchmarkMemoryDetailed/"):
+                # Remove suffix like -20 or benchmark values
+                bench_part = line.split()[0]
+                parts = bench_part.split("/")
+                
+                # Reset current_mode for every new benchmark line
+                current_mode = "default"
+                
+                # Check for explicit mode like Fast or Compact
+                if len(parts) >= 3:
+                    # The part after BenchmarkMemoryDetailed is the mode
+                    # if it's not the Keys part.
+                    if not parts[1].startswith("Keys="):
+                        current_mode = parts[1]
+                
                 for p in parts:
                     if p.startswith("Keys="):
-                        current_keys = int(p.split("=")[1].split("-")[0])
+                        try:
+                            current_keys = int(p.split("=")[1].split("-")[0])
+                        except: pass
             
             if "JSON_MEM_REPORT:" in line:
                 json_str = line.split("JSON_MEM_REPORT:")[1].strip()
                 try:
                     data = json.loads(json_str)
-                    reports[current_keys] = flatten_report(data)
+                    reports[current_mode][current_keys] = flatten_report(data)
                 except Exception as e:
-                    print(f"Failed to parse JSON report for N={current_keys}: {e}")
+                    print(f"Failed to parse JSON report for {current_mode}/N={current_keys}: {e}")
     return reports
 
 def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
@@ -90,12 +106,16 @@ def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
         name = node["name"]
         if name == "hzft":
             out["HZFastTrie"] += node["total_bytes"]
+            return # Stop walking sub-components of HZFT
         elif name == "rsdic_bv":
             out["Leaf_BitVector"] += node["total_bytes"]
+            return # Stop walking sub-components of RSDic
         elif name == "ApproxZFastTrie":
             out["MMPH_Trie"] += node["total_bytes"]
+            return
         elif name == "buckets":
             out["MMPH_Buckets"] += node["total_bytes"]
+            return
         elif name in ["header", "Top_Level_Header"]:
             out["Other"] += node["total_bytes"]
         
@@ -186,7 +206,10 @@ def main() -> int:
     series_build_time: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
     for r in build_rows:
         if r.get("keysize") and r.get("keys"):
-            series_build_time[f"{r['module'].upper()} KeySize={int(r['keysize'])}"].append((float(r["keys"]), float(r.get("ns_per_op", 0))))
+            mode = ""
+            if "Fast" in str(r["benchmark"]): mode = " (Fast)"
+            if "Compact" in str(r["benchmark"]): mode = " (Compact)"
+            series_build_time[f"{r['module'].upper()}{mode} KeySize={int(r['keysize'])}"].append((float(r["keys"]), float(r.get("ns_per_op", 0))))
             
     plotter.draw_line_chart(
         os.path.join(PLOTS_DIR, "build_time_ns.svg"),
@@ -203,7 +226,10 @@ def main() -> int:
     for r in build_rows:
         bpk = r.get("bits_per_key") or r.get("bits_key_in_mem")
         if bpk and r.get("keys"):
-             series_bits[f"{r['module'].upper()}"].append((float(r["keys"]), float(bpk)))
+             mode = ""
+             if "Fast" in str(r["benchmark"]): mode = " (Fast)"
+             if "Compact" in str(r["benchmark"]): mode = " (Compact)"
+             series_bits[f"{r['module'].upper()}{mode}"].append((float(r["keys"]), float(bpk)))
 
     if series_bits:
         plotter.draw_line_chart(
@@ -224,9 +250,13 @@ def main() -> int:
         
         for r in rows_k:
             if r.get("rl_bits_per_key"):
-                series_k["RLOC"].append((float(r["keys"]), float(r["rl_bits_per_key"])))
+                series_k["RLOC"].append((float(r["keys"]), float(r.get("rl_bits_per_key"))))
             if r.get("lerl_bits_per_key"):
-                series_k["LERLOC"].append((float(r["keys"]), float(r["lerl_bits_per_key"])))
+                series_k["LERLOC (Default)"].append((float(r["keys"]), float(r.get("lerl_bits_per_key"))))
+            if r.get("fast_bits_key"):
+                series_k["LERLOC (Fast)"].append((float(r["keys"]), float(r.get("fast_bits_key"))))
+            if r.get("compact_bits_key"):
+                series_k["LERLOC (Compact)"].append((float(r["keys"]), float(r.get("compact_bits_key"))))
         
         if series_k:
             plotter.draw_line_chart(
@@ -239,68 +269,61 @@ def main() -> int:
                 log_y=False
             )
 
-    # --- Plot 4 & 5: Detailed Memory Breakdown (Stacked Area) ---
+    # --- Plot 4 & 5: Detailed Memory Breakdown (Consolidated) ---
     detailed_components = ["Other", "HZFastTrie", "Leaf_BitVector", "MMPH_Trie", "MMPH_Buckets"]
     
+    all_breakdown_rows = []
+    efficiency_series = defaultdict(list)
+
     for mod in MODULES:
-        detailed_reports = parse_mem_reports(mod["out"])
-        if not detailed_reports:
+        reports_by_mode = parse_mem_reports(mod["out"])
+        if not reports_by_mode:
             continue
             
-        m_name = mod["name"].upper()
-        sorted_n = sorted(detailed_reports.keys())
-        
-        # Bytes Plot
-        series_bytes: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
-        for n in sorted_n:
-            comp_data = detailed_reports[n]
-            for comp in detailed_components:
-                series_bytes[comp].append((float(n), float(comp_data.get(comp, 0))))
-        
-        plotter.draw_stacked_area_chart(
-            os.path.join(PLOTS_DIR, f"{mod['name']}_mem_breakdown_bytes.svg"),
-            f"{m_name} Memory Usage Breakdown",
-            "Keys (N)",
-            "Bytes",
-            series_bytes,
-            log_x=True
-        )
-
-        # Bits/Key Plot
-        series_bits_breakdown: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
-        for n in sorted_n:
-            comp_data = detailed_reports[n]
-            for comp in detailed_components:
-                bits_per_key = (float(comp_data.get(comp, 0)) * 8.0) / float(n)
-                series_bits_breakdown[comp].append((float(n), bits_per_key))
-        
-        plotter.draw_stacked_area_chart(
-            os.path.join(PLOTS_DIR, f"{mod['name']}_mem_breakdown_bits.svg"),
-            f"{m_name} Memory Efficiency Breakdown",
-            "Keys (N)",
-            "bits/key",
-            series_bits_breakdown,
-            log_x=True
-        )
-
-        # Export CSV
-        csv_path = os.path.join(PARSED_DIR, f"{mod['name']}_mem_breakdown.csv")
-        with open(csv_path, "w", newline="") as f:
-            fieldnames = ["Keys"] + detailed_components + ["Total_Bits_Per_Key"]
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
+        for mode, detailed_reports in reports_by_mode.items():
+            m_name = mod["name"].upper()
+            if mode != "default":
+                m_name += f" ({mode})"
+            
+            sorted_n = sorted(detailed_reports.keys())
+            
             for n in sorted_n:
-                row = {"Keys": n}
+                comp_data = detailed_reports[n]
+                row = {"Module": mod["name"], "Mode": mode, "Keys": n}
                 total_bpk = 0.0
                 for comp in detailed_components:
-                    bpk = (float(detailed_reports[n].get(comp, 0)) * 8.0) / float(n)
+                    bpk = (float(comp_data.get(comp, 0)) * 8.0) / float(n)
                     row[comp] = round(bpk, 4)
                     total_bpk += bpk
                 row["Total_Bits_Per_Key"] = round(total_bpk, 4)
-                writer.writerow(row)
-        print(f"Detailed CSV breakdown for {mod['name']} saved to {csv_path}")
+                all_breakdown_rows.append(row)
+                
+                efficiency_series[m_name].append((float(n), total_bpk))
 
-    print("Plots generated in locators/benchmarks/plots/")
+    # Export Consolidated CSV
+    if all_breakdown_rows:
+        csv_path = os.path.join(PARSED_DIR, "mem_breakdown.csv")
+        with open(csv_path, "w", newline="") as f:
+            fieldnames = ["Module", "Mode", "Keys"] + detailed_components + ["Total_Bits_Per_Key"]
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(all_breakdown_rows)
+        print(f"Consolidated memory breakdown saved to {csv_path}")
+
+    # Export Consolidated Efficiency Plot (Line Chart)
+    if efficiency_series:
+        plotter.draw_line_chart(
+            os.path.join(PLOTS_DIR, "mem_efficiency_all.svg"),
+            "Memory Efficiency Comparison",
+            "Keys (N)",
+            "bits/key",
+            efficiency_series,
+            log_x=True,
+            log_y=False
+        )
+        print(f"Consolidated efficiency plot saved to {PLOTS_DIR}/mem_efficiency_all.svg")
+
+    print("Consolidated reports generated in locators/benchmarks/")
     return 0
 
 if __name__ == "__main__":

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Memory Efficiency Comparison</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">0.00</text>
+<line class="grid" x1="90.0" y1="383.00" x2="920.0" y2="383.00" />
+<text class="label" x="82.0" y="387.00" text-anchor="end">58.58</text>
+<line class="grid" x1="90.0" y1="301.00" x2="920.0" y2="301.00" />
+<text class="label" x="82.0" y="305.00" text-anchor="end">117.15</text>
+<line class="grid" x1="90.0" y1="219.00" x2="920.0" y2="219.00" />
+<text class="label" x="82.0" y="223.00" text-anchor="end">175.72</text>
+<line class="grid" x1="90.0" y1="137.00" x2="920.0" y2="137.00" />
+<text class="label" x="82.0" y="141.00" text-anchor="end">234.30</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">292.88</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">32</text>
+<line class="grid" x1="228.33" y1="55.0" x2="228.33" y2="465.0" />
+<text class="label" x="228.33" y="485.0" text-anchor="middle">256</text>
+<line class="grid" x1="320.56" y1="55.0" x2="320.56" y2="465.0" />
+<text class="label" x="320.56" y="485.0" text-anchor="middle">1,024</text>
+<line class="grid" x1="458.89" y1="55.0" x2="458.89" y2="465.0" />
+<text class="label" x="458.89" y="485.0" text-anchor="middle">8,192</text>
+<line class="grid" x1="551.11" y1="55.0" x2="551.11" y2="465.0" />
+<text class="label" x="551.11" y="485.0" text-anchor="middle">32,768</text>
+<line class="grid" x1="689.44" y1="55.0" x2="689.44" y2="465.0" />
+<text class="label" x="689.44" y="485.0" text-anchor="middle">262,144</text>
+<line class="grid" x1="781.67" y1="55.0" x2="781.67" y2="465.0" />
+<text class="label" x="781.67" y="485.0" text-anchor="middle">1.0e+06</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">8.4e+06</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,92.27 228.33,274.70 320.56,286.46 458.89,297.97 551.11,297.07 689.44,289.08" />
+<circle cx="90.00" cy="92.27" r="3.5" fill="#2a7fff" />
+<circle cx="228.33" cy="274.70" r="3.5" fill="#2a7fff" />
+<circle cx="320.56" cy="286.46" r="3.5" fill="#2a7fff" />
+<circle cx="458.89" cy="297.97" r="3.5" fill="#2a7fff" />
+<circle cx="551.11" cy="297.07" r="3.5" fill="#2a7fff" />
+<circle cx="689.44" cy="289.08" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">LERLOC (Fast)</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,118.87 228.33,322.95 320.56,334.18 458.89,341.10 551.11,337.44 689.44,333.59" />
+<circle cx="90.00" cy="118.87" r="3.5" fill="#e4572e" />
+<circle cx="228.33" cy="322.95" r="3.5" fill="#e4572e" />
+<circle cx="320.56" cy="334.18" r="3.5" fill="#e4572e" />
+<circle cx="458.89" cy="341.10" r="3.5" fill="#e4572e" />
+<circle cx="551.11" cy="337.44" r="3.5" fill="#e4572e" />
+<circle cx="689.44" cy="333.59" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">LERLOC (Compact)</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,372.26 228.33,438.71 320.56,441.95 458.89,442.70 551.11,442.93 689.44,442.89 781.67,442.87 920.00,442.89" />
+<circle cx="90.00" cy="372.26" r="3.5" fill="#22a06b" />
+<circle cx="228.33" cy="438.71" r="3.5" fill="#22a06b" />
+<circle cx="320.56" cy="441.95" r="3.5" fill="#22a06b" />
+<circle cx="458.89" cy="442.70" r="3.5" fill="#22a06b" />
+<circle cx="551.11" cy="442.93" r="3.5" fill="#22a06b" />
+<circle cx="689.44" cy="442.89" r="3.5" fill="#22a06b" />
+<circle cx="781.67" cy="442.87" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="442.89" r="3.5" fill="#22a06b" />
+<line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122.0" y="107.0">MMPH</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Keys (N)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">bits/key</text>
+</svg>
