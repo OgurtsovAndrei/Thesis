@@ -5,10 +5,7 @@ import (
 	"Thesis/trie/zft"
 	"encoding/json"
 	"fmt"
-	"math"
-	"math/rand"
 	"os"
-	"sort"
 	"testing"
 	"time"
 )
@@ -46,7 +43,7 @@ func TestRangeLocator_CaptureMMPHFailures(t *testing.T) {
 		t.Run(fmt.Sprintf("Run %d", run), func(t *testing.T) {
 
 			seed := time.Now().UnixNano() + int64(run)
-			keys := genUniqueBitStringsDebug(seed)
+			keys := GenUniqueBitStringsDebug(seed, debugMaxKeys, debugMaxBitLen)
 
 			// Use a deterministic MMPH seed for this test run
 			mmphSeed := uint64(seed) * 31337 // Derive from key seed
@@ -139,7 +136,7 @@ func TestRangeLocator_LoadAndReplayFailures(t *testing.T) {
 	for i, record := range failures {
 		t.Run(fmt.Sprintf("replay_seed_%d_mmphSeed_%d", record.Seed, record.MMPHSeed), func(t *testing.T) {
 			// Regenerate keys using the original seed
-			keys := genUniqueBitStringsDebug(record.Seed)
+			keys := GenUniqueBitStringsDebug(record.Seed, debugMaxKeys, debugMaxBitLen)
 			t.Logf("Regenerated %d keys from seed %d (expected: %d keys)",
 				len(keys), record.Seed, record.KeyCount)
 
@@ -180,40 +177,6 @@ func TestRangeLocator_LoadAndReplayFailures(t *testing.T) {
 }
 
 // Helper functions
-
-func genUniqueBitStringsDebug(seed int64) []bits.BitString {
-	r := rand.New(rand.NewSource(seed))
-
-	numKeys := r.Intn(debugMaxKeys) + 1
-	minSize := int(math.Log2(debugMaxKeys)) + 1
-	bitLen := minSize + r.Intn(debugMaxBitLen-minSize)
-
-	uniqueUints := make(map[uint64]bool)
-	mask := uint64(0)
-	if bitLen == 64 {
-		mask = 0xFFFFFFFFFFFFFFFF
-	} else {
-		mask = (uint64(1) << uint(bitLen)) - 1
-	}
-
-	for len(uniqueUints) < numKeys {
-		uniqueUints[r.Uint64()&mask] = true
-	}
-
-	keys := make([]bits.BitString, 0, len(uniqueUints))
-	for val := range uniqueUints {
-		bs := bits.NewFromUint64(val)
-		if uint32(bitLen) < bs.Size() {
-			bs = bs.Prefix(bitLen)
-		}
-		keys = append(keys, bs)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].Compare(keys[j]) < 0
-	})
-	return keys
-}
 
 func keysToData(keys []bits.BitString) []BitStringData {
 	data := make([]BitStringData, len(keys))
