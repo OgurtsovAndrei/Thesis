@@ -1,7 +1,7 @@
 benchmark,module,keysize,keys,prefixlen,allocs_per_op,bytes_per_op,full_name,ns_per_op,samples_count
-BenchmarkMemoryDetailed,lerloc,,32.0,,2223.0,94034.0,BenchmarkMemoryDetailed/Keys=32-20,257266.0,6826
-BenchmarkMemoryDetailed,lerloc,,256.0,,18827.0,691385.0,BenchmarkMemoryDetailed/Keys=256-20,1935582.0,518
-BenchmarkMemoryDetailed,lerloc,,1024.0,,89280.0,2989239.0,BenchmarkMemoryDetailed/Keys=1024-20,8542557.0,127
-BenchmarkMemoryDetailed,lerloc,,8192.0,,828399.0,25813490.0,BenchmarkMemoryDetailed/Keys=8192-20,84059713.0,15
-BenchmarkMemoryDetailed,lerloc,,32768.0,,4684964.0,124519282.0,BenchmarkMemoryDetailed/Keys=32768-20,456567054.0,3
-BenchmarkMemoryDetailed,lerloc,,262144.0,,374509005.0,6076868240.0,BenchmarkMemoryDetailed/Keys=262144-20,22632150197.0,1
+BenchmarkMemoryDetailed,lerloc,,32.0,,2273.0,95315.0,BenchmarkMemoryDetailed/Keys=32-20,209347.0,5341
+BenchmarkMemoryDetailed,lerloc,,256.0,,18755.0,707057.0,BenchmarkMemoryDetailed/Keys=256-20,1695278.0,669
+BenchmarkMemoryDetailed,lerloc,,1024.0,,87821.0,2967218.0,BenchmarkMemoryDetailed/Keys=1024-20,8410857.0,142
+BenchmarkMemoryDetailed,lerloc,,8192.0,,789246.0,25076539.0,BenchmarkMemoryDetailed/Keys=8192-20,76073179.0,15
+BenchmarkMemoryDetailed,lerloc,,32768.0,,4794717.0,126284117.0,BenchmarkMemoryDetailed/Keys=32768-20,430426501.0,3
+BenchmarkMemoryDetailed,lerloc,,262144.0,,337406563.0,5530563296.0,BenchmarkMemoryDetailed/Keys=262144-20,19355552161.0,1
