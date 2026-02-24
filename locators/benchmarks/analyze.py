@@ -278,6 +278,23 @@ def main() -> int:
                     log_x=True
                 )
 
+                # --- Export CSV: Detailed Memory Breakdown (Bits/Key) ---
+                csv_path = os.path.join(PARSED_DIR, "lerloc_mem_breakdown.csv")
+                with open(csv_path, "w", newline="") as f:
+                    fieldnames = ["Keys"] + components + ["Total_Bits_Per_Key"]
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for n in sorted_n:
+                        row = {"Keys": n}
+                        total_bpk = 0.0
+                        for comp in components:
+                            bpk = (float(detailed_reports[n].get(comp, 0)) * 8.0) / float(n)
+                            row[comp] = round(bpk, 4)
+                            total_bpk += bpk
+                        row["Total_Bits_Per_Key"] = round(total_bpk, 4)
+                        writer.writerow(row)
+                print(f"Detailed CSV breakdown saved to {csv_path}")
+
     print("Plots generated in locators/benchmarks/plots/")
     return 0
 
