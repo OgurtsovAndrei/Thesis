@@ -72,6 +72,9 @@ Check:
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributor.html
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributorMonotoneMinimalPerfectHashFunction.html
 - Incremental Prefix hash for BitStrings (to have constant handle lookup in zft)
+- We REALLY need images to illustrate
+  - how rloc works
+  - 6 children hack in AZFT
 - check structs, check if we can make less random IO acceses, see /home/andrei/Thesis/mmph/go-boomphf-bs/boomphf-flat-arrays.go
 - maybe compress uints in mph
 - use instead rotl https://pkg.go.dev/math/bits#ReverseBytes16
