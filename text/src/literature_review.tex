@@ -1,0 +1,34 @@
+\newpage
+\section{Summarised Related Literature Review}
+\markboth{Summarised Related Literature Review}{}
+
+This part looks at three directions: the theoretical limits of the Approximate Range Emptiness problem, the evolution of filters in LSM storages, and the monotone hashing algorithms.
+
+\subsection{Theoretical Foundations}
+The key work is the study by Goswami et al.\cite{goswami2015approximate} strictly formalized the ``ARE`` problem. The authors proved the information-theoretical lower memory limit: $B \ge \Omega(n \log(L/\epsilon))$, where $L$ is the range length. (But no real implementation.) This proof refuted the possibility of using standard Bloom filters, because to check a range of length $L$, a Bloom filter requires $L$ independent checks.
+
+Belazzougui et al.\cite{belazzougui2010fast} proposed the \textbf{Hollow Z-Fast Trie} structure. The basis of the structure is ``blind`` search using path hashes from root to leaf. (Hashes of paths with ``2-fattest`` numbers lengths) ``Z-Fast`` optimization applies properties of 2-adict (2-fattest numbers) for navigation, allowing skipping tree levels. The ``hollowing`` mechanism removes all internal nodes, replacing them with a compact transition hash table, which reduces memory to $O(n)$ words, making the structure asymptotically optimal.
+
+\subsection{Practical LSM Filters}
+Key-Value DB storages (RocksDB, LevelDB) use structures for block access.
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{SuRF (Succinct Range Filter) \cite{zhang2018surf}:} Implements Fast Succinct Trie (FST). The key idea is hybrid tree encoding: upper levels are stored as \textit{LOUDS-Dense} (bit map supporting rank/select), and lower ones as \textit{LOUDS-Sparse}. This hack allows efficiently cutting off empty ranges, but it has two drawbacks: search time dependence on key length $O(k)$ and complexity of implementing iterators on compressed bit maps.
+    \item \textbf{Rosetta \cite{luo2020rosetta}:} Abandons the tree structure in favor of a hierarchy of Bloom filters (Prefix Bloom Filters). A separate filter is build for each prefix length. Although this provides $O(1)$ access for the specific prefix, total memory overhead grows linearly with the number of hierarchy levels. Rosetta is effective only with the small number of unique key lengths. Which limits the number of prefixes sizes, which can be optimized.
+    \item \textbf{REMIX \cite{zhong2021remix}:} Proposes ``Range Indexing`` approach instead of filtering. REMIX builds sparse index over sorted SST files, allows quickly defining ranges but requires rebuilding during every data compaction, that slows down writing.
+\end{itemize}
+
+\subsection{Learned Filters and Adaptive Structures}
+With appearance of ``Learned Index Structures`` (Kraska et al.) \cite{vaidya2022snarf}, filters using ML models appeared.
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{SNARF \cite{vaidya2022snarf}:} Builds cumulative distribution function (CDF) model of keys. The filter checks if the query range falls into the predicted key region. SNARF is effective on data with high correlation (e.g., timestamps), but on random (uniformly distributed) keys its model degrades, and it switches to a structure similar to SuRF.
+    \item \textbf{Proteus \cite{knorr2022proteus}:} Tries to solve the Model Selection problem. Proteus dynamically profiles the load and ``assembles`` filter from primitives (Bloom, Prefix BF, SuRF). However, overhead on training and rebuilding in real-time often exceeds the gain from adaptation.
+    \item \textbf{Oasis \cite{chen2024oasis}:} Segments the key space into disjoint intervals, training a simple linear model for each segment. This allows achieving better data locality but complicates the logic of processing boundary queries (range query boundary conditions).
+\end{itemize}
+
+\subsection{Monotone Hashing}
+To transform node hash into physical rank (Range Locator), MMPH algorithms are used. The \textbf{HDC (Hash, Displace, Compress)} method \cite{belazzougui2009hash} builds function in three stages: hashing into buckets, resolving collisions by displacement, and compressing the displacement table. The recent \textbf{LeMonHash} \cite{ferragina2023learned} tries to replace the displacement table with neural network, but in practice sometimes (for $N < 10^8$) the tabular HDC method remains faster due to the absence of floating-point operations. (However, replacement partly succeeded)
+
+\subsection{Research Gap}
+Today we see two groups: theoretically optimal structures (ARE, Hollow Trie) are considered ``complex`` for implementation, while practical ones (SuRF, Rosetta) have suboptimal asymptotics ($O(k)$ or $O(L)$). Thus, we need an ``engineering adaptation`` of the theoretical ideas of Hollow Z-Fast Trie, which will allow obtaining constant search time $O(1)$ without overhead on any ML models.

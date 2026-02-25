@@ -1,0 +1,52 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=25mm,
+    right=25mm,
+    top=25mm,
+    bottom=25mm,
+}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{pgfgantt}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{Page \thepage}
+\fancyfoot[L]{Andrei Ogurtsov}
+\fancyfoot[R]{January 17, 2026}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\setlength{\headheight}{15pt}
+
+\begin{document}
+
+\input{src/title}
+\input{src/abstract}
+
+\newpage
+\markboth{CONTENTS}{}
+\tableofcontents
+
+\input{src/purpose_objectives}
+\input{src/research_questions}
+\input{src/impact}
+\input{src/methodology}
+\input{src/project_plan}
+\input{src/literature_review}
+\input{src/subject_field}
+
+\newpage
+\markboth{REFERENCES}{}
+\bibliographystyle{unsrt}
+\bibliography{proposal_refs}
+
+\end{document}

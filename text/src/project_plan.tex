@@ -1,0 +1,65 @@
+\newpage
+\section{Project Plan}
+\markboth{Project Plan}{}
+
+The development process is structured into sequential stages. The project progress is monitored against these key milestones, with a buffer included for contingencies.
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Stage 1: Hollow Z-Fast Trie (Completed).} Implementation of deterministic and probabilistic Z-Fast Tries, including MMPH and Encoded Handles.
+    \item \textbf{Stage 2: Succinct Structures (In Progress).} Development of Succinct Bit Vectors and Range Locator integration.
+    \item \textbf{Stage 3: LocalExactRange \& ARE (Planned).} Assembling the final Approximate Range Emptiness structure using the ``Universe Reduction`` mechanism.
+    \item \textbf{Stage 4: Evaluation (Planned).} Comparative benchmarking against RocksDB filters and AVX-512 optimization analysis.
+\end{itemize}
+
+\vspace{1cm}
+\begin{figure}[h]
+\centering
+\begin{ganttchart}[
+    x unit=0.9cm,
+    y unit title=0.5cm,
+    y unit chart=0.6cm,
+    vgrid,hgrid,
+    title label anchor/.style={below=-1.5ex},
+    title left shift=.1,
+    title right shift=-.1,
+    title height=1,
+    bar/.style={fill=green!70!black},
+    bar height=0.5,
+    group right shift=0,
+    group top shift=.6,
+    group height=.3,
+    inline
+  ]{1}{8}
+  \gantttitle{2025}{3} \gantttitle{2026}{5} \\
+  \gantttitle{Oct}{1} \gantttitle{Nov}{1} \gantttitle{Dec}{1} 
+  \gantttitle{Jan}{1} \gantttitle{Feb}{1} \gantttitle{Mar}{1} 
+  \gantttitle{Apr}{1} \gantttitle{May}{1} \\
+  
+  \ganttgroup[inline=false]{Core Structures}{1}{4} \\
+  \ganttbar[inline=false]{Z-Fast Trie \& MMPH}{1}{4} \\
+  \ganttbar[inline=false]{Succinct BitVector}{2}{4} \\
+  
+  \ganttgroup[inline=false]{Advanced Structs}{4}{6} \\
+  \ganttbar[inline=false, bar/.style={fill=orange!70}]{Hollow Z-Fast Trie}{4}{5} \\
+  \ganttbar[inline=false, bar/.style={fill=blue!30}]{Range Locator}{5}{6} \\
+  \ganttbar[inline=false, bar/.style={fill=blue!10}]{Approx Range Emptiness}{6}{7} \\
+  
+  \ganttgroup[inline=false]{Optimization \& Eval}{5}{8} \\
+  \ganttbar[inline=false, bar/.style={fill=orange!70}]{BMI2/AVX-512 HW Opts}{5}{7} \\
+  \ganttbar[inline=false, bar/.style={fill=blue!10}]{Benchmarking (RocksDB)}{7}{8} \\
+  
+  \ganttgroup[inline=false]{Thesis Writing}{6}{8} \\
+  \ganttbar[inline=false, bar/.style={fill=blue!70}]{Thesis 2: Final Report}{6}{8} 
+\end{ganttchart}
+\caption{Project Roadmap and Progress (as of Jan 2026)}
+\end{figure}
+
+\subsection*{Key Milestones}
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Dec 2025:} Completion of Core Data Structures (Z-Fast Trie, MMPH).
+    \item \textbf{Jan 2026:} Submission of Project Proposal (Thesis I).
+    \item \textbf{Mar 2026:} Integration of Approximate Range Emptiness (ARE) structure.
+    \item \textbf{Apr 2026:} Completion of Benchmarking and Hardware Optimization analysis.
+    \item \textbf{May 2026:} Submission of Final Report (Thesis II) and Viva preparation.
+\end{itemize}

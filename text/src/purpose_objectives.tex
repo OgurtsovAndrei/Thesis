@@ -1,0 +1,34 @@
+\newpage
+\section{Purpose and Objectives}
+\markboth{Purpose and Objectives}{}
+
+Storage engines (NoSQL databases, search engines, time-series processing systems) such as RocksDB, LevelDB, Cassandra, and HBase, use the \textbf{LSM-tree} (Log-Structured Merge-tree) structure at their core. This concept, formalized by Patrick O`Neil\cite{oneil1996lsm}, changes random writes into sequential IO by accumulating data in RAM (\textit{Memtable}) and periodically flushing it to disk as immutable Sorted String Tables (\textbf{SSTables}). This matches the strengths of SSD/HDD throughput, where sequential writes are much cheaper than random writes.
+
+SSTables are organized in levels. On reads, a missing key may require checking multiple SSTables across levels, which leads to ``read amplification``: confirming that data is absent requires performing many Disk IO operations (we should check entry absence in all levels, all files). LSM engines attach filters like \textbf{Bloom Filters}\cite{bloom1970space} to each SSTable to avoid disk IO. A negative result guarantees the key is absent; a positive result may be a false positive (FP). However, classic Bloom Filters only support point queries. Modern applications often require range queries (e.g., \texttt{SELECT * WHERE key BETWEEN \textquotesingle A\textquotesingle\ AND \textquotesingle B\textquotesingle}). Using point filters for range search tasks leads to performance degradation, from $O(1)$ to $O(L)$, where $L$ is the range length.
+
+The purpose of this research is to address the performance limitations of existing \textbf{Approximate Range Filters} (like SuRF\cite{zhang2018surf} or Rosetta\cite{luo2020rosetta}), where constant-factor overheads often dominate. While asymptotically fast, they remain CPU-heavy in practice. This study focuses on the \textbf{Hollow Z-Fast Trie}\cite{belazzougui2010fast}, adapting this theoretically optimal structure using ``non-asymptotic`` hardware optimizations to minimize real-world query processing time.
+
+\subsection*{Objectives}
+
+\textbf{Main Goal:} To verify the applicability of non-asymptotic optimizations for reducing CPU query time in Range Filter data structures, specifically adapting the Hollow Z Fast Trie for modern CPU architectures.
+
+\vspace{0.5em}
+\noindent \textbf{Specific Research Objectives:}
+\begin{enumerate}
+    \item \textbf{Theoretical Analysis:} Study algorithms for constructing \textbf{Approximate Range Emptiness (ARE)} in linear time and analyze existing Z Fast Trie implementations.
+    \item \textbf{Succinct Structures Development:} Implement a \textbf{Succinct Bit Vector} supporting \texttt{Rank} and \texttt{Select} operations in constant time $O(1)$ using $N + o(N)$ bits of memory.
+    \item \textbf{Hollow Z Fast Trie Implementation:}
+    \begin{itemize}[label=$\bullet$, noitemsep]
+        \item Implement the deterministic version of the structure.
+        \item Develop a probabilistic extension (\textit{Probabilistic Trie}) to ensure a given $\epsilon$.
+        \item Integrate the table of Encoded Handles.
+    \end{itemize}
+    \item \textbf{MMPH Development:} Implement monotone minimal perfect hashing (MMPH) to effectively map keys to ranks. Investigate \textit{Time-optimized} (bucketing and LCP) and \textit{Space-optimized} (relative ranking) variants.
+    \item \textbf{Hardware Optimization:}
+    \begin{itemize}[label=$\bullet$, noitemsep]
+        \item Utilize \textbf{BMI2} instructions (\texttt{PDEP}/\texttt{PEXT}) to speed up bit index manipulations.
+        \item Experiment with \textbf{AVX512-BITALG} for parallel bit counting (Popcount).
+        \item Optimize the \textit{Memory Layout} to ensure sequential access and reduce cache misses.
+    \end{itemize}
+    \item \textbf{Evaluation:} Conduct a comparative analysis of the developed solution against existing filters (SuRF, Rosetta, Memento) regarding query latency (p50, p99), memory overhead, and build time.
+\end{enumerate}

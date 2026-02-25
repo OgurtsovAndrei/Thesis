@@ -1,0 +1,20 @@
+\newpage
+\section{Impact of the Study}
+\markboth{Impact of the Study}{}
+
+The scientific and practical importance of this research is determined by modern trends in hardware development and data processing systems.
+
+\vspace{0.5em}
+\noindent \textbf{1. The Problem of Constants in Data Structures.} Many data structures that are theoretically optimal (Big-O) and space-efficient often have high computational complexity when running on real hardware. For example, comparing MMPH implementations, we can notice that some structures with worse memory asymptotics $N \log N + O(N)$\cite{belazzougui2009hash} actually use less memory than $N \log W + O(N)$\cite{belazzougui2009monotone}, which has better asymptotics, his happens because of big ``hidden`` constant in $O(N)$. Our research aims to reduce these ``hidden`` constant time factors through Hardware-Software Co-design.
+
+\vspace{0.5em}
+\noindent \textbf{2. CPU Evolution.} For the last 20 years, CPU core performance has almost stopped growing due to frequency. The main growth comes from parallel instruction execution. This is mainly achieved through \textit{out-of-order execution}. And Single Instruction Multiple Data (SIMD) CPU instructions. To do this, it is necessary to have minimal number of \textit{branch mispredictions}, CPU-friendly \textit{memory layout}, and minimal number of \textit{memory random accesses}, and also use special CPU bit manipulation instructions like \textbf{BMI2} and \textbf{AVX512-VBMI}. Thus, building CPU-friendly algorithms is crucial for performance.
+
+\vspace{0.5em}
+\noindent \textbf{3. Economic Efficiency of Storage Systems.} In cloud infrastructures, storage costs and Disk I/O are the main expenses. Optimal Range Filters allow:
+
+\begin{itemize}[label=$\bullet$]
+    \item Reducing throughput load on HDDs and SSDs, extending their lifespan by reducing unnecessary reads.
+    \item Speeding up real-time analytical queries.
+    \item Reducing RAM and DISK consumption for SSTable metadata.
+\end{itemize}
