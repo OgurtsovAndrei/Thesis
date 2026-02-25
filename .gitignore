@@ -14,3 +14,17 @@
 /.venv/
 *.txt.*
 .DS_Store
+
+# LaTeX build artifacts
+text/*.aux
+text/*.log
+text/*.toc
+text/*.out
+text/*.fls
+text/*.fdb_latexmk
+text/*.synctex.gz
+text/*.bbl
+text/*.blg
+text/*.pdf
+text/*.run.xml
+text/*.bcf
