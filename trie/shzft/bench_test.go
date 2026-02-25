@@ -28,6 +28,7 @@ func BenchmarkMemory(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					trie := NewSuccinctHZFastTrie(keys)
 					b.ReportMetric(float64(trie.ByteSize())*8.0/float64(n), "bits/key")
+					b.ReportMetric(float64(trie.deltaBits), "delta_bits")
 				}
 			})
 		}
