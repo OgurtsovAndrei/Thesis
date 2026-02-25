@@ -70,6 +70,9 @@ Check:
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributor.html
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributorMonotoneMinimalPerfectHashFunction.html
 - Incremental Prefix hash for BitStrings (to have constant handle lookup in zft)
+- We REALLY need images to illustrate 
+  - how rloc works
+  - 6 children hack in AZFT 
 
 ## Literature
 
