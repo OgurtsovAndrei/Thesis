@@ -1,2 +1,62 @@
-PASS
-ok  	Thesis/locators/rloc	73.516s
+goos: linux
+goarch: amd64
+pkg: Thesis/locators/rloc
+cpu: 13th Gen Intel(R) Core(TM) i9-13900H
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32-20         	       4	    321015 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        81.25 bits_per_key	       325.0 total_bytes	   64096 B/op	    1865 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=256-20        	       1	   1717520 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        53.75 bits_per_key	      1720 total_bytes	  494088 B/op	   16296 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=1024-20       	       1	   8647017 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        51.20 bits_per_key	      6553 total_bytes	 2142192 B/op	   76712 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=8192-20       	       1	  54170722 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        49.71 bits_per_key	     50901 total_bytes	17973256 B/op	  684256 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=32768-20      	       1	 280514008 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	        50.91 bits_per_key	    208524 total_bytes	74691376 B/op	 3107430 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=64/Keys=262144-20     	       1	18213827315 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	        51.30 bits_per_key	   1681141 total_bytes	5682291264 B/op	361849033 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32-20        	       3	    352680 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        95.50 bits_per_key	       382.0 total_bytes	   69930 B/op	    2076 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=256-20       	       1	   1684773 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        53.38 bits_per_key	      1708 total_bytes	  535176 B/op	   17803 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=1024-20      	       1	   7917096 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        51.19 bits_per_key	      6552 total_bytes	 3049728 B/op	  118850 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=8192-20      	       1	  55209624 ns/op	         8.000 E_bits	         8.000 I_bits	        16.00 S_bits	        49.80 bits_per_key	     50998 total_bytes	19755472 B/op	  757418 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=32768-20     	       1	 340854927 ns/op	         8.000 E_bits	        16.00 I_bits	        16.00 S_bits	        51.36 bits_per_key	    210351 total_bytes	96521160 B/op	 4190712 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=128/Keys=262144-20    	       1	19458305210 ns/op	         8.000 E_bits	        16.00 I_bits	        32.00 S_bits	        51.77 bits_per_key	   1696302 total_bytes	5436906200 B/op	332955237 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32-20        	       4	    316455 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        92.50 bits_per_key	       370.0 total_bytes	   82944 B/op	    2358 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=256-20       	       1	   1416556 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        56.41 bits_per_key	      1805 total_bytes	  646000 B/op	   20125 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=1024-20      	       1	   7608468 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        53.60 bits_per_key	      6861 total_bytes	 2806480 B/op	   92493 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=8192-20      	       1	  72643469 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        51.93 bits_per_key	     53178 total_bytes	24680176 B/op	  861397 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=32768-20     	       1	 517170773 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	        52.31 bits_per_key	    214242 total_bytes	161712560 B/op	 6804351 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=256/Keys=262144-20    	       1	17429868090 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	        52.76 bits_per_key	   1728967 total_bytes	5379871336 B/op	292092948 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=32-20        	       4	    296768 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        96.25 bits_per_key	       385.0 total_bytes	  110640 B/op	    2701 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=256-20       	       1	   2206599 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        57.34 bits_per_key	      1835 total_bytes	  878152 B/op	   23145 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=1024-20      	       1	  11828334 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        55.09 bits_per_key	      7051 total_bytes	 3936248 B/op	  109191 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=8192-20      	       1	  84758101 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        53.11 bits_per_key	     54388 total_bytes	33743288 B/op	  979453 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=32768-20     	       1	 428535269 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	        54.11 bits_per_key	    221638 total_bytes	150956064 B/op	 4742888 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=512/Keys=262144-20    	       1	18564761571 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	        54.69 bits_per_key	   1792198 total_bytes	7596063184 B/op	325242726 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=32-20       	       3	    549773 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       111.8 bits_per_key	       447.0 total_bytes	  161666 B/op	    3027 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=256-20      	       1	   2222879 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        71.72 bits_per_key	      2295 total_bytes	 1361592 B/op	   26211 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=1024-20     	       1	  11982191 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        62.51 bits_per_key	      8001 total_bytes	 6127072 B/op	  122570 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=8192-20     	       1	  90092286 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        57.34 bits_per_key	     58721 total_bytes	50539616 B/op	 1073458 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=32768-20    	       1	 801308872 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	        58.13 bits_per_key	    238115 total_bytes	379540104 B/op	 9232538 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=1024/Keys=262144-20   	       1	21546613403 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	        58.88 bits_per_key	   1929361 total_bytes	11073393752 B/op	331797995 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=4096/Keys=32-20       	       2	    780180 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       211.5 bits_per_key	       846.0 total_bytes	  460016 B/op	    3575 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=4096/Keys=256-20      	       1	   4106139 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	       100.0 bits_per_key	      3201 total_bytes	 3882160 B/op	   30667 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=4096/Keys=1024-20     	       1	  20096830 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        96.48 bits_per_key	     12349 total_bytes	18662368 B/op	  142391 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=4096/Keys=8192-20     	       1	 173438775 ns/op	        16.00 E_bits	         8.000 I_bits	        16.00 S_bits	        81.56 bits_per_key	     83518 total_bytes	156367400 B/op	 1253576 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=4096/Keys=32768-20    	       1	 793492987 ns/op	        16.00 E_bits	        16.00 I_bits	        16.00 S_bits	        81.90 bits_per_key	    335460 total_bytes	637713416 B/op	 5447499 allocs/op
+BenchmarkRangeLocatorBuild/KeySize=4096/Keys=262144-20   	       1	32431177514 ns/op	        16.00 E_bits	        16.00 I_bits	        32.00 S_bits	        82.18 bits_per_key	   2693004 total_bytes	29812629704 B/op	328513843 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=32-20         	     802	      1445 ns/op	     338 B/op	      17 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=256-20        	     961	      1050 ns/op	     416 B/op	      21 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=1024-20       	     819	      1530 ns/op	     537 B/op	      27 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=8192-20       	     778	      2124 ns/op	     564 B/op	      29 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=32768-20      	     567	      1851 ns/op	     619 B/op	      33 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=64/Keys=262144-20     	     505	      2237 ns/op	     679 B/op	      45 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=32-20        	    1305	       847.5 ns/op	     395 B/op	      19 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=256-20       	    1003	      1100 ns/op	     464 B/op	      22 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=1024-20      	     534	      1924 ns/op	     576 B/op	      28 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=8192-20      	     715	      2534 ns/op	     648 B/op	      32 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=32768-20     	     349	      2909 ns/op	     700 B/op	      37 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=128/Keys=262144-20    	     471	      2642 ns/op	     762 B/op	      49 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=32-20        	     998	      1123 ns/op	     526 B/op	      22 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=256-20       	     974	      1307 ns/op	     606 B/op	      25 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=1024-20      	     673	      1796 ns/op	     717 B/op	      30 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=8192-20      	     476	      2136 ns/op	     894 B/op	      39 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=32768-20     	     512	      2289 ns/op	     912 B/op	      43 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=256/Keys=262144-20    	     412	      2866 ns/op	     978 B/op	      53 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=32-20        	    1054	      2034 ns/op	     773 B/op	      25 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=256-20       	     716	      1428 ns/op	     864 B/op	      29 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=1024-20      	     553	      2306 ns/op	    1089 B/op	      37 allocs/op
+BenchmarkRangeLocatorQuery/KeySize=512/Keys=8192-20      	
