@@ -177,8 +177,8 @@ def main() -> int:
         writer.writerows(all_rows)
 
     # 3. Aggregate
-    # Grouping by Benchmark Name, KeySize, Keys, PrefixLen
-    agg_rows = parser.aggregate(all_rows, ["benchmark", "keysize", "keys", "prefixlen"])
+    # Grouping by Benchmark Name, Module, KeySize, Keys, PrefixLen
+    agg_rows = parser.aggregate(all_rows, ["benchmark", "module", "keysize", "keys", "prefixlen"])
     
     agg_fieldnames = set()
     for r in agg_rows:
@@ -225,16 +225,17 @@ def main() -> int:
     series_bits: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
     for r in build_rows:
         bpk = r.get("bits_per_key") or r.get("bits_key_in_mem")
-        if bpk and r.get("keys"):
+        if bpk and r.get("keys") and r.get("keysize"):
              mode = ""
              if "Fast" in str(r["benchmark"]): mode = " (Fast)"
              if "Compact" in str(r["benchmark"]): mode = " (Compact)"
-             series_bits[f"{r['module'].upper()}{mode}"].append((float(r["keys"]), float(bpk)))
+             k_size = int(r["keysize"])
+             series_bits[f"{r['module'].upper()}{mode} L={k_size}"].append((float(r["keys"]), float(bpk)))
 
     if series_bits:
         plotter.draw_line_chart(
             os.path.join(PLOTS_DIR, "bits_per_key.svg"),
-            "Bits per Key",
+            "Trie Memory Efficiency: Bits/Key vs N",
             "Keys (N)",
             "bits/key",
             series_bits,
@@ -269,7 +270,70 @@ def main() -> int:
                 log_y=False
             )
 
-    # --- Plot 4 & 5: Detailed Memory Breakdown (Consolidated) ---
+    # --- Plot 4: Query Time vs N (Log-Log) ---
+    series_query_n: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+    for r in query_rows:
+        if r.get("keysize") and r.get("keys") and r.get("ns_per_op"):
+            # Exclude rows that are specifically varying prefix length for this plot
+            if "PrefixLengthVariation" in str(r["benchmark"]): continue
+            mode = ""
+            if "Fast" in str(r["benchmark"]): mode = " (Fast)"
+            if "Compact" in str(r["benchmark"]): mode = " (Compact)"
+            series_query_n[f"{r['module'].upper()}{mode} KeySize={int(r['keysize'])}"].append((float(r["keys"]), float(r["ns_per_op"])))
+
+    if series_query_n:
+        plotter.draw_line_chart(
+            os.path.join(PLOTS_DIR, "query_time_vs_n.svg"),
+            "Query Time vs Number of Keys",
+            "Keys (N)",
+            "ns/op",
+            series_query_n,
+            log_x=True,
+            log_y=True
+        )
+
+    # --- Plot 5: Query Time vs KeySize (Log-X) ---
+    series_query_l: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+    for r in query_rows:
+        if r.get("keysize") and r.get("keys") and r.get("ns_per_op"):
+            if "PrefixLengthVariation" in str(r["benchmark"]): continue
+            mode = ""
+            if "Fast" in str(r["benchmark"]): mode = " (Fast)"
+            if "Compact" in str(r["benchmark"]): mode = " (Compact)"
+            n_keys = int(r["keys"])
+            # Filter to a few specific N values to avoid cluttering
+            if n_keys in [1024, 8192, 65536, 262144]:
+                series_query_l[f"{r['module'].upper()}{mode} N={n_keys}"].append((float(r["keysize"]), float(r["ns_per_op"])))
+
+    if series_query_l:
+        plotter.draw_line_chart(
+            os.path.join(PLOTS_DIR, "query_time_vs_ksize.svg"),
+            "Query Time vs Key Length",
+            "Key Length (L, bits)",
+            "ns/op",
+            series_query_l,
+            log_x=True,
+            log_y=False
+        )
+
+    # --- Plot 6: Query Time vs Prefix Length ---
+    series_query_plen: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
+    for r in query_rows:
+        if "PrefixLengthVariation" in str(r["benchmark"]) and r.get("prefixlen") and r.get("ns_per_op"):
+             series_query_plen[f"KeySize={int(r['keysize'])}"].append((float(r["prefixlen"]), float(r["ns_per_op"])))
+             
+    if series_query_plen:
+        plotter.draw_line_chart(
+            os.path.join(PLOTS_DIR, "query_time_vs_prefixlen.svg"),
+            "Query Time vs Prefix Length",
+            "Prefix Length",
+            "ns/op",
+            series_query_plen,
+            log_x=False,
+            log_y=False
+        )
+
+    # --- Plot 7 & 8: Detailed Memory Breakdown (Consolidated) ---
     detailed_components = ["Other", "HZFastTrie", "Leaf_BitVector", "MMPH_Trie", "MMPH_Buckets"]
     
     all_breakdown_rows = []

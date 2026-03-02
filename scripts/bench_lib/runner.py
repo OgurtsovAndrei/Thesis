@@ -28,7 +28,7 @@ def run_single_iteration(mod: Dict[str, Any], iteration: int, bench: str, benchm
     # Otherwise we use the provided bench pattern.
     actual_bench = f"^{bench}$" if bench_suffix else bench
     
-    args = ["go", "test", f"-bench={actual_bench}", "-count=1"]
+    args = ["go", "test", "-run=^$", f"-bench={actual_bench}", "-count=1"]
     if benchmem:
         args.append("-benchmem")
     args.append("./...")
