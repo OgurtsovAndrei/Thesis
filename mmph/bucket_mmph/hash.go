@@ -49,8 +49,8 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 	var allKeys []bits.BitString
 	var allLcps []bits.BitString
 
-	keyToLcpLen := make(map[bits.BitString]int, n)
-	prefixToBucketIdx := make(map[bits.BitString]int, numBuckets)
+	keyToLcpLen := bits.NewBitMap[int]()
+	prefixToBucketIdx := bits.NewBitMap[int]()
 
 	for i := 0; i < numBuckets; i++ {
 		start := i * bucketSize
@@ -87,14 +87,15 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 				lcp = lcp.Prefix(int(lcpLen))
 			}
 
-			if _, exists := prefixToBucketIdx[lcp]; !exists {
+			if _, exists := prefixToBucketIdx.Get(lcp); !exists {
 				allLcps = append(allLcps, lcp)
-				prefixToBucketIdx[lcp] = i
+				prefixToBucketIdx.Put(lcp, i)
 			}
 
-			lcpSize := int(lcp.Size())
+			// Wait, lcpSize should be the size of the LCP bits
+			actualLcpSize := int(lcp.Size())
 			for _, k := range bucketKeys {
-				keyToLcpLen[k] = lcpSize
+				keyToLcpLen.Put(k, actualLcpSize)
 			}
 			allKeys = append(allKeys, bucketKeys...)
 		}
@@ -113,7 +114,8 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 			if phfIdx+1 == 0 {
 				panic("boomphf construction failure: Query returned 0 for known key in d0Table")
 			}
-			mh.d0Lengths[phfIdx] = uint16(keyToLcpLen[k])
+			lcpSize, _ := keyToLcpLen.Get(k)
+			mh.d0Lengths[phfIdx] = uint16(lcpSize)
 		}
 	}
 
@@ -127,7 +129,8 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {
 			phfIdx := mh.d1Table.Query(p.Hash()) - 1
-			mh.d1Indices[phfIdx] = int32(prefixToBucketIdx[p])
+			idx, _ := prefixToBucketIdx.Get(p)
+			mh.d1Indices[phfIdx] = int32(idx)
 		}
 	}
 

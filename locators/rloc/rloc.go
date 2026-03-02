@@ -155,19 +155,19 @@ func NewGenericRangeLocatorSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](z
 }
 
 func collectPSortedItems(zt *zft.ZFastTrie[bool]) ([]pItem, int) {
-	pMap := make(map[bits.BitString]bool)
+	pMap := bits.NewBitMap[bool]()
 	maxBitLen := 0
 
 	addToMap := func(bs bits.BitString, isLeaf bool) {
-		if existingIsLeaf, exists := pMap[bs]; exists {
+		if existingIsLeaf, exists := pMap.Get(bs); exists {
 			// Prioritize leaf status
 			if isLeaf {
-				pMap[bs] = true
+				pMap.Put(bs, true)
 			} else {
-				pMap[bs] = existingIsLeaf
+				pMap.Put(bs, existingIsLeaf)
 			}
 		} else {
-			pMap[bs] = isLeaf
+			pMap.Put(bs, isLeaf)
 		}
 		if int(bs.Size()) > maxBitLen {
 			maxBitLen = int(bs.Size())
@@ -189,21 +189,22 @@ func collectPSortedItems(zt *zft.ZFastTrie[bool]) ([]pItem, int) {
 		e1Bs := extent.AppendBit(true)
 		addToMap(e1Bs, false)
 
-		if !isAllOnes(extent) {
-			successor := calcSuccessor(extent)
+		if !extent.IsAllOnes() {
+			successor := extent.AppendBit(true).Successor()
 			// Use TrimTrailingZeros instead of string conversion and trimming
 			succArrowBs := successor.TrimTrailingZeros()
 			addToMap(succArrowBs, false)
 		}
 	}
 
-	sortedItems := make([]pItem, 0, len(pMap))
-	for bs, isLeaf := range pMap {
+	sortedItems := make([]pItem, 0, pMap.Len())
+	pMap.Range(func(bs bits.BitString, isLeaf bool) bool {
 		sortedItems = append(sortedItems, pItem{
 			bs:     bs,
 			isLeaf: isLeaf,
 		})
-	}
+		return true
+	})
 
 	sort.Slice(sortedItems, func(i, j int) bool {
 		return sortedItems[i].bs.Compare(sortedItems[j].bs) < 0
@@ -265,10 +266,10 @@ func (rl *GenericRangeLocator[E, S, I]) Query(nodeName bits.BitString) (int, int
 
 	var j int
 
-	if isAllOnes(nodeName) {
+	if nodeName.IsAllOnes() {
 		j = rl.totalLeaves
 	} else {
-		xSucc := calcSuccessor(nodeName)
+		xSucc := nodeName.AppendBit(true).Successor()
 		xSuccArrowBs := xSucc.TrimTrailingZeros()
 
 		lexRankRight := rl.mmph.GetRank(xSuccArrowBs)
@@ -280,14 +281,6 @@ func (rl *GenericRangeLocator[E, S, I]) Query(nodeName bits.BitString) (int, int
 	}
 
 	return i, j, nil
-}
-
-func isAllOnes(bs bits.BitString) bool {
-	return bs.IsAllOnes()
-}
-
-func calcSuccessor(bs bits.BitString) bits.BitString {
-	return bs.AppendBit(true).Successor()
 }
 
 // ByteSize returns the estimated resident size of RangeLocator in bytes.

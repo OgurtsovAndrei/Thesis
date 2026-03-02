@@ -36,7 +36,7 @@ type UNumber interface {
 type ZFastTrie[V comparable] struct {
 	size           int32
 	Root           *Node[V]
-	Handle2NodeMap map[bits.BitString]*Node[V]
+	Handle2NodeMap *bits.BitMap[*Node[V]]
 	emptyValue     V
 
 	stat statistics
@@ -48,7 +48,7 @@ func NewZFastTrie[V comparable](emptyValue V) *ZFastTrie[V] {
 	return &ZFastTrie[V]{
 		size:           0,
 		Root:           nil,
-		Handle2NodeMap: make(map[bits.BitString]*Node[V]),
+		Handle2NodeMap: bits.NewBitMap[*Node[V]](),
 		emptyValue:     emptyValue,
 	}
 }
@@ -254,7 +254,7 @@ func swapChildren[V comparable](a, b *Node[V]) {
 func (zt *ZFastTrie[V]) checkTrie() {
 	if debug {
 		cnt := zt.checkTrieRec(zt.Root)
-		errutil.BugOn(cnt != len(zt.Handle2NodeMap), "%d != %d\n%s", cnt, len(zt.Handle2NodeMap), zt)
+		errutil.BugOn(cnt != zt.Handle2NodeMap.Len(), "%d != %d\n%s", cnt, zt.Handle2NodeMap.Len(), zt)
 	}
 }
 
@@ -267,7 +267,7 @@ func (zt *ZFastTrie[V]) checkTrieRec(node *Node[V]) (notEmptyNodesInTrie int) {
 		fFast := node.HandleLength()
 		f := int32(fFast)
 		handle := node.Extent.Prefix(int(f))
-		handleNode, ok := zt.Handle2NodeMap[handle]
+		handleNode, ok := zt.Handle2NodeMap.Get(handle)
 		errutil.BugOn(!ok, "on %q, %d != %d\n%s\n%s\n%s", handle, zt.size, f, node, handleNode, zt)
 		errutil.BugOn(node != handleNode, "%s\n%s\n%s\n%s", handle, node, handleNode, zt)
 	}
@@ -285,17 +285,18 @@ func (zt *ZFastTrie[V]) insertHandle2NodeMap(n *Node[V]) {
 	//}
 	handle := n.Handle()
 	if handle.IsEmpty() {
-		errutil.BugOn(zt.Handle2NodeMap[handle] != nil, "root already in Handle2NodeMap")
+		_, exists := zt.Handle2NodeMap.Get(handle)
+		errutil.BugOn(exists, "root already in Handle2NodeMap")
 		//return
 	}
-	zt.Handle2NodeMap[handle] = n
+	zt.Handle2NodeMap.Put(handle, n)
 }
 
 func (zt *ZFastTrie[V]) eraseHandle2NodeMap(handle bits.BitString) {
 	//if handle.IsEmpty() {
 	//	return
 	//}
-	delete(zt.Handle2NodeMap, handle)
+	zt.Handle2NodeMap.Delete(handle)
 }
 
 // ContainsPrefix checks if the string is a prefix of any entry in the Trie.
@@ -359,7 +360,7 @@ func (zt *ZFastTrie[V]) GetExistingPrefix(pattern bits.BitString) *Node[V] {
 }
 
 func (zt *ZFastTrie[V]) GetNode(handle bits.BitString) *Node[V] {
-	node, _ := zt.Handle2NodeMap[handle]
+	node, _ := zt.Handle2NodeMap.Get(handle)
 	return node
 }
 
@@ -377,13 +378,14 @@ func (zt *ZFastTrie[V]) String() string {
 		sb.WriteString(zt.stringNode(zt.Root, "| | "))
 	}
 
-	for bitString, z := range zt.Handle2NodeMap {
+	zt.Handle2NodeMap.Range(func(bitString bits.BitString, z *Node[V]) bool {
 		sb.WriteString(bitString.PrettyString())
 		sb.WriteString(": ")
 		sb.WriteString(z.String())
 		sb.WriteString("\n")
-	}
-	if len(zt.Handle2NodeMap) == 0 {
+		return true
+	})
+	if zt.Handle2NodeMap.Len() == 0 {
 		sb.WriteString("<empty handle>")
 	}
 	sb.WriteString("\n")

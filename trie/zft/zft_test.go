@@ -1,7 +1,6 @@
 package zft
 
 import (
-	"Thesis/bits"
 	"fmt"
 	"testing"
 )
@@ -69,9 +68,6 @@ func TestTrie(t *testing.T) {
 	texts2 := []string{"0000", "0000000100000011", "00000002", "0000000100000012", "000000010000001100000021"}
 	t.Run("Complex_0", func(t *testing.T) {
 		t.Parallel()
-		if bits.SelectedImpl == bits.Uint64String {
-			t.Skip("Lines are too long")
-		}
 		testTrie(t, texts2, false)
 		testTrie(t, texts2, true)
 	})
@@ -79,9 +75,6 @@ func TestTrie(t *testing.T) {
 	texts3 := []string{"0000000100000011", "00000001", "000000010000", "00000"}
 	t.Run("Prefixes", func(t *testing.T) {
 		t.Parallel()
-		if bits.SelectedImpl == bits.Uint64String {
-			t.Skip("Lines are too long")
-		}
 		testTrie(t, texts3, false)
 		testTrie(t, texts3, true)
 	})

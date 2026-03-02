@@ -37,13 +37,13 @@ func setupBitStringTrie(b *testing.B, n int) (*ZFastTrie[bool], []bits.BitString
 	return tree, keys
 }
 
-func setupStdMap(b *testing.B, n int) (map[bits.BitString]bool, []bits.BitString) {
+func setupStdMap(b *testing.B, n int) (*bits.BitMap[bool], []bits.BitString) {
 	b.Helper()
 	b.StopTimer()
 	keys := GenerateBitStringKeys(n)
-	m := make(map[bits.BitString]bool, n)
+	m := bits.NewBitMap[bool]()
 	for _, s := range keys {
-		m[s] = true
+		m.Put(s, true)
 	}
 	b.StartTimer()
 	return m, keys
@@ -75,11 +75,11 @@ func BenchmarkTrie_BitString_Insert(b *testing.B) {
 func Benchmark_StdMap_BitString_Insert(b *testing.B) {
 	b.StopTimer()
 	keys := GenerateBitStringKeys(b.N)
-	m := make(map[bits.BitString]bool, b.N)
+	m := bits.NewBitMap[bool]()
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		m[keys[i]] = true
+		m.Put(keys[i], true)
 	}
 }
 
@@ -108,7 +108,7 @@ func Benchmark_StdMap_BitString_Contains_Hit_100k(b *testing.B) {
 	mask := len(keys) - 1
 	var ok bool
 	for i := 0; i < b.N; i++ {
-		_, ok = m[keys[i&mask]]
+		_, ok = m.Get(keys[i&mask])
 		_ = ok
 	}
 }
@@ -140,7 +140,7 @@ func Benchmark_StdMap_BitString_Contains_Miss_100k(b *testing.B) {
 	b.StartTimer()
 	var ok bool
 	for i := 0; i < b.N; i++ {
-		_, ok = m[missKeys[i]]
+		_, ok = m.Get(missKeys[i])
 		_ = ok
 	}
 }
@@ -200,8 +200,8 @@ func Benchmark_StdMap_BitString_Insert_Erase_100k(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		s := keys[i&mask]
-		m[s] = true
-		delete(m, s)
+		m.Put(s, true)
+		m.Delete(s)
 	}
 }
 

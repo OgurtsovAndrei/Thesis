@@ -11,12 +11,12 @@ import (
 // It processes sorted keys one at a time, emitting handle→extentLen pairs on-the-fly.
 // Memory usage: O(n × log L) instead of O(n × L) where L is average key length.
 type streamingBuilder[E UNumber] struct {
-	kv map[bits.BitString]HNodeData[E]
+	kv *bits.BitMap[HNodeData[E]]
 }
 
 func newStreamingBuilder[E UNumber]() *streamingBuilder[E] {
 	return &streamingBuilder[E]{
-		kv: make(map[bits.BitString]HNodeData[E]),
+		kv: bits.NewBitMap[HNodeData[E]](),
 	}
 }
 
@@ -44,9 +44,9 @@ func (b *streamingBuilder[E]) emit(depth, parentDepth int, key bits.BitString) {
 
 	desc := key.Prefix(int(original))
 
-	b.kv[desc] = HNodeData[E]{
+	b.kv.Put(desc, HNodeData[E]{
 		extentLen: E(extentLen),
-	}
+	})
 
 	if original == 0 {
 		return
@@ -58,9 +58,9 @@ func (b *streamingBuilder[E]) emit(depth, parentDepth int, key bits.BitString) {
 		ftst := bits.TwoFattest(a, b_pseudo)
 		descPseudo := key.Prefix(int(ftst))
 
-		b.kv[descPseudo] = HNodeData[E]{
+		b.kv.Put(descPseudo, HNodeData[E]{
 			extentLen: ^E(0), // infinity - marks pseudo-descriptor
-		}
+		})
 		b_pseudo = ftst - 1
 	}
 }
@@ -140,7 +140,7 @@ func NewHZFastTrieFromIteratorStreaming[E UNumber](iter bits.BitStringIterator) 
 		return nil, err
 	}
 
-	if firstKey == nil {
+	if !firstKey.HasValue() {
 		return nil, nil
 	}
 
@@ -173,19 +173,21 @@ func NewHZFastTrieFromIteratorStreaming[E UNumber](iter bits.BitStringIterator) 
 	b.emit(rootExtentLen, 0, firstKey)
 
 	// Build MPH from collected handles
-	keysForMPH := make([]bits.BitString, 0, len(b.kv))
-	for k := range b.kv {
+	keysForMPH := make([]bits.BitString, 0, b.kv.Len())
+	b.kv.Range(func(k bits.BitString, _ HNodeData[E]) bool {
 		keysForMPH = append(keysForMPH, k)
-	}
+		return true
+	})
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
 	data := make([]HNodeData[E], len(keysForMPH))
-	for key, value := range b.kv {
+	b.kv.Range(func(key bits.BitString, value HNodeData[E]) bool {
 		idx := mph.Query(key) - 1
 		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
 		data[idx] = value
-	}
+		return true
+	})
 
 	// Compute root handle
 	rootA := uint64(0)

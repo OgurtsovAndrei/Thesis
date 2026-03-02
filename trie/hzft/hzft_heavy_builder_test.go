@@ -21,7 +21,7 @@ func NewHZFastTrieFromIteratorHeavy[E UNumber](iter bits.BitStringIterator) (*HZ
 		return nil, nil
 	}
 
-	kv := make(map[bits.BitString]HNodeData[E])
+	kv := bits.NewBitMap[HNodeData[E]]()
 	
 	// Traverse ZFT to collect handles and pseudo-descriptors
 	var traverse func(n *zft.Node[bool])
@@ -39,7 +39,7 @@ func NewHZFastTrieFromIteratorHeavy[E UNumber](iter bits.BitStringIterator) (*HZ
 		// Main descriptor
 		original := bits.TwoFattest(a, extentLen)
 		desc := n.Extent.Prefix(int(original))
-		kv[desc] = HNodeData[E]{extentLen: E(extentLen)}
+		kv.Put(desc, HNodeData[E]{extentLen: E(extentLen)})
 
 		// Pseudo-descriptors
 		if original > 0 {
@@ -47,7 +47,7 @@ func NewHZFastTrieFromIteratorHeavy[E UNumber](iter bits.BitStringIterator) (*HZ
 			for a < b_pseudo {
 				ftst := bits.TwoFattest(a, b_pseudo)
 				descPseudo := n.Extent.Prefix(int(ftst))
-				kv[descPseudo] = HNodeData[E]{extentLen: ^E(0)}
+				kv.Put(descPseudo, HNodeData[E]{extentLen: ^E(0)})
 				b_pseudo = ftst - 1
 			}
 		}
@@ -58,19 +58,21 @@ func NewHZFastTrieFromIteratorHeavy[E UNumber](iter bits.BitStringIterator) (*HZ
 	traverse(zt.Root)
 
 	// Build MPH from collected handles
-	keysForMPH := make([]bits.BitString, 0, len(kv))
-	for k := range kv {
+	keysForMPH := make([]bits.BitString, 0, kv.Len())
+	kv.Range(func(k bits.BitString, _ HNodeData[E]) bool {
 		keysForMPH = append(keysForMPH, k)
-	}
+		return true
+	})
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
 	data := make([]HNodeData[E], len(keysForMPH))
-	for key, value := range kv {
+	kv.Range(func(key bits.BitString, value HNodeData[E]) bool {
 		idx := mph.Query(key) - 1
 		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
 		data[idx] = value
-	}
+		return true
+	})
 
 	// Compute root handle
 	rootA := uint64(0)

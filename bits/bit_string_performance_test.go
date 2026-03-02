@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-// Test TrimTrailingZeros for all implementations
+// Test TrimTrailingZeros
 func TestTrimTrailingZeros(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
@@ -21,54 +21,20 @@ func TestTrimTrailingZeros(t *testing.T) {
 		{"alternating pattern", "1010100", "10101"},
 	}
 
-	for _, impl := range []BitStringImpl{CharString, Uint64String, Uint64ArrayString} {
-		oldImpl := SelectedImpl
-		// We can't directly modify SelectedImpl, so we'll test each implementation directly
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bs := NewFromBinary(tc.input)
+			result := bs.TrimTrailingZeros()
+			expected := NewFromBinary(tc.expected)
 
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				var bs BitString
-
-				switch impl {
-				case CharString:
-					bs = NewCharFromBinary(tc.input)
-				case Uint64String:
-					if len(tc.input) <= 64 {
-						bs = NewUint64FromBinaryText(tc.input)
-					} else {
-						t.Skip("Uint64BitString limited to 64 bits")
-					}
-				case Uint64ArrayString:
-					bs = NewUint64ArrayFromBinaryText(tc.input)
-				}
-
-				result := bs.TrimTrailingZeros()
-
-				var expected BitString
-				switch impl {
-				case CharString:
-					expected = NewCharFromBinary(tc.expected)
-				case Uint64String:
-					if len(tc.expected) <= 64 {
-						expected = NewUint64FromBinaryText(tc.expected)
-					} else {
-						t.Skip("Uint64BitString limited to 64 bits")
-					}
-				case Uint64ArrayString:
-					expected = NewUint64ArrayFromBinaryText(tc.expected)
-				}
-
-				if !result.Equal(expected) {
-					t.Errorf("TrimTrailingZeros(%s) = %v, want %v", tc.input, result, expected)
-				}
-			})
-		}
-
-		_ = oldImpl // Restore if needed
+			if !result.Equal(expected) {
+				t.Errorf("TrimTrailingZeros(%s) = %v, want %v", tc.input, result, expected)
+			}
+		})
 	}
 }
 
-// Test AppendBit for all implementations
+// Test AppendBit
 func TestAppendBit(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
@@ -85,45 +51,20 @@ func TestAppendBit(t *testing.T) {
 		{"append to single bit", "0", true, "01"},
 	}
 
-	for _, impl := range []BitStringImpl{CharString, Uint64String, Uint64ArrayString} {
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				var bs BitString
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bs := NewFromBinary(tc.input)
+			result := bs.AppendBit(tc.bit)
+			expected := NewFromBinary(tc.expected)
 
-				switch impl {
-				case CharString:
-					bs = NewCharFromBinary(tc.input)
-				case Uint64String:
-					if len(tc.input) < 64 { // Must have room for one more bit
-						bs = NewUint64FromBinaryText(tc.input)
-					} else {
-						t.Skip("Uint64BitString would exceed 64 bits")
-					}
-				case Uint64ArrayString:
-					bs = NewUint64ArrayFromBinaryText(tc.input)
-				}
-
-				result := bs.AppendBit(tc.bit)
-
-				var expected BitString
-				switch impl {
-				case CharString:
-					expected = NewCharFromBinary(tc.expected)
-				case Uint64String:
-					expected = NewUint64FromBinaryText(tc.expected)
-				case Uint64ArrayString:
-					expected = NewUint64ArrayFromBinaryText(tc.expected)
-				}
-
-				if !result.Equal(expected) {
-					t.Errorf("AppendBit(%s, %t) = %v, want %v", tc.input, tc.bit, result, expected)
-				}
-			})
-		}
+			if !result.Equal(expected) {
+				t.Errorf("AppendBit(%s, %t) = %v, want %v", tc.input, tc.bit, result, expected)
+			}
+		})
 	}
 }
 
-// Test IsAllOnes for all implementations
+// Test IsAllOnes
 func TestIsAllOnes(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
@@ -140,35 +81,19 @@ func TestIsAllOnes(t *testing.T) {
 		{"long all ones", "11111111111111111", true},
 	}
 
-	for _, impl := range []BitStringImpl{CharString, Uint64String, Uint64ArrayString} {
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				var bs BitString
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bs := NewFromBinary(tc.input)
+			result := bs.IsAllOnes()
 
-				switch impl {
-				case CharString:
-					bs = NewCharFromBinary(tc.input)
-				case Uint64String:
-					if len(tc.input) <= 64 {
-						bs = NewUint64FromBinaryText(tc.input)
-					} else {
-						t.Skip("Uint64BitString limited to 64 bits")
-					}
-				case Uint64ArrayString:
-					bs = NewUint64ArrayFromBinaryText(tc.input)
-				}
-
-				result := bs.IsAllOnes()
-
-				if result != tc.expected {
-					t.Errorf("IsAllOnes(%s) = %t, want %t", tc.input, result, tc.expected)
-				}
-			})
-		}
+			if result != tc.expected {
+				t.Errorf("IsAllOnes(%s) = %t, want %t", tc.input, result, tc.expected)
+			}
+		})
 	}
 }
 
-// Test Successor for all implementations
+// Test Successor
 func TestSuccessor(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
@@ -186,97 +111,47 @@ func TestSuccessor(t *testing.T) {
 		{"increment with carry", "1001", "1010"},
 	}
 
-	for _, impl := range []BitStringImpl{CharString, Uint64String, Uint64ArrayString} {
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				var bs BitString
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bs := NewFromBinary(tc.input)
+			result := bs.Successor()
+			expected := NewFromBinary(tc.expected)
 
-				switch impl {
-				case CharString:
-					bs = NewCharFromBinary(tc.input)
-				case Uint64String:
-					if len(tc.input) < 64 { // Must have room for potential overflow
-						bs = NewUint64FromBinaryText(tc.input)
-					} else {
-						t.Skip("Uint64BitString would exceed 64 bits")
-					}
-				case Uint64ArrayString:
-					bs = NewUint64ArrayFromBinaryText(tc.input)
-				}
-
-				result := bs.Successor()
-
-				var expected BitString
-				switch impl {
-				case CharString:
-					expected = NewCharFromBinary(tc.expected)
-				case Uint64String:
-					expected = NewUint64FromBinaryText(tc.expected)
-				case Uint64ArrayString:
-					expected = NewUint64ArrayFromBinaryText(tc.expected)
-				}
-
-				if !result.Equal(expected) {
-					t.Errorf("Successor(%s) = %v, want %v", tc.input, result, expected)
-				}
-			})
-		}
+			if !result.Equal(expected) {
+				t.Errorf("Successor(%s) = %v, want %v", tc.input, result, expected)
+			}
+		})
 	}
 }
 
-// Benchmark the new methods to ensure they're faster than string-based alternatives
 func BenchmarkTrimTrailingZeros(b *testing.B) {
-	bs := NewUint64FromBinaryText("1010000000")
-
-	b.Run("NewMethod", func(b *testing.B) {
-		b.SetParallelism(benchmarkParallelism)
-		b.ResetTimer()
-		b.RunParallel(func(pb *testing.PB) {
-			for pb.Next() {
-				_ = bs.TrimTrailingZeros()
-			}
-		})
-	})
+	bs := NewFromBinary("1010000000")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = bs.TrimTrailingZeros()
+	}
 }
 
 func BenchmarkAppendBit(b *testing.B) {
-	bs := NewUint64FromBinaryText("101010")
-
-	b.Run("NewMethod", func(b *testing.B) {
-		b.SetParallelism(benchmarkParallelism)
-		b.ResetTimer()
-		b.RunParallel(func(pb *testing.PB) {
-			for pb.Next() {
-				_ = bs.AppendBit(true)
-			}
-		})
-	})
+	bs := NewFromBinary("101010")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = bs.AppendBit(true)
+	}
 }
 
 func BenchmarkIsAllOnes(b *testing.B) {
-	bs := NewUint64FromBinaryText("111111111111111111111111111111")
-
-	b.Run("NewMethod", func(b *testing.B) {
-		b.SetParallelism(benchmarkParallelism)
-		b.ResetTimer()
-		b.RunParallel(func(pb *testing.PB) {
-			for pb.Next() {
-				_ = bs.IsAllOnes()
-			}
-		})
-	})
+	bs := NewFromBinary("111111111111111111111111111111")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = bs.IsAllOnes()
+	}
 }
 
 func BenchmarkSuccessor(b *testing.B) {
-	bs := NewUint64FromBinaryText("1010101010")
-
-	b.Run("NewMethod", func(b *testing.B) {
-		b.SetParallelism(benchmarkParallelism)
-		b.ResetTimer()
-		b.RunParallel(func(pb *testing.PB) {
-			for pb.Next() {
-				_ = bs.Successor()
-			}
-		})
-	})
+	bs := NewFromBinary("1010101010")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = bs.Successor()
+	}
 }
