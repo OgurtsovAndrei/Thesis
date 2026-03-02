@@ -314,7 +314,7 @@ func (bs BitString) Prefix(size int) BitString {
 }
 
 // Hash returns a 64-bit hash of the BitString using an optimized manual FNV-1a.
-// See HASHING_STRATEGY.md for performance benchmarks and rationale.
+// See PERFORMANCE.md for performance benchmarks and rationale.
 func (bs BitString) Hash() uint64 {
 	const (
 		offset64 = 14695981039346656037
@@ -332,7 +332,7 @@ func (bs BitString) Hash() uint64 {
 }
 
 // HashWithSeed returns a 64-bit hash of the BitString using an optimized manual FNV-1a.
-// See HASHING_STRATEGY.md for performance benchmarks and rationale.
+// See PERFORMANCE.md for performance benchmarks and rationale.
 func (bs BitString) HashWithSeed(seed uint64) uint64 {
 	const (
 		offset64 = 14695981039346656037
@@ -350,51 +350,43 @@ func (bs BitString) HashWithSeed(seed uint64) uint64 {
 	return h
 }
 
+// Compare performs lexicographic comparison. Returns:
+// -1 if bs < other
+//  1 if bs > other
+//  0 if bs == other
+// See PERFORMANCE.md for performance benchmarks and rationale.
 func (bs BitString) Compare(other BitString) int {
 	aSize := bs.sizeBits
 	bSize := other.sizeBits
 
-	if aSize == 0 && bSize == 0 {
-		return 0
-	}
 	if aSize == 0 {
+		if bSize == 0 {
+			return 0
+		}
 		return -1
 	}
 	if bSize == 0 {
 		return 1
 	}
 
-	minSize := aSize
-	if bSize < minSize {
-		minSize = bSize
+	minWords := len(bs.data)
+	if len(other.data) < minWords {
+		minWords = len(other.data)
 	}
 
-	minWords := (minSize + 63) / 64
-
-	for i := uint32(0); i < minWords; i++ {
-		aWord := uint64(0)
-		bWord := uint64(0)
-
-		if i < uint32(len(bs.data)) {
-			aWord = bs.data[i]
-		}
-		if i < uint32(len(other.data)) {
-			bWord = other.data[i]
-		}
-
+	for i := 0; i < minWords; i++ {
+		aWord := bs.data[i]
+		bWord := other.data[i]
 		if aWord != bWord {
 			xor := aWord ^ bWord
-			firstDiffBit := i*64 + uint32(bits.TrailingZeros64(xor))
-			if firstDiffBit < minSize {
-				if (aWord & (uint64(1) << (firstDiffBit % 64))) != 0 {
-					return 1
-				}
-				return -1
+			diffBitInWord := uint32(bits.TrailingZeros64(xor))
+			if (aWord & (uint64(1) << diffBitInWord)) != 0 {
+				return 1
 			}
+			return -1
 		}
 	}
 
-	// Standard lexicographic comparison: shorter < longer when prefixes match
 	if aSize < bSize {
 		return -1
 	}
