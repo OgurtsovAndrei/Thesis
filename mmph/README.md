@@ -73,8 +73,8 @@ Uses probabilistic trees (z-fast trie) and relative ranking.
 - **Space**: $O(n \log \log w)$ bits
 - **Notes**: Extremely compact (theoretically 2-3 bits/key), but harder to implement
 - **In this repo**: prototype `relative_trie/` with an approximate z-fast trie and full-key validation;
-  details and plots in `relative_trie/analysis_summary.md` and the collision-filter note
-  `zfasttrie/getexistingprefix_collision_filter.md`.
+  details and plots in `relative_trie/analysis.md` and the collision-filter note
+  `../trie/azft/collision_filter.md`.
 
 ## 3. Modern approaches (State-of-the-Art)
 

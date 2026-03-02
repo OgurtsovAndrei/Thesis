@@ -2,7 +2,7 @@
 
 - [x] `SuccinctBitVector` Лаконичные Битовые Векторы
 - [x] `LocalExactRangeLocator` 
-    - [x] [*in progress*] Weak Prefix Search `Hollow Z Fast Trie`
+    - [x] Weak Prefix Search `Hollow Z Fast Trie`
         - [x] Deterministic Z Fast Trie
         - [x] Probabilistic Z Fast Trie
         - [x] MMPH (Монтонное Минимальное Совершенное Хеширование)
@@ -29,7 +29,7 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - `func (bv *SuccinctBitVector) Select1(k int) int`
     - Возвращает индекс $k$-й установленной единицы в массиве. in $O(1)^*$
 
-### Z Fast Trie [z_fast_trie.md](zfasttrie/ZFastTrie.md)
+### Z Fast Trie [zft_theory.md](trie/zft/zft_theory.md)
 
 #### Api
 
@@ -39,9 +39,9 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - `PrefixSearch(query string) PrefixSearchResult` - for example range [L, R] in Weak Prefix Search Task
 - `PredecessorSearch(query string) PredecessorSearchResult` - for example to find bucket in MMPH
 
-#### Deterministic Implementation [zfasttrie](zfasttrie) was adopted from [ctriepp](https://gitlab.com/habatakitai/ctriepp)
+#### Deterministic Implementation [zft](trie/zft) was adopted from [ctriepp](https://gitlab.com/habatakitai/ctriepp)
 
-### MMPH (Monotone Minimal Perfect Hashing) [mmph/MonotoneMinimalPerfectHashing.md](mmph/MonotoneMinimalPerfectHashing.md)
+### MMPH (Monotone Minimal Perfect Hashing) [mmph/README.md](mmph/README.md)
 
 Биективное отображение элементов отсортированного множества ключей в их порядковые номера с сохранением
 лексикографического порядка.
