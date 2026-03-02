@@ -1,20 +1,20 @@
 ## Plan
 
 - [x] `SuccinctBitVector` Лаконичные Битовые Векторы
-- [ ] `LocalExactRangeStructure`
-    - [ ] [*in progress*] Weak Prefix Search `Hollow Z Fast Trie` 
+- [x] `LocalExactRangeLocator` 
+    - [x] [*in progress*] Weak Prefix Search `Hollow Z Fast Trie`
         - [x] Deterministic Z Fast Trie
         - [x] Probabilistic Z Fast Trie
         - [x] MMPH (Монтонное Минимальное Совершенное Хеширование)
         - [x] Encoded Handles table T (handles -> len(e_alpha))
-            - [ ] ...
-    - [ ] Range Locator
+    - [x] Range Locator
 - [ ] `ExactRangeEmptiness`
 - [ ] `ApproximateRangeEmptiness`
 
 ### `SuccinctBitVector` Лаконичные Битовые Векторы [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.md)
 
-Succinct Bit Vector — это пространственно-эффективная структура данных, позволяющая хранить битовый массив длины $N$, занимая $N + o(N)$
+Succinct Bit Vector — это пространственно-эффективная структура данных, позволяющая хранить битовый массив длины $N$,
+занимая $N + o(N)$
 памяти, и поддерживающая операции Rank и Select за время $O(1)$.
 More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.md)
 
@@ -43,7 +43,8 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 
 ### MMPH (Monotone Minimal Perfect Hashing) [mmph/MonotoneMinimalPerfectHashing.md](mmph/MonotoneMinimalPerfectHashing.md)
 
-Биективное отображение элементов отсортированного множества ключей в их порядковые номера с сохранением лексикографического порядка.
+Биективное отображение элементов отсортированного множества ключей в их порядковые номера с сохранением
+лексикографического порядка.
 
 #### Два варианта реализации
 
@@ -67,9 +68,24 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 ## TODO:
 
 Check:
+
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributor.html
 - https://javadoc.io/doc/it.unimi.dsi/sux4j/latest/it/unimi/dsi/sux4j/mph/HollowTrieDistributorMonotoneMinimalPerfectHashFunction.html
 - Incremental Prefix hash for BitStrings (to have constant handle lookup in zft)
+- check structs, check if we can make less random IO acceses, see /home/andrei/Thesis/mmph/go-boomphf-bs/boomphf-flat-arrays.go
+- maybe compress uints in mph
+- use instead rotl https://pkg.go.dev/math/bits#ReverseBytes16
+  - Homework: check Assembly
+    - go test -c
+    objdump -d ./go-boomphf-bs.test
+  - check repo for math.bits applications
+- Update mph using one of suggested impls
+  - see docs
+    - https://docs.google.com/document/d/15lVjff73MiWJJczNcxw-YwEa4Gsk7uJfP3QBrcZyMfI/edit?tab=t.0
+    - https://docs.google.com/document/d/1MUGEStgsORBztSGaef-edOMQJ0011Mo5fj8iWZKNHdg/edit?pli=1&tab=t.0
+- Homework: double test changes on ARM & x86
+- add 2 fattest links
+- get rid of BitString interface
 
 ## Literature
 
@@ -81,7 +97,7 @@ Check:
     - Proof of Range Emptiness lower bound
     - ApproximateRangeEmptiness structure
 - [ZFastTrie & MonotoneMinimalPerfectHashing](https://vigna.di.unimi.it/ftp/papers/MonotoneMinimalPerfectHashing.pdf)
-  - see also [Learned Monotone Minimal Perfect Hashing](https://arxiv.org/pdf/2304.11012) 
+    - see also [Learned Monotone Minimal Perfect Hashing](https://arxiv.org/pdf/2304.11012)
 
 #### Related works
 
