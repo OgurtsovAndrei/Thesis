@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"Thesis/bits"
+	"Thesis/bits/maps"
 
 	"github.com/dgryski/go-boomphf"
 )
@@ -13,20 +14,20 @@ import (
 type DebugMonotoneHash struct {
 	bucketSize int
 
-	// d0: KeyHash -> LCP Length (in bits)
+		// d0: KeyHash -> LCP Length (in bits)
 	d0Table    *boomphf.H
 	d0Lengths  []uint16
-	d0DebugMap *bits.BitMap[uint16] // DEBUG
+	d0DebugMap *maps.BitMap[uint16] // DEBUG
 
 	// d1: PrefixHash -> Bucket Index
 	d1Table    *boomphf.H
 	d1Indices  []int32
-	d1DebugMap *bits.BitMap[int32] // DEBUG
+	d1DebugMap *maps.BitMap[int32] // DEBUG
 
 	// buckets: KeyHash -> Local Rank
 	buckets         []*boomphf.H
 	bucketRanks     [][]uint8
-	bucketsDebugMap []*bits.BitMap[uint8] // DEBUG
+	bucketsDebugMap []*maps.BitMap[uint8] // DEBUG
 }
 
 func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
@@ -47,16 +48,16 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		bucketSize:      bucketSize,
 		buckets:         make([]*boomphf.H, numBuckets),
 		bucketRanks:     make([][]uint8, numBuckets),
-		bucketsDebugMap: make([]*bits.BitMap[uint8], numBuckets), // DEBUG
-		d1DebugMap:      bits.NewBitMap[int32](),                 // DEBUG
-		d0DebugMap:      bits.NewBitMap[uint16](),                // DEBUG
+		bucketsDebugMap: make([]*maps.BitMap[uint8], numBuckets), // DEBUG
+		d1DebugMap:      maps.NewBitMap[int32](),                 // DEBUG
+		d0DebugMap:      maps.NewBitMap[uint16](),                // DEBUG
 	}
 
 	var allKeys []bits.BitString
 	var allLcps []bits.BitString
 
-	keyToLcpLen := bits.NewBitMap[int]()
-	prefixToBucketIdx := bits.NewBitMap[int]()
+	keyToLcpLen := maps.NewBitMap[int]()
+	prefixToBucketIdx := maps.NewBitMap[int]()
 
 	for i := 0; i < numBuckets; i++ {
 		start := i * bucketSize
@@ -85,7 +86,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 				}
 			}
 
-			mh.bucketsDebugMap[i] = bits.NewBitMap[uint8]()
+			mh.bucketsDebugMap[i] = maps.NewBitMap[uint8]()
 
 			mh.bucketRanks[i] = make([]uint8, len(bucketKeys))
 			for localRank, k := range bucketKeys {

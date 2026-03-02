@@ -2,6 +2,7 @@ package zft
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"math/rand"
 	"testing"
 
@@ -37,11 +38,11 @@ func setupBitStringTrie(b *testing.B, n int) (*ZFastTrie[bool], []bits.BitString
 	return tree, keys
 }
 
-func setupStdMap(b *testing.B, n int) (*bits.BitMap[bool], []bits.BitString) {
+func setupStdMap(b *testing.B, n int) (*maps.BitMap[bool], []bits.BitString) {
 	b.Helper()
 	b.StopTimer()
 	keys := GenerateBitStringKeys(n)
-	m := bits.NewBitMap[bool]()
+	m := maps.NewBitMap[bool]()
 	for _, s := range keys {
 		m.Put(s, true)
 	}
@@ -72,10 +73,10 @@ func BenchmarkTrie_BitString_Insert(b *testing.B) {
 	}
 }
 
-func Benchmark_StdMap_BitString_Insert(b *testing.B) {
+func Benchmark_BitMap_BitString_Insert(b *testing.B) {
 	b.StopTimer()
 	keys := GenerateBitStringKeys(b.N)
-	m := bits.NewBitMap[bool]()
+	m := maps.NewBitMap[bool]()
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {

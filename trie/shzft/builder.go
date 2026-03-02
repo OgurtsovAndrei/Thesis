@@ -2,6 +2,7 @@ package shzft
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"fmt"
@@ -17,12 +18,12 @@ type nodeData struct {
 // streamingBuilder builds SHZFT. It processes sorted keys one at a time,
 // emitting handle->extentLen pairs on-the-fly.
 type streamingBuilder struct {
-	kv *bits.BitMap[nodeData]
+	kv *maps.BitMap[nodeData]
 }
 
 func newStreamingBuilder() *streamingBuilder {
 	return &streamingBuilder{
-		kv: bits.NewBitMap[nodeData](),
+		kv: maps.NewBitMap[nodeData](),
 	}
 }
 
