@@ -2,6 +2,7 @@ package hzft
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"fmt"
@@ -11,12 +12,12 @@ import (
 // It processes sorted keys one at a time, emitting handle→extentLen pairs on-the-fly.
 // Memory usage: O(n × log L) instead of O(n × L) where L is average key length.
 type streamingBuilder[E UNumber] struct {
-	kv *bits.BitMap[HNodeData[E]]
+	kv *maps.BitMap[HNodeData[E]]
 }
 
 func newStreamingBuilder[E UNumber]() *streamingBuilder[E] {
 	return &streamingBuilder[E]{
-		kv: bits.NewBitMap[HNodeData[E]](),
+		kv: maps.NewBitMap[HNodeData[E]](),
 	}
 }
 

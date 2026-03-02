@@ -8,8 +8,6 @@ import (
 	"math/bits"
 	"strconv"
 	"strings"
-
-	"github.com/zeebo/xxh3"
 )
 
 // BitString represents a sequence of bits stored in a slice of uint64 words.
@@ -336,7 +334,7 @@ func (bs BitString) Hash() uint64 {
 }
 
 func (bs BitString) HashWithSeed(seed uint64) uint64 {
-	h := xxh3.New()
+	h := fnv.New64a()
 
 	// Write seed as bytes
 	seedBuf := make([]byte, 8)
@@ -612,77 +610,5 @@ func BugIfNotSortedOrHaveDuplicates(bss []BitString) {
 			errutil.Bug("BitStrings are not sorted")
 		}
 		i++
-	}
-}
-
-// BitMap is a high-performance map using BitString as keys.
-// It uses an underlying map of hashes to handle collisions via slices of entries.
-type BitMap[V any] struct {
-	m     map[uint64][]entry[V]
-	count int
-}
-
-type entry[V any] struct {
-	key   BitString
-	value V
-}
-
-func NewBitMap[V any]() *BitMap[V] {
-	return &BitMap[V]{
-		m: make(map[uint64][]entry[V]),
-	}
-}
-
-func (bm *BitMap[V]) Put(key BitString, value V) {
-	h := key.Hash()
-	entries := bm.m[h]
-	for i := range entries {
-		if entries[i].key.Equal(key) {
-			entries[i].value = value
-			return
-		}
-	}
-	bm.m[h] = append(entries, entry[V]{key, value})
-	bm.count++
-}
-
-func (bm *BitMap[V]) Get(key BitString) (V, bool) {
-	h := key.Hash()
-	entries := bm.m[h]
-	for i := range entries {
-		if entries[i].key.Equal(key) {
-			return entries[i].value, true
-		}
-	}
-	var zero V
-	return zero, false
-}
-
-func (bm *BitMap[V]) Delete(key BitString) {
-	h := key.Hash()
-	entries := bm.m[h]
-	for i := range entries {
-		if entries[i].key.Equal(key) {
-			bm.m[h] = append(entries[:i], entries[i+1:]...)
-			if len(bm.m[h]) == 0 {
-				delete(bm.m, h)
-			}
-			bm.count--
-			return
-		}
-	}
-}
-
-func (bm *BitMap[V]) Len() int {
-	return bm.count
-}
-
-func (bm *BitMap[V]) Range(f func(key BitString, value V) bool) {
-	for _, entries := range bm.m {
-		for _, e := range entries {
-			if !f(e.key, e.value) {
-				return
-			}
-		}
 	}
 }

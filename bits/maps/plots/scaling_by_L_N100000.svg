@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Lookup Scaling vs Key Length (N=100000)</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">0.00</text>
+<line class="grid" x1="90.0" y1="383.00" x2="920.0" y2="383.00" />
+<text class="label" x="82.0" y="387.00" text-anchor="end">50.38</text>
+<line class="grid" x1="90.0" y1="301.00" x2="920.0" y2="301.00" />
+<text class="label" x="82.0" y="305.00" text-anchor="end">100.76</text>
+<line class="grid" x1="90.0" y1="219.00" x2="920.0" y2="219.00" />
+<text class="label" x="82.0" y="223.00" text-anchor="end">151.14</text>
+<line class="grid" x1="90.0" y1="137.00" x2="920.0" y2="137.00" />
+<text class="label" x="82.0" y="141.00" text-anchor="end">201.52</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">251.90</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">64</text>
+<line class="grid" x1="505.00" y1="55.0" x2="505.00" y2="465.0" />
+<text class="label" x="505.00" y="485.0" text-anchor="middle">256</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">1,024</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,392.75 505.00,329.92 920.00,92.27" />
+<circle cx="90.00" cy="392.75" r="3.5" fill="#2a7fff" />
+<circle cx="505.00" cy="329.92" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="92.27" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">BitMap</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,409.35 505.00,355.22 920.00,144.68" />
+<circle cx="90.00" cy="409.35" r="3.5" fill="#e4572e" />
+<circle cx="505.00" cy="355.22" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="144.68" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">ArrayBitMap</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Key Length (L, bits)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">Latency (ns/op)</text>
+</svg>

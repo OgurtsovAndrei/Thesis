@@ -1,0 +1,42 @@
+goos: linux
+goarch: amd64
+pkg: Thesis/bits/maps
+cpu: 13th Gen Intel(R) Core(TM) i9-13900H
+BenchmarkMaps/BitMap_Put_N1000_L64-20         	    5996	    180960 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N1000_L64-20    	    6159	    195713 ns/op
+BenchmarkMaps/BitMap_Get_N1000_L64-20         	43182452	        27.07 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N1000_L64-20    	59670831	        21.96 ns/op
+BenchmarkMaps/BitMap_Put_N10000_L64-20        	     650	   1792804 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N10000_L64-20   	     584	   2356284 ns/op
+BenchmarkMaps/BitMap_Get_N10000_L64-20        	35164248	        35.25 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N10000_L64-20   	50081490	        23.59 ns/op
+BenchmarkMaps/BitMap_Put_N100000_L64-20       	      79	  14987913 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N100000_L64-20  	      68	  16478558 ns/op
+BenchmarkMaps/BitMap_Get_N100000_L64-20       	26807242	        44.39 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N100000_L64-20  	31255935	        34.19 ns/op
+BenchmarkMaps/BitMap_Put_N1000_L256-20        	    6865	    196665 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N1000_L256-20   	    6759	    216209 ns/op
+BenchmarkMaps/BitMap_Get_N1000_L256-20        	22309549	        54.73 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N1000_L256-20   	24224925	        49.15 ns/op
+BenchmarkMaps/BitMap_Put_N10000_L256-20       	     627	   2122965 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N10000_L256-20  	     520	   2177568 ns/op
+BenchmarkMaps/BitMap_Get_N10000_L256-20       	18524191	        60.03 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N10000_L256-20  	19935654	        53.01 ns/op
+BenchmarkMaps/BitMap_Put_N100000_L256-20      	      69	  15507717 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N100000_L256-20 	      67	  17901592 ns/op
+BenchmarkMaps/BitMap_Get_N100000_L256-20      	13404194	        82.99 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N100000_L256-20 	16335518	        67.45 ns/op
+BenchmarkMaps/BitMap_Put_N1000_L1024-20       	    4867	    328673 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N1000_L1024-20  	    3646	    324280 ns/op
+BenchmarkMaps/BitMap_Get_N1000_L1024-20       	 6651141	       162.0 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N1000_L1024-20  	 7714024	       149.1 ns/op
+BenchmarkMaps/BitMap_Put_N10000_L1024-20      	     351	   3317780 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N10000_L1024-20 	     372	   3448816 ns/op
+BenchmarkMaps/BitMap_Get_N10000_L1024-20      	 6540667	       174.8 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N10000_L1024-20 	 7678416	       160.6 ns/op
+BenchmarkMaps/BitMap_Put_N100000_L1024-20     	      51	  24588061 ns/op
+BenchmarkMaps/ArrayBitMap_Put_N100000_L1024-20         	      40	  26663920 ns/op
+BenchmarkMaps/BitMap_Get_N100000_L1024-20              	 5333084	       229.0 ns/op
+BenchmarkMaps/ArrayBitMap_Get_N100000_L1024-20         	 6207518	       196.8 ns/op
+PASS
+ok  	Thesis/bits/maps	59.989s

@@ -2,6 +2,7 @@ package hzft
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/trie/zft"
@@ -21,7 +22,7 @@ func NewHZFastTrieFromIteratorHeavy[E UNumber](iter bits.BitStringIterator) (*HZ
 		return nil, nil
 	}
 
-	kv := bits.NewBitMap[HNodeData[E]]()
+	kv := maps.NewBitMap[HNodeData[E]]()
 	
 	// Traverse ZFT to collect handles and pseudo-descriptors
 	var traverse func(n *zft.Node[bool])

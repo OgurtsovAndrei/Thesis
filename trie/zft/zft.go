@@ -2,6 +2,7 @@ package zft
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"Thesis/errutil"
 	"fmt"
 	"log"
@@ -36,7 +37,7 @@ type UNumber interface {
 type ZFastTrie[V comparable] struct {
 	size           int32
 	Root           *Node[V]
-	Handle2NodeMap *bits.BitMap[*Node[V]]
+	Handle2NodeMap *maps.BitMap[*Node[V]]
 	emptyValue     V
 
 	stat statistics
@@ -48,7 +49,7 @@ func NewZFastTrie[V comparable](emptyValue V) *ZFastTrie[V] {
 	return &ZFastTrie[V]{
 		size:           0,
 		Root:           nil,
-		Handle2NodeMap: bits.NewBitMap[*Node[V]](),
+		Handle2NodeMap: maps.NewBitMap[*Node[V]](),
 		emptyValue:     emptyValue,
 	}
 }

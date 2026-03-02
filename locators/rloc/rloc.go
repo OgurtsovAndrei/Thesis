@@ -2,6 +2,7 @@ package rloc
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"Thesis/errutil"
 	bucket "Thesis/mmph/relative_trie"
 	"Thesis/trie/zft"
@@ -155,7 +156,7 @@ func NewGenericRangeLocatorSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](z
 }
 
 func collectPSortedItems(zt *zft.ZFastTrie[bool]) ([]pItem, int) {
-	pMap := bits.NewBitMap[bool]()
+	pMap := maps.NewBitMap[bool]()
 	maxBitLen := 0
 
 	addToMap := func(bs bits.BitString, isLeaf bool) {

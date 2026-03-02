@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"Thesis/bits"
+	"Thesis/bits/maps"
 
 	"Thesis/mmph/go-boomphf"
 )
@@ -49,8 +50,8 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 	var allKeys []bits.BitString
 	var allLcps []bits.BitString
 
-	keyToLcpLen := bits.NewBitMap[int]()
-	prefixToBucketIdx := bits.NewBitMap[int]()
+	keyToLcpLen := maps.NewBitMap[int]()
+	prefixToBucketIdx := maps.NewBitMap[int]()
 
 	for i := 0; i < numBuckets; i++ {
 		start := i * bucketSize

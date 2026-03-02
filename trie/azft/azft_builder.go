@@ -2,6 +2,7 @@ package azft
 
 import (
 	"Thesis/bits"
+	"Thesis/bits/maps"
 	"Thesis/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/trie/zft"
@@ -53,7 +54,7 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 
 	// Create mapping from keys to their delimiter indices
-	keyToDelimiterIdx := bits.NewBitMap[int]()
+	keyToDelimiterIdx := maps.NewBitMap[int]()
 
 	// Reconstruct ranks by traversing Trie in-order
 	trieIter := zft.NewSortedIterator(trie)
