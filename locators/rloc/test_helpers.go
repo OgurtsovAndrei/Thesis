@@ -10,7 +10,7 @@ import (
 
 var (
 	BenchKeyCounts  = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18}
-	BenchBitLengths = []int{64, 128, 256, 512, 1024}
+	BenchBitLengths = []int{64, 128, 256, 512, 1024, 4096}
 	BenchKeys       map[int]map[int][]bits.BitString // [bitLength][keyCount]
 	benchOnce       sync.Once
 )

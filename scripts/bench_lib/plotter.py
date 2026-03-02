@@ -17,11 +17,14 @@ def svg_finish(parts: List[str], path: str) -> None:
     with open(path, "w") as f:
         f.write("\n".join(parts))
 
-def draw_line_chart(path: str, title: str, x_label: str, y_label: str, series: Dict[str, List[Tuple[float, float]]], log_x: bool = False, log_y: bool = False) -> None:
+def draw_line_chart(path: str, title: str, x_label: str, y_label: str, series: Dict[str, List[Tuple[float, float]]], log_x: bool = False, log_y: bool = False, styles: Dict[str, str] = None, colors: Dict[str, str] = None) -> None:
     width, height = 960.0, 540.0
     left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
     pw = width - left - right
     ph = height - top - bottom
+
+    if styles is None: styles = {}
+    if colors is None: colors = {}
 
     x_vals = sorted({x for pts in series.values() for x, _ in pts})
     if not x_vals:
@@ -104,18 +107,23 @@ def draw_line_chart(path: str, title: str, x_label: str, y_label: str, series: D
     legend_y = top + 12
     
     for idx, (name, pts) in enumerate(series.items()):
-        color = palette[idx % len(palette)]
+        color = colors.get(name, palette[idx % len(palette)])
         if not pts:
             continue
         pts = sorted(pts, key=lambda t: t[0])
         coords = " ".join(f"{x_pos(x):.2f},{y_pos(y):.2f}" for x, y in pts)
-        parts.append(f'<polyline fill="none" stroke="{color}" stroke-width="2.5" points="{coords}" />')
+        
+        style_attr = ""
+        if styles.get(name) == "dashed":
+            style_attr = ' stroke-dasharray="10,6"'
+            
+        parts.append(f'<polyline fill="none" stroke="{color}" stroke-width="2.5"{style_attr} points="{coords}" />')
         for x, y in pts:
             parts.append(f'<circle cx="{x_pos(x):.2f}" cy="{y_pos(y):.2f}" r="3.5" fill="{color}" />')
         
         # Legend
         ly = legend_y + idx * 18
-        parts.append(f'<line x1="{legend_x}" y1="{ly}" x2="{legend_x+16}" y2="{ly}" stroke="{color}" stroke-width="2.5" />')
+        parts.append(f'<line x1="{legend_x}" y1="{ly}" x2="{legend_x+16}" y2="{ly}" stroke="{color}" stroke-width="2.5"{style_attr} />')
         parts.append(f'<text class="label" x="{legend_x+22}" y="{ly+4}">{name}</text>')
 
     parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
