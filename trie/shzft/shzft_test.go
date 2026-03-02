@@ -19,7 +19,7 @@ func genRandomKeys(n, l int, seed int64) []bits.BitString {
 		b := make([]byte, byteLen)
 		rng.Read(b)
 
-		bs := bits.NewCharBitStringFromDataAndSize(b, uint32(l))
+		bs := bits.NewFromDataAndSize(b, uint32(l))
 		str := bs.PrettyString()
 		if !unique[str] {
 			unique[str] = true

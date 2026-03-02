@@ -16,17 +16,17 @@ type DebugMonotoneHash struct {
 	// d0: KeyHash -> LCP Length (in bits)
 	d0Table    *boomphf.H
 	d0Lengths  []uint16
-	d0DebugMap map[bits.BitString]uint16 // DEBUG
+	d0DebugMap *bits.BitMap[uint16] // DEBUG
 
 	// d1: PrefixHash -> Bucket Index
 	d1Table    *boomphf.H
 	d1Indices  []int32
-	d1DebugMap map[bits.BitString]int32 // DEBUG
+	d1DebugMap *bits.BitMap[int32] // DEBUG
 
 	// buckets: KeyHash -> Local Rank
 	buckets         []*boomphf.H
 	bucketRanks     [][]uint8
-	bucketsDebugMap []map[bits.BitString]uint8 // DEBUG
+	bucketsDebugMap []*bits.BitMap[uint8] // DEBUG
 }
 
 func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
@@ -47,16 +47,16 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		bucketSize:      bucketSize,
 		buckets:         make([]*boomphf.H, numBuckets),
 		bucketRanks:     make([][]uint8, numBuckets),
-		bucketsDebugMap: make([]map[bits.BitString]uint8, numBuckets), // DEBUG
-		d1DebugMap:      make(map[bits.BitString]int32),               // DEBUG
-		d0DebugMap:      make(map[bits.BitString]uint16),              // DEBUG
+		bucketsDebugMap: make([]*bits.BitMap[uint8], numBuckets), // DEBUG
+		d1DebugMap:      bits.NewBitMap[int32](),                 // DEBUG
+		d0DebugMap:      bits.NewBitMap[uint16](),                // DEBUG
 	}
 
 	var allKeys []bits.BitString
 	var allLcps []bits.BitString
 
-	keyToLcpLen := make(map[bits.BitString]int, n)
-	prefixToBucketIdx := make(map[bits.BitString]int, numBuckets)
+	keyToLcpLen := bits.NewBitMap[int]()
+	prefixToBucketIdx := bits.NewBitMap[int]()
 
 	for i := 0; i < numBuckets; i++ {
 		start := i * bucketSize
@@ -85,13 +85,13 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 				}
 			}
 
-			mh.bucketsDebugMap[i] = make(map[bits.BitString]uint8)
+			mh.bucketsDebugMap[i] = bits.NewBitMap[uint8]()
 
 			mh.bucketRanks[i] = make([]uint8, len(bucketKeys))
 			for localRank, k := range bucketKeys {
 				phfIdx := mh.buckets[i].Query(k.Hash()) - 1
 				mh.bucketRanks[i][phfIdx] = uint8(localRank)
-				mh.bucketsDebugMap[i][k] = uint8(localRank)
+				mh.bucketsDebugMap[i].Put(k, uint8(localRank))
 			}
 
 			lcp := bucketKeys[0]
@@ -100,22 +100,23 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 				lcp = lcp.Prefix(int(lcpLen))
 			}
 
-			if _, exists := prefixToBucketIdx[lcp]; !exists {
+			if _, exists := prefixToBucketIdx.Get(lcp); !exists {
 				allLcps = append(allLcps, lcp)
-				prefixToBucketIdx[lcp] = i
+				prefixToBucketIdx.Put(lcp, i)
 			}
 
 			lcpSize := int(lcp.Size())
 			for _, k := range bucketKeys {
-				keyToLcpLen[k] = lcpSize
+				keyToLcpLen.Put(k, lcpSize)
 			}
 			allKeys = append(allKeys, bucketKeys...)
 		}
 	}
 
-	for p, idx := range prefixToBucketIdx {
-		mh.d1DebugMap[p] = int32(idx)
-	}
+	prefixToBucketIdx.Range(func(p bits.BitString, idx int) bool {
+		mh.d1DebugMap.Put(p, int32(idx))
+		return true
+	})
 
 	if len(allKeys) > 0 {
 		allKeyHashes := make([]uint64, len(allKeys))
@@ -130,8 +131,9 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 			if phfIdx+1 == 0 {
 				panic("boomphf construction failure: Query returned 0 for known key in d0Table")
 			}
-			mh.d0Lengths[phfIdx] = uint16(keyToLcpLen[k])
-			mh.d0DebugMap[k] = uint16(keyToLcpLen[k])
+			lcpLen, _ := keyToLcpLen.Get(k)
+			mh.d0Lengths[phfIdx] = uint16(lcpLen)
+			mh.d0DebugMap.Put(k, uint16(lcpLen))
 		}
 	}
 
@@ -145,25 +147,29 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {
 			phfIdx := mh.d1Table.Query(p.Hash()) - 1
-			mh.d1Indices[phfIdx] = int32(prefixToBucketIdx[p])
+			idx, _ := prefixToBucketIdx.Get(p)
+			mh.d1Indices[phfIdx] = int32(idx)
 		}
 	}
 
 	fmt.Println("=== DEBUG: Constructed DebugMonotoneHash Maps ===")
 	fmt.Println("--- D0 (Key -> LCP Length) ---")
-	for k, v := range mh.d0DebugMap {
+	mh.d0DebugMap.Range(func(k bits.BitString, v uint16) bool {
 		fmt.Printf("Key: %s, Hash: %x, LCP Len: %d\n", k.PrettyString(), k.Hash(), v)
-	}
+		return true
+	})
 	fmt.Println("--- D1 (Prefix -> Bucket Index) ---")
-	for k, v := range mh.d1DebugMap {
+	mh.d1DebugMap.Range(func(k bits.BitString, v int32) bool {
 		fmt.Printf("Prefix: %s, Hash: %x, Bucket: %d\n", k.PrettyString(), k.Hash(), v)
-	}
+		return true
+	})
 	fmt.Println("--- Buckets (Key -> Local Rank) ---")
 	for i, m := range mh.bucketsDebugMap {
 		fmt.Printf("Bucket %d:\n", i)
-		for k, v := range m {
+		m.Range(func(k bits.BitString, v uint8) bool {
 			fmt.Printf("  Key: %s, Hash: %x, Rank: %d\n", k.PrettyString(), k.Hash(), v)
-		}
+			return true
+		})
 	}
 	fmt.Println("============================================")
 
@@ -184,18 +190,19 @@ func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
 	if d0PhfIdx != 0 && int(d0PhfIdx) <= len(mh.d0Lengths) {
 		lcpLen = int(mh.d0Lengths[d0PhfIdx-1])
 	}
-	fmt.Printf("1. D0 Lookup: Hash=%x -> PHF_Idx=%d -> LCP_Len=%d (Expected: %d)\n", keyHash, d0PhfIdx, lcpLen, mh.d0DebugMap[key])
+	expectedLcpLen, _ := mh.d0DebugMap.Get(key)
+	fmt.Printf("1. D0 Lookup: Hash=%x -> PHF_Idx=%d -> LCP_Len=%d (Expected: %d)\n", keyHash, d0PhfIdx, lcpLen, expectedLcpLen)
 
 	if d0PhfIdx == 0 || int(d0PhfIdx) > len(mh.d0Lengths) {
-		errutil.BugOn(true, "d0Table miss for key %s", key)
+		errutil.BugOn(true, "d0Table miss for key %s", key.PrettyString())
 		return -1
 	}
 
-	expectedLcpLen, ok := mh.d0DebugMap[key]
+	expectedLcpLen, ok := mh.d0DebugMap.Get(key)
 	if !ok {
-		errutil.BugOn(true, "DEBUG: Key %s not found in d0DebugMap!", key)
+		errutil.BugOn(true, "DEBUG: Key %s not found in d0DebugMap!", key.PrettyString())
 	} else if uint16(lcpLen) != expectedLcpLen {
-		errutil.BugOn(true, "DEBUG: d0 mismatch for key %s. PHF got %d, Map got %d", key, lcpLen, expectedLcpLen)
+		errutil.BugOn(true, "DEBUG: d0 mismatch for key %s. PHF got %d, Map got %d", key.PrettyString(), lcpLen, expectedLcpLen)
 	}
 
 	if int(key.Size()) < lcpLen {
@@ -210,18 +217,19 @@ func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
 	if d1PhfIdx != 0 && int(d1PhfIdx) <= len(mh.d1Indices) {
 		bucketIdx = int(mh.d1Indices[d1PhfIdx-1])
 	}
-	fmt.Printf("2. D1 Lookup: Prefix=%s, Hash=%x -> PHF_Idx=%d -> Bucket=%d (Expected: %d)\n", prefix.PrettyString(), prefixHash, d1PhfIdx, bucketIdx, mh.d1DebugMap[prefix])
+	expectedBucketIdx, _ := mh.d1DebugMap.Get(prefix)
+	fmt.Printf("2. D1 Lookup: Prefix=%s, Hash=%x -> PHF_Idx=%d -> Bucket=%d (Expected: %d)\n", prefix.PrettyString(), prefixHash, d1PhfIdx, bucketIdx, expectedBucketIdx)
 
 	if d1PhfIdx == 0 || int(d1PhfIdx) > len(mh.d1Indices) {
-		errutil.BugOn(true, "d1Table miss for prefix %s (key %s)", prefix, key)
+		errutil.BugOn(true, "d1Table miss for prefix %s (key %s)", prefix.PrettyString(), key.PrettyString())
 		return -1
 	}
 
-	expectedBucketIdx, ok := mh.d1DebugMap[prefix]
+	expectedBucketIdx, ok = mh.d1DebugMap.Get(prefix)
 	if !ok {
-		errutil.BugOn(true, "DEBUG: Prefix %s not found in d1DebugMap! (key %s)", prefix, key)
+		errutil.BugOn(true, "DEBUG: Prefix %s not found in d1DebugMap! (key %s)", prefix.PrettyString(), key.PrettyString())
 	} else if int32(bucketIdx) != expectedBucketIdx {
-		errutil.BugOn(true, "DEBUG: d1 mismatch for prefix %s. PHF got %d, Map got %d", prefix, bucketIdx, expectedBucketIdx)
+		errutil.BugOn(true, "DEBUG: d1 mismatch for prefix %s. PHF got %d, Map got %d", prefix.PrettyString(), bucketIdx, expectedBucketIdx)
 	}
 
 	if bucketIdx >= len(mh.buckets) || mh.buckets[bucketIdx] == nil {
@@ -233,18 +241,19 @@ func (mh *DebugMonotoneHash) GetRank(key bits.BitString) int {
 	if localPhfIdx != 0 && int(localPhfIdx) <= len(mh.bucketRanks[bucketIdx]) {
 		localOffset = int(mh.bucketRanks[bucketIdx][localPhfIdx-1])
 	}
-	fmt.Printf("3. Bucket %d Lookup: Hash=%x -> PHF_Idx=%d -> LocalRank=%d (Expected: %d)\n", bucketIdx, keyHash, localPhfIdx, localOffset, mh.bucketsDebugMap[bucketIdx][key])
+	expectedOffset, _ := mh.bucketsDebugMap[bucketIdx].Get(key)
+	fmt.Printf("3. Bucket %d Lookup: Hash=%x -> PHF_Idx=%d -> LocalRank=%d (Expected: %d)\n", bucketIdx, keyHash, localPhfIdx, localOffset, expectedOffset)
 
 	if localPhfIdx == 0 || int(localPhfIdx) > len(mh.bucketRanks[bucketIdx]) {
-		errutil.BugOn(true, "Local bucket %d miss for key %s", bucketIdx, key)
+		errutil.BugOn(true, "Local bucket %d miss for key %s", bucketIdx, key.PrettyString())
 		return -1
 	}
 
-	expectedOffset, ok := mh.bucketsDebugMap[bucketIdx][key]
+	expectedOffset, ok = mh.bucketsDebugMap[bucketIdx].Get(key)
 	if !ok {
-		errutil.BugOn(true, "DEBUG: Key %s not found in bucketsDebugMap[%d]!", key, bucketIdx)
+		errutil.BugOn(true, "DEBUG: Key %s not found in bucketsDebugMap[%d]!", key.PrettyString(), bucketIdx)
 	} else if uint8(localOffset) != expectedOffset {
-		errutil.BugOn(true, "DEBUG: Local rank mismatch for key %s in bucket %d. PHF got %d, Map got %d", key, bucketIdx, localOffset, expectedOffset)
+		errutil.BugOn(true, "DEBUG: Local rank mismatch for key %s in bucket %d. PHF got %d, Map got %d", key.PrettyString(), bucketIdx, localOffset, expectedOffset)
 	}
 
 	return bucketIdx*mh.bucketSize + localOffset

@@ -35,10 +35,11 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 	}
 
 	// Extract handles for MPH
-	keysForMPH := make([]bits.BitString, 0, len(trie.Handle2NodeMap))
-	for handle := range trie.Handle2NodeMap {
+	keysForMPH := make([]bits.BitString, 0, trie.Handle2NodeMap.Len())
+	trie.Handle2NodeMap.Range(func(handle bits.BitString, _ *zft.Node[bool]) bool {
 		keysForMPH = append(keysForMPH, handle)
-	}
+		return true
+	})
 	// Sort keysForMPH to ensure deterministic order
 	sort.Slice(keysForMPH, func(i, j int) bool {
 		return keysForMPH[i].Compare(keysForMPH[j]) < 0
@@ -52,7 +53,7 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 
 	// Create mapping from keys to their delimiter indices
-	keyToDelimiterIdx := make(map[string]int)
+	keyToDelimiterIdx := bits.NewBitMap[int]()
 
 	// Reconstruct ranks by traversing Trie in-order
 	trieIter := zft.NewSortedIterator(trie)
@@ -60,14 +61,14 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 	for trieIter.Next() {
 		node := trieIter.Node()
 		if node.Value {
-			keyToDelimiterIdx[string(node.Extent.Data())] = rank
+			keyToDelimiterIdx.Put(node.Extent, rank)
 			rank++
 		}
 	}
 
 	maxDelimiterIndex := I(^I(0))
 
-	for handle, node := range trie.Handle2NodeMap {
+	trie.Handle2NodeMap.Range(func(handle bits.BitString, node *zft.Node[bool]) bool {
 		idx := mph.Query(handle) - 1
 		errutil.BugOn(idx >= uint64(len(data)), "Out of bounds")
 
@@ -102,7 +103,7 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 
 		// Determine delimiter index for this node
 		delimiterIdx := maxDelimiterIndex
-		if delimIdx, exists := keyToDelimiterIdx[string(node.Extent.Data())]; exists {
+		if delimIdx, exists := keyToDelimiterIdx.Get(node.Extent); exists {
 			delimiterIdx = I(delimIdx)
 		}
 
@@ -125,7 +126,8 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 			rightChild:      rightChildIdx,
 			Rank:            delimiterIdx,
 		}
-	}
+		return true
+	})
 
 	// Set up parent relationships - find first ancestor where node is in left subtree
 	var setParentRecursive func(*zft.Node[bool], I)

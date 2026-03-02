@@ -17,12 +17,12 @@ type nodeData struct {
 // streamingBuilder builds SHZFT. It processes sorted keys one at a time,
 // emitting handle->extentLen pairs on-the-fly.
 type streamingBuilder struct {
-	kv map[bits.BitString]nodeData
+	kv *bits.BitMap[nodeData]
 }
 
 func newStreamingBuilder() *streamingBuilder {
 	return &streamingBuilder{
-		kv: make(map[bits.BitString]nodeData),
+		kv: bits.NewBitMap[nodeData](),
 	}
 }
 
@@ -37,10 +37,10 @@ func (b *streamingBuilder) emit(depth, parentDepth int, key bits.BitString) {
 
 	desc := key.Prefix(int(original))
 
-	b.kv[desc] = nodeData{
+	b.kv.Put(desc, nodeData{
 		isTrueDescriptor: true,
 		extentLen:        extentLen,
-	}
+	})
 
 	if original == 0 {
 		return
@@ -52,10 +52,10 @@ func (b *streamingBuilder) emit(depth, parentDepth int, key bits.BitString) {
 		ftst := bits.TwoFattest(a, b_pseudo)
 		descPseudo := key.Prefix(int(ftst))
 
-		b.kv[descPseudo] = nodeData{
+		b.kv.Put(descPseudo, nodeData{
 			isTrueDescriptor: false,
 			extentLen:        ^uint64(0), // infinity - marks pseudo-descriptor
-		}
+		})
 		b_pseudo = ftst - 1
 	}
 }
@@ -126,7 +126,7 @@ func NewSHZFastTrieFromIteratorStreaming(iter bits.BitStringIterator) (*Succinct
 		return nil, err
 	}
 
-	if firstKey == nil {
+	if !firstKey.HasValue() {
 		return nil, nil
 	}
 
@@ -159,10 +159,11 @@ func NewSHZFastTrieFromIteratorStreaming(iter bits.BitStringIterator) (*Succinct
 	b.emit(rootExtentLen, 0, firstKey)
 
 	// Phase 1: Build MPH from collected handles
-	keysForMPH := make([]bits.BitString, 0, len(b.kv))
-	for k := range b.kv {
+	keysForMPH := make([]bits.BitString, 0, b.kv.Len())
+	b.kv.Range(func(k bits.BitString, _ nodeData) bool {
 		keysForMPH = append(keysForMPH, k)
-	}
+		return true
+	})
 
 	mph := boomphf.New(boomphf.Gamma, keysForMPH)
 
@@ -172,13 +173,14 @@ func NewSHZFastTrieFromIteratorStreaming(iter bits.BitStringIterator) (*Succinct
 	extentLenArray := make([]uint64, totalEntries)
 	descriptorLenArray := make([]uint32, totalEntries)
 
-	for key, value := range b.kv {
+	b.kv.Range(func(key bits.BitString, value nodeData) bool {
 		idx := mph.Query(key) - 1
 		errutil.BugOn(idx >= uint64(totalEntries), "Out of bounds")
 		isTrueDescriptorArray[idx] = value.isTrueDescriptor
 		extentLenArray[idx] = value.extentLen
 		descriptorLenArray[idx] = key.Size()
-	}
+		return true
+	})
 
 	// Phase 3: Build Bitvector (RSDic)
 	bv := rsdic.New()

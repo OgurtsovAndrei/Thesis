@@ -239,9 +239,6 @@ func TestBitStringTrieCompare(t *testing.T) {
 }
 
 func TestBitStringLongCompare(t *testing.T) {
-	if SelectedImpl == Uint64String {
-		t.SkipNow()
-	}
 	t.Parallel()
 	// Test with longer bitstrings that span multiple uint64 words
 	long1 := NewFromBinary("1010101010101010101010101010101010101010101010101010101010101010" +

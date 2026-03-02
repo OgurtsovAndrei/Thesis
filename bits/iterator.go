@@ -32,6 +32,9 @@ func (it *SliceBitStringIterator) Next() bool {
 }
 
 func (it *SliceBitStringIterator) Value() BitString {
+	if it.idx < 0 || it.idx >= len(it.keys) {
+		return BitString{}
+	}
 	return it.keys[it.idx]
 }
 
@@ -43,14 +46,15 @@ func (it *SliceBitStringIterator) Error() error {
 // BitStrings are sorted in non-decreasing order. It panics via errutil.BugOn
 // if an out-of-order element is encountered.
 type CheckedSortedIterator struct {
-	iter BitStringIterator
-	prev BitString
+	iter    BitStringIterator
+	prev    BitString
+	hasPrev bool
 }
 
 func NewCheckedSortedIterator(iter BitStringIterator) *CheckedSortedIterator {
 	return &CheckedSortedIterator{
-		iter: iter,
-		prev: nil,
+		iter:    iter,
+		hasPrev: false,
 	}
 }
 
@@ -59,10 +63,11 @@ func (it *CheckedSortedIterator) Next() bool {
 		return false
 	}
 	val := it.iter.Value()
-	if it.prev != nil {
+	if it.hasPrev {
 		errutil.BugOn(it.prev.Compare(val) > 0, "Keys should be sorted")
 	}
 	it.prev = val
+	it.hasPrev = true
 	return true
 }
 
