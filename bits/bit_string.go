@@ -2,9 +2,7 @@ package bits
 
 import (
 	"Thesis/errutil"
-	"encoding/binary"
 	"fmt"
-	"hash/fnv"
 	"math/bits"
 	"strconv"
 	"strings"
@@ -315,45 +313,41 @@ func (bs BitString) Prefix(size int) BitString {
 	}
 }
 
+// Hash returns a 64-bit hash of the BitString using an optimized manual FNV-1a.
+// See HASHING_STRATEGY.md for performance benchmarks and rationale.
 func (bs BitString) Hash() uint64 {
-	h := fnv.New64a()
+	const (
+		offset64 = 14695981039346656037
+		prime64  = 1099511628211
+	)
+	h := uint64(offset64)
+	h ^= uint64(bs.sizeBits)
+	h *= prime64
 
-	// Write sizeBits first to avoid collisions
-	sizeBuf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(sizeBuf, bs.sizeBits)
-	h.Write(sizeBuf)
-
-	numWords := (bs.sizeBits + 63) / 64
-	buf := make([]byte, 8)
-	for i := uint32(0); i < numWords && i < uint32(len(bs.data)); i++ {
-		binary.LittleEndian.PutUint64(buf, bs.data[i])
-		h.Write(buf)
+	for _, word := range bs.data {
+		h ^= word
+		h *= prime64
 	}
-
-	return h.Sum64()
+	return h
 }
 
+// HashWithSeed returns a 64-bit hash of the BitString using an optimized manual FNV-1a.
+// See HASHING_STRATEGY.md for performance benchmarks and rationale.
 func (bs BitString) HashWithSeed(seed uint64) uint64 {
-	h := fnv.New64a()
+	const (
+		offset64 = 14695981039346656037
+		prime64  = 1099511628211
+	)
+	h := uint64(offset64) ^ seed
+	h *= prime64
+	h ^= uint64(bs.sizeBits)
+	h *= prime64
 
-	// Write seed as bytes
-	seedBuf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(seedBuf, seed)
-	h.Write(seedBuf)
-
-	// Write sizeBits first to avoid collisions
-	sizeBuf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(sizeBuf, bs.sizeBits)
-	h.Write(sizeBuf)
-
-	numWords := (bs.sizeBits + 63) / 64
-	buf := make([]byte, 8)
-	for i := uint32(0); i < numWords && i < uint32(len(bs.data)); i++ {
-		binary.LittleEndian.PutUint64(buf, bs.data[i])
-		h.Write(buf)
+	for _, word := range bs.data {
+		h ^= word
+		h *= prime64
 	}
-
-	return h.Sum64()
+	return h
 }
 
 func (bs BitString) Compare(other BitString) int {
