@@ -1,0 +1,229 @@
+goos: linux
+goarch: amd64
+pkg: Thesis/trie/shzft
+cpu: 13th Gen Intel(R) Core(TM) i9-13900H
+BenchmarkMemory/HZFT/L=64/N=1024         	     708	   1949553 ns/op	       215.4 bits/key	  838732 B/op	   11882 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=64/N=1024
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":27568,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":2992},{"name":"data","total_bytes":24568}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":27568,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":2992},{"name":"data","total_bytes":24568}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":27568,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":2992},{"name":"data","total_bytes":24568}]}
+BenchmarkMemory/SHZFT/L=64/N=1024        	     682	   2154974 ns/op	        37.37 bits/key	 1129533 B/op	   11910 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=64/N=1024
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":4783,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":2992},{"name":"shzft_bv","total_bytes":967},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":4783,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":2992},{"name":"shzft_bv","total_bytes":967},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":4783,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":2992},{"name":"shzft_bv","total_bytes":967},{"name":"deltas_array","total_bytes":768}]}
+BenchmarkMemory/HZFT/L=64/N=8192         	      92	  17162675 ns/op	       195.1 bits/key	 6890605 B/op	   89328 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=64/N=8192
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":199816,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":20808},{"name":"data","total_bytes":179000}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":199816,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":20808},{"name":"data","total_bytes":179000}]}
+BenchmarkMemory/SHZFT/L=64/N=8192        	      85	  17530860 ns/op	        35.28 bits/key	 9208324 B/op	   89373 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=64/N=8192
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":36131,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":20808},{"name":"shzft_bv","total_bytes":7075},{"name":"deltas_array","total_bytes":8192}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":36131,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":20808},{"name":"shzft_bv","total_bytes":7075},{"name":"deltas_array","total_bytes":8192}]}
+BenchmarkMemory/HZFT/L=64/N=32768        	      19	  69688354 ns/op	       195.5 bits/key	28373118 B/op	  359201 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=64/N=32768
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":800636,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":83432},{"name":"data","total_bytes":717196}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":800636,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":83432},{"name":"data","total_bytes":717196}]}
+BenchmarkMemory/SHZFT/L=64/N=32768       	      18	  89167603 ns/op	        35.29 bits/key	37665902 B/op	  359261 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=64/N=32768
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":144545,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":83432},{"name":"shzft_bv","total_bytes":28289},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":144545,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":83432},{"name":"shzft_bv","total_bytes":28289},{"name":"deltas_array","total_bytes":32768}]}
+BenchmarkMemory/HZFT/L=64/N=262144       	       1	1238839280 ns/op	       212.9 bits/key	245396248 B/op	 3133189 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=64/N=262144
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6975184,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":724440},{"name":"data","total_bytes":6250736}]}
+BenchmarkMemory/SHZFT/L=64/N=262144      	       1	1466024543 ns/op	        37.59 bits/key	321103016 B/op	 3133278 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=64/N=262144
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1231856,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":724440},{"name":"shzft_bv","total_bytes":245216},{"name":"deltas_array","total_bytes":262144}]}
+BenchmarkMemory/HZFT/L=128/N=1024        	     508	   2505625 ns/op	       253.8 bits/key	 1233897 B/op	   14078 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=128/N=1024
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":32480,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":3568},{"name":"data","total_bytes":28904}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":32480,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":3568},{"name":"data","total_bytes":28904}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":32480,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":3568},{"name":"data","total_bytes":28904}]}
+BenchmarkMemory/SHZFT/L=128/N=1024       	     528	   2746823 ns/op	        43.12 bits/key	 1674679 B/op	   14108 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=128/N=1024
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":5520,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":3568},{"name":"shzft_bv","total_bytes":1128},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":5520,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":3568},{"name":"shzft_bv","total_bytes":1128},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":5520,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":3568},{"name":"shzft_bv","total_bytes":1128},{"name":"deltas_array","total_bytes":768}]}
+BenchmarkMemory/HZFT/L=128/N=8192        	      73	  18549842 ns/op	       231.3 bits/key	 7791185 B/op	  105863 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=128/N=8192
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":236808,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":24728},{"name":"data","total_bytes":212072}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":236808,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":24728},{"name":"data","total_bytes":212072}]}
+BenchmarkMemory/SHZFT/L=128/N=8192       	      64	  22104251 ns/op	        40.23 bits/key	10202348 B/op	  105909 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=128/N=8192
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":41196,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":24728},{"name":"shzft_bv","total_bytes":8220},{"name":"deltas_array","total_bytes":8192}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":41196,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":24728},{"name":"shzft_bv","total_bytes":8220},{"name":"deltas_array","total_bytes":8192}]}
+BenchmarkMemory/HZFT/L=128/N=32768       	      14	  85299273 ns/op	       230.8 bits/key	31994313 B/op	  424325 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=128/N=32768
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":945432,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":98000},{"name":"data","total_bytes":847424}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":945432,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":98000},{"name":"data","total_bytes":847424}]}
+BenchmarkMemory/SHZFT/L=128/N=32768      	      13	  96628313 ns/op	        39.99 bits/key	41656380 B/op	  424387 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=128/N=32768
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":163798,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":98000},{"name":"shzft_bv","total_bytes":32974},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":163798,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":98000},{"name":"shzft_bv","total_bytes":32974},{"name":"deltas_array","total_bytes":32768}]}
+BenchmarkMemory/HZFT/L=128/N=262144      	       1	1836291091 ns/op	       248.6 bits/key	321990280 B/op	 3660709 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=128/N=262144
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":8145296,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":846312},{"name":"data","total_bytes":7298976}]}
+BenchmarkMemory/SHZFT/L=128/N=262144     	       1	2054442515 ns/op	        42.31 bits/key	426614808 B/op	 3660959 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=128/N=262144
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1386343,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":846312},{"name":"shzft_bv","total_bytes":277831},{"name":"deltas_array","total_bytes":262144}]}
+BenchmarkMemory/HZFT/L=256/N=1024        	     457	   3198616 ns/op	       287.1 bits/key	 1491814 B/op	   16031 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=256/N=1024
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":36744,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":3920},{"name":"data","total_bytes":32816}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":36744,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":3920},{"name":"data","total_bytes":32816}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":36744,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":3920},{"name":"data","total_bytes":32816}]}
+BenchmarkMemory/SHZFT/L=256/N=1024       	     384	   3667620 ns/op	        46.44 bits/key	 2029929 B/op	   16062 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=256/N=1024
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":5944,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":3920},{"name":"shzft_bv","total_bytes":1200},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":5944,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":3920},{"name":"shzft_bv","total_bytes":1200},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":5944,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":3920},{"name":"shzft_bv","total_bytes":1200},{"name":"deltas_array","total_bytes":768}]}
+BenchmarkMemory/HZFT/L=256/N=8192        	      43	  26174519 ns/op	       267.5 bits/key	12305583 B/op	  122730 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=256/N=8192
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":273900,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":28584},{"name":"data","total_bytes":245308}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":273900,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":28584},{"name":"data","total_bytes":245308}]}
+BenchmarkMemory/SHZFT/L=256/N=8192       	      44	  33023340 ns/op	        44.85 bits/key	16509747 B/op	  122778 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=256/N=8192
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":45926,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":28584},{"name":"shzft_bv","total_bytes":9094},{"name":"deltas_array","total_bytes":8192}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":45926,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":28584},{"name":"shzft_bv","total_bytes":9094},{"name":"deltas_array","total_bytes":8192}]}
+BenchmarkMemory/HZFT/L=256/N=32768       	       8	 135193450 ns/op	       266.6 bits/key	49881478 B/op	  491016 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=256/N=32768
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1092164,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":113328},{"name":"data","total_bytes":978828}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1092164,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":113328},{"name":"data","total_bytes":978828}]}
+BenchmarkMemory/SHZFT/L=256/N=32768      	       8	 154230892 ns/op	        44.56 bits/key	66601616 B/op	  491078 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=256/N=32768
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":182511,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":113328},{"name":"shzft_bv","total_bytes":36359},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":182511,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":113328},{"name":"shzft_bv","total_bytes":36359},{"name":"deltas_array","total_bytes":32768}]}
+BenchmarkMemory/HZFT/L=256/N=262144      	       1	2490187651 ns/op	       284.2 bits/key	407545304 B/op	 4188567 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=256/N=262144
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":9312204,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":967088},{"name":"data","total_bytes":8345108}]}
+BenchmarkMemory/SHZFT/L=256/N=262144     	       1	2466630632 ns/op	        46.68 bits/key	544425832 B/op	 4188661 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=256/N=262144
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1529718,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":967088},{"name":"shzft_bv","total_bytes":300430},{"name":"deltas_array","total_bytes":262144}]}
+BenchmarkMemory/HZFT/L=512/N=1024        	     363	   3556614 ns/op	       321.1 bits/key	 1736712 B/op	   19028 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=512/N=1024
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":41104,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":4344},{"name":"data","total_bytes":36752}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":41104,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":4344},{"name":"data","total_bytes":36752}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":41104,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":4344},{"name":"data","total_bytes":36752}]}
+BenchmarkMemory/SHZFT/L=512/N=1024       	     356	   3982775 ns/op	        50.05 bits/key	 2275081 B/op	   19060 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=512/N=1024
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6407,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":4344},{"name":"shzft_bv","total_bytes":1239},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6407,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":4344},{"name":"shzft_bv","total_bytes":1239},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6407,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":4344},{"name":"shzft_bv","total_bytes":1239},{"name":"deltas_array","total_bytes":768}]}
+BenchmarkMemory/HZFT/L=512/N=8192        	      40	  31662207 ns/op	       302.2 bits/key	13784164 B/op	  146919 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=512/N=8192
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":309480,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":32184},{"name":"data","total_bytes":277288}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":309480,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":32184},{"name":"data","total_bytes":277288}]}
+BenchmarkMemory/SHZFT/L=512/N=8192       	      40	  42847208 ns/op	        46.94 bits/key	18087934 B/op	  146969 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=512/N=8192
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":48067,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":32184},{"name":"shzft_bv","total_bytes":9683},{"name":"deltas_array","total_bytes":6144}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":48067,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":32184},{"name":"shzft_bv","total_bytes":9683},{"name":"deltas_array","total_bytes":6144}]}
+BenchmarkMemory/HZFT/L=512/N=32768       	       6	 191561414 ns/op	       302.4 bits/key	55910458 B/op	  589246 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=512/N=32768
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1238624,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":128928},{"name":"data","total_bytes":1109688}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1238624,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":128928},{"name":"data","total_bytes":1109688}]}
+BenchmarkMemory/SHZFT/L=512/N=32768      	       6	 224902947 ns/op	        48.90 bits/key	73151306 B/op	  589312 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=512/N=32768
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":200278,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":128928},{"name":"shzft_bv","total_bytes":38526},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":200278,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":128928},{"name":"shzft_bv","total_bytes":38526},{"name":"deltas_array","total_bytes":32768}]}
+BenchmarkMemory/HZFT/L=512/N=262144      	       1	3331154436 ns/op	       319.9 bits/key	470647000 B/op	 4974509 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=512/N=262144
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":10482696,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":1089984},{"name":"data","total_bytes":9392704}]}
+BenchmarkMemory/SHZFT/L=512/N=262144     	       1	3122819352 ns/op	        50.90 bits/key	609886792 B/op	 4974603 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=512/N=262144
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1667882,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":1089984},{"name":"shzft_bv","total_bytes":315698},{"name":"deltas_array","total_bytes":262144}]}
+BenchmarkMemory/HZFT/L=1024/N=1024       	     284	   4414809 ns/op	       357.6 bits/key	 2041810 B/op	   22150 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=1024/N=1024
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":45776,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":4824},{"name":"data","total_bytes":40944}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":45776,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":4824},{"name":"data","total_bytes":40944}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":45776,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":4824},{"name":"data","total_bytes":40944}]}
+BenchmarkMemory/SHZFT/L=1024/N=1024      	     243	   5293200 ns/op	        54.12 bits/key	 2589146 B/op	   22182 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=1024/N=1024
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6927,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":4824},{"name":"shzft_bv","total_bytes":1279},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6927,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":4824},{"name":"shzft_bv","total_bytes":1279},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":6927,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":4824},{"name":"shzft_bv","total_bytes":1279},{"name":"deltas_array","total_bytes":768}]}
+BenchmarkMemory/HZFT/L=1024/N=8192       	      30	  46280952 ns/op	       338.3 bits/key	16849755 B/op	  171606 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=1024/N=8192
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":346408,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":36128},{"name":"data","total_bytes":310272}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":346408,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":36128},{"name":"data","total_bytes":310272}]}
+BenchmarkMemory/SHZFT/L=1024/N=8192      	      27	  51513224 ns/op	        53.17 bits/key	21229317 B/op	  171656 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=1024/N=8192
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":54451,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":36128},{"name":"shzft_bv","total_bytes":10075},{"name":"deltas_array","total_bytes":8192}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":54451,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":36128},{"name":"shzft_bv","total_bytes":10075},{"name":"deltas_array","total_bytes":8192}]}
+BenchmarkMemory/HZFT/L=1024/N=32768      	       4	 265526540 ns/op	       337.5 bits/key	68110616 B/op	  686540 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=1024/N=32768
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1382580,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":143840},{"name":"data","total_bytes":1238732}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1382580,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":143840},{"name":"data","total_bytes":1238732}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1382580,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":143840},{"name":"data","total_bytes":1238732}]}
+BenchmarkMemory/SHZFT/L=1024/N=32768     	       4	 311905024 ns/op	        52.94 bits/key	85646678 B/op	  686609 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=1024/N=32768
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":216846,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":143840},{"name":"shzft_bv","total_bytes":40182},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":216846,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":143840},{"name":"shzft_bv","total_bytes":40182},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":216846,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":143840},{"name":"shzft_bv","total_bytes":40182},{"name":"deltas_array","total_bytes":32768}]}
+BenchmarkMemory/HZFT/L=1024/N=262144     	       1	3789842816 ns/op	       355.6 bits/key	549531840 B/op	 5760979 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=1024/N=262144
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":11651912,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":1210552},{"name":"data","total_bytes":10441352}]}
+BenchmarkMemory/SHZFT/L=1024/N=262144    	       1	3871093133 ns/op	        54.93 bits/key	691130896 B/op	 5761073 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=1024/N=262144
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1799970,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":1210552},{"name":"shzft_bv","total_bytes":327218},{"name":"deltas_array","total_bytes":262144}]}
+BenchmarkMemory/HZFT/L=4096/N=1024       	     112	  10054656 ns/op	       428.1 bits/key	 3705115 B/op	   28258 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=4096/N=1024
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":54800,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":5712},{"name":"data","total_bytes":49080}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":54800,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":5712},{"name":"data","total_bytes":49080}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":54800,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":5712},{"name":"data","total_bytes":49080}]}
+BenchmarkMemory/SHZFT/L=4096/N=1024      	     100	  10716084 ns/op	        61.80 bits/key	 4270903 B/op	   28291 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=4096/N=1024
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":7911,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":5712},{"name":"shzft_bv","total_bytes":1375},{"name":"deltas_array","total_bytes":768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":7911,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":5712},{"name":"shzft_bv","total_bytes":1375},{"name":"deltas_array","total_bytes":768}]}
+BenchmarkMemory/HZFT/L=4096/N=8192       	      13	  92600874 ns/op	       409.7 bits/key	30921528 B/op	  220644 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=4096/N=8192
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":419548,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":43960},{"name":"data","total_bytes":375580}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":419548,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":43960},{"name":"data","total_bytes":375580}]}
+BenchmarkMemory/SHZFT/L=4096/N=8192      	      12	  98966807 ns/op	        61.52 bits/key	35450878 B/op	  220696 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=4096/N=8192
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":62995,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":43960},{"name":"shzft_bv","total_bytes":10787},{"name":"deltas_array","total_bytes":8192}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":62995,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":43960},{"name":"shzft_bv","total_bytes":10787},{"name":"deltas_array","total_bytes":8192}]}
+BenchmarkMemory/HZFT/L=4096/N=32768      	       2	 505377611 ns/op	       409.2 bits/key	124368344 B/op	  883798 allocs/op
+--- BENCH: BenchmarkMemory/HZFT/L=4096/N=32768
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1676164,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":173984},{"name":"data","total_bytes":1502172}]}
+    bench_test.go:31: JSON_MEM_REPORT: {"name":"hzft","total_bytes":1676164,"children":[{"name":"header","total_bytes":40},{"name":"mph","total_bytes":173984},{"name":"data","total_bytes":1502172}]}
+BenchmarkMemory/SHZFT/L=4096/N=32768     	       2	 526056846 ns/op	        60.99 bits/key	142501992 B/op	  883866 allocs/op
+--- BENCH: BenchmarkMemory/SHZFT/L=4096/N=32768
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":249819,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":173984},{"name":"shzft_bv","total_bytes":43011},{"name":"deltas_array","total_bytes":32768}]}
+    bench_test.go:44: JSON_MEM_REPORT: {"name":"hzft","total_bytes":249819,"children":[{"name":"header","total_bytes":56},{"name":"mph","total_bytes":173984},{"name":"shzft_bv","total_bytes":43011},{"name":"deltas_array","total_bytes":32768}]}
+PASS
+ok  	Thesis/trie/shzft	90.060s
+goos: linux
+goarch: amd64
+pkg: Thesis/trie/shzft
+cpu: 13th Gen Intel(R) Core(TM) i9-13900H
+BenchmarkQuery/HZFT/Query/L=64/N=1024         	 7274168	       516.5 ns/op	     149 B/op	      10 allocs/op
+BenchmarkQuery/SHZFT/Query/L=64/N=1024        	 4852108	       762.3 ns/op	     149 B/op	      10 allocs/op
+BenchmarkQuery/HZFT/Query/L=64/N=8192         	 7080691	       541.3 ns/op	     149 B/op	      10 allocs/op
+BenchmarkQuery/SHZFT/Query/L=64/N=8192        	 4764842	       810.7 ns/op	     149 B/op	      10 allocs/op
+BenchmarkQuery/HZFT/Query/L=64/N=32768        	 6320284	       614.5 ns/op	     151 B/op	      10 allocs/op
+BenchmarkQuery/SHZFT/Query/L=64/N=32768       	 4108046	       895.3 ns/op	     151 B/op	      10 allocs/op
+BenchmarkQuery/HZFT/Query/L=64/N=262144       	 3737050	       943.3 ns/op	     156 B/op	      11 allocs/op
+BenchmarkQuery/SHZFT/Query/L=64/N=262144      	 3359569	      1085 ns/op	     156 B/op	      11 allocs/op
+BenchmarkQuery/HZFT/Query/L=256/N=1024        	 5398402	       711.3 ns/op	     225 B/op	      14 allocs/op
+BenchmarkQuery/SHZFT/Query/L=256/N=1024       	 3149041	      1179 ns/op	     225 B/op	      14 allocs/op
+BenchmarkQuery/HZFT/Query/L=256/N=8192        	 4816635	       791.6 ns/op	     225 B/op	      14 allocs/op
+BenchmarkQuery/SHZFT/Query/L=256/N=8192       	 2950508	      1296 ns/op	     225 B/op	      14 allocs/op
+BenchmarkQuery/HZFT/Query/L=256/N=32768       	 4347999	       864.0 ns/op	     227 B/op	      14 allocs/op
+BenchmarkQuery/SHZFT/Query/L=256/N=32768      	 2262376	      1899 ns/op	     227 B/op	      14 allocs/op
+BenchmarkQuery/HZFT/Query/L=256/N=262144      	 2489982	      1406 ns/op	     232 B/op	      15 allocs/op
+BenchmarkQuery/SHZFT/Query/L=256/N=262144     	 1985400	      1844 ns/op	     232 B/op	      15 allocs/op
+BenchmarkQuery/HZFT/Query/L=1024/N=1024       	 3314577	      1111 ns/op	     433 B/op	      19 allocs/op
+BenchmarkQuery/SHZFT/Query/L=1024/N=1024      	 1635712	      2020 ns/op	     433 B/op	      19 allocs/op
+BenchmarkQuery/HZFT/Query/L=1024/N=8192       	 2735598	      1289 ns/op	     433 B/op	      19 allocs/op
+BenchmarkQuery/SHZFT/Query/L=1024/N=8192      	 1495897	      2712 ns/op	     433 B/op	      19 allocs/op
+BenchmarkQuery/HZFT/Query/L=1024/N=32768      	 2089425	      1702 ns/op	     435 B/op	      19 allocs/op
+BenchmarkQuery/SHZFT/Query/L=1024/N=32768     	 1223638	      3184 ns/op	     435 B/op	      19 allocs/op
+BenchmarkQuery/HZFT/Query/L=1024/N=262144     	 1841377	      2002 ns/op	     440 B/op	      20 allocs/op
+BenchmarkQuery/SHZFT/Query/L=1024/N=262144    	 1258890	      2843 ns/op	     440 B/op	      20 allocs/op
+BenchmarkQuery/HZFT/Query/L=4096/N=1024       	 1787653	      2105 ns/op	    1249 B/op	      25 allocs/op
+BenchmarkQuery/SHZFT/Query/L=4096/N=1024      	 1000000	      3727 ns/op	    1249 B/op	      25 allocs/op
+BenchmarkQuery/HZFT/Query/L=4096/N=8192       	 1607481	      2268 ns/op	    1249 B/op	      25 allocs/op
+BenchmarkQuery/SHZFT/Query/L=4096/N=8192      	  976459	      4029 ns/op	    1249 B/op	      25 allocs/op
+BenchmarkQuery/HZFT/Query/L=4096/N=32768      	 1495321	      2331 ns/op	    1251 B/op	      25 allocs/op
+BenchmarkQuery/SHZFT/Query/L=4096/N=32768     	  973828	      4074 ns/op	    1251 B/op	      25 allocs/op
+PASS
+ok  	Thesis/trie/shzft	183.435s

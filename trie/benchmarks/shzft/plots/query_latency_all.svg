@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Query Performance: HZFT vs SHZFT</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">10^0</text>
+<line class="grid" x1="90.0" y1="362.50" x2="920.0" y2="362.50" />
+<text class="label" x="82.0" y="366.50" text-anchor="end">10^1</text>
+<line class="grid" x1="90.0" y1="260.00" x2="920.0" y2="260.00" />
+<text class="label" x="82.0" y="264.00" text-anchor="end">10^2</text>
+<line class="grid" x1="90.0" y1="157.50" x2="920.0" y2="157.50" />
+<text class="label" x="82.0" y="161.50" text-anchor="end">10^3</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">10^4</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">1,024</text>
+<line class="grid" x1="401.25" y1="55.0" x2="401.25" y2="465.0" />
+<text class="label" x="401.25" y="485.0" text-anchor="middle">8,192</text>
+<line class="grid" x1="608.75" y1="55.0" x2="608.75" y2="465.0" />
+<text class="label" x="608.75" y="485.0" text-anchor="middle">32,768</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">262,144</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,393.36 401.25,416.10 608.75,393.36 920.00,416.10" />
+<circle cx="90.00" cy="393.36" r="3.5" fill="#2a7fff" />
+<circle cx="401.25" cy="416.10" r="3.5" fill="#2a7fff" />
+<circle cx="608.75" cy="393.36" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="416.10" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="71.0">HZFT (L=64)</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,416.10 401.25,378.38 608.75,416.10 920.00,153.87" />
+<circle cx="90.00" cy="416.10" r="3.5" fill="#2a7fff" />
+<circle cx="401.25" cy="378.38" r="3.5" fill="#2a7fff" />
+<circle cx="608.75" cy="416.10" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="153.87" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">SHZFT (L=64)</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,416.10 401.25,385.24 608.75,465.00 920.00,142.33" />
+<circle cx="90.00" cy="416.10" r="3.5" fill="#22a06b" />
+<circle cx="401.25" cy="385.24" r="3.5" fill="#22a06b" />
+<circle cx="608.75" cy="465.00" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="142.33" r="3.5" fill="#22a06b" />
+<line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="107.0">HZFT (L=256)</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,150.17 401.25,145.96 608.75,128.95 920.00,130.26" />
+<circle cx="90.00" cy="150.17" r="3.5" fill="#22a06b" />
+<circle cx="401.25" cy="145.96" r="3.5" fill="#22a06b" />
+<circle cx="608.75" cy="128.95" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="130.26" r="3.5" fill="#22a06b" />
+<line x1="100.0" y1="121.0" x2="116.0" y2="121.0" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122.0" y="125.0">SHZFT (L=256)</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,152.81 401.25,146.20 608.75,133.83 920.00,126.60" />
+<circle cx="90.00" cy="152.81" r="3.5" fill="#e4572e" />
+<circle cx="401.25" cy="146.20" r="3.5" fill="#e4572e" />
+<circle cx="608.75" cy="133.83" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="126.60" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="139.0" x2="116.0" y2="139.0" stroke="#e4572e" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="143.0">HZFT (L=1024)</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,126.20 401.25,113.09 608.75,105.95 920.00,110.99" />
+<circle cx="90.00" cy="126.20" r="3.5" fill="#e4572e" />
+<circle cx="401.25" cy="113.09" r="3.5" fill="#e4572e" />
+<circle cx="608.75" cy="105.95" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="110.99" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="157.0" x2="116.0" y2="157.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="161.0">SHZFT (L=1024)</text>
+<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,124.37 401.25,121.05 608.75,119.83" />
+<circle cx="90.00" cy="124.37" r="3.5" fill="#7c3aed" />
+<circle cx="401.25" cy="121.05" r="3.5" fill="#7c3aed" />
+<circle cx="608.75" cy="119.83" r="3.5" fill="#7c3aed" />
+<line x1="100.0" y1="175.0" x2="116.0" y2="175.0" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="179.0">HZFT (L=4096)</text>
+<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" points="90.00,98.94 401.25,95.47 608.75,94.97" />
+<circle cx="90.00" cy="98.94" r="3.5" fill="#7c3aed" />
+<circle cx="401.25" cy="95.47" r="3.5" fill="#7c3aed" />
+<circle cx="608.75" cy="94.97" r="3.5" fill="#7c3aed" />
+<line x1="100.0" y1="193.0" x2="116.0" y2="193.0" stroke="#7c3aed" stroke-width="2.5" />
+<text class="label" x="122.0" y="197.0">SHZFT (L=4096)</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Number of Keys (N)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">Latency (ns/op)</text>
+</svg>
