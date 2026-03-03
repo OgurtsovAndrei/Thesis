@@ -563,19 +563,14 @@ func (bs BitString) IsAllOnes() bool {
 	}
 
 	fullWords := bs.sizeBits / 64
-	remainingBits := bs.sizeBits % 64
-
 	for i := uint32(0); i < fullWords; i++ {
-		if i >= uint32(len(bs.data)) || bs.data[i] != ^uint64(0) {
+		if bs.data[i] != ^uint64(0) {
 			return false
 		}
 	}
 
-	if remainingBits > 0 {
-		if fullWords >= uint32(len(bs.data)) {
-			return false
-		}
-		mask := (uint64(1) << remainingBits) - 1
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
 		if (bs.data[fullWords] & mask) != mask {
 			return false
 		}
