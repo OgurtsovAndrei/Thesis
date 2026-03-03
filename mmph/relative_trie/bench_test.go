@@ -1,43 +1,19 @@
 package bucket
 
 import (
-	"Thesis/bits"
+	"Thesis/testutils"
 	"fmt"
-	"sort"
-	"sync"
 	"testing"
 )
 
 var (
 	benchKeyCounts = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20, 1 << 23}
-	benchKeys      map[int][]bits.BitString
-	benchOnce      sync.Once
 )
 
-func initBenchKeys() {
-	benchOnce.Do(func() {
-		benchKeys = make(map[int][]bits.BitString)
-		for _, count := range benchKeyCounts {
-			rawKeys := buildUniqueStrKeys(count)
-
-			bsKeys := make([]bits.BitString, count)
-			for i, k := range rawKeys {
-				bsKeys[i] = bits.NewFromText(k)
-			}
-
-			sort.Sort(bitStringSorter(bsKeys))
-
-			benchKeys[count] = bsKeys
-		}
-	})
-}
-
 func BenchmarkMonotoneHashWithTrieBuild(b *testing.B) {
-	initBenchKeys()
-
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeys(64, count) // Using default 64-bit length
 
 			var totalTrieAttempts int64
 			var maxTrieAttempts int
@@ -67,11 +43,9 @@ func BenchmarkMonotoneHashWithTrieBuild(b *testing.B) {
 }
 
 func BenchmarkMonotoneHashWithTrieLookup(b *testing.B) {
-	initBenchKeys()
-
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeys(64, count)
 			mh, err := NewMonotoneHashWithTrie[uint8, uint32, uint16](keys)
 			if err != nil {
 				b.Fatalf("Failed to build: %v", err)
@@ -88,28 +62,22 @@ func BenchmarkMonotoneHashWithTrieLookup(b *testing.B) {
 }
 
 func BenchmarkMonotoneHashWithTrieLookupMiss(b *testing.B) {
-	initBenchKeys()
-
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeys(64, count)
 			mh, err := NewMonotoneHashWithTrie[uint8, uint32, uint16](keys)
 			if err != nil {
 				b.Fatalf("Failed to build: %v", err)
 			}
 
 			// Generate some keys that are likely not in the set
-			missKeys := buildUniqueStrKeys(100)
-			missBitKeys := make([]bits.BitString, len(missKeys))
-			for i, s := range missKeys {
-				missBitKeys[i] = bits.NewFromText(s)
-			}
+			missKeys := testutils.GetBenchKeys(64, 100)
 
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				// Query non-existent keys cyclically
-				_ = mh.GetRank(missBitKeys[i%len(missBitKeys)])
+				_ = mh.GetRank(missKeys[i%len(missKeys)])
 			}
 		})
 	}
@@ -117,14 +85,12 @@ func BenchmarkMonotoneHashWithTrieLookupMiss(b *testing.B) {
 
 // Benchmark to measure trie construction overhead specifically
 func BenchmarkTrieRebuilds(b *testing.B) {
-	initBenchKeys()
-
 	// Focus on medium-sized datasets where trie rebuilds are more likely
 	testCounts := []int{1 << 10, 1 << 13, 1 << 15}
 
 	for _, count := range testCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeys(64, count)
 
 			successfulBuilds := 0
 			totalAttempts := int64(0)
@@ -154,11 +120,9 @@ func BenchmarkTrieRebuilds(b *testing.B) {
 
 // Memory usage benchmark
 func BenchmarkMonotoneHashWithTrieMemory(b *testing.B) {
-	initBenchKeys()
-
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeys(64, count)
 
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -206,11 +170,9 @@ func BenchmarkMonotoneHashWithTrieMemory(b *testing.B) {
 
 // Benchmark detailed memory breakdown for MMPH
 func BenchmarkMemoryDetailed(b *testing.B) {
-	initBenchKeys()
-
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeys(64, count)
 
 			b.ReportAllocs()
 			b.ResetTimer()

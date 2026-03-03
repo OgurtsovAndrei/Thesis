@@ -22,7 +22,7 @@ func BenchmarkMemory(b *testing.B) {
 			}
 
 			b.Run(fmt.Sprintf("HZFT/L=%d/N=%d", l, n), func(b *testing.B) {
-				keys := rloc.BenchKeys[l][n]
+				keys := rloc.GetBenchKeys(l, n)
 				b.ReportAllocs()
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
@@ -35,7 +35,7 @@ func BenchmarkMemory(b *testing.B) {
 			})
 
 			b.Run(fmt.Sprintf("SHZFT/L=%d/N=%d", l, n), func(b *testing.B) {
-				keys := rloc.BenchKeys[l][n]
+				keys := rloc.GetBenchKeys(l, n)
 				b.ReportAllocs()
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
@@ -59,7 +59,7 @@ func BenchmarkQuery(b *testing.B) {
 			if n > 65536 && l > 1024 {
 				continue
 			}
-			keys := rloc.BenchKeys[l][n]
+			keys := rloc.GetBenchKeys(l, n)
 			hzftTrie := hzft.NewHZFastTrie[uint32](keys)
 			shzftTrie := NewSuccinctHZFastTrie(keys)
 

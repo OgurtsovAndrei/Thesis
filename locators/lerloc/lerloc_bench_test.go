@@ -14,7 +14,7 @@ func BenchmarkLocalExactRangeLocatorBuildFast(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := rloc.BenchKeys[bitLen][count]
+				keys := rloc.GetBenchKeys(bitLen, count)
 
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -41,7 +41,7 @@ func BenchmarkLocalExactRangeLocatorBuildCompact(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := rloc.BenchKeys[bitLen][count]
+				keys := rloc.GetBenchKeys(bitLen, count)
 
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -68,7 +68,7 @@ func BenchmarkLocalExactRangeLocatorQueryFast(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := rloc.BenchKeys[bitLen][count]
+				keys := rloc.GetBenchKeys(bitLen, count)
 				lerl, _ := NewLocalExactRangeLocator(keys)
 
 				queryPrefixes := generateQueryPrefixes(keys)
@@ -92,7 +92,7 @@ func BenchmarkLocalExactRangeLocatorQueryCompact(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := rloc.BenchKeys[bitLen][count]
+				keys := rloc.GetBenchKeys(bitLen, count)
 				lerl, _ := NewCompactLocalExactRangeLocator(keys)
 
 				queryPrefixes := generateQueryPrefixes(keys)
@@ -129,7 +129,7 @@ func BenchmarkMemoryComparison(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := rloc.BenchKeys[bitLen][count]
+				keys := rloc.GetBenchKeys(bitLen, count)
 
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -155,7 +155,7 @@ func BenchmarkMemoryDetailed(b *testing.B) {
 	for _, count := range rloc.BenchKeyCounts {
 		// Fast Mode
 		b.Run(fmt.Sprintf("Fast/Keys=%d", count), func(b *testing.B) {
-			keys := rloc.BenchKeys[bitLen][count]
+			keys := rloc.GetBenchKeys(bitLen, count)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				lerl, _ := NewLocalExactRangeLocator(keys)
@@ -167,7 +167,7 @@ func BenchmarkMemoryDetailed(b *testing.B) {
 
 		// Compact Mode
 		b.Run(fmt.Sprintf("Compact/Keys=%d", count), func(b *testing.B) {
-			keys := rloc.BenchKeys[bitLen][count]
+			keys := rloc.GetBenchKeys(bitLen, count)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				lerl, _ := NewCompactLocalExactRangeLocator(keys)

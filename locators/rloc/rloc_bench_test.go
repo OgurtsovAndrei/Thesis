@@ -14,7 +14,7 @@ func BenchmarkRangeLocatorBuild(b *testing.B) {
 	for _, bitLen := range BenchBitLengths {
 		for _, count := range BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := BenchKeys[bitLen][count]
+				keys := GetBenchKeys(bitLen, count)
 
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -51,7 +51,7 @@ func BenchmarkRangeLocatorQuery(b *testing.B) {
 	for _, bitLen := range BenchBitLengths {
 		for _, count := range BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
-				keys := BenchKeys[bitLen][count]
+				keys := GetBenchKeys(bitLen, count)
 				zt := zft.Build(keys)
 				rl, err := NewRangeLocator(zt)
 				if err != nil {
