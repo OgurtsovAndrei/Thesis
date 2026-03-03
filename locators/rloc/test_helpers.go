@@ -2,65 +2,24 @@ package rloc
 
 import (
 	"Thesis/bits"
+	"Thesis/testutils"
 	"math"
 	"math/rand"
 	"sort"
-	"sync"
 )
 
 var (
-	BenchKeyCounts  = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18}
-	BenchBitLengths = []int{64, 128, 256, 512, 1024, 4096}
-	BenchKeys       map[int]map[int][]bits.BitString // [bitLength][keyCount]
-	benchOnce       sync.Once
+	BenchKeyCounts  = testutils.DefaultBenchKeyCounts
+	BenchBitLengths = testutils.DefaultBenchBitLengths
 )
 
+func GetBenchKeys(bitLen int, count int) []bits.BitString {
+	return testutils.GetBenchKeys(bitLen, count)
+}
+
 func InitBenchKeys() {
-	benchOnce.Do(func() {
-		BenchKeys = make(map[int]map[int][]bits.BitString)
-		for _, bitLen := range BenchBitLengths {
-			BenchKeys[bitLen] = make(map[int][]bits.BitString)
-			for _, count := range BenchKeyCounts {
-				rawKeys := buildUniqueStrKeys(count, bitLen)
-
-				bsKeys := make([]bits.BitString, count)
-				for i, k := range rawKeys {
-					bsKeys[i] = bits.NewFromText(k)
-				}
-
-				sort.Sort(BitStringSorter(bsKeys))
-
-				BenchKeys[bitLen][count] = bsKeys
-			}
-		}
-	})
+	// No-op for compatibility
 }
-
-func buildUniqueStrKeys(size int, bitLength int) []string {
-	keys := make([]string, size)
-	unique := make(map[string]bool, size)
-	byteLength := (bitLength + 7) / 8 // Round up to nearest byte
-
-	for i := 0; i < size; i++ {
-		for {
-			b := make([]byte, byteLength)
-			_, _ = rand.Read(b)
-			s := string(b)
-			if !unique[s] {
-				keys[i] = s
-				unique[s] = true
-				break
-			}
-		}
-	}
-	return keys
-}
-
-type BitStringSorter []bits.BitString
-
-func (b BitStringSorter) Len() int           { return len(b) }
-func (b BitStringSorter) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b BitStringSorter) Less(i, j int) bool { return b[i].Compare(b[j]) < 0 }
 
 func GenUniqueBitStrings(seed int64, maxKeys int, maxBitLen int) []bits.BitString {
 	r := rand.New(rand.NewSource(seed))

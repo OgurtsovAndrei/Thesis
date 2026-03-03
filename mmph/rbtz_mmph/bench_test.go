@@ -1,31 +1,19 @@
 package rbtz
 
 import (
+	"Thesis/testutils"
 	"fmt"
-	"strconv"
 	"testing"
 )
 
 var (
 	benchKeyCounts = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20, 1 << 22, 1 << 24}
-	benchKeys      map[int][]string
 )
-
-func init() {
-	benchKeys = make(map[int][]string)
-	for _, count := range benchKeyCounts {
-		keys := make([]string, count)
-		for i := 0; i < count; i++ {
-			keys[i] = "key-" + strconv.Itoa(i)
-		}
-		benchKeys[count] = keys
-	}
-}
 
 func BenchmarkBuild(b *testing.B) {
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeysAsStrings(64, count)
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -40,7 +28,7 @@ func BenchmarkBuild(b *testing.B) {
 func BenchmarkLookup(b *testing.B) {
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeysAsStrings(64, count)
 			table := Build(keys)
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -54,7 +42,7 @@ func BenchmarkLookup(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeysAsStrings(64, count)
 			table := Build(keys)
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -71,7 +59,7 @@ func BenchmarkSerialize(b *testing.B) {
 func BenchmarkDeserialize(b *testing.B) {
 	for _, count := range benchKeyCounts {
 		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := benchKeys[count]
+			keys := testutils.GetBenchKeysAsStrings(64, count)
 			table := Build(keys)
 			data, _ := table.Serialize()
 			var newTable Table
