@@ -18,5 +18,8 @@
 .idea/
 Pipfile.lock
 __pycache__/
+
+# Proj temp output dirs
 /text/out/
 /locators/benchmarks_parsed.csv
+bench_results/raw/
