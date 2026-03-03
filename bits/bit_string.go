@@ -262,43 +262,18 @@ func (bs BitString) HasPrefix(prefixToCheck BitString) bool {
 		return false
 	}
 
-	prefixWords := (prefixSize + 63) / 64
-
-	for i := uint32(0); i < prefixWords-1; i++ {
-		wordA := uint64(0)
-		wordB := uint64(0)
-
-		if i < uint32(len(bs.data)) {
-			wordA = bs.data[i]
-		}
-		if i < uint32(len(prefixToCheck.data)) {
-			wordB = prefixToCheck.data[i]
-		}
-
-		if wordA != wordB {
+	fullWords := prefixSize / 64
+	for i := uint32(0); i < fullWords; i++ {
+		if bs.data[i] != prefixToCheck.data[i] {
 			return false
 		}
 	}
 
-	if prefixWords > 0 {
-		lastWordIndex := prefixWords - 1
-		bitsInLastWord := prefixSize % 64
-		if bitsInLastWord == 0 {
-			bitsInLastWord = 64
+	if prefixSize%64 != 0 {
+		mask := (uint64(1) << (prefixSize % 64)) - 1
+		if (bs.data[fullWords] & mask) != (prefixToCheck.data[fullWords] & mask) {
+			return false
 		}
-
-		wordA := uint64(0)
-		wordB := uint64(0)
-
-		if lastWordIndex < uint32(len(bs.data)) {
-			wordA = bs.data[lastWordIndex]
-		}
-		if lastWordIndex < uint32(len(prefixToCheck.data)) {
-			wordB = prefixToCheck.data[lastWordIndex]
-		}
-
-		mask := (uint64(1) << bitsInLastWord) - 1
-		return (wordA & mask) == (wordB & mask)
 	}
 
 	return true
