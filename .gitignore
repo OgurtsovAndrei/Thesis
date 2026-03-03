@@ -14,9 +14,15 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Articles
+/papers/
+
 # Project-specific ignores
 .idea/
 Pipfile.lock
 __pycache__/
+
+# Proj temp output dirs
 /text/out/
 /locators/benchmarks_parsed.csv
+bench_results/raw/
