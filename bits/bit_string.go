@@ -33,20 +33,24 @@ func NewFromUint64(value uint64) BitString {
 
 // NewFromBinary creates a BitString from a binary string (e.g., "1011").
 func NewFromBinary(text string) BitString {
-	for _, r := range text {
-		errutil.BugOn(r != '0' && r != '1', "invalid string format, %q", text)
-	}
-
 	size := len(text)
 	if size == 0 {
 		return BitString{}
 	}
 
+	// Fast validation
+	for i := 0; i < size; i++ {
+		r := text[i]
+		if r != '0' && r != '1' {
+			errutil.Bug("invalid string format, %q", text)
+		}
+	}
+
 	numWords := (uint32(size) + 63) / 64
 	data := make([]uint64, numWords)
 
-	for i, r := range text {
-		if r == '1' {
+	for i := 0; i < size; i++ {
+		if text[i] == '1' {
 			wordIndex := uint32(i) / 64
 			bitIndex := uint32(i) % 64
 			data[wordIndex] |= uint64(1) << bitIndex
