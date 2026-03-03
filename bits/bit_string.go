@@ -457,24 +457,29 @@ func (bs BitString) TrieCompare(other BitString) int {
 		minSize = bSize
 	}
 
-	minWords := (minSize + 63) / 64
-
-	for i := uint32(0); i < minWords; i++ {
-		aWord := uint64(0)
-		bWord := uint64(0)
-
-		if i < uint32(len(bs.data)) {
-			aWord = bs.data[i]
-		}
-		if i < uint32(len(other.data)) {
-			bWord = other.data[i]
-		}
-
+	fullWords := minSize / 64
+	for i := uint32(0); i < fullWords; i++ {
+		aWord := bs.data[i]
+		bWord := other.data[i]
 		if aWord != bWord {
 			xor := aWord ^ bWord
-			firstDiffBit := i*64 + uint32(bits.TrailingZeros64(xor))
-			if firstDiffBit < minSize {
-				if (aWord & (uint64(1) << (firstDiffBit % 64))) != 0 {
+			diffBit := uint32(bits.TrailingZeros64(xor))
+			if (aWord & (uint64(1) << diffBit)) != 0 {
+				return 1
+			}
+			return -1
+		}
+	}
+
+	if minSize%64 != 0 {
+		i := fullWords
+		aWord := bs.data[i]
+		bWord := other.data[i]
+		if aWord != bWord {
+			xor := aWord ^ bWord
+			diffBit := uint32(bits.TrailingZeros64(xor))
+			if diffBit < minSize%64 {
+				if (aWord & (uint64(1) << diffBit)) != 0 {
 					return 1
 				}
 				return -1
@@ -482,10 +487,6 @@ func (bs BitString) TrieCompare(other BitString) int {
 		}
 	}
 
-	// Handle different sizes - in trie in-order traversal:
-	// - Left children (extension starts with 0) come before parent
-	// - Parent comes in the middle
-	// - Right children (extension starts with 1) come after parent
 	if aSize < bSize {
 		if other.At(aSize) {
 			return -1
