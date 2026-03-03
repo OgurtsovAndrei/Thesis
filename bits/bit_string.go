@@ -2,6 +2,7 @@ package bits
 
 import (
 	"Thesis/errutil"
+	"encoding/binary"
 	"fmt"
 	"math/bits"
 	"strconv"
@@ -79,12 +80,22 @@ func NewFromDataAndSize(data []byte, size uint32) BitString {
 		panic("data length is insufficient for the specified size")
 	}
 
-	for i := uint32(0); i < numBytes; i++ {
-		wordIndex := i / 8
-		byteOffsetInWord := i % 8
-		if wordIndex < uint32(len(result)) {
-			result[wordIndex] |= uint64(data[i]) << (byteOffsetInWord * 8)
+	// Process full words (8 bytes each)
+	fullWords := numBytes / 8
+	for i := uint32(0); i < fullWords; i++ {
+		result[i] = binary.LittleEndian.Uint64(data[i*8:])
+	}
+
+	// Handle remaining bytes
+	if numBytes%8 != 0 {
+		lastWordIdx := fullWords
+		remainingBytes := numBytes % 8
+		offset := fullWords * 8
+		var lastWord uint64
+		for j := uint32(0); j < remainingBytes; j++ {
+			lastWord |= uint64(data[offset+j]) << (j * 8)
 		}
+		result[lastWordIdx] = lastWord
 	}
 
 	if size%64 != 0 {
@@ -150,11 +161,17 @@ func (bs BitString) Data() []byte {
 	numBytes := (bs.sizeBits + 7) / 8
 	result := make([]byte, numBytes)
 
-	for i := uint32(0); i < numBytes; i++ {
-		wordIndex := i / 8
-		byteOffsetInWord := i % 8
-		if wordIndex < uint32(len(bs.data)) {
-			result[i] = byte(bs.data[wordIndex] >> (byteOffsetInWord * 8))
+	fullWords := numBytes / 8
+	for i := uint32(0); i < fullWords; i++ {
+		binary.LittleEndian.PutUint64(result[i*8:], bs.data[i])
+	}
+
+	if numBytes%8 != 0 {
+		lastWord := bs.data[fullWords]
+		offset := fullWords * 8
+		remainingBytes := numBytes % 8
+		for j := uint32(0); j < remainingBytes; j++ {
+			result[offset+j] = byte(lastWord >> (j * 8))
 		}
 	}
 
