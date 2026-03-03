@@ -224,28 +224,28 @@ func (bs BitString) GetLCPLength(other BitString) uint32 {
 		minLengthBits = bSize
 	}
 
-	minWords := (minLengthBits + 63) / 64
-
-	for i := uint32(0); i < minWords; i++ {
-		wordA := uint64(0)
-		wordB := uint64(0)
-
-		if i < uint32(len(bs.data)) {
-			wordA = bs.data[i]
+	fullWords := minLengthBits / 64
+	for i := uint32(0); i < fullWords; i++ {
+		wA := bs.data[i]
+		wB := other.data[i]
+		if wA != wB {
+			return i*64 + uint32(bits.TrailingZeros64(wA^wB))
 		}
-		if i < uint32(len(other.data)) {
-			wordB = other.data[i]
-		}
+	}
 
-		if wordA != wordB {
-			xor := wordA ^ wordB
+	if minLengthBits%64 != 0 {
+		i := fullWords
+		wA := bs.data[i]
+		wB := other.data[i]
+		xor := wA ^ wB
+		if xor != 0 {
 			lcp := i*64 + uint32(bits.TrailingZeros64(xor))
 			if lcp < minLengthBits {
 				return lcp
 			}
-			return minLengthBits
 		}
 	}
+
 	return minLengthBits
 }
 
