@@ -284,7 +284,7 @@ func (bs BitString) HasPrefix(prefixToCheck BitString) bool {
 }
 
 func (bs BitString) Prefix(size int) BitString {
-	if size == 0 {
+	if size <= 0 {
 		return BitString{}
 	}
 	if int(bs.sizeBits) == size {
@@ -292,6 +292,32 @@ func (bs BitString) Prefix(size int) BitString {
 	}
 
 	numWords := (uint32(size) + 63) / 64
+
+	// If size is a multiple of 64, we can just slice the data.
+	// This is safe because BitString is immutable and we never modify the underlying array.
+	if uint32(size)%64 == 0 {
+		// Ensure we don't go out of bounds if requested size is larger than actual data
+		endWord := numWords
+		if endWord > uint32(len(bs.data)) {
+			endWord = uint32(len(bs.data))
+		}
+
+		// If we need more words than we have, we still need to allocate to provide zeros.
+		if numWords > uint32(len(bs.data)) {
+			newData := make([]uint64, numWords)
+			copy(newData, bs.data)
+			return BitString{
+				data:     newData,
+				sizeBits: uint32(size),
+			}
+		}
+
+		return BitString{
+			data:     bs.data[:endWord],
+			sizeBits: uint32(size),
+		}
+	}
+
 	newData := make([]uint64, numWords)
 
 	copyWords := numWords
@@ -301,11 +327,9 @@ func (bs BitString) Prefix(size int) BitString {
 
 	copy(newData, bs.data[:copyWords])
 
-	if uint32(size)%64 != 0 {
-		lastWordIndex := numWords - 1
-		mask := (uint64(1) << (uint32(size) % 64)) - 1
-		newData[lastWordIndex] &= mask
-	}
+	lastWordIndex := numWords - 1
+	mask := (uint64(1) << (uint32(size) % 64)) - 1
+	newData[lastWordIndex] &= mask
 
 	return BitString{
 		data:     newData,
