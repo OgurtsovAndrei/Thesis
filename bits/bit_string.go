@@ -571,46 +571,70 @@ func (bs BitString) Successor() BitString {
 		return NewFromBinary("1")
 	}
 
-	// Big-Endian increment: start from the last bit (index sizeBits-1)
-	// If it's 0, set to 1 and we're done.
-	// If it's 1, set to 0 and carry over to the left.
+	// 1. Find the highest index i such that At(i) == false
+	lastWordIdx := int(bs.sizeBits-1) / 64
+	lastZero := -1
 
-	// Find the rightmost zero bit
-	lastZero := int32(-1)
-	for i := int32(bs.sizeBits) - 1; i >= 0; i-- {
-		if !bs.At(uint32(i)) {
-			lastZero = i
-			break
+	// Check last word first (might be partial)
+	{
+		w := bs.data[lastWordIdx]
+		bitsInLastWord := (bs.sizeBits-1)%64 + 1
+		mask := ^uint64(0)
+		if bitsInLastWord < 64 {
+			mask = (uint64(1) << bitsInLastWord) - 1
+		}
+
+		zeros := (^w) & mask
+		if zeros != 0 {
+			bitIdx := 63 - bits.LeadingZeros64(zeros)
+			lastZero = lastWordIdx*64 + bitIdx
 		}
 	}
 
 	if lastZero == -1 {
-		// All bits are 1 (e.g., "11" -> "100")
-		// New size is current size + 1. New bit 0 is 1, rest are 0.
+		// Check previous words
+		for i := lastWordIdx - 1; i >= 0; i-- {
+			w := bs.data[i]
+			if w != ^uint64(0) {
+				bitIdx := 63 - bits.LeadingZeros64(^w)
+				lastZero = i*64 + bitIdx
+				break
+			}
+		}
+	}
+
+	if lastZero == -1 {
+		// All ones: "11" -> "100"
 		newSize := bs.sizeBits + 1
-		result := NewBitString(newSize)
-		// Set bit at index 0 to 1
-		result.data[0] |= 1
-		return result
+		numWords := (newSize + 63) / 64
+		newData := make([]uint64, numWords)
+		newData[0] = 1
+		return BitString{
+			data:     newData,
+			sizeBits: newSize,
+		}
 	}
 
-	// Create a copy and increment
-	result := NewBitString(bs.sizeBits)
-	copy(result.data, bs.data)
+	// 2. Create copy and apply change
+	newData := make([]uint64, len(bs.data))
+	copy(newData, bs.data)
 
-	// Set the last zero to 1
-	wordIdx := uint32(lastZero) / 64
-	bitIdx := uint32(lastZero) % 64
-	result.data[wordIdx] |= uint64(1) << bitIdx
+	wordIdx := lastZero / 64
+	bitIdx := uint32(lastZero % 64)
 
-	// Set all bits to the right of it to 0
-	for i := uint32(lastZero) + 1; i < bs.sizeBits; i++ {
-		wIdx := i / 64
-		bIdx := i % 64
-		result.data[wIdx] &= ^(uint64(1) << bIdx)
+	// Set bitIdx to 1 and clear all bits to its right in this word (indices > lastZero)
+	newData[wordIdx] &= (uint64(1) << bitIdx) - 1
+	newData[wordIdx] |= (uint64(1) << bitIdx)
+
+	// Clear all subsequent words
+	for i := wordIdx + 1; i < len(newData); i++ {
+		newData[i] = 0
 	}
 
-	return result
+	return BitString{
+		data:     newData,
+		sizeBits: bs.sizeBits,
+	}
 }
 
 func BugIfNotSortedOrHaveDuplicates(bss []BitString) {
