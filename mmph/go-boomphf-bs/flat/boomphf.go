@@ -1,12 +1,9 @@
-// Package go_boomphf_bs is a fast perfect hash function for massive key sets
-// code taken from https://github.com/dgryski/go-boomphf
-// adapted to use bitstrings
-/*
-   https://arxiv.org/abs/1702.03154
-*/
-package go_boomphf_bs
+// Package flat is a fast perfect hash function for massive key sets
+// adapted from boomphf-flat-arrays.go
+package flat
 
 import (
+	"Thesis/errutil"
 	"math/bits"
 
 	tbits "Thesis/bits"
@@ -14,32 +11,32 @@ import (
 
 // H is hash function data
 type H struct {
-	b     []bitvector
-	ranks [][]uint64
+	b          bitvector
+	ranks      []uint32
+	levelSizes []uint32 // Size of bitvector for each level (in bits)
 }
 
-// Gamma is good default value for controlling space vs. construction speed
-const Gamma = 2
-
-// New contructs a perfect hash function for the keys.  The gamma value controls the space used.
+// New constructs a perfect hash function for the keys. The gamma value controls the space used.
 func New(gamma float64, keys []tbits.BitString) *H {
-
+	errutil.BugOn(uint64(len(keys)) > uint64(^uint32(0)), "too many keys")
 	var h H
 
 	var level uint32
 
 	size := uint32(gamma * float64(len(keys)))
 	size = (size + 63) &^ 63
+
 	A := newbv(size)
 	collide := newbv(size)
 
 	var redo []tbits.BitString
+	var levels []bitvector
 
 	for len(keys) > 0 {
 		for _, v := range keys {
 			hash := v.Hash()
 			h1, h2 := uint32(hash), uint32(hash>>32)
-			idx := (h1 ^ rotl(h2, level)) % size
+			idx := (h1 ^ bits.RotateLeft32(h2, int(level))) % size
 
 			if collide.get(idx) == 1 {
 				continue
@@ -57,7 +54,7 @@ func New(gamma float64, keys []tbits.BitString) *H {
 		for _, v := range keys {
 			hash := v.Hash()
 			h1, h2 := uint32(hash), uint32(hash>>32)
-			idx := (h1 ^ rotl(h2, level)) % size
+			idx := (h1 ^ bits.RotateLeft32(h2, int(level))) % size
 
 			if collide.get(idx) == 1 {
 				redo = append(redo, v)
@@ -66,7 +63,8 @@ func New(gamma float64, keys []tbits.BitString) *H {
 
 			bv.set(idx)
 		}
-		h.b = append(h.b, bv)
+		levels = append(levels, bv)
+		h.levelSizes = append(h.levelSizes, size)
 
 		keys = redo
 		redo = redo[:0] // tricky, sharing space with `keys`
@@ -77,51 +75,57 @@ func New(gamma float64, keys []tbits.BitString) *H {
 		level++
 	}
 
+	// Flatten levels into a single bitvector
+	var totalWords uint32
+	for _, lv := range levels {
+		totalWords += uint32(len(lv))
+	}
+	h.b = make(bitvector, totalWords)
+	var currentWord uint32
+	for _, lv := range levels {
+		copy(h.b[currentWord:], lv)
+		currentWord += uint32(len(lv))
+	}
+
 	h.computeRanks()
 
 	return &h
 }
 
 func (h *H) computeRanks() {
-	var pop uint64
-	for _, bv := range h.b {
-
-		r := make([]uint64, 0, 1+(len(bv)/8))
-
-		for i, v := range bv {
-			if i%8 == 0 {
-				r = append(r, pop)
-			}
-			pop += uint64(bits.OnesCount64(v))
+	var pop uint32
+	// Pre-allocate ranks: 1 rank for every 8 uint64 words
+	h.ranks = make([]uint32, 0, (len(h.b)+7)/8)
+	for i, v := range h.b {
+		if i%8 == 0 {
+			h.ranks = append(h.ranks, pop)
 		}
-		h.ranks = append(h.ranks, r)
+		pop += uint32(bits.OnesCount64(v))
 	}
 }
 
 // Query returns the index of the key
 func (h *H) Query(k tbits.BitString) uint64 {
-
 	hash := k.Hash()
 	h1, h2 := uint32(hash), uint32(hash>>32)
 
-	for i, bv := range h.b {
-		idx := (h1 ^ rotl(h2, uint32(i))) % uint32(len(bv)*64)
+	var offset uint32
+	for level, size := range h.levelSizes {
+		idx := (h1 ^ bits.RotateLeft32(h2, level)) % size
+		n := offset + (idx / 64)
 
-		if bv.get(idx) == 0 {
+		if h.b[n]&(1<<(idx%64)) == 0 {
+			offset += (size + 63) / 64
 			continue
 		}
 
-		rank := h.ranks[i][idx/512]
-
-		for j := (idx / 64) &^ 7; j < idx/64; j++ {
-			rank += uint64(bits.OnesCount64(bv[j]))
+		rank := h.ranks[n/8]
+		for j := n &^ 7; j < n; j++ {
+			rank += uint32(bits.OnesCount64(h.b[j]))
 		}
+		rank += uint32(bits.OnesCount64(h.b[n] << (64 - (idx % 64))))
 
-		w := bv[idx/64]
-
-		rank += uint64(bits.OnesCount64(w << (64 - (idx % 64))))
-
-		return rank + 1
+		return uint64(rank + 1)
 	}
 
 	return 0
@@ -129,23 +133,12 @@ func (h *H) Query(k tbits.BitString) uint64 {
 
 // Size returns the size in bytes
 func (h *H) Size() int {
-	var size int
-	for _, v := range h.b {
-		size += len(v) * 8
-	}
-	for _, v := range h.ranks {
-		size += len(v) * 8
-	}
-	return size
+	return len(h.b)*8 + len(h.ranks)*4 + len(h.levelSizes)*4
 }
 
 // ByteSize returns the size in bytes (same as Size for consistency)
 func (h *H) ByteSize() int {
 	return h.Size()
-}
-
-func rotl(v uint32, r uint32) uint32 {
-	return (v << r) | (v >> (32 - r))
 }
 
 type bitvector []uint64
