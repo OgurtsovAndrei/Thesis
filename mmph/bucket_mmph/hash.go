@@ -2,29 +2,28 @@ package bucket
 
 import (
 	"Thesis/errutil"
+	"Thesis/mmph/go-boomphf-bs/inline-uint64"
 	"fmt"
 	"math"
 
 	"Thesis/bits"
 	"Thesis/bits/maps"
-
-	"Thesis/mmph/go-boomphf"
 )
 
 type MonotoneHash struct {
 	bucketSize int
 
 	// d0: KeyHash -> LCP Length (in bits)
-	d0Table   *boomphf.H // overhead of 2-3 bits per key
-	d0Lengths []uint16   // O(n * log w) bits
+	d0Table   *inline_uint64.H // overhead of 2-3 bits per key
+	d0Lengths []uint16         // O(n * log w) bits
 
 	// d1: PrefixHash -> Bucket Index
-	d1Table   *boomphf.H // overhead of 2-3 bits per bucket
-	d1Indices []int32    // O((n/b) * log(n/b)) <= O(n) bits, when b = log n
+	d1Table   *inline_uint64.H // overhead of 2-3 bits per bucket
+	d1Indices []int32          // O((n/b) * log(n/b)) <= O(n) bits, when b = log n
 
 	// buckets: KeyHash -> Local Rank
-	buckets     []*boomphf.H // overhead of 2-3 bits per key
-	bucketRanks [][]uint8    // O(n log(b)) = O(b log(log(n))) bits, when b = log n
+	buckets     []*inline_uint64.H // overhead of 2-3 bits per key
+	bucketRanks [][]uint8          // O(n log(b)) = O(b log(log(n))) bits, when b = log n
 }
 
 func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
@@ -43,7 +42,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 
 	mh := &MonotoneHash{
 		bucketSize:  bucketSize,
-		buckets:     make([]*boomphf.H, numBuckets),
+		buckets:     make([]*inline_uint64.H, numBuckets),
 		bucketRanks: make([][]uint8, numBuckets),
 	}
 
@@ -68,7 +67,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 				bucketHashes[j] = k.Hash()
 			}
 
-			mh.buckets[i] = boomphf.NewDefault(bucketHashes)
+			mh.buckets[i] = inline_uint64.NewDefault(bucketHashes)
 
 			for j, h := range bucketHashes {
 				if idx := mh.buckets[i].Query(h); idx == 0 {
@@ -107,7 +106,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 		for i, k := range allKeys {
 			allKeyHashes[i] = k.Hash()
 		}
-		mh.d0Table = boomphf.NewDefault(allKeyHashes)
+		mh.d0Table = inline_uint64.NewDefault(allKeyHashes)
 
 		mh.d0Lengths = make([]uint16, len(allKeys))
 		for _, k := range allKeys {
@@ -125,7 +124,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 		for i, p := range allLcps {
 			lcpHashes[i] = p.Hash()
 		}
-		mh.d1Table = boomphf.NewDefault(lcpHashes)
+		mh.d1Table = inline_uint64.NewDefault(lcpHashes)
 
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {

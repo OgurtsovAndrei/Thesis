@@ -3,7 +3,7 @@
 /*
    https://arxiv.org/abs/1702.03154
 */
-package boomphf
+package inline_uint64
 
 import (
 	"math/bits"
@@ -44,7 +44,9 @@ func New(gamma float64, keys []uint64) *H {
 			h1, h2 := uint32(hash), uint32(hash>>32)
 			idx := (h1 ^ bits.RotateLeft32(h2, int(level))) % size
 
-			if collide.get(idx) == 1 { continue }
+			if collide.get(idx) == 1 {
+				continue
+			}
 			if A.get(idx) == 1 {
 				collide.set(idx)
 				continue
@@ -130,7 +132,7 @@ func (h *H) Query(k uint64) uint64 {
 	for current < uint32(len(h.b)) {
 		size := uint32(h.b[current])
 		idx := (h1 ^ bits.RotateLeft32(h2, level)) % size
-		
+
 		dataStart := current + 8
 		n := dataStart + (idx / 64)
 
@@ -169,6 +171,7 @@ func xorshiftMult64(x uint64) uint64 {
 }
 
 type bitvector []uint64
+
 func newbv(size uint32) bitvector { return make([]uint64, uint(size+63)/64) }
 func (b bitvector) get(bit uint32) uint {
 	shift := bit % 64
@@ -178,5 +181,7 @@ func (b bitvector) get(bit uint32) uint {
 }
 func (b bitvector) set(bit uint32) { b[bit/64] |= (1 << (bit % 64)) }
 func (b bitvector) reset() {
-	for i := range b { b[i] = 0 }
+	for i := range b {
+		b[i] = 0
+	}
 }
