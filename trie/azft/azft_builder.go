@@ -50,7 +50,7 @@ func NewApproxZFastTrieFromIteratorStreaming[E UNumber, S UNumber, I UNumber](
 		return &ApproxZFastTrie[E, S, I]{seed: seed}, nil
 	}
 
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
+	mph := boomphf.NewDefault(keysForMPH)
 	data := make([]NodeData[E, S, I], len(keysForMPH))
 
 	// Create mapping from keys to their delimiter indices

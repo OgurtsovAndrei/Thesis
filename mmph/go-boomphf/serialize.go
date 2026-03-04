@@ -4,45 +4,29 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"io"
 )
 
 // The serialization format for the H structure is as follows (all values are LittleEndian):
 //
-// Header:
-// - uint32: Count of levels (L) in h.b
-//
-// Data for h.b (L iterations):
-// - uint32: Length of the current bitvector (N_i)
-// - N_i * uint64: The actual uint64 blocks of the bitvector
-//
-// Data for h.ranks:
-// - uint32: Count of levels (L) in h.ranks (should match the first header value)
-//
-// Data for h.ranks (L iterations):
-// - uint32: Length of the current rank slice (R_i)
-// - R_i * uint64: The actual uint64 rank values
-//
-// Total Size: Size() + 8 + L * 8 bytes (where L is the number of levels)
+// - uint32: Length of h.b (number of uint64 words)
+// - h.b data: uint64 words
+// - uint32: Length of h.ranks (number of uint32 values)
+// - h.ranks data: uint32 values
 
 func (h *H) Serialize() ([]byte, error) {
 	var buf []byte
 
+	// Serialize h.b
 	buf = binary.LittleEndian.AppendUint32(buf, uint32(len(h.b)))
-
-	for _, bv := range h.b {
-		buf = binary.LittleEndian.AppendUint32(buf, uint32(len(bv)))
-		for _, v := range bv {
-			buf = binary.LittleEndian.AppendUint64(buf, v)
-		}
+	for _, v := range h.b {
+		buf = binary.LittleEndian.AppendUint64(buf, v)
 	}
 
+	// Serialize h.ranks
 	buf = binary.LittleEndian.AppendUint32(buf, uint32(len(h.ranks)))
-
-	for _, rankSlice := range h.ranks {
-		buf = binary.LittleEndian.AppendUint32(buf, uint32(len(rankSlice)))
-		for _, v := range rankSlice {
-			buf = binary.LittleEndian.AppendUint64(buf, v)
-		}
+	for _, v := range h.ranks {
+		buf = binary.LittleEndian.AppendUint32(buf, v)
 	}
 
 	return buf, nil
@@ -51,50 +35,39 @@ func (h *H) Serialize() ([]byte, error) {
 func Deserialize(data []byte, target *H) error {
 	r := bytes.NewReader(data)
 
-	var bLevels uint32
-	if err := binary.Read(r, binary.LittleEndian, &bLevels); err != nil {
-		return errors.New("failed to read b levels count")
+	// Read h.b
+	var bLen uint32
+	if err := binary.Read(r, binary.LittleEndian, &bLen); err != nil {
+		return errors.New("failed to read b length")
 	}
 
-	target.b = make([]bitvector, bLevels)
-	for i := uint32(0); i < bLevels; i++ {
-		var bvLen uint32
-		if err := binary.Read(r, binary.LittleEndian, &bvLen); err != nil {
-			return errors.New("failed to read bitvector length")
+	target.b = make([]uint64, bLen)
+	for i := uint32(0); i < bLen; i++ {
+		var val uint64
+		if err := binary.Read(r, binary.LittleEndian, &val); err != nil {
+			return errors.New("failed to read b data")
 		}
-
-		bv := make(bitvector, bvLen)
-		for j := uint32(0); j < bvLen; j++ {
-			var val uint64
-			if err := binary.Read(r, binary.LittleEndian, &val); err != nil {
-				return errors.New("failed to read bitvector data")
-			}
-			bv[j] = val
-		}
-		target.b[i] = bv
+		target.b[i] = val
 	}
 
-	var rankLevels uint32
-	if err := binary.Read(r, binary.LittleEndian, &rankLevels); err != nil {
-		return errors.New("failed to read ranks levels count")
+	// Read h.ranks
+	var rankLen uint32
+	if err := binary.Read(r, binary.LittleEndian, &rankLen); err != nil {
+		if err == io.EOF {
+			// Older version might not have ranks if it was built differently, 
+			// but here we expect them.
+			return errors.New("failed to read ranks length")
+		}
+		return errors.New("failed to read ranks length")
 	}
 
-	target.ranks = make([][]uint64, rankLevels)
-	for i := uint32(0); i < rankLevels; i++ {
-		var rankLen uint32
-		if err := binary.Read(r, binary.LittleEndian, &rankLen); err != nil {
-			return errors.New("failed to read rank slice length")
+	target.ranks = make([]uint32, rankLen)
+	for i := uint32(0); i < rankLen; i++ {
+		var val uint32
+		if err := binary.Read(r, binary.LittleEndian, &val); err != nil {
+			return errors.New("failed to read ranks data")
 		}
-
-		rankSlice := make([]uint64, rankLen)
-		for j := uint32(0); j < rankLen; j++ {
-			var val uint64
-			if err := binary.Read(r, binary.LittleEndian, &val); err != nil {
-				return errors.New("failed to read rank slice data")
-			}
-			rankSlice[j] = val
-		}
-		target.ranks[i] = rankSlice
+		target.ranks[i] = val
 	}
 
 	if r.Len() != 0 {

@@ -68,7 +68,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 				bucketHashes[j] = k.Hash()
 			}
 
-			mh.buckets[i] = boomphf.New(2.0, bucketHashes)
+			mh.buckets[i] = boomphf.NewDefault(bucketHashes)
 
 			for j, h := range bucketHashes {
 				if idx := mh.buckets[i].Query(h); idx == 0 {
@@ -107,7 +107,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 		for i, k := range allKeys {
 			allKeyHashes[i] = k.Hash()
 		}
-		mh.d0Table = boomphf.New(2.0, allKeyHashes)
+		mh.d0Table = boomphf.NewDefault(allKeyHashes)
 
 		mh.d0Lengths = make([]uint16, len(allKeys))
 		for _, k := range allKeys {
@@ -125,7 +125,7 @@ func NewMonotoneHash(data []bits.BitString) *MonotoneHash {
 		for i, p := range allLcps {
 			lcpHashes[i] = p.Hash()
 		}
-		mh.d1Table = boomphf.New(2.0, lcpHashes)
+		mh.d1Table = boomphf.NewDefault(lcpHashes)
 
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {

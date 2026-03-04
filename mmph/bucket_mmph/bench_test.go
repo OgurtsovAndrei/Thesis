@@ -1,7 +1,6 @@
 package bucket
 
 import (
-	"Thesis/bits"
 	"Thesis/testutils"
 	"fmt"
 	"testing"

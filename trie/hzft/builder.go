@@ -180,7 +180,7 @@ func NewHZFastTrieFromIteratorStreaming[E UNumber](iter bits.BitStringIterator) 
 		return true
 	})
 
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
+	mph := boomphf.NewDefault(keysForMPH)
 
 	data := make([]HNodeData[E], len(keysForMPH))
 	b.kv.Range(func(key bits.BitString, value HNodeData[E]) bool {

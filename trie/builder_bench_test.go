@@ -1,7 +1,6 @@
 package trie
 
 import (
-	"Thesis/bits"
 	"Thesis/locators/lerloc"
 	"Thesis/locators/rloc"
 	"Thesis/testutils"

@@ -65,7 +65,7 @@ func NewHZFastTrieFromIteratorHeavy[E UNumber](iter bits.BitStringIterator) (*HZ
 		return true
 	})
 
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
+	mph := boomphf.NewDefault(keysForMPH)
 
 	data := make([]HNodeData[E], len(keysForMPH))
 	kv.Range(func(key bits.BitString, value HNodeData[E]) bool {

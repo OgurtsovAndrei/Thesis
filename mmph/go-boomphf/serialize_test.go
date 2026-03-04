@@ -25,32 +25,14 @@ func generateRandomKeys(count int) []uint64 {
 }
 
 func checkDataEquality(t *testing.B, h1, h2 *H, name string) {
-	h1B := h1.b
-	h2B := h2.b
-
-	require.Equal(t, len(h1B), len(h2B), "%s: h.b level count mismatch", name)
-
-	for i := 0; i < len(h1B); i++ {
-		bv1 := h1B[i]
-		bv2 := h2B[i]
-		require.Equal(t, len(bv1), len(bv2), "%s: h.b[%d] length mismatch", name, i)
-		for j := 0; j < len(bv1); j++ {
-			require.Equal(t, bv1[j], bv2[j], "%s: h.b[%d][%d] data mismatch", name, i, j)
-		}
+	require.Equal(t, len(h1.b), len(h2.b), "%s: h.b length mismatch", name)
+	for i := 0; i < len(h1.b); i++ {
+		require.Equal(t, h1.b[i], h2.b[i], "%s: h.b[%d] data mismatch", name, i)
 	}
 
-	h1Ranks := h1.ranks
-	h2Ranks := h2.ranks
-
-	require.Equal(t, len(h1Ranks), len(h2Ranks), "%s: h.ranks level count mismatch", name)
-
-	for i := 0; i < len(h1Ranks); i++ {
-		r1 := h1Ranks[i]
-		r2 := h2Ranks[i]
-		require.Equal(t, len(r1), len(r2), "%s: h.ranks[%d] length mismatch", name, i)
-		for j := 0; j < len(r1); j++ {
-			require.Equal(t, r1[j], r2[j], "%s: h.ranks[%d][%d] data mismatch", name, i, j)
-		}
+	require.Equal(t, len(h1.ranks), len(h2.ranks), "%s: h.ranks length mismatch", name)
+	for i := 0; i < len(h1.ranks); i++ {
+		require.Equal(t, h1.ranks[i], h2.ranks[i], "%s: h.ranks[%d] data mismatch", name, i)
 	}
 }
 
