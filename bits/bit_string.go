@@ -142,14 +142,21 @@ func (bs BitString) Equal(other BitString) bool {
 	if bs.IsEmpty() {
 		return true
 	}
-	if len(bs.data) != len(other.data) {
-		return false
-	}
-	for i := range bs.data {
+	
+	fullWords := bs.sizeBits / 64
+	for i := uint32(0); i < fullWords; i++ {
 		if bs.data[i] != other.data[i] {
 			return false
 		}
 	}
+	
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		if (bs.data[fullWords] & mask) != (other.data[fullWords] & mask) {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -172,6 +179,10 @@ func (bs BitString) Data() []byte {
 
 	if numBytes%8 != 0 {
 		lastWord := bs.data[fullWords]
+		if bs.sizeBits%64 != 0 {
+			mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+			lastWord &= mask
+		}
 		offset := fullWords * 8
 		remainingBytes := numBytes % 8
 		for j := uint32(0); j < remainingBytes; j++ {
@@ -200,9 +211,16 @@ func (bs BitString) PrettyString() string {
 	sb.WriteString(": (")
 	sb.WriteString(strconv.Itoa(int(bs.sizeBits)))
 	sb.WriteString(" bits) [")
-	for i, word := range bs.data {
+	
+	numWords := (bs.sizeBits + 63) / 64
+	for i := uint32(0); i < numWords; i++ {
 		if i > 0 {
 			sb.WriteString(",")
+		}
+		word := bs.data[i]
+		if i == numWords-1 && bs.sizeBits%64 != 0 {
+			mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+			word &= mask
 		}
 		sb.WriteString(strconv.FormatUint(word, 10))
 	}
@@ -283,52 +301,13 @@ func (bs BitString) Prefix(size int) BitString {
 	if size <= 0 {
 		return BitString{}
 	}
-	if int(bs.sizeBits) == size {
+	if int(bs.sizeBits) <= size {
 		return bs
 	}
 
 	numWords := (uint32(size) + 63) / 64
-
-	// If size is a multiple of 64, we can just slice the data.
-	// This is safe because BitString is immutable and we never modify the underlying array.
-	if uint32(size)%64 == 0 {
-		// Ensure we don't go out of bounds if requested size is larger than actual data
-		endWord := numWords
-		if endWord > uint32(len(bs.data)) {
-			endWord = uint32(len(bs.data))
-		}
-
-		// If we need more words than we have, we still need to allocate to provide zeros.
-		if numWords > uint32(len(bs.data)) {
-			newData := make([]uint64, numWords)
-			copy(newData, bs.data)
-			return BitString{
-				data:     newData,
-				sizeBits: uint32(size),
-			}
-		}
-
-		return BitString{
-			data:     bs.data[:endWord],
-			sizeBits: uint32(size),
-		}
-	}
-
-	newData := make([]uint64, numWords)
-
-	copyWords := numWords
-	if copyWords > uint32(len(bs.data)) {
-		copyWords = uint32(len(bs.data))
-	}
-
-	copy(newData, bs.data[:copyWords])
-
-	lastWordIndex := numWords - 1
-	mask := (uint64(1) << (uint32(size) % 64)) - 1
-	newData[lastWordIndex] &= mask
-
 	return BitString{
-		data:     newData,
+		data:     bs.data[:numWords],
 		sizeBits: uint32(size),
 	}
 }
@@ -344,10 +323,18 @@ func (bs BitString) Hash() uint64 {
 	h ^= uint64(bs.sizeBits)
 	h *= prime64
 
-	for _, word := range bs.data {
-		h ^= word
+	fullWords := bs.sizeBits / 64
+	for i := uint32(0); i < fullWords; i++ {
+		h ^= bs.data[i]
 		h *= prime64
 	}
+	
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		h ^= (bs.data[fullWords] & mask)
+		h *= prime64
+	}
+
 	return h
 }
 
@@ -363,10 +350,18 @@ func (bs BitString) HashWithSeed(seed uint64) uint64 {
 	h ^= uint64(bs.sizeBits)
 	h *= prime64
 
-	for _, word := range bs.data {
-		h ^= word
+	fullWords := bs.sizeBits / 64
+	for i := uint32(0); i < fullWords; i++ {
+		h ^= bs.data[i]
 		h *= prime64
 	}
+	
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		h ^= (bs.data[fullWords] & mask)
+		h *= prime64
+	}
+
 	return h
 }
 
@@ -389,12 +384,13 @@ func (bs BitString) Compare(other BitString) int {
 		return 1
 	}
 
-	minWords := len(bs.data)
-	if len(other.data) < minWords {
-		minWords = len(other.data)
+	minSize := aSize
+	if bSize < minSize {
+		minSize = bSize
 	}
 
-	for i := 0; i < minWords; i++ {
+	fullWords := minSize / 64
+	for i := uint32(0); i < fullWords; i++ {
 		aWord := bs.data[i]
 		bWord := other.data[i]
 		if aWord != bWord {
@@ -404,6 +400,22 @@ func (bs BitString) Compare(other BitString) int {
 				return 1
 			}
 			return -1
+		}
+	}
+
+	if minSize%64 != 0 {
+		i := fullWords
+		aWord := bs.data[i]
+		bWord := other.data[i]
+		if aWord != bWord {
+			xor := aWord ^ bWord
+			diffBitInWord := uint32(bits.TrailingZeros64(xor))
+			if diffBitInWord < minSize%64 {
+				if (aWord & (uint64(1) << diffBitInWord)) != 0 {
+					return 1
+				}
+				return -1
+			}
 		}
 	}
 
@@ -488,10 +500,16 @@ func (bs BitString) TrimTrailingZeros() BitString {
 		return bs
 	}
 
+	lastWordIdx := int32((bs.sizeBits - 1) / 64)
 	lastOneBit := int32(-1)
 
-	for i := int32(len(bs.data) - 1); i >= 0; i-- {
+	for i := lastWordIdx; i >= 0; i-- {
 		word := bs.data[i]
+		if i == lastWordIdx && bs.sizeBits%64 != 0 {
+			mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+			word &= mask
+		}
+
 		if word != 0 {
 			highestBit := 63 - bits.LeadingZeros64(word)
 			lastOneBit = i*64 + int32(highestBit)
@@ -515,13 +533,16 @@ func (bs BitString) AppendBit(bit bool) BitString {
 	newSize := bs.sizeBits + 1
 	newNumWords := (newSize + 63) / 64
 
-	var newData []uint64
-	if newNumWords > uint32(len(bs.data)) {
-		newData = make([]uint64, newNumWords)
-		copy(newData, bs.data)
-	} else {
-		newData = make([]uint64, len(bs.data))
-		copy(newData, bs.data)
+	newData := make([]uint64, newNumWords)
+	copyWords := uint32(len(bs.data))
+	if copyWords > newNumWords {
+		copyWords = newNumWords
+	}
+	copy(newData, bs.data[:copyWords])
+
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		newData[bs.sizeBits/64] &= mask
 	}
 
 	if bit {
@@ -563,7 +584,6 @@ func (bs BitString) Successor() BitString {
 		return NewFromBinary("1")
 	}
 
-	// 1. Find the highest index i such that At(i) == false
 	lastWordIdx := int(bs.sizeBits-1) / 64
 	lastZero := -1
 
@@ -608,8 +628,14 @@ func (bs BitString) Successor() BitString {
 	}
 
 	// 2. Create copy and apply change
-	newData := make([]uint64, len(bs.data))
-	copy(newData, bs.data)
+	numWords := (bs.sizeBits + 63) / 64
+	newData := make([]uint64, numWords)
+	copy(newData, bs.data[:numWords])
+
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		newData[numWords-1] &= mask
+	}
 
 	wordIdx := lastZero / 64
 	bitIdx := uint32(lastZero % 64)

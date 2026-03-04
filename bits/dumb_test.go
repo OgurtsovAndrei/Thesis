@@ -318,3 +318,43 @@ func TestTrailingZerosVsTrimmed(t *testing.T) {
 			"Compare: %s should be > %s (standard lexicographic)", tc.longer, tc.shorter)
 	}
 }
+
+func TestBitStringJunkBits(t *testing.T) {
+	t.Parallel()
+
+	// Create a long string and take a prefix so it retains the underlying data with junk bits
+	longStr := NewFromBinary("10101010101010101010101010101010101010101010101010101010101010101111")
+	prefixStr := longStr.Prefix(10) // "1010101010"
+
+	// Create a clean string of the same length
+	cleanStr := NewFromBinary("1010101010")
+
+	// Ensure they have the same size and value but underlying arrays have different "junk"
+	require.Equal(t, uint32(10), prefixStr.Size())
+	require.Equal(t, uint32(10), cleanStr.Size())
+
+	// Test Equal / Eq
+	require.True(t, prefixStr.Equal(cleanStr), "Equal should ignore junk bits")
+	require.True(t, prefixStr.Eq(cleanStr), "Eq should ignore junk bits")
+
+	// Test Hash
+	require.Equal(t, prefixStr.Hash(), cleanStr.Hash(), "Hash should ignore junk bits")
+	require.Equal(t, prefixStr.HashWithSeed(42), cleanStr.HashWithSeed(42), "HashWithSeed should ignore junk bits")
+
+	// Test Compare and TrieCompare
+	require.Equal(t, 0, prefixStr.Compare(cleanStr), "Compare should ignore junk bits")
+	require.Equal(t, 0, prefixStr.TrieCompare(cleanStr), "TrieCompare should ignore junk bits")
+
+	// Test Data (serialization)
+	require.Equal(t, cleanStr.Data(), prefixStr.Data(), "Data should ignore junk bits")
+
+	// Test TrimTrailingZeros
+	require.True(t, prefixStr.TrimTrailingZeros().Equal(cleanStr.TrimTrailingZeros()), "TrimTrailingZeros should ignore junk bits")
+
+	// Test AppendBit
+	require.True(t, prefixStr.AppendBit(true).Equal(cleanStr.AppendBit(true)), "AppendBit should ignore junk bits")
+	
+	// Test Successor
+	require.True(t, prefixStr.Successor().Equal(cleanStr.Successor()), "Successor should ignore junk bits")
+}
+
