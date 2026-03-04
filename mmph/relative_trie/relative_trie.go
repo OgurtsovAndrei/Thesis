@@ -110,7 +110,7 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 				bucketHashes[j] = k.Hash()
 			}
 
-			bucketMPHF := boomphf.New(2.0, bucketHashes)
+			bucketMPHF := boomphf.NewDefault(bucketHashes)
 
 			for j, h := range bucketHashes {
 				if idx := bucketMPHF.Query(h); idx == 0 {

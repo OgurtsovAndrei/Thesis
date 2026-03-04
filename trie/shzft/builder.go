@@ -166,7 +166,7 @@ func NewSHZFastTrieFromIteratorStreaming(iter bits.BitStringIterator) (*Succinct
 		return true
 	})
 
-	mph := boomphf.New(boomphf.Gamma, keysForMPH)
+	mph := boomphf.NewDefault(keysForMPH)
 
 	// Phase 2: Create temporary arrays mapped by MPH index
 	totalEntries := len(keysForMPH)

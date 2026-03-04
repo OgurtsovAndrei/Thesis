@@ -8,7 +8,7 @@ import (
 	"Thesis/bits"
 	"Thesis/bits/maps"
 
-	"github.com/dgryski/go-boomphf"
+	"Thesis/mmph/go-boomphf"
 )
 
 type DebugMonotoneHash struct {
@@ -124,7 +124,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		for i, k := range allKeys {
 			allKeyHashes[i] = k.Hash()
 		}
-		mh.d0Table = boomphf.New(2.0, allKeyHashes)
+		mh.d0Table = boomphf.NewDefault(allKeyHashes)
 
 		mh.d0Lengths = make([]uint16, len(allKeys))
 		for _, k := range allKeys {
@@ -143,7 +143,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		for i, p := range allLcps {
 			lcpHashes[i] = p.Hash()
 		}
-		mh.d1Table = boomphf.New(2.0, lcpHashes)
+		mh.d1Table = boomphf.NewDefault(lcpHashes)
 
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {
