@@ -1,4 +1,4 @@
-package go_boomphf_bs
+package inline
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 
 var (
 	benchBitKeys   map[int][]tbits.BitString
-	testGammas     = []float64{1.3, 1.5, 1.7, 2.0, 2.5, 3.0, 4.0, 5.0}
-	benchKeyCounts = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20}
+	testGammas     = []float64{1.3, 1.5, 1.7, 2.0, 2.5, 3.0}
+	benchKeyCounts = []int{1 << 10, 1 << 13, 1 << 15, 1 << 18}
 )
 
 func init() {

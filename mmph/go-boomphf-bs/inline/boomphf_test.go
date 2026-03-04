@@ -1,4 +1,4 @@
-package go_boomphf_bs
+package inline
 
 import (
 	"math/rand"
