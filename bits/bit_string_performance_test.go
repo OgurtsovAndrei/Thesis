@@ -1,157 +1,223 @@
 package bits
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
 )
 
-// Test TrimTrailingZeros
-func TestTrimTrailingZeros(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{"empty string", "", ""},
-		{"all zeros", "00000", ""},
-		{"no trailing zeros", "10101", "10101"},
-		{"some trailing zeros", "10100", "101"},
-		{"single one", "10000", "1"},
-		{"single zero", "0", ""},
-		{"alternating pattern", "1010100", "10101"},
+// --- BENCHMARKS ---
+
+func generateRandomBitString(maxSize int, r *rand.Rand) BitString {
+	size := r.Intn(maxSize-1) + 1
+	numWords := (size + 63) / 64
+	data := make([]uint64, numWords)
+	for i := 0; i < numWords; i++ {
+		data[i] = r.Uint64()
 	}
+	// Mask the last word to ensure it's "clean" initially if needed, 
+	// or leave it as is to simulate realistic creation.
+	if size%64 != 0 {
+		mask := (uint64(1) << (uint32(size) % 64)) - 1
+		data[numWords-1] &= mask
+	}
+	return BitString{
+		data:     data,
+		sizeBits: uint32(size),
+	}
+}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			bs := NewFromBinary(tc.input)
-			result := bs.TrimTrailingZeros()
-			expected := NewFromBinary(tc.expected)
+func generatePool(count int, maxSize int) []BitString {
+	r := rand.New(rand.NewSource(42))
+	pool := make([]BitString, count)
+	for i := 0; i < count; i++ {
+		pool[i] = generateRandomBitString(maxSize, r)
+	}
+	return pool
+}
 
-			if !result.Equal(expected) {
-				t.Errorf("TrimTrailingZeros(%s) = %v, want %v", tc.input, result, expected)
+var benchmarkSizes = []int{64, 256, 1024, 4096}
+
+func BenchmarkPrefix(b *testing.B) {
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool := generatePool(100, size)
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				bs := pool[i%100]
+				targetSize := (i % int(bs.sizeBits)) + 1
+				_ = bs.Prefix(targetSize)
 			}
 		})
 	}
 }
 
-// Test AppendBit
-func TestAppendBit(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name     string
-		input    string
-		bit      bool
-		expected string
-	}{
-		{"append 0 to empty", "", false, "0"},
-		{"append 1 to empty", "", true, "1"},
-		{"append 0", "101", false, "1010"},
-		{"append 1", "101", true, "1011"},
-		{"append to single bit", "1", false, "10"},
-		{"append to single bit", "0", true, "01"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			bs := NewFromBinary(tc.input)
-			result := bs.AppendBit(tc.bit)
-			expected := NewFromBinary(tc.expected)
-
-			if !result.Equal(expected) {
-				t.Errorf("AppendBit(%s, %t) = %v, want %v", tc.input, tc.bit, result, expected)
+func BenchmarkHash(b *testing.B) {
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			// Generate strings and then take prefix to ensure they have "junk bits"
+			// for the 'After' version to handle.
+			pool := generatePool(100, size+64)
+			for i := range pool {
+				targetSize := (rand.Intn(size-1) + 1)
+				pool[i] = pool[i].Prefix(targetSize)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool[i%100].Hash()
 			}
 		})
 	}
 }
 
-// Test IsAllOnes
-func TestIsAllOnes(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name     string
-		input    string
-		expected bool
-	}{
-		{"empty string", "", false},
-		{"single zero", "0", false},
-		{"single one", "1", true},
-		{"all ones", "1111", true},
-		{"mixed bits", "1101", false},
-		{"all zeros", "0000", false},
-		{"long all ones", "11111111111111111", true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			bs := NewFromBinary(tc.input)
-			result := bs.IsAllOnes()
-
-			if result != tc.expected {
-				t.Errorf("IsAllOnes(%s) = %t, want %t", tc.input, result, tc.expected)
+func BenchmarkEqual(b *testing.B) {
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool1 := generatePool(100, size+64)
+			pool2 := generatePool(100, size+64)
+			// Equalize lengths and take prefixes
+			for i := range pool1 {
+				targetSize := (rand.Intn(size-1) + 1)
+				pool1[i] = pool1[i].Prefix(targetSize)
+				pool2[i] = pool2[i].Prefix(targetSize)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool1[i%100].Equal(pool2[i%100])
 			}
 		})
 	}
 }
 
-// Test Successor
-func TestSuccessor(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{"empty string", "", "1"},
-		{"zero", "0", "1"},
-		{"one", "1", "10"},
-		{"simple increment", "10", "11"},
-		{"carry propagation", "11", "100"},
-		{"longer carry", "111", "1000"},
-		{"mixed bits", "1010", "1011"},
-		{"increment with carry", "1001", "1010"},
+func BenchmarkCompare(b *testing.B) {
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool1 := generatePool(100, size+64)
+			pool2 := generatePool(100, size+64)
+			for i := range pool1 {
+				len1 := rand.Intn(size-1) + 1
+				len2 := rand.Intn(size-1) + 1
+				pool1[i] = pool1[i].Prefix(len1)
+				pool2[i] = pool2[i].Prefix(len2)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool1[i%100].Compare(pool2[i%100])
+			}
+		})
 	}
+}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			bs := NewFromBinary(tc.input)
-			result := bs.Successor()
-			expected := NewFromBinary(tc.expected)
+func BenchmarkTrieCompare(b *testing.B) {
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool1 := generatePool(100, size+64)
+			pool2 := generatePool(100, size+64)
+			for i := range pool1 {
+				len1 := rand.Intn(size-1) + 1
+				len2 := rand.Intn(size-1) + 1
+				pool1[i] = pool1[i].Prefix(len1)
+				pool2[i] = pool2[i].Prefix(len2)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool1[i%100].TrieCompare(pool2[i%100])
+			}
+		})
+	}
+}
 
-			if !result.Equal(expected) {
-				t.Errorf("Successor(%s) = %v, want %v", tc.input, result, expected)
+func BenchmarkHasPrefix(b *testing.B) {
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool1 := generatePool(100, size+64)
+			pool2 := generatePool(100, size)
+			for i := range pool1 {
+				pSize := int(pool2[i].sizeBits)
+				if pSize > int(pool1[i].sizeBits) {
+					pSize = int(pool1[i].sizeBits)
+				}
+				pool2[i] = pool1[i].Prefix(pSize)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool1[i%100].HasPrefix(pool2[i%100])
 			}
 		})
 	}
 }
 
 func BenchmarkTrimTrailingZeros(b *testing.B) {
-	bs := NewFromBinary("1010000000")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.TrimTrailingZeros()
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool := generatePool(100, size+64)
+			for i := range pool {
+				pool[i] = pool[i].Prefix(size)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool[i%100].TrimTrailingZeros()
+			}
+		})
 	}
 }
 
 func BenchmarkAppendBit(b *testing.B) {
-	bs := NewFromBinary("101010")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.AppendBit(true)
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool := generatePool(100, size+64)
+			for i := range pool {
+				pool[i] = pool[i].Prefix(size)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool[i%100].AppendBit(i%2 == 0)
+			}
+		})
 	}
 }
 
 func BenchmarkIsAllOnes(b *testing.B) {
-	bs := NewFromBinary("111111111111111111111111111111")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.IsAllOnes()
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool := make([]BitString, 100)
+			for i := 0; i < 100; i++ {
+				s := rand.Intn(size-1) + 1
+				bs := NewBitString(uint32(s))
+				for j := range bs.data {
+					bs.data[j] = ^uint64(0)
+				}
+				pool[i] = bs.Prefix(s)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool[i%100].IsAllOnes()
+			}
+		})
 	}
 }
 
 func BenchmarkSuccessor(b *testing.B) {
-	bs := NewFromBinary("1010101010")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = bs.Successor()
+	for _, size := range benchmarkSizes {
+		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
+			pool := generatePool(100, size+64)
+			for i := range pool {
+				pool[i] = pool[i].Prefix(size)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = pool[i%100].Successor()
+			}
+		})
 	}
 }
