@@ -3,7 +3,7 @@ package bucket
 import (
 	"Thesis/bits"
 	"Thesis/errutil"
-	"Thesis/mmph/go-boomphf"
+	"Thesis/mmph/go-boomphf-bs/inline-uint64"
 	"Thesis/trie/azft"
 	"Thesis/trie/zft"
 	"Thesis/utils"
@@ -16,9 +16,9 @@ import (
 
 // Bucket represents a single bucket in the hash structure
 type Bucket struct {
-	mphf      *boomphf.H     // MPHF for this bucket
-	ranks     []uint8        // Local ranks within this bucket
-	delimiter bits.BitString // The delimiter (last key) of this bucket
+	mphf      *inline_uint64.H // MPHF for this bucket
+	ranks     []uint8          // Local ranks within this bucket
+	delimiter bits.BitString   // The delimiter (last key) of this bucket
 }
 
 // MonotoneHashWithTrie implements monotone minimal perfect hashing using
@@ -110,7 +110,7 @@ func NewMonotoneHashWithTrieSeeded[E zft.UNumber, S zft.UNumber, I zft.UNumber](
 				bucketHashes[j] = k.Hash()
 			}
 
-			bucketMPHF := boomphf.NewDefault(bucketHashes)
+			bucketMPHF := inline_uint64.NewDefault(bucketHashes)
 
 			for j, h := range bucketHashes {
 				if idx := bucketMPHF.Query(h); idx == 0 {

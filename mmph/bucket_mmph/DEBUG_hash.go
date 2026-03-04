@@ -2,30 +2,29 @@ package bucket
 
 import (
 	"Thesis/errutil"
+	"Thesis/mmph/go-boomphf-bs/inline-uint64"
 	"fmt"
 	"math"
 
 	"Thesis/bits"
 	"Thesis/bits/maps"
-
-	"Thesis/mmph/go-boomphf"
 )
 
 type DebugMonotoneHash struct {
 	bucketSize int
 
-		// d0: KeyHash -> LCP Length (in bits)
-	d0Table    *boomphf.H
+	// d0: KeyHash -> LCP Length (in bits)
+	d0Table    *inline_uint64.H
 	d0Lengths  []uint16
 	d0DebugMap *maps.BitMap[uint16] // DEBUG
 
 	// d1: PrefixHash -> Bucket Index
-	d1Table    *boomphf.H
+	d1Table    *inline_uint64.H
 	d1Indices  []int32
 	d1DebugMap *maps.BitMap[int32] // DEBUG
 
 	// buckets: KeyHash -> Local Rank
-	buckets         []*boomphf.H
+	buckets         []*inline_uint64.H
 	bucketRanks     [][]uint8
 	bucketsDebugMap []*maps.BitMap[uint8] // DEBUG
 }
@@ -46,7 +45,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 
 	mh := &DebugMonotoneHash{
 		bucketSize:      bucketSize,
-		buckets:         make([]*boomphf.H, numBuckets),
+		buckets:         make([]*inline_uint64.H, numBuckets),
 		bucketRanks:     make([][]uint8, numBuckets),
 		bucketsDebugMap: make([]*maps.BitMap[uint8], numBuckets), // DEBUG
 		d1DebugMap:      maps.NewBitMap[int32](),                 // DEBUG
@@ -78,7 +77,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 			if len(bucketKeys) < 10 {
 				gamma = 10.0
 			}
-			mh.buckets[i] = boomphf.New(gamma, bucketHashes)
+			mh.buckets[i] = inline_uint64.New(gamma, bucketHashes)
 
 			for j, h := range bucketHashes {
 				if idx := mh.buckets[i].Query(h); idx == 0 {
@@ -124,7 +123,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		for i, k := range allKeys {
 			allKeyHashes[i] = k.Hash()
 		}
-		mh.d0Table = boomphf.NewDefault(allKeyHashes)
+		mh.d0Table = inline_uint64.NewDefault(allKeyHashes)
 
 		mh.d0Lengths = make([]uint16, len(allKeys))
 		for _, k := range allKeys {
@@ -143,7 +142,7 @@ func NewDebugMonotoneHash(data []bits.BitString) *DebugMonotoneHash {
 		for i, p := range allLcps {
 			lcpHashes[i] = p.Hash()
 		}
-		mh.d1Table = boomphf.NewDefault(lcpHashes)
+		mh.d1Table = inline_uint64.NewDefault(lcpHashes)
 
 		mh.d1Indices = make([]int32, len(allLcps))
 		for _, p := range allLcps {

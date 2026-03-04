@@ -1,4 +1,4 @@
-package boomphf
+package inline_uint64
 
 import (
 	"bytes"
@@ -54,7 +54,7 @@ func Deserialize(data []byte, target *H) error {
 	var rankLen uint32
 	if err := binary.Read(r, binary.LittleEndian, &rankLen); err != nil {
 		if err == io.EOF {
-			// Older version might not have ranks if it was built differently, 
+			// Older version might not have ranks if it was built differently,
 			// but here we expect them.
 			return errors.New("failed to read ranks length")
 		}

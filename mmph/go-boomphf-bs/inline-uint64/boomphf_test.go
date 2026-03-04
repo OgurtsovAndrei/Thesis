@@ -1,4 +1,4 @@
-package boomphf
+package inline_uint64
 
 // code taken from https://github.com/dgryski/go-boomphf
 

@@ -1,4 +1,4 @@
-package boomphf
+package inline_uint64
 
 import (
 	"math/rand"
