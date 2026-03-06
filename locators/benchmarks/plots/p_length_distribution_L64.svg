@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">String Length Distribution in Boundary Set P
+N=100000, L=64, |P|=431117 (|P|/N=4.31)</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">0</text>
+<line class="grid" x1="90.0" y1="383.00" x2="920.0" y2="383.00" />
+<text class="label" x="82.0" y="387.00" text-anchor="end">22,000</text>
+<line class="grid" x1="90.0" y1="301.00" x2="920.0" y2="301.00" />
+<text class="label" x="82.0" y="305.00" text-anchor="end">44,000</text>
+<line class="grid" x1="90.0" y1="219.00" x2="920.0" y2="219.00" />
+<text class="label" x="82.0" y="223.00" text-anchor="end">66,000</text>
+<line class="grid" x1="90.0" y1="137.00" x2="920.0" y2="137.00" />
+<text class="label" x="82.0" y="141.00" text-anchor="end">88,000</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">110,000</text>
+<rect x="90.00" y="465.00" width="11.28" height="0.00" fill="#2a7fff" />
+<rect x="101.49" y="465.00" width="11.28" height="0.00" fill="#2a7fff" />
+<rect x="112.98" y="464.99" width="11.28" height="0.01" fill="#2a7fff" />
+<rect x="124.48" y="464.99" width="11.28" height="0.01" fill="#2a7fff" />
+<rect x="135.97" y="464.97" width="11.28" height="0.03" fill="#2a7fff" />
+<rect x="147.46" y="464.94" width="11.28" height="0.06" fill="#2a7fff" />
+<rect x="158.95" y="464.88" width="11.28" height="0.12" fill="#2a7fff" />
+<rect x="170.45" y="464.76" width="11.28" height="0.24" fill="#2a7fff" />
+<rect x="181.94" y="464.52" width="11.28" height="0.48" fill="#2a7fff" />
+<rect x="193.43" y="464.05" width="11.28" height="0.95" fill="#2a7fff" />
+<rect x="204.92" y="463.09" width="11.28" height="1.91" fill="#2a7fff" />
+<rect x="216.42" y="461.18" width="11.28" height="3.82" fill="#2a7fff" />
+<rect x="227.91" y="457.37" width="11.28" height="7.63" fill="#2a7fff" />
+<rect x="239.40" y="449.73" width="11.28" height="15.27" fill="#2a7fff" />
+<rect x="250.89" y="434.47" width="11.28" height="30.53" fill="#2a7fff" />
+<rect x="262.38" y="405.73" width="11.28" height="59.27" fill="#2a7fff" />
+<rect x="273.88" y="372.21" width="11.28" height="92.79" fill="#2a7fff" />
+<rect x="285.37" y="366.71" width="11.28" height="98.29" fill="#2a7fff" />
+<rect x="296.86" y="389.67" width="11.28" height="75.33" fill="#2a7fff" />
+<rect x="308.35" y="417.98" width="11.28" height="47.02" fill="#2a7fff" />
+<rect x="319.85" y="438.38" width="11.28" height="26.62" fill="#2a7fff" />
+<rect x="331.34" y="451.11" width="11.28" height="13.89" fill="#2a7fff" />
+<rect x="342.83" y="457.92" width="11.28" height="7.08" fill="#2a7fff" />
+<rect x="354.32" y="461.41" width="11.28" height="3.59" fill="#2a7fff" />
+<rect x="365.82" y="463.17" width="11.28" height="1.83" fill="#2a7fff" />
+<rect x="377.31" y="464.03" width="11.28" height="0.97" fill="#2a7fff" />
+<rect x="388.80" y="464.47" width="11.28" height="0.53" fill="#2a7fff" />
+<rect x="400.29" y="464.77" width="11.28" height="0.23" fill="#2a7fff" />
+<rect x="411.78" y="464.89" width="11.28" height="0.11" fill="#2a7fff" />
+<rect x="423.28" y="464.94" width="11.28" height="0.06" fill="#2a7fff" />
+<rect x="434.77" y="464.98" width="11.28" height="0.02" fill="#2a7fff" />
+<rect x="446.26" y="464.99" width="11.28" height="0.01" fill="#2a7fff" />
+<rect x="457.75" y="465.00" width="11.28" height="0.00" fill="#2a7fff" />
+<rect x="584.17" y="465.00" width="11.28" height="0.00" fill="#2a7fff" />
+<rect x="607.15" y="464.99" width="11.28" height="0.01" fill="#2a7fff" />
+<rect x="641.63" y="465.00" width="11.28" height="0.00" fill="#2a7fff" />
+<rect x="653.12" y="464.99" width="11.28" height="0.01" fill="#2a7fff" />
+<rect x="664.62" y="464.98" width="11.28" height="0.02" fill="#2a7fff" />
+<rect x="676.11" y="464.96" width="11.28" height="0.04" fill="#2a7fff" />
+<rect x="687.60" y="464.91" width="11.28" height="0.09" fill="#2a7fff" />
+<rect x="699.09" y="464.85" width="11.28" height="0.15" fill="#2a7fff" />
+<rect x="710.58" y="464.60" width="11.28" height="0.40" fill="#2a7fff" />
+<rect x="722.08" y="464.29" width="11.28" height="0.71" fill="#2a7fff" />
+<rect x="733.57" y="463.49" width="11.28" height="1.51" fill="#2a7fff" />
+<rect x="745.06" y="462.33" width="11.28" height="2.67" fill="#2a7fff" />
+<rect x="756.55" y="459.38" width="11.28" height="5.62" fill="#2a7fff" />
+<rect x="768.05" y="453.46" width="11.28" height="11.54" fill="#2a7fff" />
+<rect x="779.54" y="441.37" width="11.28" height="23.63" fill="#2a7fff" />
+<rect x="791.03" y="418.17" width="11.28" height="46.83" fill="#2a7fff" />
+<rect x="802.52" y="371.89" width="11.28" height="93.11" fill="#2a7fff" />
+<rect x="814.02" y="278.63" width="11.28" height="186.37" fill="#2a7fff" />
+<rect x="825.51" y="92.27" width="11.28" height="372.73" fill="#2a7fff" />
+<rect x="837.00" y="92.27" width="11.28" height="372.73" fill="#2a7fff" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">0</text>
+<text class="label" x="204.92" y="485.0" text-anchor="middle">10</text>
+<text class="label" x="319.85" y="485.0" text-anchor="middle">20</text>
+<text class="label" x="434.77" y="485.0" text-anchor="middle">30</text>
+<text class="label" x="549.69" y="485.0" text-anchor="middle">40</text>
+<text class="label" x="664.62" y="485.0" text-anchor="middle">50</text>
+<text class="label" x="779.54" y="485.0" text-anchor="middle">60</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Bit Length</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">Frequency</text>
+</svg>

@@ -6,15 +6,15 @@
 <line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
 <text class="label" x="82.0" y="469.00" text-anchor="end">0.00</text>
 <line class="grid" x1="90.0" y1="383.00" x2="920.0" y2="383.00" />
-<text class="label" x="82.0" y="387.00" text-anchor="end">64.02</text>
+<text class="label" x="82.0" y="387.00" text-anchor="end">168.30</text>
 <line class="grid" x1="90.0" y1="301.00" x2="920.0" y2="301.00" />
-<text class="label" x="82.0" y="305.00" text-anchor="end">128.04</text>
+<text class="label" x="82.0" y="305.00" text-anchor="end">336.60</text>
 <line class="grid" x1="90.0" y1="219.00" x2="920.0" y2="219.00" />
-<text class="label" x="82.0" y="223.00" text-anchor="end">192.06</text>
+<text class="label" x="82.0" y="223.00" text-anchor="end">504.90</text>
 <line class="grid" x1="90.0" y1="137.00" x2="920.0" y2="137.00" />
-<text class="label" x="82.0" y="141.00" text-anchor="end">256.08</text>
+<text class="label" x="82.0" y="141.00" text-anchor="end">673.20</text>
 <line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
-<text class="label" x="82.0" y="59.00" text-anchor="end">320.10</text>
+<text class="label" x="82.0" y="59.00" text-anchor="end">841.50</text>
 <line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
 <text class="label" x="90.00" y="485.0" text-anchor="middle">32</text>
 <line class="grid" x1="228.33" y1="55.0" x2="228.33" y2="465.0" />
@@ -29,35 +29,41 @@
 <text class="label" x="689.44" y="485.0" text-anchor="middle">262,144</text>
 <line class="grid" x1="781.67" y1="55.0" x2="781.67" y2="465.0" />
 <text class="label" x="781.67" y="485.0" text-anchor="middle">1.0e+06</text>
+<line class="grid" x1="873.89" y1="55.0" x2="873.89" y2="465.0" />
+<text class="label" x="873.89" y="485.0" text-anchor="middle">4.2e+06</text>
 <line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
 <text class="label" x="920.00" y="485.0" text-anchor="middle">8.4e+06</text>
-<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,92.27 228.33,258.22 320.56,274.99 458.89,285.83 551.11,287.08 689.44,280.09" />
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,92.27 228.33,337.32 320.56,364.89 458.89,375.68 551.11,377.59 689.44,375.76 781.67,378.22 873.89,378.09" />
 <circle cx="90.00" cy="92.27" r="3.5" fill="#2a7fff" />
-<circle cx="228.33" cy="258.22" r="3.5" fill="#2a7fff" />
-<circle cx="320.56" cy="274.99" r="3.5" fill="#2a7fff" />
-<circle cx="458.89" cy="285.83" r="3.5" fill="#2a7fff" />
-<circle cx="551.11" cy="287.08" r="3.5" fill="#2a7fff" />
-<circle cx="689.44" cy="280.09" r="3.5" fill="#2a7fff" />
+<circle cx="228.33" cy="337.32" r="3.5" fill="#2a7fff" />
+<circle cx="320.56" cy="364.89" r="3.5" fill="#2a7fff" />
+<circle cx="458.89" cy="375.68" r="3.5" fill="#2a7fff" />
+<circle cx="551.11" cy="377.59" r="3.5" fill="#2a7fff" />
+<circle cx="689.44" cy="375.76" r="3.5" fill="#2a7fff" />
+<circle cx="781.67" cy="378.22" r="3.5" fill="#2a7fff" />
+<circle cx="873.89" cy="378.09" r="3.5" fill="#2a7fff" />
 <line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
 <text class="label" x="122.0" y="71.0">LERLOC (Fast)</text>
-<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,115.65 228.33,300.37 320.56,318.20 458.89,322.90 551.11,324.03 689.44,321.34" />
-<circle cx="90.00" cy="115.65" r="3.5" fill="#e4572e" />
-<circle cx="228.33" cy="300.37" r="3.5" fill="#e4572e" />
-<circle cx="320.56" cy="318.20" r="3.5" fill="#e4572e" />
-<circle cx="458.89" cy="322.90" r="3.5" fill="#e4572e" />
-<circle cx="551.11" cy="324.03" r="3.5" fill="#e4572e" />
-<circle cx="689.44" cy="321.34" r="3.5" fill="#e4572e" />
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,101.16 228.33,353.35 320.56,381.36 458.89,389.78 551.11,391.64 689.44,391.45 781.67,393.37 873.89,391.26" />
+<circle cx="90.00" cy="101.16" r="3.5" fill="#e4572e" />
+<circle cx="228.33" cy="353.35" r="3.5" fill="#e4572e" />
+<circle cx="320.56" cy="381.36" r="3.5" fill="#e4572e" />
+<circle cx="458.89" cy="389.78" r="3.5" fill="#e4572e" />
+<circle cx="551.11" cy="391.64" r="3.5" fill="#e4572e" />
+<circle cx="689.44" cy="391.45" r="3.5" fill="#e4572e" />
+<circle cx="781.67" cy="393.37" r="3.5" fill="#e4572e" />
+<circle cx="873.89" cy="391.26" r="3.5" fill="#e4572e" />
 <line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
 <text class="label" x="122.0" y="89.0">LERLOC (Compact)</text>
-<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,380.14 228.33,441.26 320.56,443.67 458.89,443.82 551.11,444.03 689.44,444.12 781.67,444.13 920.00,444.13" />
-<circle cx="90.00" cy="380.14" r="3.5" fill="#22a06b" />
-<circle cx="228.33" cy="441.26" r="3.5" fill="#22a06b" />
-<circle cx="320.56" cy="443.67" r="3.5" fill="#22a06b" />
-<circle cx="458.89" cy="443.82" r="3.5" fill="#22a06b" />
-<circle cx="551.11" cy="444.03" r="3.5" fill="#22a06b" />
-<circle cx="689.44" cy="444.12" r="3.5" fill="#22a06b" />
-<circle cx="781.67" cy="444.13" r="3.5" fill="#22a06b" />
-<circle cx="920.00" cy="444.13" r="3.5" fill="#22a06b" />
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,403.00 228.33,450.37 320.56,452.42 458.89,452.48 551.11,452.45 689.44,452.50 781.67,452.54 920.00,452.52" />
+<circle cx="90.00" cy="403.00" r="3.5" fill="#22a06b" />
+<circle cx="228.33" cy="450.37" r="3.5" fill="#22a06b" />
+<circle cx="320.56" cy="452.42" r="3.5" fill="#22a06b" />
+<circle cx="458.89" cy="452.48" r="3.5" fill="#22a06b" />
+<circle cx="551.11" cy="452.45" r="3.5" fill="#22a06b" />
+<circle cx="689.44" cy="452.50" r="3.5" fill="#22a06b" />
+<circle cx="781.67" cy="452.54" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="452.52" r="3.5" fill="#22a06b" />
 <line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
 <text class="label" x="122.0" y="107.0">MMPH</text>
 <text class="label" x="480.0" y="522.0" text-anchor="middle">Keys (N)</text>
