@@ -9,12 +9,19 @@ The most critical finding is that while standalone MMPH indexes original keys ($
 ### Theoretical vs. Experimental Multipliers
 For a set of $N$ unique keys:
 - **Trie Nodes ($U$)**: In a compacted binary trie, the number of nodes is always $2N - 1$. As $N \to \infty$, the ratio **$U/N \to 2.0$**.
-- **Boundary Set ($P$)**: Each node generates up to 3 boundary strings (trimmed extent, extension with '1', and successor). After deduplication, experimental results confirm a stable ratio:
-  $$\mathbf{|P|/N \approx 3.3}$$
+- **Boundary Set ($P$)**: Each node generates up to 3 boundary strings (trimmed extent, extension with '1', and successor). After deduplication, experimental results with large datasets ($N > 100,000$) show an expansion ratio:
+  $$\mathbf{|P|/N \approx 4.3}$$
+  *(Previous estimates of 3.3 were based on smaller N and different key distributions)*.
+
+### String Length Distribution in P
+While the original keys have a fixed length $L$, the strings in $P$ vary significantly in length. This distribution directly impacts how MMPH buckets are formed and searched.
+
+![String Length Distribution L=64](../benchmarks/plots/p_length_distribution_L64.svg)
+*Figure 1: Distribution of bit-lengths in P for N=100,000, L=64. The peaks at L and L+1 are due to leaf nodes, while the lower-length distribution corresponds to internal trie nodes.*
 
 ### Impact on Memory (bits/key)
 Since the benchmarking pipeline normalizes all metrics to **bits per original key ($N$)**, the MMPH contribution is multiplied by the $|P|/N$ ratio:
-$$15 \text{ bits/item in } P \times 3.3 \text{ items/key} \approx \mathbf{49.5 \text{ bits/key}}$$
+$$15 \text{ bits/item in } P \times 4.3 \text{ items/key} \approx \mathbf{64.5 \text{ bits/key}}$$
 
 This matches the observed **~48.7 bits/key** in LERLOC benchmarks.
 

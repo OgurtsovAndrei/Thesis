@@ -35,6 +35,13 @@ The `locators` package provides structures for mapping query prefixes to rank in
 - **Fast Mode**: Extremely high performance ($O(1)$ array accesses).
 - **Compact Mode**: $\approx 1.4\times$ slower for long keys ($L=1024$) due to Rank operations, but remains on-par for short keys ($L=64$) due to better cache locality.
 
+## Boundary Set (P) Distribution
+
+The Range Locator indexes a boundary set $P$ derived from the trie. For $N$ keys of length $L$, the size of $P$ is typically $|P| \approx 4.3N$. The strings in $P$ are not all of length $L$; they follow a specific distribution based on the trie structure:
+
+![String Length Distribution L=64](benchmarks/plots/p_length_distribution_L64.svg)
+*Figure 2: Distribution of bit-lengths in P for N=100,000, L=64. Peaks at L and L+1 correspond to leaf-related boundaries.*
+
 ## Deep Dive Investigations
 
 For detailed analysis of component scaling and memory bottlenecks, see:
