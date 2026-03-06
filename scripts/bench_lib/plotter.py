@@ -230,3 +230,81 @@ def draw_stacked_area_chart(path: str, title: str, x_label: str, y_label: str, s
     parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
     parts.append(f'<text class="label" transform="translate(20,{height/2}) rotate(-90)" text-anchor="middle">{y_label}</text>')
     svg_finish(parts, path)
+
+def draw_bar_chart(path: str, title: str, x_label: str, y_label: str, data: Dict[float, float], color: str = "#2a7fff") -> None:
+    width, height = 960.0, 540.0
+    left, right, top, bottom = 90.0, 40.0, 55.0, 75.0
+    pw = width - left - right
+    ph = height - top - bottom
+
+    x_vals = sorted(data.keys())
+    if not x_vals: return
+    
+    y_vals = list(data.values())
+    y_max = max(y_vals) * 1.1 if y_vals else 1.0
+
+    # Coordinate mappers
+    x_min_val, x_max_val = min(x_vals), max(x_vals)
+    x_range = x_max_val - x_min_val if x_max_val != x_min_val else 1.0
+
+    def x_pos(x_val: float) -> float:
+        if x_max_val == x_min_val: return left + pw / 2
+        t = (x_val - x_min_val) / x_range
+        return left + t * (pw * 0.9) # Give some space for bar width
+
+    def y_pos(y: float) -> float:
+        t = y / y_max
+        return top + ph - t * ph
+
+    parts = svg_start(width, height)
+    parts.append(f'<text x="{width/2}" y="26" text-anchor="middle">{title}</text>')
+    
+    # Axes
+    parts.append(f'<line class="axis" x1="{left}" y1="{top+ph}" x2="{left+pw}" y2="{top+ph}" />')
+    parts.append(f'<line class="axis" x1="{left}" y1="{top}" x2="{left}" y2="{top+ph}" />')
+
+    # Y Grid
+    for i in range(6):
+        yv = y_max * i / 5
+        py = y_pos(yv)
+        parts.append(f'<line class="grid" x1="{left}" y1="{py:.2f}" x2="{left+pw}" y2="{py:.2f}" />')
+        parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{yv:,.0f}</text>')
+
+    # Bars
+    # Dynamic bar width based on number of points
+    bar_width = (pw * 0.9) / max(1, len(x_vals)) * 0.8
+    if bar_width < 1.0: bar_width = 1.0
+    
+    for x in x_vals:
+        px = x_pos(x)
+        y_val = data[x]
+        py = y_pos(y_val)
+        bh = (top + ph) - py
+        parts.append(f'<rect x="{px:.2f}" y="{py:.2f}" width="{bar_width:.2f}" height="{bh:.2f}" fill="{color}" />')
+    
+    # X Axis Labels (Ticks)
+    # Find a "nice" step for uniform distribution
+    step_options = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000]
+    step = 1
+    for s in step_options:
+        if x_range / s <= 12: # Aim for ~10-12 ticks max
+            step = s
+            break
+    
+    # Draw uniform ticks
+    first_tick = math.floor(x_min_val / step) * step
+    last_px = -100.0
+    
+    curr_tick = first_tick
+    while curr_tick <= x_max_val + step * 0.01:
+        if curr_tick >= x_min_val:
+            px = x_pos(curr_tick)
+            # Only draw if far enough from previous label to avoid overlap
+            if px - last_px > 45: 
+                parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{curr_tick:,.0f}</text>')
+                last_px = px
+        curr_tick += step
+
+    parts.append(f'<text class="label" x="{width/2}" y="{height-18}" text-anchor="middle">{x_label}</text>')
+    parts.append(f'<text class="label" transform="translate(20,{height/2}) rotate(-90)" text-anchor="middle">{y_label}</text>')
+    svg_finish(parts, path)
