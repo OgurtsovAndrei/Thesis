@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	DefaultBenchKeyCounts  = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18}
-	DefaultBenchBitLengths = []int{64, 256, 1024, 4096}
+	DefaultBenchKeyCounts  = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20, 1 << 22}
+	DefaultBenchBitLengths = []int{64, 128, 256}
 
 	benchKeys map[int]map[int][]bits.BitString // [bitLength][keyCount]
 	benchMu   sync.Mutex
