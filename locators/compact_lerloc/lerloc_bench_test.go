@@ -14,7 +14,6 @@ func BenchmarkCompactLocalExactRangeLocator_Build(b *testing.B) {
 
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
-			if count > 65536 { continue } // Skip very large sets for now
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, count)
 
@@ -41,7 +40,6 @@ func BenchmarkCompactLocalExactRangeLocator_Query(b *testing.B) {
 
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
-			if count > 65536 { continue }
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, count)
 				lerl, _ := NewAutoCompactLocalExactRangeLocator(keys)
@@ -76,44 +74,44 @@ func generateQueryPrefixes(keys []bits.BitString) []bits.BitString {
 func BenchmarkMemoryComparison(b *testing.B) {
 	rloc.InitBenchKeys()
 
-	bitLen := 64
-	for _, count := range rloc.BenchKeyCounts {
-		if count > 65536 { continue }
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := rloc.GetBenchKeys(bitLen, count)
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := rloc.GetBenchKeys(bitLen, count)
 
-			b.ReportAllocs()
-			b.ResetTimer()
+				b.ReportAllocs()
+				b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
-				original, _ := lerloc.NewLocalExactRangeLocator(keys)
-				compact, _ := NewAutoCompactLocalExactRangeLocator(keys)
+				for i := 0; i < b.N; i++ {
+					original, _ := lerloc.NewLocalExactRangeLocator(keys)
+					compact, _ := NewAutoCompactLocalExactRangeLocator(keys)
 
-				b.ReportMetric(float64(original.ByteSize())*8/float64(count), "orig_bits_key")
-				b.ReportMetric(float64(compact.ByteSize())*8/float64(count), "lemon_bits_key")
-				b.ReportMetric(float64(original.ByteSize())/float64(compact.ByteSize()), "improvement_ratio")
-			}
-		})
+					b.ReportMetric(float64(original.ByteSize())*8/float64(count), "orig_bits_key")
+					b.ReportMetric(float64(compact.ByteSize())*8/float64(count), "lemon_bits_key")
+					b.ReportMetric(float64(original.ByteSize())/float64(compact.ByteSize()), "improvement_ratio")
+				}
+			})
+		}
 	}
 }
 
 func BenchmarkMemoryDetailed(b *testing.B) {
 	rloc.InitBenchKeys()
 
-	bitLen := 64
-	for _, count := range rloc.BenchKeyCounts {
-		if count > 65536 { continue }
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := rloc.GetBenchKeys(bitLen, count)
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				lerl, _ := NewAutoCompactLocalExactRangeLocator(keys)
-				if i == 0 {
-					// Use a helper or just Log it
-					report := lerl.(interface{ MemDetailed() utils.MemReport }).MemDetailed()
-					b.Logf("JSON_MEM_REPORT: %s", report.JSON())
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := rloc.GetBenchKeys(bitLen, count)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					lerl, _ := NewAutoCompactLocalExactRangeLocator(keys)
+					if i == 0 {
+						// Use a helper or just Log it
+						report := lerl.(interface{ MemDetailed() utils.MemReport }).MemDetailed()
+						b.Logf("JSON_MEM_REPORT: %s", report.JSON())
+					}
 				}
-			}
-		})
+			})
+		}
 	}
 }
