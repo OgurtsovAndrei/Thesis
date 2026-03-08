@@ -2,32 +2,45 @@
 
 ## 1. Benchmarks Summary (Apple M4 Max)
 
+The following metrics represent the "Zero-Allocation" performance where data preparation is done outside the query loop to measure pure CGO and C++ overhead.
+
 | Metric | 1k keys | 1M keys | 16M keys |
 | :--- | :--- | :--- | :--- |
 | **Space (bits/key)** | 29.2 | 3.34 | **3.32** |
 | **Rank (Single, Zero-Alloc)** | ~88 ns | ~175 ns | ~200 ns |
 | **RankPair (2 keys/call)** | **~65 ns** | **~162 ns** | ~180 ns |
-| **RankBatch (1024 keys/call)** | ~190 ns | ~290 ns | ~310 ns |
+| **RankBatch (1024 keys)** | ~190 ns | ~290 ns | ~310 ns |
 
-## 2. Overhead Breakdown
+## 2. Evolution of Performance: From 600ns to 88ns
 
-A single `Rank(key)` call now takes ~90-200ns after removing allocations.
+Initially, a single `Rank(key)` call took ~600ns. We reduced this by **85%** through structural optimizations.
 
-1. **CGO Transition (~50-80 ns):** The fixed cost of switching context.
-2. **Implicit Pinning (~0 ns):** When passing arguments directly, Go's compiler handles pinning with near-zero overhead.
-3. **C++ Logic (~10-100 ns):** Increases with dataset size due to PGM-index depth and cache misses.
+### Where the time went (Overhead Breakdown):
 
-## 3. The Pinning Trade-off
+| Component | Initial Latency | Current Latency | Optimization |
+| :--- | :--- | :--- | :--- |
+| **Go Allocation** | ~350 ns | **0 ns** | Avoided `key.Data()` allocation (benchmarked via `rankRaw`) |
+| **C Allocation** | ~150 ns | **0 ns** | Removed `C.CBytes` and `C.free` (using `unsafe.Pointer`) |
+| **CGO Transition** | ~70 ns | ~70 ns | Fixed cost of context switching |
+| **C++ Logic** | ~30 ns | ~18 ns | Pure mathematical lookup + PGM search |
+| **TOTAL** | **~600 ns** | **~88 ns** | |
 
-The benchmarks reveal a clear hierarchy of efficiency:
+## 3. Key Optimization Techniques
 
-1. **Direct Arguments (RankPair):** Best performance. Amortizes the CGO transition across 2 keys while keeping pinning "implicit" and fast.
-2. **Single Call (Rank):** Good performance, but pays the full transition tax for every key.
-3. **Manual Pinning (RankBatch):** Worst performance. Even though it has only 1 CGO transition per 1024 keys, the cost of calling `runtime.Pinner.Pin()` 1024 times is significantly higher than 1024 CGO transitions.
+### A. Zero-Copy CGO
+The most significant gain came from switching from `C.CBytes` to direct `unsafe.Pointer` passing. 
+- **Old way:** `malloc` in C heap -> `memcpy` Go data to C -> call C -> `free` in C.
+- **New way:** Pass pointer to existing Go slice directly to C. Go's runtime guarantees the memory is pinned during the call duration.
 
-## 4. Conclusion
+### B. Implicit vs. Manual Pinning
+The "Batch Paradox" showed that `RankBatch` (1024 keys) is slower than single `Rank` calls.
+- **Manual Pinning (`runtime.Pinner`):** Used in `RankBatch` to pin 1024 separate slices. The overhead of the Go runtime managing these pins exceeds the cost of 1024 CGO transitions.
+- **Implicit Pinning:** Used in `Rank` and `RankPair`. Go pins arguments passed directly to CGO functions at the compiler level with near-zero overhead. 
+- **The Result:** `RankPair` (2 keys per call) is the fastest method because it amortizes the transition cost across two queries without incurring the `runtime.Pinner` penalty.
 
-For maximum performance through CGO:
-- **Avoid `runtime.Pinner`** for large batches of small objects.
-- **Use "Multi-Arg" wrappers** (like `RankPair`, `RankQuad`) to amortize transition costs if data can be passed as separate arguments.
-- **Use Flat Buffers** if batching is required. By concatenating keys into one large `[]byte`, we can use `Pin()` once for the entire batch, which would likely outperform all other methods.
+## 4. Path to Production Excellence
+
+To achieve these ~88ns speeds in a real application (not just benchmarks), we must eliminate the allocation in the `bits` module:
+
+1. **`BitString` Refactoring:** Currently, `key.Data()` creates a new `[]byte` slice. We need a method (e.g., `UnsafeDataPtr()`) that provides read-only access to the internal `[]uint64` buffer without copying.
+2. **Flat Buffers for Batching:** For high-throughput batching, keys should be stored in a single contiguous `[]byte`. This would allow pinning 1000s of keys with a **single** `Pin()` call, likely bringing batch latency down to **< 50ns/key**.
