@@ -30,7 +30,7 @@ target_include_directories(ds2i SYSTEM INTERFACE extlib/ds2i)
 
 # Only parts of sdsl to avoid using old cmake dependencies
 set(sdsl_dir ${CMAKE_CURRENT_SOURCE_DIR}/extlib/sdsl-lite/lib)
-add_library(sdsl SHARED ${sdsl_dir}/bits.cpp ${sdsl_dir}/memory_management.cpp ${sdsl_dir}/util.cpp ${sdsl_dir}/ram_fs.cpp)
+add_library(sdsl STATIC ${sdsl_dir}/bits.cpp ${sdsl_dir}/memory_management.cpp ${sdsl_dir}/util.cpp ${sdsl_dir}/ram_fs.cpp)
 target_include_directories(sdsl SYSTEM PUBLIC extlib/sdsl-lite/include)
 
 add_library(LeMonHash INTERFACE)

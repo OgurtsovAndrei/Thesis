@@ -83,7 +83,7 @@ namespace ds2i {
     template <typename State, typename AdvanceFunctor, typename ValueFunctor>
     class function_iterator
         : public std::iterator<std::forward_iterator_tag,
-                               typename std::result_of<ValueFunctor(State)>::type> {
+                               std::invoke_result_t<ValueFunctor, State>> {
 
     public:
         function_iterator()
@@ -101,7 +101,7 @@ namespace ds2i {
         }
 
         // XXX why isn't this inherited from std::iterator?
-        typedef typename std::result_of<ValueFunctor(State)>::type value_type;
+        typedef std::invoke_result_t<ValueFunctor, State> value_type;
 
         value_type operator*() const
         {

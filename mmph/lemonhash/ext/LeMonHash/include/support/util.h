@@ -8,7 +8,7 @@
 #include <bit>
 #include <sdsl/bits.hpp>
 #include <set>
-#include <immintrin.h>
+
 
 namespace lemonhash {
 struct LcpDetails {

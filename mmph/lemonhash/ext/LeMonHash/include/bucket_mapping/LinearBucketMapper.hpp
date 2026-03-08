@@ -18,7 +18,7 @@ struct LinearBucketMapper {
     }
 
     [[nodiscard]] size_t bucketOf(uint64_t key) const {
-        return std::min(numBuckets_ - 1, key / divisor);
+        return std::min<size_t>(numBuckets_ - 1, key / divisor);
     }
 
     template<typename Iterator, typename Func>
