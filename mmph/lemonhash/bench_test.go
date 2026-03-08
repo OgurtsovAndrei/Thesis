@@ -21,7 +21,7 @@ func BenchmarkMMPHBuild(b *testing.B) {
 				keys[i] = bits.NewFromText(s)
 			}
 			sort.Slice(keys, func(i, j int) bool {
-				return string(keys[i].Data()) < string(keys[j].Data())
+				return keys[i].TrieCompare(keys[j]) < 0
 			})
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -43,7 +43,7 @@ func BenchmarkMMPHQuery(b *testing.B) {
 				keys[i] = bits.NewFromText(s)
 			}
 			sort.Slice(keys, func(i, j int) bool {
-				return string(keys[i].Data()) < string(keys[j].Data())
+				return keys[i].TrieCompare(keys[j]) < 0
 			})
 			table := New(keys)
 
@@ -75,7 +75,7 @@ func BenchmarkMMPHQueryBatch(b *testing.B) {
 				keys[i] = bits.NewFromText(s)
 			}
 			sort.Slice(keys, func(i, j int) bool {
-				return string(keys[i].Data()) < string(keys[j].Data())
+				return keys[i].TrieCompare(keys[j]) < 0
 			})
 			table := New(keys)
 			results := make([]int, batchSize)
@@ -103,7 +103,7 @@ func BenchmarkMMPHQueryPair(b *testing.B) {
 				keys[i] = bits.NewFromText(s)
 			}
 			sort.Slice(keys, func(i, j int) bool {
-				return string(keys[i].Data()) < string(keys[j].Data())
+				return keys[i].TrieCompare(keys[j]) < 0
 			})
 			table := New(keys)
 

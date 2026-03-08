@@ -90,7 +90,7 @@ func TestLeMonHashLargeKeys(t *testing.T) {
 		keys = append(keys, bits.NewFromText(s))
 	}
 	sort.Slice(keys, func(i, j int) bool {
-		return string(keys[i].Data()) < string(keys[j].Data())
+		return keys[i].TrieCompare(keys[j]) < 0
 	})
 	
 	lh := New(keys)

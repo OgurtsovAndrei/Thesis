@@ -85,9 +85,9 @@ class LeMonHash {
 
         size_t spaceBits(bool print = true) {
             if (print) {
-                std::cout << "Retrieval:      " << (double(retrievalDataStructure.spaceBits(0)) / N) << std::endl;
-                std::cout << "Bucket mapper:  " << (8.0 * bucketMapper.space() / N) << " (" << bucketMapper.info() << ")" << std::endl;
-                std::cout << "Bucket offsets: " << (8.0 * bucketOffsets.space() / N) << std::endl;
+                std::cerr << "Retrieval:      " << (double(retrievalDataStructure.spaceBits(0)) / N) << std::endl;
+                std::cerr << "Bucket mapper:  " << (8.0 * bucketMapper.space() / N) << " (" << bucketMapper.info() << ")" << std::endl;
+                std::cerr << "Bucket offsets: " << (8.0 * bucketOffsets.space() / N) << std::endl;
             }
             size_t bytes = bucketMapper.space() + sizeof(*this) + bucketOffsets.space();
             return 8 * bytes + retrievalDataStructure.spaceBits(0);

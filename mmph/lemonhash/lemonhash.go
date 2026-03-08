@@ -9,12 +9,22 @@ package lemonhash
 import "C"
 import (
 	"Thesis/bits"
+	"Thesis/errutil"
+	mathbits "math/bits"
 	"runtime"
 	"unsafe"
 )
 
 type LeMonHash struct {
 	ptr C.LeMonHashPtr
+}
+
+// reverseBitsInBytes reverses the bits within each byte of the slice in-place.
+// This makes byte-wise lexicographical comparison (memcmp) equivalent to BitString.TrieCompare.
+func reverseBitsInBytes(data []byte) {
+	for i := 0; i < len(data); i++ {
+		data[i] = mathbits.Reverse8(data[i])
+	}
 }
 
 // New creates a new LeMonHash wrapper.
@@ -28,13 +38,14 @@ func New(keys []bits.BitString) *LeMonHash {
 	}
 
 	numKeys := len(keys)
-	
+
 	// Prepare C arrays
 	cStrings := make([]*C.char, numKeys)
 	lengths := make([]C.size_t, numKeys)
-	
+
 	for i, k := range keys {
 		data := k.Data()
+		reverseBitsInBytes(data)
 		if len(data) == 0 {
 			cStrings[i] = nil
 		} else {
@@ -67,8 +78,11 @@ func (lh *LeMonHash) Rank(key bits.BitString) int {
 	if lh.ptr == nil {
 		return 0
 	}
+	errutil.BugOn(key.Size() > 32*8, "Only keys up to 256 bits are supported")
 
-	data := key.Data()
+	var buf [32]byte
+	data := key.AppendToBytes(buf[:0])
+	reverseBitsInBytes(data)
 	var ptr *C.char
 	if len(data) > 0 {
 		ptr = (*C.char)(unsafe.Pointer(&data[0]))
@@ -84,6 +98,8 @@ func (lh *LeMonHash) rankRaw(data []byte) int {
 	if lh.ptr == nil {
 		return 0
 	}
+	// Note: for benchmarking rankRaw we assume data is already bit-reversed if needed,
+	// or we just don't care because we only benchmark latency.
 	var ptr *C.char
 	if len(data) > 0 {
 		ptr = (*C.char)(unsafe.Pointer(&data[0]))
@@ -110,6 +126,7 @@ func (lh *LeMonHash) RankBatch(keys []bits.BitString, results []int) {
 
 	for i, k := range keys {
 		data := k.Data()
+		reverseBitsInBytes(data)
 		if len(data) > 0 {
 			pinner.Pin(&data[0])
 			cKeys[i] = (*C.char)(unsafe.Pointer(&data[0]))
@@ -124,16 +141,20 @@ func (lh *LeMonHash) RankBatch(keys []bits.BitString, results []int) {
 	}
 }
 
-// RankPair queries two keys in a single CGO call. 
-// Since arguments are passed directly, Go performs implicit pinning, 
+// RankPair queries two keys in a single CGO call.
+// Since arguments are passed directly, Go performs implicit pinning,
 // avoiding the overhead of runtime.Pinner used in RankBatch.
 func (lh *LeMonHash) RankPair(k1, k2 bits.BitString) (int, int) {
 	if lh.ptr == nil {
 		return 0, 0
 	}
+	errutil.BugOn(k1.Size() > 32*8 || k2.Size() > 32*8, "Only keys up to 256 bits are supported")
 
-	d1 := k1.Data()
-	d2 := k2.Data()
+	var buf1, buf2 [32]byte
+	d1 := k1.AppendToBytes(buf1[:0])
+	d2 := k2.AppendToBytes(buf2[:0])
+	reverseBitsInBytes(d1)
+	reverseBitsInBytes(d2)
 
 	var p1, p2 *C.char
 	if len(d1) > 0 {
@@ -169,7 +190,8 @@ func (lh *LeMonHash) rankPairRaw(d1, d2 []byte) (int, int) {
 	return int(r1), int(r2)
 }
 
-func (lh *LeMonHash) ByteSize() int {	if lh.ptr == nil {
+func (lh *LeMonHash) ByteSize() int {
+	if lh.ptr == nil {
 		return 0
 	}
 	return int(C.lemonhash_vl_space_bits(lh.ptr) / 8)
