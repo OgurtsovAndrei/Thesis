@@ -42,5 +42,6 @@ The "Batch Paradox" showed that `RankBatch` (1024 keys) is slower than single `R
 
 To achieve these ~88ns speeds in a real application (not just benchmarks), we must eliminate the allocation in the `bits` module:
 
-1. **`BitString` Refactoring:** Currently, `key.Data()` creates a new `[]byte` slice. We need a method (e.g., `UnsafeDataPtr()`) that provides read-only access to the internal `[]uint64` buffer without copying.
+1. **`BitString` Refactoring:** Currently, `key.Data()` creates a new `[]byte` slice. We need to transition from Little-Endian `[]uint64` to **Big-Endian `[]byte`** storage. This will enable true zero-copy CGO.
+    * See [Detailed Refactoring Plan](../../bits/BITSTRING_REFACTOR_PLAN.md) for more info.
 2. **Flat Buffers for Batching:** For high-throughput batching, keys should be stored in a single contiguous `[]byte`. This would allow pinning 1000s of keys with a **single** `Pin()` call, likely bringing batch latency down to **< 50ns/key**.
