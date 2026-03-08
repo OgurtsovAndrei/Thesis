@@ -4,7 +4,6 @@ import (
 	"Thesis/bits"
 	"Thesis/locators/lerloc"
 	"Thesis/locators/rloc"
-	"Thesis/utils"
 	"fmt"
 	"testing"
 )
@@ -21,7 +20,7 @@ func BenchmarkCompactLocalExactRangeLocator_Build(b *testing.B) {
 				b.ResetTimer()
 
 				for i := 0; i < b.N; i++ {
-					lerl, err := NewAutoCompactLocalExactRangeLocator(keys)
+					lerl, err := NewCompactLocalExactRangeLocator(keys)
 					if err != nil {
 						b.Fatalf("Failed to build locator: %v", err)
 					}
@@ -42,7 +41,7 @@ func BenchmarkCompactLocalExactRangeLocator_Query(b *testing.B) {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, count)
-				lerl, _ := NewAutoCompactLocalExactRangeLocator(keys)
+				lerl, _ := NewCompactLocalExactRangeLocator(keys)
 
 				queryPrefixes := generateQueryPrefixes(keys)
 
@@ -84,7 +83,7 @@ func BenchmarkMemoryComparison(b *testing.B) {
 
 				for i := 0; i < b.N; i++ {
 					original, _ := lerloc.NewLocalExactRangeLocator(keys)
-					compact, _ := NewAutoCompactLocalExactRangeLocator(keys)
+					compact, _ := NewCompactLocalExactRangeLocator(keys)
 
 					b.ReportMetric(float64(original.ByteSize())*8/float64(count), "orig_bits_key")
 					b.ReportMetric(float64(compact.ByteSize())*8/float64(count), "lemon_bits_key")
@@ -104,10 +103,10 @@ func BenchmarkMemoryDetailed(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, count)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					lerl, _ := NewAutoCompactLocalExactRangeLocator(keys)
+					lerl, _ := NewCompactLocalExactRangeLocator(keys)
 					if i == 0 {
-						// Use a helper or just Log it
-						report := lerl.(interface{ MemDetailed() utils.MemReport }).MemDetailed()
+						// Use MemDetailed directly
+						report := lerl.MemDetailed()
 						b.Logf("JSON_MEM_REPORT: %s", report.JSON())
 					}
 				}

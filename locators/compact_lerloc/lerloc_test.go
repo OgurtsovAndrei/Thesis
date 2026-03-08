@@ -16,7 +16,7 @@ const (
 )
 
 func TestCompactLocalExactRangeLocator_EmptyKeys(t *testing.T) {
-	lerl, err := NewAutoCompactLocalExactRangeLocator([]bits.BitString{})
+	lerl, err := NewCompactLocalExactRangeLocator([]bits.BitString{})
 	if err != nil {
 		t.Fatalf("NewAutoCompactLocalExactRangeLocator failed: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestCompactLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 		return keys[i].TrieCompare(keys[j]) < 0
 	})
 
-	lerl, err := NewAutoCompactLocalExactRangeLocator(keys)
+	lerl, err := NewCompactLocalExactRangeLocator(keys)
 	if err != nil {
 		t.Fatalf("NewAutoCompactLocalExactRangeLocator failed: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestCompactLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 			seed := time.Now().UnixNano()
 			keys := rloc.GenUniqueBitStrings(seed, maxKeys, maxBitLen)
 
-			lerl, err := NewAutoCompactLocalExactRangeLocator(keys)
+			lerl, err := NewCompactLocalExactRangeLocator(keys)
 			if err != nil {
 				t.Fatalf("NewAutoCompactLocalExactRangeLocator failed (seed: %d): %v", seed, err)
 			}
