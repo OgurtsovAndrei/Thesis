@@ -91,9 +91,8 @@ mapping. Collisions and prediction errors are resolved via an auxiliary BuRR str
 - **Compact**: 1.3 - 3 bits per key, often beating trie-based theoretical methods
 - **Fast**: "Flat" structure (math instead of pointer chasing) gives strong read performance and CPU prefetch behavior
 
-**Status**: Reference C++ implementation
-exists ([GitHub: ByteHamster/LeMonHash](https://github.com/ByteHamster/LeMonHash)).
-No Go ports yet.
+**Status**: Reference C++ implementation exists ([GitHub: ByteHamster/LeMonHash](https://github.com/ByteHamster/LeMonHash)).
+Integrated into this repository as a CGO wrapper module (`lemonhash/`). Benchmarks show ~3.3 bits/key for large sets.
 
 ## 4. Asymptotic comparison
 
@@ -105,7 +104,7 @@ Below is a comparison of theoretical methods, modern approaches, and a standard 
 | MMPH: Hash Displace and Compress (hdc) | $O(1)$               | $O(n \log n)$                  |
 | MMPH: Relative Trie                    | $O(\log w)$          | $O(n \log \log w)$             |
 | MMPH: Relative Trie (impl)             | $O(\log w)$          | $O(n \log \log w)$ + constants |
-| LeMonHash (Learned)                    | Fast (Math + Lookup) | $? O(n) but how ? $            |
+| LeMonHash (Learned)                    | Fast (Math + Lookup) | ~3.3 bits/key (Empirical)      |
 
 **Note**: $n$ is the number of keys, $w$ is key length in bits (typically 64).
 

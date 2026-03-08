@@ -26,3 +26,4 @@ __pycache__/
 /text/out/
 /locators/benchmarks_parsed.csv
 bench_results/raw/
+/mmph/lemonhash/build
