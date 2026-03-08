@@ -20,7 +20,16 @@ For a dataset of **32,768 keys** (64-bit length):
 | **Metadata & Headers** | 97.8 | **~0.01** | Classical implementation had huge overhead in 'Other' category. |
 | **TOTAL** | **141.9** | **~58.9** | |
 
-## 3. The Boundary Set Impact ($|P| \approx 5N$)
+## 3. Query Performance (N=32,768, L=64)
+
+| Metric | Baseline LERLOC (Compact) | Compact LERLOC (New) | Change |
+| :--- | :--- | :--- | :--- |
+| **Query Latency** | ~722 ns/op | **~758 ns/op** | +5% |
+| **Allocations** | 1 alloc/op | 3 allocs/op | +2 allocs |
+
+The massive memory saving (58%) comes at a negligible cost in query latency (~36 ns). The small increase in allocations is due to the multi-component boundary checks, which can be further optimized.
+
+## 4. The Boundary Set Impact ($|P| \approx 5N$)
 
 As noted during analysis, the boundary set $P$ constructed from the ZFastTrie is significantly larger than the number of original keys $N$. 
 - For $N=32,768$, the RSDic takes ~5.1 bits per *original* key. Since RSDic overhead is slightly above 1 bit per element, this implies $|P| \approx 5.1 \times N$.
