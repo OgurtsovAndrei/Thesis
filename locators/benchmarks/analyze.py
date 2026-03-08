@@ -35,6 +35,11 @@ MODULES = [
         "out": os.path.join(RAW_DIR, "lerloc.txt"),
     },
     {
+        "name": "compact_lerloc",
+        "dir": os.path.join(LOCATORS_DIR, "compact_lerloc"),
+        "out": os.path.join(RAW_DIR, "compact_lerloc.txt"),
+    },
+    {
         "name": "mmph",
         "dir": MMPH_DIR,
         "out": os.path.join(RAW_DIR, "mmph.txt"),
@@ -113,11 +118,15 @@ def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
         elif name == "ApproxZFastTrie":
             out["MMPH_Trie"] += node["total_bytes"]
             return
-        elif name == "buckets":
+        elif name == "lemonhash":
             out["MMPH_Buckets"] += node["total_bytes"]
             return
-        elif name in ["header", "Top_Level_Header"]:
-            out["Other"] += node["total_bytes"]
+        elif name in ["header", "Top_Level_Header", "CompactRangeLocator", "GenericRangeLocator"]:
+            # Only count the overhead of the structure itself if we can determine it,
+            # but usually 'total_bytes' here includes all children.
+            # So we just let it recurse to pick up children and the final 'Other' 
+            # calculation will handle the structural overhead.
+            pass
         
         for child in node.get("children", []):
             walk(child)

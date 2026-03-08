@@ -6,15 +6,15 @@
 <line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
 <text class="label" x="82.0" y="469.00" text-anchor="end">0.00</text>
 <line class="grid" x1="90.0" y1="383.00" x2="920.0" y2="383.00" />
-<text class="label" x="82.0" y="387.00" text-anchor="end">168.30</text>
+<text class="label" x="82.0" y="387.00" text-anchor="end">307.89</text>
 <line class="grid" x1="90.0" y1="301.00" x2="920.0" y2="301.00" />
-<text class="label" x="82.0" y="305.00" text-anchor="end">336.60</text>
+<text class="label" x="82.0" y="305.00" text-anchor="end">615.78</text>
 <line class="grid" x1="90.0" y1="219.00" x2="920.0" y2="219.00" />
-<text class="label" x="82.0" y="223.00" text-anchor="end">504.90</text>
+<text class="label" x="82.0" y="223.00" text-anchor="end">923.67</text>
 <line class="grid" x1="90.0" y1="137.00" x2="920.0" y2="137.00" />
-<text class="label" x="82.0" y="141.00" text-anchor="end">673.20</text>
+<text class="label" x="82.0" y="141.00" text-anchor="end">1231.56</text>
 <line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
-<text class="label" x="82.0" y="59.00" text-anchor="end">841.50</text>
+<text class="label" x="82.0" y="59.00" text-anchor="end">1539.45</text>
 <line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
 <text class="label" x="90.00" y="485.0" text-anchor="middle">32</text>
 <line class="grid" x1="228.33" y1="55.0" x2="228.33" y2="465.0" />
@@ -33,39 +33,47 @@
 <text class="label" x="873.89" y="485.0" text-anchor="middle">4.2e+06</text>
 <line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
 <text class="label" x="920.00" y="485.0" text-anchor="middle">8.4e+06</text>
-<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,92.27 228.33,337.32 320.56,364.89 458.89,375.68 551.11,377.59 689.44,375.76 781.67,378.22 873.89,378.09" />
-<circle cx="90.00" cy="92.27" r="3.5" fill="#2a7fff" />
-<circle cx="228.33" cy="337.32" r="3.5" fill="#2a7fff" />
-<circle cx="320.56" cy="364.89" r="3.5" fill="#2a7fff" />
-<circle cx="458.89" cy="375.68" r="3.5" fill="#2a7fff" />
-<circle cx="551.11" cy="377.59" r="3.5" fill="#2a7fff" />
-<circle cx="689.44" cy="375.76" r="3.5" fill="#2a7fff" />
-<circle cx="781.67" cy="378.22" r="3.5" fill="#2a7fff" />
-<circle cx="873.89" cy="378.09" r="3.5" fill="#2a7fff" />
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,273.51 228.33,398.87 320.56,412.92 458.89,418.50 551.11,419.53 689.44,418.52 781.67,419.86 873.89,419.79" />
+<circle cx="90.00" cy="273.51" r="3.5" fill="#2a7fff" />
+<circle cx="228.33" cy="398.87" r="3.5" fill="#2a7fff" />
+<circle cx="320.56" cy="412.92" r="3.5" fill="#2a7fff" />
+<circle cx="458.89" cy="418.50" r="3.5" fill="#2a7fff" />
+<circle cx="551.11" cy="419.53" r="3.5" fill="#2a7fff" />
+<circle cx="689.44" cy="418.52" r="3.5" fill="#2a7fff" />
+<circle cx="781.67" cy="419.86" r="3.5" fill="#2a7fff" />
+<circle cx="873.89" cy="419.79" r="3.5" fill="#2a7fff" />
 <line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
 <text class="label" x="122.0" y="71.0">LERLOC (Fast)</text>
-<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,101.16 228.33,353.35 320.56,381.36 458.89,389.78 551.11,391.64 689.44,391.45 781.67,393.37 873.89,391.26" />
-<circle cx="90.00" cy="101.16" r="3.5" fill="#e4572e" />
-<circle cx="228.33" cy="353.35" r="3.5" fill="#e4572e" />
-<circle cx="320.56" cy="381.36" r="3.5" fill="#e4572e" />
-<circle cx="458.89" cy="389.78" r="3.5" fill="#e4572e" />
-<circle cx="551.11" cy="391.64" r="3.5" fill="#e4572e" />
-<circle cx="689.44" cy="391.45" r="3.5" fill="#e4572e" />
-<circle cx="781.67" cy="393.37" r="3.5" fill="#e4572e" />
-<circle cx="873.89" cy="391.26" r="3.5" fill="#e4572e" />
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,278.37 228.33,407.63 320.56,421.93 458.89,426.21 551.11,427.21 689.44,427.09 781.67,428.14 873.89,426.99" />
+<circle cx="90.00" cy="278.37" r="3.5" fill="#e4572e" />
+<circle cx="228.33" cy="407.63" r="3.5" fill="#e4572e" />
+<circle cx="320.56" cy="421.93" r="3.5" fill="#e4572e" />
+<circle cx="458.89" cy="426.21" r="3.5" fill="#e4572e" />
+<circle cx="551.11" cy="427.21" r="3.5" fill="#e4572e" />
+<circle cx="689.44" cy="427.09" r="3.5" fill="#e4572e" />
+<circle cx="781.67" cy="428.14" r="3.5" fill="#e4572e" />
+<circle cx="873.89" cy="426.99" r="3.5" fill="#e4572e" />
 <line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
 <text class="label" x="122.0" y="89.0">LERLOC (Compact)</text>
-<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,403.00 228.33,450.37 320.56,452.42 458.89,452.48 551.11,452.45 689.44,452.50 781.67,452.54 920.00,452.52" />
-<circle cx="90.00" cy="403.00" r="3.5" fill="#22a06b" />
-<circle cx="228.33" cy="450.37" r="3.5" fill="#22a06b" />
-<circle cx="320.56" cy="452.42" r="3.5" fill="#22a06b" />
-<circle cx="458.89" cy="452.48" r="3.5" fill="#22a06b" />
-<circle cx="551.11" cy="452.45" r="3.5" fill="#22a06b" />
-<circle cx="689.44" cy="452.50" r="3.5" fill="#22a06b" />
-<circle cx="781.67" cy="452.54" r="3.5" fill="#22a06b" />
-<circle cx="920.00" cy="452.52" r="3.5" fill="#22a06b" />
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,92.27 228.33,395.03 320.56,428.28 458.89,440.56 551.11,441.64" />
+<circle cx="90.00" cy="92.27" r="3.5" fill="#22a06b" />
+<circle cx="228.33" cy="395.03" r="3.5" fill="#22a06b" />
+<circle cx="320.56" cy="428.28" r="3.5" fill="#22a06b" />
+<circle cx="458.89" cy="440.56" r="3.5" fill="#22a06b" />
+<circle cx="551.11" cy="441.64" r="3.5" fill="#22a06b" />
 <line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
-<text class="label" x="122.0" y="107.0">MMPH</text>
+<text class="label" x="122.0" y="107.0">COMPACT_LERLOC</text>
+<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" points="90.00,438.03 228.33,457.87 320.56,458.74 458.89,458.70 551.11,458.68 689.44,458.70 781.67,458.72 920.00,458.71" />
+<circle cx="90.00" cy="438.03" r="3.5" fill="#7c3aed" />
+<circle cx="228.33" cy="457.87" r="3.5" fill="#7c3aed" />
+<circle cx="320.56" cy="458.74" r="3.5" fill="#7c3aed" />
+<circle cx="458.89" cy="458.70" r="3.5" fill="#7c3aed" />
+<circle cx="551.11" cy="458.68" r="3.5" fill="#7c3aed" />
+<circle cx="689.44" cy="458.70" r="3.5" fill="#7c3aed" />
+<circle cx="781.67" cy="458.72" r="3.5" fill="#7c3aed" />
+<circle cx="920.00" cy="458.71" r="3.5" fill="#7c3aed" />
+<line x1="100.0" y1="121.0" x2="116.0" y2="121.0" stroke="#7c3aed" stroke-width="2.5" />
+<text class="label" x="122.0" y="125.0">MMPH</text>
 <text class="label" x="480.0" y="522.0" text-anchor="middle">Keys (N)</text>
 <text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">bits/key</text>
 </svg>

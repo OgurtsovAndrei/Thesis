@@ -358,18 +358,18 @@ class LeMonHashVL {
         }
 
         size_t spaceBits() {
-            std::cout<<"Retrieval:           "<<1.0*retrieval.spaceBits()/N<<std::endl;
-            std::cout<<"Bucket mapper:       "<<8.0*std::accumulate(treeNodes.begin(), treeNodes.end(), 0,
+            std::cerr<<"Retrieval:           "<<1.0*retrieval.spaceBits()/N<<std::endl;
+            std::cerr<<"Bucket mapper:       "<<8.0*std::accumulate(treeNodes.begin(), treeNodes.end(), 0,
                                                                     [] (size_t size, auto &node) { return size + node.space(); }) / N<<std::endl;
-            std::cout<<"Bucket offsets:      "<<1.0 * std::accumulate(bucketOffsets.begin(), bucketOffsets.end(), 0,
+            std::cerr<<"Bucket offsets:      "<<1.0 * std::accumulate(bucketOffsets.begin(), bucketOffsets.end(), 0,
                                                                       [] (size_t size, auto &fano) { return size + fano.bit_size(); }) / N<<std::endl;
-            std::cout<<"Tree node data:      "<<(8.0 * (treeNodes.size() * sizeof(TreeNode) + sizeof(Mphf))
+            std::cerr<<"Tree node data:      "<<(8.0 * (treeNodes.size() * sizeof(TreeNode) + sizeof(Mphf))
                                                     + treeNodesMphf.num_bits())/N<<std::endl;
-            std::cout<<"Alphabet maps:       "<<8.0 * alphabetMaps.sizeInBytes() / N<<std::endl;
-            std::cout<<"7-bit alphabets:     "<<alphabetMaps.size().first<<std::endl;
-            std::cout<<"8-bit alphabets:     "<<alphabetMaps.size().second<<std::endl;
-            std::cout<<"Height:              "<<bucketOffsets.size()<<std::endl;
-            std::cout<<"Nodes:               "<<treeNodes.size()<<std::endl;
+            std::cerr<<"Alphabet maps:       "<<8.0 * alphabetMaps.sizeInBytes() / N<<std::endl;
+            std::cerr<<"7-bit alphabets:     "<<alphabetMaps.size().first<<std::endl;
+            std::cerr<<"8-bit alphabets:     "<<alphabetMaps.size().second<<std::endl;
+            std::cerr<<"Height:              "<<bucketOffsets.size()<<std::endl;
+            std::cerr<<"Nodes:               "<<treeNodes.size()<<std::endl;
 
             return retrieval.spaceBits()
                         + 8 * (sizeof(*this)
