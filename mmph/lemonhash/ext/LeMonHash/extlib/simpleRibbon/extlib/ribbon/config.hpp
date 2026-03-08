@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <iomanip>
 #include <utility>
+#include <sstream>
+#include <ostream>
 
 // requires xxhash3, i.e. libxxhash v0.8.0 or later
 // available from https://github.com/Cyan4973/xxHash/releases/tag/v0.8.0

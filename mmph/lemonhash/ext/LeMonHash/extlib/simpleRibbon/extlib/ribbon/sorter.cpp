@@ -10,7 +10,7 @@
 #include <ips2ra.hpp>
 #endif
 
-#include <bits/stdint-uintn.h>
+#include <stdint.h>
 
 #include <algorithm>
 #include <functional>
