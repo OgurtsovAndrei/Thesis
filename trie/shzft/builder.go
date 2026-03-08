@@ -157,7 +157,7 @@ func NewSHZFastTrieFromIteratorStreaming(iter bits.BitStringIterator) (*Succinct
 
 	// Emit root node
 	rootExtentLen := int(firstKey.GetLCPLength(prevKey))
-	b.emit(rootExtentLen, 0, firstKey)
+	b.emit(rootExtentLen, -1, firstKey)
 
 	// Phase 1: Build MPH from collected handles
 	keysForMPH := make([]bits.BitString, 0, b.kv.Len())
@@ -216,7 +216,7 @@ func NewSHZFastTrieFromIteratorStreaming(iter bits.BitStringIterator) (*Succinct
 	packedDeltas := packBits(deltas, deltaBits)
 
 	// Phase 5: Root Id
-	rootA := uint64(0)
+	rootA := uint64(^uint64(0)) // Use -1 as conceptual parent for root to get descriptor length 0
 	rootB := uint64(rootExtentLen)
 	rootOriginal := bits.TwoFattest(rootA, rootB)
 	rootHandle := firstKey.Prefix(int(rootOriginal))
