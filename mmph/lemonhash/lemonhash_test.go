@@ -49,6 +49,39 @@ func TestLeMonHashSingle(t *testing.T) {
 	}
 }
 
+func TestLeMonHashBatch(t *testing.T) {
+	keysStr := []string{"apple", "banana", "cherry", "date"}
+	keys := make([]bits.BitString, len(keysStr))
+	for i, s := range keysStr {
+		keys[i] = bits.NewFromText(s)
+	}
+
+	lh := New(keys)
+	results := make([]int, len(keys))
+	lh.RankBatch(keys, results)
+
+	for i, r := range results {
+		if r != i {
+			t.Errorf("Expected rank %d for key %s, got %d", i, keysStr[i], r)
+		}
+	}
+}
+
+func TestLeMonHashPair(t *testing.T) {
+	keysStr := []string{"apple", "banana"}
+	keys := make([]bits.BitString, len(keysStr))
+	for i, s := range keysStr {
+		keys[i] = bits.NewFromText(s)
+	}
+
+	lh := New(keys)
+	r1, r2 := lh.RankPair(keys[0], keys[1])
+
+	if r1 != 0 || r2 != 1 {
+		t.Errorf("Expected ranks (0, 1), got (%d, %d)", r1, r2)
+	}
+}
+
 func TestLeMonHashLargeKeys(t *testing.T) {
 	// Generate sorted keys
 	var keys []bits.BitString

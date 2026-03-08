@@ -67,20 +67,109 @@ func (lh *LeMonHash) Rank(key bits.BitString) int {
 	if lh.ptr == nil {
 		return 0
 	}
-	
+
 	data := key.Data()
-	var cStr *C.char
+	var ptr *C.char
 	if len(data) > 0 {
-		cStr = (*C.char)(C.CBytes(data))
-		defer C.free(unsafe.Pointer(cStr))
+		ptr = (*C.char)(unsafe.Pointer(&data[0]))
 	}
-	
-	rank := C.lemonhash_vl_query(lh.ptr, cStr, C.size_t(len(data)))
+
+	rank := C.lemonhash_vl_query(lh.ptr, ptr, C.size_t(len(data)))
 	return int(rank)
 }
 
-func (lh *LeMonHash) ByteSize() int {
+// rankRaw is a version of Rank that doesn't use Data() (which allocates).
+// It's meant for benchmarking the CGO overhead itself.
+func (lh *LeMonHash) rankRaw(data []byte) int {
 	if lh.ptr == nil {
+		return 0
+	}
+	var ptr *C.char
+	if len(data) > 0 {
+		ptr = (*C.char)(unsafe.Pointer(&data[0]))
+	}
+	rank := C.lemonhash_vl_query(lh.ptr, ptr, C.size_t(len(data)))
+	return int(rank)
+}
+
+func (lh *LeMonHash) RankBatch(keys []bits.BitString, results []int) {
+	if lh.ptr == nil || len(keys) == 0 {
+		return
+	}
+
+	numKeys := len(keys)
+	cKeys := make([]*C.char, numKeys)
+	lengths := make([]C.size_t, numKeys)
+	cResults := make([]C.uint64_t, numKeys)
+
+	var pinner runtime.Pinner
+	defer pinner.Unpin()
+	pinner.Pin(&cKeys[0])
+	pinner.Pin(&lengths[0])
+	pinner.Pin(&cResults[0])
+
+	for i, k := range keys {
+		data := k.Data()
+		if len(data) > 0 {
+			pinner.Pin(&data[0])
+			cKeys[i] = (*C.char)(unsafe.Pointer(&data[0]))
+		}
+		lengths[i] = C.size_t(len(data))
+	}
+
+	C.lemonhash_vl_query_batch(lh.ptr, (**C.char)(unsafe.Pointer(&cKeys[0])), (*C.size_t)(unsafe.Pointer(&lengths[0])), C.size_t(numKeys), (*C.uint64_t)(unsafe.Pointer(&cResults[0])))
+
+	for i, r := range cResults {
+		results[i] = int(r)
+	}
+}
+
+// RankPair queries two keys in a single CGO call. 
+// Since arguments are passed directly, Go performs implicit pinning, 
+// avoiding the overhead of runtime.Pinner used in RankBatch.
+func (lh *LeMonHash) RankPair(k1, k2 bits.BitString) (int, int) {
+	if lh.ptr == nil {
+		return 0, 0
+	}
+
+	d1 := k1.Data()
+	d2 := k2.Data()
+
+	var p1, p2 *C.char
+	if len(d1) > 0 {
+		p1 = (*C.char)(unsafe.Pointer(&d1[0]))
+	}
+	if len(d2) > 0 {
+		p2 = (*C.char)(unsafe.Pointer(&d2[0]))
+	}
+
+	var r1, r2 C.uint64_t
+	C.lemonhash_vl_query_pair(lh.ptr, p1, C.size_t(len(d1)), p2, C.size_t(len(d2)), &r1, &r2)
+
+	return int(r1), int(r2)
+}
+
+// rankPairRaw is a zero-alloc version of RankPair for benchmarking.
+func (lh *LeMonHash) rankPairRaw(d1, d2 []byte) (int, int) {
+	if lh.ptr == nil {
+		return 0, 0
+	}
+
+	var p1, p2 *C.char
+	if len(d1) > 0 {
+		p1 = (*C.char)(unsafe.Pointer(&d1[0]))
+	}
+	if len(d2) > 0 {
+		p2 = (*C.char)(unsafe.Pointer(&d2[0]))
+	}
+
+	var r1, r2 C.uint64_t
+	C.lemonhash_vl_query_pair(lh.ptr, p1, C.size_t(len(d1)), p2, C.size_t(len(d2)), &r1, &r2)
+
+	return int(r1), int(r2)
+}
+
+func (lh *LeMonHash) ByteSize() int {	if lh.ptr == nil {
 		return 0
 	}
 	return int(C.lemonhash_vl_space_bits(lh.ptr) / 8)

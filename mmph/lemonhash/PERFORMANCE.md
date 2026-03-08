@@ -5,36 +5,29 @@
 | Metric | 1k keys | 1M keys | 16M keys |
 | :--- | :--- | :--- | :--- |
 | **Space (bits/key)** | 29.2 | 3.34 | **3.32** |
-| **Rank Latency (ns/key)** | ~550 | ~630 | ~700 |
-| **RankBatch (ns/key)** | ~625 | ~680 | ~720 |
+| **Rank (Single, Zero-Alloc)** | ~88 ns | ~175 ns | ~200 ns |
+| **RankPair (2 keys/call)** | **~65 ns** | **~162 ns** | ~180 ns |
+| **RankBatch (1024 keys/call)** | ~190 ns | ~290 ns | ~310 ns |
 
 ## 2. Overhead Breakdown
 
-A single `Rank(key)` call currently takes ~600ns. Here is where the time goes:
+A single `Rank(key)` call now takes ~90-200ns after removing allocations.
 
-1. **CGO Transition (~50-100 ns):** The fixed cost of switching the execution context from Go (segmented stack) to C (standard stack) and back.
-2. **Memory Allocation (~300-400 ns):** The current implementation of `bits.BitString.Data()` creates a **new `[]byte` slice** on every call. This triggers the Go allocator and a `memcpy`.
-3. **C++ Logic (< 100 ns):** LeMonHash itself is extremely fast (math-based learned index + local bit-layer lookup).
-4. **CGO Pointer Validation:** Go's runtime checks if pointers passed to C are valid, which adds a small cost.
+1. **CGO Transition (~50-80 ns):** The fixed cost of switching context.
+2. **Implicit Pinning (~0 ns):** When passing arguments directly, Go's compiler handles pinning with near-zero overhead.
+3. **C++ Logic (~10-100 ns):** Increases with dataset size due to PGM-index depth and cache misses.
 
-## 3. The Batch Paradox
+## 3. The Pinning Trade-off
 
-Surprisingly, `RankBatch` is currently **slower** than single `Rank` calls.
+The benchmarks reveal a clear hierarchy of efficiency:
 
-### Why?
-To pass a slice of `BitString` to C, we must pass an array of pointers (`**char`). Go's CGO rules require that any Go memory pointed to by a pointer passed to C must be **pinned**.
+1. **Direct Arguments (RankPair):** Best performance. Amortizes the CGO transition across 2 keys while keeping pinning "implicit" and fast.
+2. **Single Call (Rank):** Good performance, but pays the full transition tax for every key.
+3. **Manual Pinning (RankBatch):** Worst performance. Even though it has only 1 CGO transition per 1024 keys, the cost of calling `runtime.Pinner.Pin()` 1024 times is significantly higher than 1024 CGO transitions.
 
-Since we pass an array containing $N$ pointers to $N$ different memory blocks (the keys), we have to call `runtime.Pinner.Pin()` **$N$ times**. 
-* **Single Rank:** 1 implicit, highly optimized pin (done by the compiler).
-* **RankBatch (1024):** 1024 explicit `Pin()` calls in a loop.
+## 4. Conclusion
 
-The overhead of 1024 manual pinning operations is currently greater than the overhead of 1024 CGO transitions.
-
-## 4. Future Optimizations
-
-To achieve < 200ns per query, we need to eliminate allocations:
-
-1. **Zero-Alloc `BitString` Access:** Add a method to `BitString` that returns a pointer to the internal `[]uint64` storage without copying (using `unsafe.Pointer`). This removes the `Data()` allocation.
-2. **Flat Buffer for Batching:** Instead of a slice of `BitString`, use a `FlatBitBuffer` where all keys are concatenated into one large `[]byte`. 
-    * This allows pinning the entire batch with **one** `Pin()` call.
-    * This would likely reduce `RankBatch` latency to **< 50ns per key**.
+For maximum performance through CGO:
+- **Avoid `runtime.Pinner`** for large batches of small objects.
+- **Use "Multi-Arg" wrappers** (like `RankPair`, `RankQuad`) to amortize transition costs if data can be passed as separate arguments.
+- **Use Flat Buffers** if batching is required. By concatenating keys into one large `[]byte`, we can use `Pin()` once for the entire batch, which would likely outperform all other methods.
