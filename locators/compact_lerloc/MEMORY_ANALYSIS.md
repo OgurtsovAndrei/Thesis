@@ -1,23 +1,24 @@
-# Memory Analysis: CompactLocalExactRangeLocator (LeMonHash)
+# Memory Analysis: CompactLocalExactRangeLocator (LeMonHash + SuccinctHZFastTrie)
 
 ## 1. Executive Summary
 
-By replacing the classical bucketing MMPH (`relative_trie`) with the learned `LeMonHash`, we achieved a massive reduction in memory usage for the Local Exact Range Locator.
+By replacing the classical bucketing MMPH with the learned `LeMonHash`, and combining it with the `SuccinctHZFastTrie` as the exit-node locator, we achieved a massive reduction in memory usage for the Local Exact Range Locator.
 
-For a dataset of **32,768 keys**:
+For a dataset of **32,768 keys** (64-bit length):
 - **Baseline LERLOC (Compact):** ~141.9 bits/key
-- **Compact LERLOC (LeMonHash):** **~87.7 bits/key**
-- **Improvement:** **~54 bits/key (~38% reduction)**
+- **Compact LERLOC (LeMonHash + Generic HZFastTrie):** ~87.7 bits/key
+- **Compact LERLOC (LeMonHash + SuccinctHZFastTrie):** **~58.9 bits/key**
+- **Overall Improvement:** **~83 bits/key (~58% reduction from baseline)**
 
 ## 2. Component Breakdown (N=32,768)
 
-| Component | Bits/Key (Baseline) | Bits/Key (Compact) | Notes |
+| Component | Bits/Key (Baseline) | Bits/Key (Compact LeMonHash) | Notes |
 | :--- | :--- | :--- | :--- |
-| **HZFastTrie** | 34.6 | 63.4 | Exit-node locator. |
+| **HZFastTrie** | 34.6 | **34.6** | Using `SuccinctHZFastTrie` via PGM-index and RSDic instead of raw arrays. |
 | **MMPH (Boundary Set P)** | 4.3 (Trie) | **19.1 (LeMonHash)** | Learned index on the $|P| \approx 5N$ boundary strings. |
-| **Leaf BitVector (RSDic)** | 5.1 | 5.1 | Rankable bitvector on $|P|$ elements. |
+| **Leaf BitVector (RSDic)** | 5.1 | **5.1** | Rankable bitvector on $|P|$ elements. |
 | **Metadata & Headers** | 97.8 | **~0.01** | Classical implementation had huge overhead in 'Other' category. |
-| **TOTAL** | **141.9** | **87.7** | |
+| **TOTAL** | **141.9** | **~58.9** | |
 
 ## 3. The Boundary Set Impact ($|P| \approx 5N$)
 
@@ -29,9 +30,9 @@ As noted during analysis, the boundary set $P$ constructed from the ZFastTrie is
 
 | N | LERLOC Compact (bits/key) | Compact LERLOC (bits/key) | Improvement |
 | :--- | :--- | :--- | :--- |
-| 1,024 | 161.7 | 137.9 | -15% |
-| 8,192 | 145.6 | 91.7 | -37% |
-| 32,768 | 141.9 | **87.7** | **-38%** |
+| 1,024 | 161.7 | 104.0 | -35% |
+| 8,192 | 145.6 | 62.8 | -56% |
+| 32,768 | 141.9 | **58.9** | **-58%** |
 
 ## 5. Visualizations
 
