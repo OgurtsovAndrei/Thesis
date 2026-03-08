@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	benchKeyCounts = []int{1 << 5, 1 << 10, 1 << 15, 1 << 20, 1 << 24}
+	benchKeyCounts = []int{1 << 10, 1 << 15, 1 << 20}
 )
 
 func BenchmarkMMPHBuild(b *testing.B) {
@@ -20,7 +20,6 @@ func BenchmarkMMPHBuild(b *testing.B) {
 			for i, s := range keysStr {
 				keys[i] = bits.NewFromText(s)
 			}
-			// Sort keys by byte representation to match C++ std::string order
 			sort.Slice(keys, func(i, j int) bool {
 				return string(keys[i].Data()) < string(keys[j].Data())
 			})
@@ -47,11 +46,80 @@ func BenchmarkMMPHQuery(b *testing.B) {
 				return string(keys[i].Data()) < string(keys[j].Data())
 			})
 			table := New(keys)
+
+			// Pre-extract data to avoid allocation in benchmark loop
+			keysData := make([][]byte, len(keys))
+			for i, k := range keys {
+				keysData[i] = k.Data()
+			}
+
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_ = table.Rank(keys[i%count])
+				_ = table.rankRaw(keysData[i%count])
 			}
+		})
+	}
+}
+
+func BenchmarkMMPHQueryBatch(b *testing.B) {
+	batchSize := 1024
+	for _, count := range benchKeyCounts {
+		if count < batchSize {
+			continue
+		}
+		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
+			keysStr := testutils.GetBenchKeysAsStrings(64, count)
+			keys := make([]bits.BitString, len(keysStr))
+			for i, s := range keysStr {
+				keys[i] = bits.NewFromText(s)
+			}
+			sort.Slice(keys, func(i, j int) bool {
+				return string(keys[i].Data()) < string(keys[j].Data())
+			})
+			table := New(keys)
+			results := make([]int, batchSize)
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				start := 0
+				if count > batchSize {
+					start = (i * batchSize) % (count - batchSize)
+				}
+				table.RankBatch(keys[start:start+batchSize], results)
+			}
+			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N*batchSize), "ns/key_avg")
+		})
+	}
+}
+
+func BenchmarkMMPHQueryPair(b *testing.B) {
+	for _, count := range benchKeyCounts {
+		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
+			keysStr := testutils.GetBenchKeysAsStrings(64, count)
+			keys := make([]bits.BitString, len(keysStr))
+			for i, s := range keysStr {
+				keys[i] = bits.NewFromText(s)
+			}
+			sort.Slice(keys, func(i, j int) bool {
+				return string(keys[i].Data()) < string(keys[j].Data())
+			})
+			table := New(keys)
+
+			keysData := make([][]byte, len(keys))
+			for i, k := range keys {
+				keysData[i] = k.Data()
+			}
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				k1 := keysData[(i*2)%count]
+				k2 := keysData[(i*2+1)%count]
+				_, _ = table.rankPairRaw(k1, k2)
+			}
+			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N*2), "ns/key_avg")
 		})
 	}
 }
