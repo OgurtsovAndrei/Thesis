@@ -1,3 +1,0 @@
-[submodule "mmph/lemonhash/ext/LeMonHash"]
-	path = mmph/lemonhash/ext/LeMonHash
-	url = https://github.com/ByteHamster/LeMonHash.git
