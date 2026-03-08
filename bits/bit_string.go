@@ -142,14 +142,14 @@ func (bs BitString) Equal(other BitString) bool {
 	if bs.IsEmpty() {
 		return true
 	}
-	
+
 	fullWords := bs.sizeBits / 64
 	for i := uint32(0); i < fullWords; i++ {
 		if bs.data[i] != other.data[i] {
 			return false
 		}
 	}
-	
+
 	if bs.sizeBits%64 != 0 {
 		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
 		if (bs.data[fullWords] & mask) != (other.data[fullWords] & mask) {
@@ -193,6 +193,45 @@ func (bs BitString) Data() []byte {
 	return result
 }
 
+// AppendToBytes appends the exact byte representation of the BitString to the given buffer.
+// It masks out any garbage bits beyond sizeBits. This is allocation-free if the buffer has enough capacity.
+func (bs BitString) AppendToBytes(buf []byte) []byte {
+	if bs.sizeBits == 0 {
+		return buf
+	}
+
+	numBytes := (bs.sizeBits + 7) / 8
+	
+	// Ensure buffer has capacity
+	if uint32(cap(buf)-len(buf)) < numBytes {
+		newBuf := make([]byte, len(buf), len(buf)+int(numBytes))
+		copy(newBuf, buf)
+		buf = newBuf
+	}
+	
+	start := len(buf)
+	buf = buf[:start+int(numBytes)]
+
+	fullWords := numBytes / 8
+	for i := uint32(0); i < fullWords; i++ {
+		binary.LittleEndian.PutUint64(buf[start+int(i*8):], bs.data[i])
+	}
+
+	if numBytes%8 != 0 {
+		lastWord := bs.data[fullWords]
+		if bs.sizeBits%64 != 0 {
+			mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+			lastWord &= mask
+		}
+		offset := start + int(fullWords*8)
+		remainingBytes := numBytes % 8
+		for j := uint32(0); j < remainingBytes; j++ {
+			buf[offset+int(j)] = byte(lastWord >> (j * 8))
+		}
+	}
+
+	return buf
+}
 func (bs BitString) PrettyString() string {
 	if bs.sizeBits == 0 {
 		return "<empty>"
@@ -211,7 +250,7 @@ func (bs BitString) PrettyString() string {
 	sb.WriteString(": (")
 	sb.WriteString(strconv.Itoa(int(bs.sizeBits)))
 	sb.WriteString(" bits) [")
-	
+
 	numWords := (bs.sizeBits + 63) / 64
 	for i := uint32(0); i < numWords; i++ {
 		if i > 0 {
@@ -328,7 +367,7 @@ func (bs BitString) Hash() uint64 {
 		h ^= bs.data[i]
 		h *= prime64
 	}
-	
+
 	if bs.sizeBits%64 != 0 {
 		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
 		h ^= (bs.data[fullWords] & mask)
@@ -355,7 +394,7 @@ func (bs BitString) HashWithSeed(seed uint64) uint64 {
 		h ^= bs.data[i]
 		h *= prime64
 	}
-	
+
 	if bs.sizeBits%64 != 0 {
 		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
 		h ^= (bs.data[fullWords] & mask)
@@ -367,8 +406,10 @@ func (bs BitString) HashWithSeed(seed uint64) uint64 {
 
 // Compare performs lexicographic comparison. Returns:
 // -1 if bs < other
-//  1 if bs > other
-//  0 if bs == other
+//
+//	1 if bs > other
+//	0 if bs == other
+//
 // See PERFORMANCE.md for performance benchmarks and rationale.
 func (bs BitString) Compare(other BitString) int {
 	aSize := bs.sizeBits
