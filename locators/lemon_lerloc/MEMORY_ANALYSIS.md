@@ -1,4 +1,4 @@
-# Memory Analysis: CompactLocalExactRangeLocator (LeMonHash + SuccinctHZFastTrie)
+# Memory Analysis: LeMon-Lerloc (LeMonHash + SuccinctHZFastTrie)
 
 ## 1. Executive Summary
 
@@ -6,13 +6,13 @@ By replacing the classical bucketing MMPH with the learned `LeMonHash`, and comb
 
 For a dataset of **32,768 keys** (64-bit length):
 - **Baseline LERLOC (Compact):** ~141.9 bits/key
-- **Compact LERLOC (LeMonHash + Generic HZFastTrie):** ~87.7 bits/key
-- **Compact LERLOC (LeMonHash + SuccinctHZFastTrie):** **~58.9 bits/key**
+- **LeMon-Lerloc (LeMonHash + Generic HZFastTrie):** ~87.7 bits/key
+- **LeMon-Lerloc (LeMonHash + SuccinctHZFastTrie):** **~58.9 bits/key**
 - **Overall Improvement:** **~83 bits/key (~58% reduction from baseline)**
 
 ## 2. Component Breakdown (N=32,768)
 
-| Component | Bits/Key (Baseline) | Bits/Key (Compact LeMonHash) | Notes |
+| Component | Bits/Key (Baseline) | Bits/Key (LeMon-Lerloc) | Notes |
 | :--- | :--- | :--- | :--- |
 | **HZFastTrie** | 34.6 | **34.6** | Using `SuccinctHZFastTrie` via PGM-index and RSDic instead of raw arrays. |
 | **MMPH (Boundary Set P)** | 4.3 (Trie) | **19.1 (LeMonHash)** | Learned index on the $|P| \approx 5N$ boundary strings. |
@@ -22,7 +22,7 @@ For a dataset of **32,768 keys** (64-bit length):
 
 ## 3. Query Performance (N=32,768, L=64)
 
-| Metric | Baseline LERLOC (Compact) | Compact LERLOC (New) | Change |
+| Metric | Baseline LERLOC (Compact) | LeMon-Lerloc (New) | Change |
 | :--- | :--- | :--- | :--- |
 | **Query Latency** | ~722 ns/op | **~758 ns/op** | +5% |
 | **Allocations** | 1 alloc/op | 3 allocs/op | +2 allocs |
@@ -37,7 +37,7 @@ As noted during analysis, the boundary set $P$ constructed from the ZFastTrie is
 
 ## 4. Scalability
 
-| N | LERLOC Compact (bits/key) | Compact LERLOC (bits/key) | Improvement |
+| N | LERLOC Compact (bits/key) | LeMon-Lerloc (bits/key) | Improvement |
 | :--- | :--- | :--- | :--- |
 | 1,024 | 161.7 | 104.0 | -35% |
 | 8,192 | 145.6 | 62.8 | -56% |

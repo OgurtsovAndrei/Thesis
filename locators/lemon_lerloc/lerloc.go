@@ -1,4 +1,4 @@
-package compact_lerloc
+package lemon_lerloc
 
 import (
 	"Thesis/bits"
@@ -10,23 +10,23 @@ import (
 	"unsafe"
 )
 
-// CompactLocalExactRangeLocator supports weak prefix search and returns exact
+// LeMonLocalExactRangeLocator supports weak prefix search and returns exact
 // rank intervals in the sorted key set. It uses the highly compressed
 // CompactRangeLocator based on LeMonHash, significantly reducing the memory
 // footprint compared to the classical generic bucketing approach.
 // It also uses SuccinctHZFastTrie for the exit-node locator to minimize memory.
-type CompactLocalExactRangeLocator struct {
+type LeMonLocalExactRangeLocator struct {
 	shzft *shzft.SuccinctHZFastTrie
 	rl    *compact_rloc.CompactRangeLocator
 }
 
-// NewCompactLocalExactRangeLocator creates a new CompactLocalExactRangeLocator.
+// NewLeMonLocalExactRangeLocator creates a new LeMonLocalExactRangeLocator.
 // It composes a SuccinctHZFastTrie (to map a query prefix to an exit node) with a
 // CompactRangeLocator (to map that exit node to a rank interval).
 //
 // It assumes the keys provided are sorted. If not, construction
 // will panic.
-func NewCompactLocalExactRangeLocator(keys []bits.BitString) (*CompactLocalExactRangeLocator, error) {
+func NewLeMonLocalExactRangeLocator(keys []bits.BitString) (*LeMonLocalExactRangeLocator, error) {
 	// Build RangeLocator first
 	// We need to build a ZFastTrie to pass to NewCompactRangeLocator
 	zt := zft.Build(keys)
@@ -38,7 +38,7 @@ func NewCompactLocalExactRangeLocator(keys []bits.BitString) (*CompactLocalExact
 	// Build SuccinctHZFastTrie
 	shz := shzft.NewSuccinctHZFastTrie(keys)
 
-	return &CompactLocalExactRangeLocator{
+	return &LeMonLocalExactRangeLocator{
 		shzft: shz,
 		rl:    rl,
 	}, nil
@@ -46,7 +46,7 @@ func NewCompactLocalExactRangeLocator(keys []bits.BitString) (*CompactLocalExact
 
 // WeakPrefixSearch returns the half-open interval [i, j) of ranks of all
 // elements in the original set that share the provided prefix.
-func (lerl *CompactLocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitString) (int, int, error) {
+func (lerl *LeMonLocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitString) (int, int, error) {
 	if lerl == nil || lerl.shzft == nil || lerl.rl == nil {
 		return 0, 0, nil
 	}
@@ -66,7 +66,7 @@ func (lerl *CompactLocalExactRangeLocator) WeakPrefixSearch(prefix bits.BitStrin
 }
 
 // ByteSize returns the estimated resident size in bytes.
-func (lerl *CompactLocalExactRangeLocator) ByteSize() int {
+func (lerl *LeMonLocalExactRangeLocator) ByteSize() int {
 	if lerl == nil {
 		return 0
 	}
@@ -85,9 +85,9 @@ func (lerl *CompactLocalExactRangeLocator) ByteSize() int {
 }
 
 // MemDetailed returns a detailed memory usage report.
-func (lerl *CompactLocalExactRangeLocator) MemDetailed() utils.MemReport {
+func (lerl *LeMonLocalExactRangeLocator) MemDetailed() utils.MemReport {
 	if lerl == nil {
-		return utils.MemReport{Name: "CompactLocalExactRangeLocator", TotalBytes: 0}
+		return utils.MemReport{Name: "LeMonLocalExactRangeLocator", TotalBytes: 0}
 	}
 
 	headerSize := int(unsafe.Sizeof(*lerl))
@@ -102,7 +102,7 @@ func (lerl *CompactLocalExactRangeLocator) MemDetailed() utils.MemReport {
 	}
 
 	return utils.MemReport{
-		Name:       "CompactLocalExactRangeLocator",
+		Name:       "LeMonLocalExactRangeLocator",
 		TotalBytes: lerl.ByteSize(),
 		Children: []utils.MemReport{
 			{Name: "header", TotalBytes: headerSize},
@@ -114,7 +114,7 @@ func (lerl *CompactLocalExactRangeLocator) MemDetailed() utils.MemReport {
 
 // TypeWidths returns bit-widths. S and I are hardcoded to 0 since LeMonHash
 // resolves types dynamically in C++. E is 0 because SuccinctHZFastTrie is not generic.
-func (lerl *CompactLocalExactRangeLocator) TypeWidths() rloc.TypeWidths {
+func (lerl *LeMonLocalExactRangeLocator) TypeWidths() rloc.TypeWidths {
 	return rloc.TypeWidths{
 		E: 0,
 		S: 0,
