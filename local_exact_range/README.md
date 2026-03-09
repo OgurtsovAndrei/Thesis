@@ -34,6 +34,7 @@ Comprehensive performance analysis and visualizations are available in the [benc
 - **[Exact Structure Report](../bench_results/range_emptiness/exact/report.md)**: Analysis of space growth relative to key length $L$.
 - **[Approximate Structure Report](../bench_results/range_emptiness/approx/report.md)**: Scale testing with up to 16 million keys and 1024-bit lengths.
 - **[Accuracy Trade-off Study](../bench_results/range_emptiness/tradeoff/report.md)**: High-resolution empirical analysis of FPR vs. Space.
+- **[Adversarial Benchmarks](../bench_results/range_emptiness/adversarial/report.md)**: FPR under clustered, spread, and adversarial query workloads.
 
 ## Usage Example
 
