@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">ARE: FPR vs Space Under Different Workloads (N=200K)</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">10^-8</text>
+<line class="grid" x1="90.0" y1="419.44" x2="920.0" y2="419.44" />
+<text class="label" x="82.0" y="423.44" text-anchor="end">10^-7</text>
+<line class="grid" x1="90.0" y1="373.89" x2="920.0" y2="373.89" />
+<text class="label" x="82.0" y="377.89" text-anchor="end">10^-6</text>
+<line class="grid" x1="90.0" y1="328.33" x2="920.0" y2="328.33" />
+<text class="label" x="82.0" y="332.33" text-anchor="end">10^-5</text>
+<line class="grid" x1="90.0" y1="282.78" x2="920.0" y2="282.78" />
+<text class="label" x="82.0" y="286.78" text-anchor="end">10^-4</text>
+<line class="grid" x1="90.0" y1="237.22" x2="920.0" y2="237.22" />
+<text class="label" x="82.0" y="241.22" text-anchor="end">10^-3</text>
+<line class="grid" x1="90.0" y1="191.67" x2="920.0" y2="191.67" />
+<text class="label" x="82.0" y="195.67" text-anchor="end">10^-2</text>
+<line class="grid" x1="90.0" y1="146.11" x2="920.0" y2="146.11" />
+<text class="label" x="82.0" y="150.11" text-anchor="end">10^-1</text>
+<line class="grid" x1="90.0" y1="100.56" x2="920.0" y2="100.56" />
+<text class="label" x="82.0" y="104.56" text-anchor="end">10^0</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">10^1</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">0.0</text>
+<line class="grid" x1="90.02" y1="55.0" x2="90.02" y2="465.0" />
+<line class="grid" x1="90.03" y1="55.0" x2="90.03" y2="465.0" />
+<line class="grid" x1="90.27" y1="55.0" x2="90.27" y2="465.0" />
+<line class="grid" x1="90.72" y1="55.0" x2="90.72" y2="465.0" />
+<line class="grid" x1="91.59" y1="55.0" x2="91.59" y2="465.0" />
+<text class="label" x="91.59" y="485.0" text-anchor="middle">0.1</text>
+<line class="grid" x1="93.33" y1="55.0" x2="93.33" y2="465.0" />
+<line class="grid" x1="96.77" y1="55.0" x2="96.77" y2="465.0" />
+<line class="grid" x1="103.64" y1="55.0" x2="103.64" y2="465.0" />
+<line class="grid" x1="117.34" y1="55.0" x2="117.34" y2="465.0" />
+<line class="grid" x1="144.75" y1="55.0" x2="144.75" y2="465.0" />
+<text class="label" x="144.75" y="485.0" text-anchor="middle">1.9</text>
+<line class="grid" x1="176.59" y1="55.0" x2="176.59" y2="465.0" />
+<line class="grid" x1="186.69" y1="55.0" x2="186.69" y2="465.0" />
+<line class="grid" x1="210.04" y1="55.0" x2="210.04" y2="465.0" />
+<line class="grid" x1="216.35" y1="55.0" x2="216.35" y2="465.0" />
+<line class="grid" x1="244.86" y1="55.0" x2="244.86" y2="465.0" />
+<text class="label" x="244.86" y="485.0" text-anchor="middle">5.2</text>
+<line class="grid" x1="246.01" y1="55.0" x2="246.01" y2="465.0" />
+<line class="grid" x1="275.66" y1="55.0" x2="275.66" y2="465.0" />
+<line class="grid" x1="278.54" y1="55.0" x2="278.54" y2="465.0" />
+<line class="grid" x1="305.32" y1="55.0" x2="305.32" y2="465.0" />
+<line class="grid" x1="311.05" y1="55.0" x2="311.05" y2="465.0" />
+<text class="label" x="311.05" y="485.0" text-anchor="middle">7.5</text>
+<line class="grid" x1="334.98" y1="55.0" x2="334.98" y2="465.0" />
+<line class="grid" x1="342.51" y1="55.0" x2="342.51" y2="465.0" />
+<line class="grid" x1="364.63" y1="55.0" x2="364.63" y2="465.0" />
+<line class="grid" x1="373.19" y1="55.0" x2="373.19" y2="465.0" />
+<line class="grid" x1="394.29" y1="55.0" x2="394.29" y2="465.0" />
+<text class="label" x="394.29" y="485.0" text-anchor="middle">10.3</text>
+<line class="grid" x1="403.45" y1="55.0" x2="403.45" y2="465.0" />
+<line class="grid" x1="423.94" y1="55.0" x2="423.94" y2="465.0" />
+<line class="grid" x1="433.52" y1="55.0" x2="433.52" y2="465.0" />
+<line class="grid" x1="453.60" y1="55.0" x2="453.60" y2="465.0" />
+<line class="grid" x1="463.40" y1="55.0" x2="463.40" y2="465.0" />
+<text class="label" x="463.40" y="485.0" text-anchor="middle">12.6</text>
+<line class="grid" x1="483.26" y1="55.0" x2="483.26" y2="465.0" />
+<line class="grid" x1="493.18" y1="55.0" x2="493.18" y2="465.0" />
+<line class="grid" x1="623.44" y1="55.0" x2="623.44" y2="465.0" />
+<line class="grid" x1="653.09" y1="55.0" x2="653.09" y2="465.0" />
+<line class="grid" x1="682.75" y1="55.0" x2="682.75" y2="465.0" />
+<text class="label" x="682.75" y="485.0" text-anchor="middle">20.0</text>
+<line class="grid" x1="712.41" y1="55.0" x2="712.41" y2="465.0" />
+<line class="grid" x1="742.06" y1="55.0" x2="742.06" y2="465.0" />
+<line class="grid" x1="771.72" y1="55.0" x2="771.72" y2="465.0" />
+<line class="grid" x1="801.38" y1="55.0" x2="801.38" y2="465.0" />
+<line class="grid" x1="831.03" y1="55.0" x2="831.03" y2="465.0" />
+<text class="label" x="831.03" y="485.0" text-anchor="middle">25.0</text>
+<line class="grid" x1="860.69" y1="55.0" x2="860.69" y2="465.0" />
+<line class="grid" x1="890.34" y1="55.0" x2="890.34" y2="465.0" />
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">28.0</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="176.59,276.20 210.04,284.51 244.86,294.33 278.54,303.07 311.05,311.09 342.51,324.80 373.19,346.54 403.45,346.54 433.52,346.54 463.40,346.54 493.18,346.54" />
+<circle cx="176.59" cy="276.20" r="3.5" fill="#2a7fff" />
+<circle cx="210.04" cy="284.51" r="3.5" fill="#2a7fff" />
+<circle cx="244.86" cy="294.33" r="3.5" fill="#2a7fff" />
+<circle cx="278.54" cy="303.07" r="3.5" fill="#2a7fff" />
+<circle cx="311.05" cy="311.09" r="3.5" fill="#2a7fff" />
+<circle cx="342.51" cy="324.80" r="3.5" fill="#2a7fff" />
+<circle cx="373.19" cy="346.54" r="3.5" fill="#2a7fff" />
+<circle cx="403.45" cy="346.54" r="3.5" fill="#2a7fff" />
+<circle cx="433.52" cy="346.54" r="3.5" fill="#2a7fff" />
+<circle cx="463.40" cy="346.54" r="3.5" fill="#2a7fff" />
+<circle cx="493.18" cy="346.54" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">Uniform Keys + Wide Range (w≤10K)</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="186.69,264.83 216.35,281.28 246.01,290.43 275.66,300.93 305.32,305.34 334.98,319.06 364.63,346.48 394.29,465.00 423.94,465.00 453.60,465.00 483.26,465.00" />
+<circle cx="186.69" cy="264.83" r="3.5" fill="#e4572e" />
+<circle cx="216.35" cy="281.28" r="3.5" fill="#e4572e" />
+<circle cx="246.01" cy="290.43" r="3.5" fill="#e4572e" />
+<circle cx="275.66" cy="300.93" r="3.5" fill="#e4572e" />
+<circle cx="305.32" cy="305.34" r="3.5" fill="#e4572e" />
+<circle cx="334.98" cy="319.06" r="3.5" fill="#e4572e" />
+<circle cx="364.63" cy="346.48" r="3.5" fill="#e4572e" />
+<circle cx="394.29" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="423.94" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="453.60" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="483.26" cy="465.00" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">Spread Keys + Gap Queries</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="176.59,112.95 210.04,123.30 244.86,135.21 278.54,148.00 311.05,161.36 342.51,174.60 373.19,188.25 403.45,202.01 433.52,215.85 463.40,229.79 493.18,242.97" />
+<circle cx="176.59" cy="112.95" r="3.5" fill="#22a06b" />
+<circle cx="210.04" cy="123.30" r="3.5" fill="#22a06b" />
+<circle cx="244.86" cy="135.21" r="3.5" fill="#22a06b" />
+<circle cx="278.54" cy="148.00" r="3.5" fill="#22a06b" />
+<circle cx="311.05" cy="161.36" r="3.5" fill="#22a06b" />
+<circle cx="342.51" cy="174.60" r="3.5" fill="#22a06b" />
+<circle cx="373.19" cy="188.25" r="3.5" fill="#22a06b" />
+<circle cx="403.45" cy="202.01" r="3.5" fill="#22a06b" />
+<circle cx="433.52" cy="215.85" r="3.5" fill="#22a06b" />
+<circle cx="463.40" cy="229.79" r="3.5" fill="#22a06b" />
+<circle cx="493.18" cy="242.97" r="3.5" fill="#22a06b" />
+<line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
+<text class="label" x="122.0" y="107.0">Uniform Keys + Point Queries</text>
+<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" points="186.69,105.92 216.35,119.53 246.01,133.23 275.66,146.89 305.32,160.64 334.98,174.36 364.63,188.20 394.29,202.03 423.94,215.41 453.60,229.17 483.26,241.10" />
+<circle cx="186.69" cy="105.92" r="3.5" fill="#7c3aed" />
+<circle cx="216.35" cy="119.53" r="3.5" fill="#7c3aed" />
+<circle cx="246.01" cy="133.23" r="3.5" fill="#7c3aed" />
+<circle cx="275.66" cy="146.89" r="3.5" fill="#7c3aed" />
+<circle cx="305.32" cy="160.64" r="3.5" fill="#7c3aed" />
+<circle cx="334.98" cy="174.36" r="3.5" fill="#7c3aed" />
+<circle cx="364.63" cy="188.20" r="3.5" fill="#7c3aed" />
+<circle cx="394.29" cy="202.03" r="3.5" fill="#7c3aed" />
+<circle cx="423.94" cy="215.41" r="3.5" fill="#7c3aed" />
+<circle cx="453.60" cy="229.17" r="3.5" fill="#7c3aed" />
+<circle cx="483.26" cy="241.10" r="3.5" fill="#7c3aed" />
+<line x1="100.0" y1="121.0" x2="116.0" y2="121.0" stroke="#7c3aed" stroke-width="2.5" />
+<text class="label" x="122.0" y="125.0">Spread Keys + Point Queries</text>
+<polyline fill="none" stroke="#a16207" stroke-width="2.5" points="90.00,255.85 90.02,268.10 90.03,280.89 90.27,280.89 90.72,280.89 91.59,280.89 93.33,280.89 96.77,280.89 103.64,280.89 117.34,280.89 144.75,280.89" />
+<circle cx="90.00" cy="255.85" r="3.5" fill="#a16207" />
+<circle cx="90.02" cy="268.10" r="3.5" fill="#a16207" />
+<circle cx="90.03" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="90.27" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="90.72" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="91.59" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="93.33" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="96.77" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="103.64" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="117.34" cy="280.89" r="3.5" fill="#a16207" />
+<circle cx="144.75" cy="280.89" r="3.5" fill="#a16207" />
+<line x1="100.0" y1="139.0" x2="116.0" y2="139.0" stroke="#a16207" stroke-width="2.5" />
+<text class="label" x="122.0" y="143.0">Clustered Keys + Point Queries</text>
+<polyline fill="none" stroke="#d946ef" stroke-width="2.5" stroke-dasharray="10,6" points="623.44,92.20 653.09,105.91 682.75,119.62 712.41,133.34 742.06,147.05 771.72,160.76 801.38,174.48 831.03,188.19 860.69,201.90 890.34,215.62 920.00,229.33" />
+<circle cx="623.44" cy="92.20" r="3.5" fill="#d946ef" />
+<circle cx="653.09" cy="105.91" r="3.5" fill="#d946ef" />
+<circle cx="682.75" cy="119.62" r="3.5" fill="#d946ef" />
+<circle cx="712.41" cy="133.34" r="3.5" fill="#d946ef" />
+<circle cx="742.06" cy="147.05" r="3.5" fill="#d946ef" />
+<circle cx="771.72" cy="160.76" r="3.5" fill="#d946ef" />
+<circle cx="801.38" cy="174.48" r="3.5" fill="#d946ef" />
+<circle cx="831.03" cy="188.19" r="3.5" fill="#d946ef" />
+<circle cx="860.69" cy="201.90" r="3.5" fill="#d946ef" />
+<circle cx="890.34" cy="215.62" r="3.5" fill="#d946ef" />
+<circle cx="920.00" cy="229.33" r="3.5" fill="#d946ef" />
+<line x1="100.0" y1="157.0" x2="116.0" y2="157.0" stroke="#d946ef" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="161.0">Theoretical Bound (2N/2^K)</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Bits per Key</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">False Positive Rate</text>
+</svg>
