@@ -152,3 +152,7 @@ Check:
 - [SNARF: A Learning-Enhanced Range Filter](https://www.vldb.org/pvldb/vol15/p1632-vaidya.pdf)
 - [Oasis: An Optimal Disjoint Segmented Learned Range Filter](https://www.vldb.org/pvldb/vol17/p1911-luo.pdf)
 - [Proteus: A Self-Designing Range Filter](https://arxiv.org/abs/2207.01503)
+- [Grafite: Taming Adversarial Queries with Optimal Range Filters](https://arxiv.org/abs/2311.15380)
+    - SIGMOD 2024. Simplified practical alternative to SODA 2015, O(1) queries, robust FPR. [Code](https://github.com/marcocosta97/grafite)
+- [Diva: Making Range Filters Useful](https://dl.acm.org/doi/10.14778/3749646.3749664)
+    - VLDB 2025 Best Paper. Dynamic range filter with fast queries and robust FPR.
