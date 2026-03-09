@@ -95,11 +95,20 @@ def draw_line_chart(path: str, title: str, x_label: str, y_label: str, series: D
             parts.append(f'<text class="label" x="{left-8}" y="{py+4:.2f}" text-anchor="end">{yv:.2f}</text>')
 
     # X Grid
-    for x in x_vals:
+    # Calculate a sensible label step
+    x_min_val, x_max_val = min(x_vals), max(x_vals)
+    label_step = max(1, len(x_vals) // 8) # Aim for ~8 labels
+    
+    for i, x in enumerate(x_vals):
         px = x_pos(x)
         parts.append(f'<line class="grid" x1="{px:.2f}" y1="{top}" x2="{px:.2f}" y2="{top+ph}" />')
-        label = f"{x:,.0f}" if x < 1000000 else f"{x:.1e}"
-        parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{label}</text>')
+        
+        # Only draw label if it's on the step or first/last
+        if i % label_step == 0 or i == len(x_vals) - 1:
+            label = f"{x:,.1f}" if x < 1000000 else f"{x:.1e}"
+            # For bits per key, 1 decimal is usually enough
+            if 0 < x < 100: label = f"{x:.1f}"
+            parts.append(f'<text class="label" x="{px:.2f}" y="{top+ph+20}" text-anchor="middle">{label}</text>')
 
     # Data
     palette = ["#2a7fff", "#e4572e", "#22a06b", "#7c3aed", "#a16207", "#d946ef", "#0ea5e9"]

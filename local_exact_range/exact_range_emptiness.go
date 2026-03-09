@@ -66,7 +66,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 			D1.PushBack(false)
 		}
 	}
-	D2.PushBack(true)
+	D2.PushBack(true) // sentinel
 
 	packed := packUint64Local(suffixes, int(w))
 
@@ -85,6 +85,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 func getBlockIndex(x bits.BitString, k uint32) uint64 {
 	var idx uint64
 	size := x.Size()
+	// Bit 0 is MSB of index
 	for i := uint32(0); i < k; i++ {
 		if i < size && x.At(i) {
 			idx |= (uint64(1) << (k - 1 - i))
@@ -97,10 +98,11 @@ func extractSuffixAsUint64(bs bits.BitString, L, w uint32) uint64 {
 	var val uint64
 	size := bs.Size()
 	k := L - w
+	// Bit k is MSB of suffix
 	for i := uint32(0); i < w; i++ {
 		pos := k + i
 		if pos < size && bs.At(pos) {
-			val |= (uint64(1) << i)
+			val |= (uint64(1) << (w - 1 - i))
 		}
 	}
 	return val
@@ -113,10 +115,11 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	blockA := getBlockIndex(a, ere.k)
 	blockB := getBlockIndex(b, ere.k)
 
+	// Range exceeds universe
 	if blockA >= uint64(ere.numBlocks) { return true }
 	if blockB >= uint64(ere.numBlocks) { blockB = uint64(ere.numBlocks - 1) }
 
-	// 1. Check intermediate blocks
+	// 1. Check intermediate full blocks
 	if blockB > blockA+1 {
 		onesBeforeB := ere.D1.Rank(blockB, true)
 		onesBeforeA1 := ere.D1.Rank(blockA+1, true)
@@ -136,7 +139,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 			}
 		}
 	} else {
-		// Check blockA for elements >= suffA
+		// Check blockA for elements in [suffA, max]
 		if ere.D1.Bit(blockA) {
 			start, end := ere.getBlockRange(blockA)
 			suffA := extractSuffixAsUint64(a, ere.L, ere.w)
@@ -146,7 +149,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 				return false
 			}
 		}
-		// Check blockB for elements <= suffB
+		// Check blockB for elements in [0, suffB]
 		if ere.D1.Bit(blockB) {
 			start, end := ere.getBlockRange(blockB)
 			suffB := extractSuffixAsUint64(b, ere.L, ere.w)
