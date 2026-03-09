@@ -1,5 +1,6 @@
 import sys
 import os
+from collections import defaultdict
 
 sys.path.append(os.path.join(os.getcwd(), "scripts"))
 
@@ -7,58 +8,72 @@ from bench_lib.parser import parse_file
 from bench_lib.plotter import draw_line_chart, ensure_dir
 
 def main():
-    results_file = "bench_results/approx_range_emptiness.txt"
+    results_file = "bench_results/approx_range_grid_large.txt"
     rows = parse_file(results_file)
     
     if not rows:
         print("No results found in", results_file)
         return
 
-    # Filter Query and Build results
-    query_pts_01 = []
-    bits_pts_01 = []
-    query_pts_001 = []
-    bits_pts_001 = []
+    # series for plots
+    # We want to show performance across different N values
+    memory_series = defaultdict(list) # Name -> [(L, bits)]
+    query_series = defaultdict(list)  # Name -> [(L, ns)]
+    throughput_series = defaultdict(list) # Name -> [(L, keys_per_sec)]
     
     for r in rows:
         name = r.get("full_name", "")
         keysize = r.get("keysize")
-        eps = r.get("eps")
-        if keysize is None or eps is None:
+        keys_count = r.get("keys")
+        
+        if keysize is None or keys_count is None:
             continue
             
+        n_label = f"N=2^{int(keys_count).bit_length()-1}"
+        if keys_count == 262144: n_label = "N=262K"
+        elif keys_count == 1048576: n_label = "N=1M"
+        elif keys_count == 4194304: n_label = "N=4M"
+        elif keys_count == 16777216: n_label = "N=16M"
+
         if "/Query" in name:
-            if eps == 0.01:
-                query_pts_01.append((keysize, r.get("ns_per_op", 0)))
-            elif eps == 0.001:
-                query_pts_001.append((keysize, r.get("ns_per_op", 0)))
+            query_series[n_label].append((keysize, r.get("ns_per_op", 0)))
         elif "/Build" in name:
-            if eps == 0.01:
-                bits_pts_01.append((keysize, r.get("bits_per_key", 0)))
-            elif eps == 0.001:
-                bits_pts_001.append((keysize, r.get("bits_per_key", 0)))
+            memory_series[n_label].append((keysize, r.get("bits_per_key", 0)))
+            build_ns = r.get("ns_per_op", 0)
+            if build_ns > 0:
+                throughput = (1e9 / build_ns) * keys_count
+                throughput_series[n_label].append((keysize, throughput))
 
     ensure_dir("bench_results/plots")
     
-    # Plot 1: Query Latency
+    # Plot 1: Query Latency (L vs Time)
     draw_line_chart(
-        path="bench_results/plots/approx_range_query_latency.svg",
-        title="ARE: Query Latency (1M keys)",
-        x_label="Original Bit Length (L)",
+        path="bench_results/plots/are_large_query_latency.svg",
+        title="ARE Query Latency vs Key Size (L)",
+        x_label="Key Size (bits)",
         y_label="Time (ns/op)",
-        series={"Eps=0.01": query_pts_01, "Eps=0.001": query_pts_001}
+        series=query_series
     )
     
-    # Plot 2: Space Efficiency
+    # Plot 2: Space Efficiency (L vs Bits/Key)
     draw_line_chart(
-        path="bench_results/plots/approx_range_bits_per_key.svg",
-        title="ARE: Bits per Key (1M keys)",
-        x_label="Original Bit Length (L)",
+        path="bench_results/plots/are_large_bits_per_key.svg",
+        title="ARE Space Efficiency vs Key Size (L)",
+        x_label="Key Size (bits)",
         y_label="Bits per Key",
-        series={"Eps=0.01": bits_pts_01, "Eps=0.001": bits_pts_001}
+        series=memory_series
+    )
+
+    # Plot 3: Build Throughput
+    draw_line_chart(
+        path="bench_results/plots/are_large_build_throughput.svg",
+        title="ARE Build Throughput vs Key Size (L)",
+        x_label="Key Size (bits)",
+        y_label="Keys/sec",
+        series=throughput_series
     )
     
-    print("Plots generated in bench_results/plots/")
+    print("Large grid plots generated in bench_results/plots/")
 
 if __name__ == "__main__":
     main()
