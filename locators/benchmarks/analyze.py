@@ -30,6 +30,11 @@ MODULES = [
         "out": os.path.join(RAW_DIR, "rloc.txt"),
     },
     {
+        "name": "lemon_rloc",
+        "dir": os.path.join(LOCATORS_DIR, "lemon_rloc"),
+        "out": os.path.join(RAW_DIR, "lemon_rloc.txt"),
+    },
+    {
         "name": "lerloc",
         "dir": os.path.join(LOCATORS_DIR, "lerloc"),
         "out": os.path.join(RAW_DIR, "lerloc.txt"),
@@ -51,7 +56,7 @@ MODULES = [
 def parse_mem_reports(path: str) -> Dict[str, Dict[int, Dict[str, int]]]:
     """
     Parses JSON_MEM_REPORT lines from benchmark output.
-    Returns mapping: mode -> n_keys -> {component_name: bytes}
+    Returns mapping: mode_Lkeysize -> n_keys -> {component_name: bytes}
     """
     reports = defaultdict(dict)
     if not os.path.exists(path):
@@ -59,6 +64,7 @@ def parse_mem_reports(path: str) -> Dict[str, Dict[int, Dict[str, int]]]:
 
     current_keys = 0
     current_mode = "default"
+    current_keysize = 64
     with open(path, "r") as f:
         for line in f:
             # Detect mode and key count from Benchmark line
@@ -69,12 +75,13 @@ def parse_mem_reports(path: str) -> Dict[str, Dict[int, Dict[str, int]]]:
                 
                 # Reset current_mode for every new benchmark line
                 current_mode = "default"
+                current_keysize = 64
                 
                 # Check for explicit mode like Fast or Compact
                 if len(parts) >= 3:
                     # The part after BenchmarkMemoryDetailed is the mode
-                    # if it's not the Keys part.
-                    if not parts[1].startswith("Keys="):
+                    # if it's not the Keys or KeySize part.
+                    if not parts[1].startswith("Keys=") and not parts[1].startswith("KeySize="):
                         current_mode = parts[1]
                 
                 for p in parts:
@@ -82,14 +89,18 @@ def parse_mem_reports(path: str) -> Dict[str, Dict[int, Dict[str, int]]]:
                         try:
                             current_keys = int(p.split("=")[1].split("-")[0])
                         except: pass
+                    if p.startswith("KeySize="):
+                        try:
+                            current_keysize = int(p.split("=")[1].split("-")[0])
+                        except: pass
             
             if "JSON_MEM_REPORT:" in line:
                 json_str = line.split("JSON_MEM_REPORT:")[1].strip()
                 try:
                     data = json.loads(json_str)
-                    reports[current_mode][current_keys] = flatten_report(data)
+                    reports[f"{current_mode}_L{current_keysize}"][current_keys] = flatten_report(data)
                 except Exception as e:
-                    print(f"Failed to parse JSON report for {current_mode}/N={current_keys}: {e}")
+                    print(f"Failed to parse JSON report for {current_mode}_L{current_keysize}/N={current_keys}: {e}")
     return reports
 
 def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
@@ -118,14 +129,10 @@ def flatten_report(data: Dict[str, Any]) -> Dict[str, int]:
         elif name == "ApproxZFastTrie":
             out["MMPH_Trie"] += node["total_bytes"]
             return
-        elif name == "lemonhash":
+        elif name == "lemonhash" or name == "buckets":
             out["MMPH_Buckets"] += node["total_bytes"]
             return
         elif name in ["header", "Top_Level_Header", "LeMonLocalExactRangeLocator", "GenericRangeLocator"]:
-            # Only count the overhead of the structure itself if we can determine it,
-            # but usually 'total_bytes' here includes all children.
-            # So we just let it recurse to pick up children and the final 'Other' 
-            # calculation will handle the structural overhead.
             pass
         
         for child in node.get("children", []):
@@ -253,7 +260,7 @@ def main() -> int:
         )
 
     # --- Plot 3: RLOC vs LERLOC Comparison (Bits/Key) ---
-    for ksize in [64, 128, 256]:
+    for ksize in [64, 128, 256, 512]:
         series_k: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
         rows_k = [r for r in mem_rows if int(r.get("keysize", 0)) == ksize]
         if not rows_k: continue
@@ -283,7 +290,6 @@ def main() -> int:
     series_query_n: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
     for r in query_rows:
         if r.get("keysize") and r.get("keys") and r.get("ns_per_op"):
-            # Exclude rows that are specifically varying prefix length for this plot
             if "PrefixLengthVariation" in str(r["benchmark"]): continue
             mode = ""
             if "Fast" in str(r["benchmark"]): mode = " (Fast)"
@@ -310,8 +316,7 @@ def main() -> int:
             if "Fast" in str(r["benchmark"]): mode = " (Fast)"
             if "Compact" in str(r["benchmark"]): mode = " (Compact)"
             n_keys = int(r["keys"])
-            # Filter to a few specific N values to avoid cluttering
-            if n_keys in [1024, 8192, 65536, 262144]:
+            if n_keys in [1024, 8192, 32768, 262144]:
                 series_query_l[f"{r['module'].upper()}{mode} N={n_keys}"].append((float(r["keysize"]), float(r["ns_per_op"])))
 
     if series_query_l:
@@ -325,35 +330,26 @@ def main() -> int:
             log_y=False
         )
 
-    # --- Plot 6: Query Time vs Prefix Length ---
-    series_query_plen: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
-    for r in query_rows:
-        if "PrefixLengthVariation" in str(r["benchmark"]) and r.get("prefixlen") and r.get("ns_per_op"):
-             series_query_plen[f"KeySize={int(r['keysize'])}"].append((float(r["prefixlen"]), float(r["ns_per_op"])))
-             
-    if series_query_plen:
-        plotter.draw_line_chart(
-            os.path.join(PLOTS_DIR, "query_time_vs_prefixlen.svg"),
-            "Query Time vs Prefix Length",
-            "Prefix Length",
-            "ns/op",
-            series_query_plen,
-            log_x=False,
-            log_y=False
-        )
-
     # --- Plot 7 & 8: Detailed Memory Breakdown (Consolidated) ---
     detailed_components = ["Other", "HZFastTrie", "Leaf_BitVector", "MMPH_Trie", "MMPH_Buckets"]
     
     all_breakdown_rows = []
-    efficiency_series = defaultdict(list)
+    efficiency_series_all = defaultdict(list)
+    efficiency_series_vs_l = defaultdict(list)
 
     for mod in MODULES:
-        reports_by_mode = parse_mem_reports(mod["out"])
-        if not reports_by_mode:
+        reports_by_mode_l = parse_mem_reports(mod["out"])
+        if not reports_by_mode_l:
             continue
             
-        for mode, detailed_reports in reports_by_mode.items():
+        for mode_l, detailed_reports in reports_by_mode_l.items():
+            if "_L" in mode_l:
+                mode, l_str = mode_l.rsplit("_L", 1)
+                l_val = int(l_str)
+            else:
+                mode = mode_l
+                l_val = 64
+                
             m_name = mod["name"].upper()
             if mode != "default":
                 m_name += f" ({mode})"
@@ -362,7 +358,7 @@ def main() -> int:
             
             for n in sorted_n:
                 comp_data = detailed_reports[n]
-                row = {"Module": mod["name"], "Mode": mode, "Keys": n}
+                row = {"Module": mod["name"], "Mode": mode, "KeySize": l_val, "Keys": n}
                 total_bpk = 0.0
                 for comp in detailed_components:
                     bpk = (float(comp_data.get(comp, 0)) * 8.0) / float(n)
@@ -371,30 +367,49 @@ def main() -> int:
                 row["Total_Bits_Per_Key"] = round(total_bpk, 4)
                 all_breakdown_rows.append(row)
                 
-                efficiency_series[m_name].append((float(n), total_bpk))
+                # For original mem_efficiency_all.svg (only L=64 to avoid clutter)
+                if l_val == 64:
+                    efficiency_series_all[m_name].append((float(n), total_bpk))
+                
+                # For the new mem_efficiency_vs_L.svg (only N=262144 or max available)
+                if n == 262144 or n == 32768:
+                    efficiency_series_vs_l[f"{m_name} N={n}"].append((float(l_val), total_bpk))
 
     # Export Consolidated CSV
     if all_breakdown_rows:
         csv_path = os.path.join(PARSED_DIR, "mem_breakdown.csv")
         with open(csv_path, "w", newline="") as f:
-            fieldnames = ["Module", "Mode", "Keys"] + detailed_components + ["Total_Bits_Per_Key"]
+            fieldnames = ["Module", "Mode", "KeySize", "Keys"] + detailed_components + ["Total_Bits_Per_Key"]
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(all_breakdown_rows)
         print(f"Consolidated memory breakdown saved to {csv_path}")
 
-    # Export Consolidated Efficiency Plot (Line Chart)
-    if efficiency_series:
+    # Export Consolidated Efficiency Plot (Line Chart vs N)
+    if efficiency_series_all:
         plotter.draw_line_chart(
             os.path.join(PLOTS_DIR, "mem_efficiency_all.svg"),
-            "Memory Efficiency Comparison",
+            "Memory Efficiency Comparison (L=64)",
             "Keys (N)",
             "bits/key",
-            efficiency_series,
+            efficiency_series_all,
             log_x=True,
             log_y=False
         )
         print(f"Consolidated efficiency plot saved to {PLOTS_DIR}/mem_efficiency_all.svg")
+
+    # Export Consolidated Efficiency Plot (Line Chart vs L)
+    if efficiency_series_vs_l:
+        plotter.draw_line_chart(
+            os.path.join(PLOTS_DIR, "mem_efficiency_vs_L.svg"),
+            "Memory Efficiency Comparison vs Key Length",
+            "Key Length (L, bits)",
+            "bits/key",
+            efficiency_series_vs_l,
+            log_x=False,
+            log_y=False
+        )
+        print(f"Consolidated efficiency vs L plot saved to {PLOTS_DIR}/mem_efficiency_vs_L.svg")
 
     print("Consolidated reports generated in locators/benchmarks/")
     return 0

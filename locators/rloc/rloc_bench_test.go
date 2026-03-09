@@ -90,3 +90,25 @@ func BenchmarkRangeLocatorQuery(b *testing.B) {
 		}
 	}
 }
+
+// Benchmark detailed memory breakdown
+func BenchmarkMemoryDetailed(b *testing.B) {
+	InitBenchKeys()
+
+	for _, bitLen := range BenchBitLengths {
+		for _, count := range BenchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := GetBenchKeys(bitLen, count)
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					zt := zft.Build(keys)
+					rl, _ := NewRangeLocator(zt)
+					if i == 0 {
+						b.Logf("JSON_MEM_REPORT: %s", rl.MemDetailed().JSON())
+					}
+				}
+			})
+		}
+	}
+}

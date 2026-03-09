@@ -1,0 +1,607 @@
+goos: darwin
+goarch: arm64
+pkg: Thesis/locators/lemon_lerloc
+cpu: Apple M4 Max
+BenchmarkMemoryDetailed
+BenchmarkMemoryDetailed/KeySize=64/Keys=1024
+Retrieval:           3.39863
+Bucket mapper:       0.0728929
+Bucket offsets:      3.69795
+Tree node data:      1.38497
+Alphabet maps:       0.0583144
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.39863
+Bucket mapper:       0.0728929
+Bucket offsets:      3.69795
+Tree node data:      1.38497
+Alphabet maps:       0.0583144
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.39863
+Bucket mapper:       0.0728929
+Bucket offsets:      3.69795
+Tree node data:      1.38497
+Alphabet maps:       0.0583144
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":13321,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":6951},{"name":"LeMonRangeLocator","total_bytes":6354,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":5662},{"name":"rsdic_bv","total_bytes":684}]}]}
+BenchmarkMemoryDetailed/KeySize=64/Keys=1024-16         	       1	   6663584 ns/op
+BenchmarkMemoryDetailed/KeySize=64/Keys=8192
+Retrieval:           2.3903
+Bucket mapper:       0.0235654
+Bucket offsets:      2.15572
+Tree node data:      0.172209
+Alphabet maps:       0.00725089
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.3903
+Bucket mapper:       0.0235654
+Bucket offsets:      2.15572
+Tree node data:      0.172209
+Alphabet maps:       0.00725089
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.3903
+Bucket mapper:       0.0235654
+Bucket offsets:      2.15572
+Tree node data:      0.172209
+Alphabet maps:       0.00725089
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":64307,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":37102},{"name":"LeMonRangeLocator","total_bytes":27189,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":21894},{"name":"rsdic_bv","total_bytes":5287}]}]}
+BenchmarkMemoryDetailed/KeySize=64/Keys=8192-16         	       1	  39562500 ns/op
+BenchmarkMemoryDetailed/KeySize=64/Keys=32768
+Retrieval:           2.2501
+Bucket mapper:       0.0190188
+Bucket offsets:      2.05651
+Tree node data:      0.0463017
+Alphabet maps:       0.00181131
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.2501
+Bucket mapper:       0.0190188
+Bucket offsets:      2.05651
+Tree node data:      0.0463017
+Alphabet maps:       0.00181131
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.2501
+Bucket mapper:       0.0190188
+Bucket offsets:      2.05651
+Tree node data:      0.0463017
+Alphabet maps:       0.00181131
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":241094,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":141801},{"name":"LeMonRangeLocator","total_bytes":99277,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":78213},{"name":"rsdic_bv","total_bytes":21056}]}]}
+BenchmarkMemoryDetailed/KeySize=64/Keys=32768-16        	       1	 133386709 ns/op
+BenchmarkMemoryDetailed/KeySize=64/Keys=262144
+Retrieval:           2.20054
+Bucket mapper:       0.0208916
+Bucket offsets:      1.96603
+Tree node data:      0.00537859
+Alphabet maps:       0.000226467
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.20054
+Bucket mapper:       0.0208916
+Bucket offsets:      1.96603
+Tree node data:      0.00537859
+Alphabet maps:       0.000226467
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.20054
+Bucket mapper:       0.0208916
+Bucket offsets:      1.96603
+Tree node data:      0.00537859
+Alphabet maps:       0.000226467
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":1954806,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":1192965},{"name":"LeMonRangeLocator","total_bytes":761825,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":593419},{"name":"rsdic_bv","total_bytes":168398}]}]}
+BenchmarkMemoryDetailed/KeySize=64/Keys=262144-16       	       1	1412306333 ns/op
+BenchmarkMemoryDetailed/KeySize=64/Keys=1048576
+Retrieval:           2.19405
+Bucket mapper:       0.020766
+Bucket offsets:      1.94932
+Tree node data:      0.00134477
+Alphabet maps:       5.66218e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.19405
+Bucket mapper:       0.020766
+Bucket offsets:      1.94932
+Tree node data:      0.00134477
+Alphabet maps:       5.66218e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.19405
+Bucket mapper:       0.020766
+Bucket offsets:      1.94932
+Tree node data:      0.00134477
+Alphabet maps:       5.66218e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":7252950,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":4224593},{"name":"LeMonRangeLocator","total_bytes":3028341,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":2355105},{"name":"rsdic_bv","total_bytes":673228}]}]}
+BenchmarkMemoryDetailed/KeySize=64/Keys=1048576-16      	       1	6216072625 ns/op
+BenchmarkMemoryDetailed/KeySize=128/Keys=1024
+Retrieval:           3.61714
+Bucket mapper:       0.0437557
+Bucket offsets:      3.41682
+Tree node data:      1.3856
+Alphabet maps:       0.0583409
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.61714
+Bucket mapper:       0.0437557
+Bucket offsets:      3.41682
+Tree node data:      1.3856
+Alphabet maps:       0.0583409
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.61714
+Bucket mapper:       0.0437557
+Bucket offsets:      3.41682
+Tree node data:      1.3856
+Alphabet maps:       0.0583409
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":13753,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":7435},{"name":"LeMonRangeLocator","total_bytes":6302,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":5610},{"name":"rsdic_bv","total_bytes":684}]}]}
+BenchmarkMemoryDetailed/KeySize=128/Keys=1024-16        	       1	   3600167 ns/op
+BenchmarkMemoryDetailed/KeySize=128/Keys=8192
+Retrieval:           2.5665
+Bucket mapper:       0.0108616
+Bucket offsets:      1.88751
+Tree node data:      0.171975
+Alphabet maps:       0.00724105
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.5665
+Bucket mapper:       0.0108616
+Bucket offsets:      1.88751
+Tree node data:      0.171975
+Alphabet maps:       0.00724105
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.5665
+Bucket mapper:       0.0108616
+Bucket offsets:      1.88751
+Tree node data:      0.171975
+Alphabet maps:       0.00724105
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":66397,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":39650},{"name":"LeMonRangeLocator","total_bytes":26731,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":21459},{"name":"rsdic_bv","total_bytes":5264}]}]}
+BenchmarkMemoryDetailed/KeySize=128/Keys=8192-16        	       1	  30231291 ns/op
+BenchmarkMemoryDetailed/KeySize=128/Keys=32768
+Retrieval:           2.44947
+Bucket mapper:       0.00951821
+Bucket offsets:      1.73343
+Tree node data:      0.0430586
+Alphabet maps:       0.00181299
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.44947
+Bucket mapper:       0.00951821
+Bucket offsets:      1.73343
+Tree node data:      0.0430586
+Alphabet maps:       0.00181299
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.44947
+Bucket mapper:       0.00951821
+Bucket offsets:      1.73343
+Tree node data:      0.0430586
+Alphabet maps:       0.00181299
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":257026,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":160191},{"name":"LeMonRangeLocator","total_bytes":96819,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":75725},{"name":"rsdic_bv","total_bytes":21086}]}]}
+BenchmarkMemoryDetailed/KeySize=128/Keys=32768-16       	       1	 137022250 ns/op
+BenchmarkMemoryDetailed/KeySize=128/Keys=262144
+Retrieval:           2.4172
+Bucket mapper:       0.00990781
+Bucket offsets:      1.69828
+Tree node data:      0.00578899
+Alphabet maps:       0.000226464
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.4172
+Bucket mapper:       0.00990781
+Bucket offsets:      1.69828
+Tree node data:      0.00578899
+Alphabet maps:       0.000226464
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.4172
+Bucket mapper:       0.00990781
+Bucket offsets:      1.69828
+Tree node data:      0.00578899
+Alphabet maps:       0.000226464
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":2093163,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":1339964},{"name":"LeMonRangeLocator","total_bytes":753183,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":584721},{"name":"rsdic_bv","total_bytes":168454}]}]}
+BenchmarkMemoryDetailed/KeySize=128/Keys=262144-16      	       1	1531669583 ns/op
+BenchmarkMemoryDetailed/KeySize=128/Keys=1048576
+Retrieval:           2.41096
+Bucket mapper:       0.0103033
+Bucket offsets:      1.69381
+Tree node data:      0.00144713
+Alphabet maps:       5.66114e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.41096
+Bucket mapper:       0.0103033
+Bucket offsets:      1.69381
+Tree node data:      0.00144713
+Alphabet maps:       5.66114e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.41096
+Bucket mapper:       0.0103033
+Bucket offsets:      1.69381
+Tree node data:      0.00144713
+Alphabet maps:       5.66114e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":7833218,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":4831768},{"name":"LeMonRangeLocator","total_bytes":3001434,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":2327873},{"name":"rsdic_bv","total_bytes":673553}]}]}
+BenchmarkMemoryDetailed/KeySize=128/Keys=1048576-16     	       1	6629569083 ns/op
+BenchmarkMemoryDetailed/KeySize=256/Keys=1024
+Retrieval:           3.62676
+Bucket mapper:       0.0436959
+Bucket offsets:      3.44629
+Tree node data:      1.38371
+Alphabet maps:       0.0582613
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.62676
+Bucket mapper:       0.0436959
+Bucket offsets:      3.44629
+Tree node data:      1.38371
+Alphabet maps:       0.0582613
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.62676
+Bucket mapper:       0.0436959
+Bucket offsets:      3.44629
+Tree node data:      1.38371
+Alphabet maps:       0.0582613
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":13884,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":7540},{"name":"LeMonRangeLocator","total_bytes":6328,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":5636},{"name":"rsdic_bv","total_bytes":684}]}]}
+BenchmarkMemoryDetailed/KeySize=256/Keys=1024-16        	       1	   4942792 ns/op
+BenchmarkMemoryDetailed/KeySize=256/Keys=8192
+Retrieval:           2.55918
+Bucket mapper:       0.0108699
+Bucket offsets:      1.89385
+Tree node data:      0.172106
+Alphabet maps:       0.00724658
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.55918
+Bucket mapper:       0.0108699
+Bucket offsets:      1.89385
+Tree node data:      0.172106
+Alphabet maps:       0.00724658
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.55918
+Bucket mapper:       0.0108699
+Bucket offsets:      1.89385
+Tree node data:      0.172106
+Alphabet maps:       0.00724658
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":72959,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":46240},{"name":"LeMonRangeLocator","total_bytes":26703,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":21440},{"name":"rsdic_bv","total_bytes":5255}]}]}
+BenchmarkMemoryDetailed/KeySize=256/Keys=8192-16        	       1	  44119541 ns/op
+BenchmarkMemoryDetailed/KeySize=256/Keys=32768
+Retrieval:           2.45268
+Bucket mapper:       0.0108741
+Bucket offsets:      1.73152
+Tree node data:      0.0430433
+Alphabet maps:       0.00181235
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.45268
+Bucket mapper:       0.0108741
+Bucket offsets:      1.73152
+Tree node data:      0.0430433
+Alphabet maps:       0.00181235
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.45268
+Bucket mapper:       0.0108741
+Bucket offsets:      1.73152
+Tree node data:      0.0430433
+Alphabet maps:       0.00181235
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":275829,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":178912},{"name":"LeMonRangeLocator","total_bytes":96901,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":75798},{"name":"rsdic_bv","total_bytes":21095}]}]}
+BenchmarkMemoryDetailed/KeySize=256/Keys=32768-16       	       1	 174138959 ns/op
+BenchmarkMemoryDetailed/KeySize=256/Keys=262144
+Retrieval:           2.41711
+Bucket mapper:       0.00985292
+Bucket offsets:      1.69192
+Tree node data:      0.00537947
+Alphabet maps:       0.000226504
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.41711
+Bucket mapper:       0.00985292
+Bucket offsets:      1.69192
+Tree node data:      0.00537947
+Alphabet maps:       0.000226504
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.41711
+Bucket mapper:       0.00985292
+Bucket offsets:      1.69192
+Tree node data:      0.00537947
+Alphabet maps:       0.000226504
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":2230472,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":1478450},{"name":"LeMonRangeLocator","total_bytes":752006,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":583635},{"name":"rsdic_bv","total_bytes":168363}]}]}
+BenchmarkMemoryDetailed/KeySize=256/Keys=262144-16      	       1	1647790833 ns/op
+BenchmarkMemoryDetailed/KeySize=256/Keys=1048576
+Retrieval:           2.41299
+Bucket mapper:       0.0106139
+Bucket offsets:      1.69427
+Tree node data:      0.00148594
+Alphabet maps:       5.66073e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               5
+Retrieval:           2.41299
+Bucket mapper:       0.0106139
+Bucket offsets:      1.69427
+Tree node data:      0.00148594
+Alphabet maps:       5.66073e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               5
+Retrieval:           2.41299
+Bucket mapper:       0.0106139
+Bucket offsets:      1.69427
+Tree node data:      0.00148594
+Alphabet maps:       5.66073e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               5
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":8400404,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":5397456},{"name":"LeMonRangeLocator","total_bytes":3002932,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":2329638},{"name":"rsdic_bv","total_bytes":673286}]}]}
+BenchmarkMemoryDetailed/KeySize=256/Keys=1048576-16     	       1	7509536666 ns/op
+BenchmarkMemoryDetailed/KeySize=512/Keys=1024
+Retrieval:           3.54972
+Bucket mapper:       0.0434881
+Bucket offsets:      3.42061
+Tree node data:      1.37712
+Alphabet maps:       0.0579841
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.54972
+Bucket mapper:       0.0434881
+Bucket offsets:      3.42061
+Tree node data:      1.37712
+Alphabet maps:       0.0579841
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           3.54972
+Bucket mapper:       0.0434881
+Bucket offsets:      3.42061
+Tree node data:      1.37712
+Alphabet maps:       0.0579841
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":14422,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":8132},{"name":"LeMonRangeLocator","total_bytes":6274,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":5598},{"name":"rsdic_bv","total_bytes":668}]}]}
+BenchmarkMemoryDetailed/KeySize=512/Keys=1024-16        	       1	   5341709 ns/op
+BenchmarkMemoryDetailed/KeySize=512/Keys=8192
+Retrieval:           2.57344
+Bucket mapper:       0.0144817
+Bucket offsets:      1.89354
+Tree node data:      0.17197
+Alphabet maps:       0.00724084
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.57344
+Bucket mapper:       0.0144817
+Bucket offsets:      1.89354
+Tree node data:      0.17197
+Alphabet maps:       0.00724084
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.57344
+Bucket mapper:       0.0144817
+Bucket offsets:      1.89354
+Tree node data:      0.17197
+Alphabet maps:       0.00724084
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":77005,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":50192},{"name":"LeMonRangeLocator","total_bytes":26797,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":21533},{"name":"rsdic_bv","total_bytes":5256}]}]}
+BenchmarkMemoryDetailed/KeySize=512/Keys=8192-16        	       1	  41466750 ns/op
+BenchmarkMemoryDetailed/KeySize=512/Keys=32768
+Retrieval:           2.45078
+Bucket mapper:       0.0117777
+Bucket offsets:      1.7875
+Tree node data:      0.0463181
+Alphabet maps:       0.00181195
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.45078
+Bucket mapper:       0.0117777
+Bucket offsets:      1.7875
+Tree node data:      0.0463181
+Alphabet maps:       0.00181195
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+Retrieval:           2.45078
+Bucket mapper:       0.0117777
+Bucket offsets:      1.7875
+Tree node data:      0.0463181
+Alphabet maps:       0.00181195
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              2
+Nodes:               2
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":292374,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":194451},{"name":"LeMonRangeLocator","total_bytes":97907,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":76852},{"name":"rsdic_bv","total_bytes":21047}]}]}
+BenchmarkMemoryDetailed/KeySize=512/Keys=32768-16       	       1	 166198459 ns/op
+BenchmarkMemoryDetailed/KeySize=512/Keys=262144
+Retrieval:           2.41698
+Bucket mapper:       0.0103579
+Bucket offsets:      1.69073
+Tree node data:      0.00537703
+Alphabet maps:       0.000226401
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.41698
+Bucket mapper:       0.0103579
+Bucket offsets:      1.69073
+Tree node data:      0.00537703
+Alphabet maps:       0.000226401
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.41698
+Bucket mapper:       0.0103579
+Bucket offsets:      1.69073
+Tree node data:      0.00537703
+Alphabet maps:       0.000226401
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":2359737,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":1607607},{"name":"LeMonRangeLocator","total_bytes":752114,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":583783},{"name":"rsdic_bv","total_bytes":168323}]}]}
+BenchmarkMemoryDetailed/KeySize=512/Keys=262144-16      	       1	1815126000 ns/op
+BenchmarkMemoryDetailed/KeySize=512/Keys=1048576
+Retrieval:           2.41112
+Bucket mapper:       0.010516
+Bucket offsets:      1.69217
+Tree node data:      0.00134457
+Alphabet maps:       5.66136e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.41112
+Bucket mapper:       0.010516
+Bucket offsets:      1.69217
+Tree node data:      0.00134457
+Alphabet maps:       5.66136e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+Retrieval:           2.41112
+Bucket mapper:       0.010516
+Bucket offsets:      1.69217
+Tree node data:      0.00134457
+Alphabet maps:       5.66136e-05
+7-bit alphabets:     0
+8-bit alphabets:     1
+Height:              1
+Nodes:               1
+    lerloc_bench_test.go:110: JSON_MEM_REPORT: {"name":"LeMonLocalExactRangeLocator","total_bytes":9191513,"children":[{"name":"header","total_bytes":16},{"name":"hzft","total_bytes":6191447},{"name":"LeMonRangeLocator","total_bytes":3000050,"children":[{"name":"header","total_bytes":24},{"name":"lemonhash","total_bytes":2326996},{"name":"rsdic_bv","total_bytes":673046}]}]}
+BenchmarkMemoryDetailed/KeySize=512/Keys=1048576-16     	       1	8013812375 ns/op
+PASS
+ok  	Thesis/locators/lemon_lerloc	37.944s
