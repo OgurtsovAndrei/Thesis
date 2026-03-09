@@ -25,7 +25,7 @@ The empirical results consistently outperform the theoretical worst-case bounds.
 
 The following plot shows the relationship on a logarithmic scale. The curve is exceptionally smooth due to the high query count (1M per point) and parallelized sweeping of $N$ and $K$.
 
-- [Final Trade-off Plot (SVG)](are_tradeoff_final.svg)
+![ARE Tradeoff Final](are_tradeoff_final.svg)
 
 ## 4. Conclusion
 The `ApproximateRangeEmptiness` implementation provides a robust, high-performance range filter. For a typical use case (0.1% FP rate), it requires only **6.5 bits per key**, making it one of the most space-efficient range filters available.
