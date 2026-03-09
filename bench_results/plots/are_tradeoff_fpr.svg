@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">ARE: False Positive Rate vs Bits per Key</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">10^-6</text>
+<line class="grid" x1="90.0" y1="328.33" x2="920.0" y2="328.33" />
+<text class="label" x="82.0" y="332.33" text-anchor="end">10^-5</text>
+<line class="grid" x1="90.0" y1="191.67" x2="920.0" y2="191.67" />
+<text class="label" x="82.0" y="195.67" text-anchor="end">10^-4</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">10^-3</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">4</text>
+<line class="grid" x1="181.26" y1="55.0" x2="181.26" y2="465.0" />
+<text class="label" x="181.26" y="485.0" text-anchor="middle">5</text>
+<line class="grid" x1="271.73" y1="55.0" x2="271.73" y2="465.0" />
+<text class="label" x="271.73" y="485.0" text-anchor="middle">6</text>
+<line class="grid" x1="357.49" y1="55.0" x2="357.49" y2="465.0" />
+<text class="label" x="357.49" y="485.0" text-anchor="middle">7</text>
+<line class="grid" x1="440.88" y1="55.0" x2="440.88" y2="465.0" />
+<text class="label" x="440.88" y="485.0" text-anchor="middle">9</text>
+<line class="grid" x1="522.70" y1="55.0" x2="522.70" y2="465.0" />
+<text class="label" x="522.70" y="485.0" text-anchor="middle">10</text>
+<line class="grid" x1="602.95" y1="55.0" x2="602.95" y2="465.0" />
+<text class="label" x="602.95" y="485.0" text-anchor="middle">11</text>
+<line class="grid" x1="682.41" y1="55.0" x2="682.41" y2="465.0" />
+<text class="label" x="682.41" y="485.0" text-anchor="middle">12</text>
+<line class="grid" x1="761.87" y1="55.0" x2="761.87" y2="465.0" />
+<text class="label" x="761.87" y="485.0" text-anchor="middle">13</text>
+<line class="grid" x1="840.54" y1="55.0" x2="840.54" y2="465.0" />
+<text class="label" x="840.54" y="485.0" text-anchor="middle">14</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">15</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,126.46 181.26,191.67 271.73,465.00 357.49,465.00 440.88,150.53 522.70,465.00 602.95,465.00 682.41,465.00 761.87,465.00 840.54,465.00 920.00,465.00" />
+<circle cx="90.00" cy="126.46" r="3.5" fill="#2a7fff" />
+<circle cx="181.26" cy="191.67" r="3.5" fill="#2a7fff" />
+<circle cx="271.73" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="357.49" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="440.88" cy="150.53" r="3.5" fill="#2a7fff" />
+<circle cx="522.70" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="602.95" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="682.41" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="761.87" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="840.54" cy="465.00" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">FPR</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Bits per Key</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">False Positive Rate</text>
+</svg>
