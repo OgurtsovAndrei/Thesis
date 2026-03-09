@@ -24,21 +24,49 @@ The paper theoretically suggests using a Weak Prefix Search structure (like our 
 *   **Performance**: Binary searching through 12 bit-packed suffixes is significantly faster and uses far less memory than computing a hash (MMPH) and performing two Rank-lookups (LERLOC).
 *   **Result**: We achieved **~47 bits/key** (close to the 44-bit theoretical limit) instead of ~60 bits/key with full indexing.
 
-## 3. Performance Characteristics (N = 1,000,000)
+## 3. Complexity Analysis
 
-| Key Size ($L$) | Query Time | Bits per Key (Total) | Theoretical Min ($L - 19.93$) |
+The structure achieves the information-theoretic lower bound for representing a subset of size $n$ in a universe of size $U$.
+
+### Space Complexity: $O(n \log(U/n))$ bits
+The total space is the sum of metadata and bit-packed suffixes:
+1.  **Metadata ($D_1 + D_2$):** $O(n)$ bits. 
+    *   $D_1$ (occupancy) takes $1$ bit/key.
+    *   $D_2$ (counts) takes $\sim 2$ bits/key using Elias-Fano encoding.
+    *   Total overhead: **$\sim 3.2$ bits/key** (including Rank/Select index overhead).
+2.  **Data (Suffixes):** $O(n \cdot (L - \log n))$ bits.
+    *   Each of the $n$ keys stores only its suffix of length $W = L - \log_2 n$.
+3.  **Total Formula:** $Space \approx n \cdot (L - \log_2 n + 3.2)$ bits.
+
+| $L$ (Key Bits) | Suffix Bits ($L - 19.93$) | Metadata (Observed) | Total Bits/Key |
 | :--- | :--- | :--- | :--- |
-| **64 bits** | 141 ns | **47.27** | 44.07 |
-| **128 bits** | 146 ns | **111.3** | 108.07 |
-| **256 bits** | 141 ns | **239.3** | 236.07 |
-| **512 bits** | 139 ns | **495.3** | 492.07 |
+| **64** | 44.07 | + 3.2 | **47.27** |
+| **128** | 108.07 | + 3.2 | **111.27** |
+| **256** | 236.07 | + 3.2 | **239.27** |
+| **512** | 492.07 | + 3.2 | **495.27** |
 
-### Linear Space Growth (The "Exact" Limitation)
-In this **Exact** structure, space grows linearly with $L$ because we must store enough information (the $W$-bit suffixes) to resolve boundaries exactly. 
+**Conclusion on Space:** Space grows **linearly with $L$**. This is unavoidable for an **Exact** structure, as we must store the information distinguishing the keys.
 
-**This is the key motivation for the next step: Approximate Range Emptiness (ARE).** By replacing these suffixes with hashed fingerprints, the $L$ dependence is removed, achieving $O(n \log(L/\epsilon))$ space.
+### Time Complexity: $O(1)$ Expected
+1.  **Build:** $O(n \cdot L)$. A single pass over sorted keys to pack bits and index $D_1/D_2$.
+2.  **Query:**
+    *   **Global Navigation:** $O(1)$ via Rank/Select on $D_1$ and $D_2$.
+    *   **Local Search:** $O(\log(\text{keys per block}))$.
+    *   **Average Case:** Since we use $n$ blocks for $n$ keys, the number of keys per block follows a Poisson distribution with $\lambda \approx 1$ (if $n=m$). Expected search time is **$O(1)$**.
+    *   **Worst Case:** $O(\log n)$ if all keys collide in a single block (highly improbable for typical data).
 
-## 4. Implementation Details
-*   **Succinct BitVectors**: Provided by `github.com/hillbig/rsdic` for constant-time Rank and Select.
-*   **Bit-Packing**: Centralized in `bits/bitpack.go`.
-*   **Ordering**: The structure requires keys to be sorted lexicographically. `BitString.Compare` is the standard comparison metric.
+## 5. Transition to Approximate Range Emptiness (ARE)
+
+The linear dependence of space on key length ($L$) observed in this structure is the primary motivator for moving to **Approximate Range Emptiness**.
+
+### Goal: Breaking the Linear Space Growth
+In the ARE structure (SODA 2015, Section 4), we apply this Exact structure to **hashed fingerprints** instead of original keys.
+
+1.  **Fingerprint Length**: Instead of a suffix of length $L - \log_2 n$, we use a fingerprint of length $\approx \log(L_{interval}/\epsilon)$.
+2.  **Space Independence**: Since the fingerprint length is independent of the original key length $L$, the total space usage becomes $O(n \log(L_{interval}/\epsilon))$.
+3.  **Expected ARE Space ($\epsilon = 0.01$)**:
+    *   Fingerprint: ~14 bits.
+    *   Metadata: ~3.2 bits.
+    *   **Total: ~17-18 bits/key** (regardless of whether the keys are 64 or 1024 bits).
+
+The implementation of `ApproximateRangeEmptiness` will serve as a wrapper around this `ExactRangeEmptiness` structure, managing the universe reduction (hashing) layer.
