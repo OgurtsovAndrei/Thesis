@@ -11,6 +11,25 @@
 - [ ] `ExactRangeEmptiness`
 - [ ] `ApproximateRangeEmptiness`
 
+### `ApproximateRangeEmptiness` [approximate_range_emptiness.md](local_exact_range/approximate_range_emptiness.md)
+
+Probabilistic data structure that answers range emptiness queries with a false positive probability $\epsilon$.
+Based on Section 4 of *Approximate Range Emptiness in Constant Time and Optimal Space*.
+Breaks the linear space dependence on $L$ by using hashed fingerprints.
+
+#### Expected Complexity
+- **Space**: $O(n \log(L_{interval}/\epsilon))$ bits. Approximately **15-20 bits/key** for $\epsilon=0.01$.
+- **Time**: $O(1)$ constant time query.
+
+#### API
+- `func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64, maxL uint32) (*ApproximateRangeEmptiness, error)`
+    - `keys`: sorted slice of elements $S$.
+    - `epsilon`: desired false positive probability.
+    - `maxL`: maximum length of query interval to support optimally.
+- `func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool`
+    - Returns `true` if $[a, b] \cap S = \emptyset$.
+    - Returns `false` with high probability if $[a, b] \cap S \neq \emptyset$.
+
 ### `ExactRangeEmptiness` [exact_range_emptiness.md](local_exact_range/exact_range_emptiness.md)
 
 Succinct data structure that answers exact 1D range emptiness queries $[a, b] \cap S \neq \emptyset$ in $O(1)$ time.
