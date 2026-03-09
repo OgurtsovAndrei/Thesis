@@ -8,8 +8,8 @@
         - [x] MMPH (Монтонное Минимальное Совершенное Хеширование)
         - [x] Encoded Handles table T (handles -> len(e_alpha))
     - [x] Range Locator
-- [ ] `ExactRangeEmptiness`
-- [ ] `ApproximateRangeEmptiness`
+- [x] `ExactRangeEmptiness`
+- [x] `ApproximateRangeEmptiness`
 
 ### `ApproximateRangeEmptiness` [approximate_range_emptiness.md](local_exact_range/approximate_range_emptiness.md)
 
