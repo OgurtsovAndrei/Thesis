@@ -1,4 +1,4 @@
-package compact_rloc
+package lemon_rloc
 
 import (
 	"Thesis/bits"
@@ -14,10 +14,10 @@ import (
 	"github.com/hillbig/rsdic"
 )
 
-// CompactRangeLocator maps trie node names to leaf-rank intervals.
+// LeMonRangeLocator maps trie node names to leaf-rank intervals.
 // It is heavily optimized for space by using LeMonHash (a learned Monotone Minimal Perfect Hash)
 // instead of classical bucketing MMPH methods.
-type CompactRangeLocator struct {
+type LeMonRangeLocator struct {
 	lh          *lemonhash.LeMonHash
 	bv          *rsdic.RSDic
 	totalLeaves int
@@ -28,14 +28,14 @@ type pItem struct {
 	isLeaf bool
 }
 
-// NewCompactRangeLocator builds a CompactRangeLocator from a compacted trie.
-func NewCompactRangeLocator(zt *zft.ZFastTrie[bool]) (*CompactRangeLocator, error) {
+// NewLeMonRangeLocator builds a LeMonRangeLocator from a compacted trie.
+func NewLeMonRangeLocator(zt *zft.ZFastTrie[bool]) (*LeMonRangeLocator, error) {
 	if zt == nil {
-		return &CompactRangeLocator{totalLeaves: 0}, nil
+		return &LeMonRangeLocator{totalLeaves: 0}, nil
 	}
 
 	sortedItems := collectPSortedItems(zt)
-	return newCompactRangeLocatorFromItems(sortedItems)
+	return newLeMonRangeLocatorFromItems(sortedItems)
 }
 
 func collectPSortedItems(zt *zft.ZFastTrie[bool]) []pItem {
@@ -96,7 +96,7 @@ func collectPSortedItems(zt *zft.ZFastTrie[bool]) []pItem {
 	return sortedItems
 }
 
-func newCompactRangeLocatorFromItems(sortedItems []pItem) (*CompactRangeLocator, error) {
+func newLeMonRangeLocatorFromItems(sortedItems []pItem) (*LeMonRangeLocator, error) {
 	bv := rsdic.New()
 	keysForMMPH := make([]bits.BitString, len(sortedItems))
 
@@ -104,7 +104,7 @@ func newCompactRangeLocatorFromItems(sortedItems []pItem) (*CompactRangeLocator,
 		bv.PushBack(item.isLeaf)
 		keysForMMPH[i] = item.bs
 	}
-	
+
 	// Data must be strictly sorted and deduplicated
 	bits.BugIfNotSortedOrHaveDuplicates(keysForMMPH)
 
@@ -121,7 +121,7 @@ func newCompactRangeLocatorFromItems(sortedItems []pItem) (*CompactRangeLocator,
 		totalLeaves = int(bv.Rank(bv.Num(), true))
 	}
 
-	return &CompactRangeLocator{
+	return &LeMonRangeLocator{
 		lh:          lh,
 		bv:          bv,
 		totalLeaves: totalLeaves,
@@ -129,7 +129,7 @@ func newCompactRangeLocatorFromItems(sortedItems []pItem) (*CompactRangeLocator,
 }
 
 // Query returns the half-open interval [i, j) of leaf ranks under nodeName.
-func (rl *CompactRangeLocator) Query(nodeName bits.BitString) (int, int, error) {
+func (rl *LeMonRangeLocator) Query(nodeName bits.BitString) (int, int, error) {
 	if nodeName.Size() == 0 {
 		return 0, rl.totalLeaves, nil
 	}
@@ -162,8 +162,8 @@ func (rl *CompactRangeLocator) Query(nodeName bits.BitString) (int, int, error) 
 	return i, j, nil
 }
 
-// ByteSize returns the estimated resident size of CompactRangeLocator in bytes.
-func (rl *CompactRangeLocator) ByteSize() int {
+// ByteSize returns the estimated resident size of LeMonRangeLocator in bytes.
+func (rl *LeMonRangeLocator) ByteSize() int {
 	if rl == nil {
 		return 0
 	}
@@ -184,25 +184,25 @@ func (rl *CompactRangeLocator) ByteSize() int {
 }
 
 // MemDetailed returns a detailed memory usage report.
-func (rl *CompactRangeLocator) MemDetailed() utils.MemReport {
+func (rl *LeMonRangeLocator) MemDetailed() utils.MemReport {
 	if rl == nil {
-		return utils.MemReport{Name: "CompactRangeLocator", TotalBytes: 0}
+		return utils.MemReport{Name: "LeMonRangeLocator", TotalBytes: 0}
 	}
 
 	headerSize := int(unsafe.Sizeof(*rl))
-	
+
 	lhSize := 0
 	if rl.lh != nil {
 		lhSize = rl.lh.ByteSize()
 	}
-	
+
 	bvSize := 0
 	if rl.bv != nil {
 		bvSize = rl.bv.AllocSize()
 	}
 
 	return utils.MemReport{
-		Name:       "CompactRangeLocator",
+		Name:       "LeMonRangeLocator",
 		TotalBytes: rl.ByteSize(),
 		Children: []utils.MemReport{
 			{Name: "header", TotalBytes: headerSize},

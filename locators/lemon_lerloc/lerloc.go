@@ -2,7 +2,7 @@ package lemon_lerloc
 
 import (
 	"Thesis/bits"
-	"Thesis/locators/compact_rloc"
+	"Thesis/locators/lemon_rloc"
 	"Thesis/locators/rloc"
 	"Thesis/trie/shzft"
 	"Thesis/trie/zft"
@@ -12,25 +12,25 @@ import (
 
 // LeMonLocalExactRangeLocator supports weak prefix search and returns exact
 // rank intervals in the sorted key set. It uses the highly compressed
-// CompactRangeLocator based on LeMonHash, significantly reducing the memory
+// LeMonRangeLocator based on LeMonHash, significantly reducing the memory
 // footprint compared to the classical generic bucketing approach.
 // It also uses SuccinctHZFastTrie for the exit-node locator to minimize memory.
 type LeMonLocalExactRangeLocator struct {
 	shzft *shzft.SuccinctHZFastTrie
-	rl    *compact_rloc.CompactRangeLocator
+	rl    *lemon_rloc.LeMonRangeLocator
 }
 
 // NewLeMonLocalExactRangeLocator creates a new LeMonLocalExactRangeLocator.
 // It composes a SuccinctHZFastTrie (to map a query prefix to an exit node) with a
-// CompactRangeLocator (to map that exit node to a rank interval).
+// LeMonRangeLocator (to map that exit node to a rank interval).
 //
 // It assumes the keys provided are sorted. If not, construction
 // will panic.
 func NewLeMonLocalExactRangeLocator(keys []bits.BitString) (*LeMonLocalExactRangeLocator, error) {
 	// Build RangeLocator first
-	// We need to build a ZFastTrie to pass to NewCompactRangeLocator
+	// We need to build a ZFastTrie to pass to NewLeMonRangeLocator
 	zt := zft.Build(keys)
-	rl, err := compact_rloc.NewCompactRangeLocator(zt)
+	rl, err := lemon_rloc.NewLeMonRangeLocator(zt)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (lerl *LeMonLocalExactRangeLocator) MemDetailed() utils.MemReport {
 	if lerl.shzft != nil {
 		shzftSize = lerl.shzft.ByteSize()
 	}
-	
+
 	var rlReport utils.MemReport
 	if lerl.rl != nil {
 		rlReport = lerl.rl.MemDetailed()

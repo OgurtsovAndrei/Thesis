@@ -1,4 +1,4 @@
-package compact_rloc
+package lemon_rloc
 
 import (
 	"Thesis/locators/rloc"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func BenchmarkCompactRangeLocator_MemoryAndBuild(b *testing.B) {
+func BenchmarkLeMonRangeLocator_MemoryAndBuild(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, n := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, n), func(b *testing.B) {
@@ -17,7 +17,7 @@ func BenchmarkCompactRangeLocator_MemoryAndBuild(b *testing.B) {
 				b.ReportAllocs()
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					rl, err := NewCompactRangeLocator(zt)
+					rl, err := NewLeMonRangeLocator(zt)
 					if err != nil {
 						b.Fatalf("build failed: %v", err)
 					}
@@ -28,14 +28,14 @@ func BenchmarkCompactRangeLocator_MemoryAndBuild(b *testing.B) {
 	}
 }
 
-func BenchmarkCompactRangeLocator_Query(b *testing.B) {
+func BenchmarkLeMonRangeLocator_Query(b *testing.B) {
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, n := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, n), func(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, n)
 				zt := zft.Build(keys)
 
-				rl, err := NewCompactRangeLocator(zt)
+				rl, err := NewLeMonRangeLocator(zt)
 				if err != nil {
 					b.Fatalf("build failed: %v", err)
 				}

@@ -1,4 +1,4 @@
-package compact_rloc
+package lemon_rloc
 
 import (
 	"Thesis/locators/rloc"
@@ -14,7 +14,7 @@ const (
 	maxBitLen = 64
 )
 
-func TestCompactRangeLocator_Correctness(t *testing.T) {
+func TestLeMonRangeLocator_Correctness(t *testing.T) {
 	for run := 0; run < testRuns; run++ {
 		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
 			t.Parallel()
@@ -22,17 +22,17 @@ func TestCompactRangeLocator_Correctness(t *testing.T) {
 			keys := rloc.GenUniqueBitStrings(seed, maxKeys, maxBitLen)
 
 			zt := zft.Build(keys)
-			
+
 			// Build baseline RangeLocator
 			rlBaseline, err := rloc.NewRangeLocator(zt)
 			if err != nil {
 				t.Fatalf("NewRangeLocator (baseline) failed (seed: %d): %v", seed, err)
 			}
-			
-			// Build CompactRangeLocator
-			crl, err := NewCompactRangeLocator(zt)
+
+			// Build LeMonRangeLocator
+			crl, err := NewLeMonRangeLocator(zt)
 			if err != nil {
-				t.Fatalf("NewCompactRangeLocator failed (seed: %d): %v", seed, err)
+				t.Fatalf("NewLeMonRangeLocator failed (seed: %d): %v", seed, err)
 			}
 
 			it := zft.NewIterator(zt)
@@ -46,7 +46,7 @@ func TestCompactRangeLocator_Correctness(t *testing.T) {
 				actualI, actualJ, err := crl.Query(node.Extent)
 
 				if err != nil {
-					t.Fatalf("CompactQuery error for node %s (seed: %d): %v", node.Extent, seed, err)
+					t.Fatalf("LeMonQuery error for node %s (seed: %d): %v", node.Extent, seed, err)
 				}
 
 				if actualI != expectedI || actualJ != expectedJ {
