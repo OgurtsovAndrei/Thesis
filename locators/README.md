@@ -5,13 +5,16 @@ The `locators` package provides structures for mapping query prefixes to rank in
 ## Sub-modules
 
 - **`locators/rloc`**: Implements the base **Range Locator**. It indexes a boundary set $P$ derived from a trie and uses a Monotone Minimal Perfect Hash (MMPH) to map node names to intervals in $O(1)$ time.
+- **`locators/lemon_rloc`**: Optimized Range Locator using **LeMonHash** (Learned Monotone MPH). Reduces boundary set overhead by ~60% compared to classical bucketing.
 - **`locators/lerloc`**: Implements the **Local Exact Range Locator** (LERLOC). It composes a top-level trie (HZFT) with a Range Locator to support efficient prefix search without storing full keys.
+- **`locators/lemon_lerloc`**: The most space-efficient variant, combining a **Succinct HZFT** with a **LeMon Range Locator**.
 
 ## Features
 
-- **Trie Modes**: Supports two top-level trie implementations:
-  - `FastTrie` (Standard HZFT): Optimized for maximum query speed (~64 bits/key for $L=64$).
-  - `CompactTrie` (Succinct SHZFT): Optimized for space using $O(N \log \log L)$ scaling (~35 bits/key for $L=64$).
+- **Trie Modes**: Supports multiple top-level trie and locator combinations:
+  - `FastTrie` (Standard HZFT): Optimized for maximum query speed (~180 bits/key for $L=64$).
+  - `CompactTrie` (Succinct SHZFT): Optimized for space using $O(N \log \log L)$ scaling (~150 bits/key for $L=64$).
+  - `LeMon` (Learned): Uses learned indexes to achieve the best density (~60 bits/key for $L=64$).
 - **Hierarchical Memory Reporting**: All structures implement `MemDetailed()`, providing a recursive breakdown of memory usage (Headers, MPH, Buckets, BitVectors) exportable to JSON.
 - **Automated Parameter Selection**: Built-in logic to choose optimal bit-widths for internal types based on dataset size and key length.
 
@@ -19,21 +22,19 @@ The `locators` package provides structures for mapping query prefixes to rank in
 
 ### 1. Memory Efficiency (bits/key)
 
-| Keys (N) | RLOC (Base) | LERLOC (Fast) | LERLOC (Compact) |
-|----------|-------------|---------------|------------------|
-| 1,024    | 54.04       | 125.4         | 93.4             |
-| 32,768   | 52.94       | 117.0         | 91.1             |
-| 262,144  | 53.12       | 126.9         | 93.8             |
+| Keys (N) | RLOC (Base) | RLOC (LeMon) | LERLOC (Fast) | LERLOC (Compact) | LERLOC (LeMon) |
+|----------|-------------|--------------|---------------|------------------|----------------|
+| 1,024    | 116.3       | 49.6         | 204.4         | 170.6            | 104.1          |
+| 32,768   | 115.9       | 24.2         | 181.5         | 152.1            | 58.9           |
+| 262,144  | 114.6       | 23.2         | 185.1         | 152.9            | 59.7           |
 
-*Note: Compact mode reduces total memory by ~30% for 64-bit keys compared to Fast mode.*
+*Note: LeMon variants significantly reduce total memory by using learned monotone minimal perfect hashing.*
 
-![Memory Efficiency](benchmarks/plots/mem_efficiency_all.svg)
-*Figure 1: Memory efficiency comparison across different modules and modes.*
+![Memory Efficiency vs N](benchmarks/plots/mem_efficiency_all.svg)
+*Figure 1: Memory efficiency comparison across different modules and modes (L=64).*
 
-### 2. Query Latency
-
-- **Fast Mode**: Extremely high performance ($O(1)$ array accesses).
-- **Compact Mode**: $\approx 1.4\times$ slower for long keys ($L=1024$) due to Rank operations, but remains on-par for short keys ($L=64$) due to better cache locality.
+![Memory Efficiency vs L](benchmarks/plots/mem_efficiency_vs_L.svg)
+*Figure 2: Scaling of memory efficiency with key length L (N=262,144).*
 
 ## Boundary Set (P) Distribution
 

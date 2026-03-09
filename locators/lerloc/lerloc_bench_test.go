@@ -151,30 +151,31 @@ func BenchmarkMemoryComparison(b *testing.B) {
 func BenchmarkMemoryDetailed(b *testing.B) {
 	rloc.InitBenchKeys()
 
-	bitLen := 64
-	for _, count := range rloc.BenchKeyCounts {
-		// Fast Mode
-		b.Run(fmt.Sprintf("Fast/Keys=%d", count), func(b *testing.B) {
-			keys := rloc.GetBenchKeys(bitLen, count)
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				lerl, _ := NewLocalExactRangeLocator(keys)
-				if i == 0 {
-					b.Logf("JSON_MEM_REPORT: %s", lerl.MemDetailed().JSON())
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, count := range rloc.BenchKeyCounts {
+			// Fast Mode
+			b.Run(fmt.Sprintf("Fast/KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := rloc.GetBenchKeys(bitLen, count)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					lerl, _ := NewLocalExactRangeLocator(keys)
+					if i == 0 {
+						b.Logf("JSON_MEM_REPORT: %s", lerl.MemDetailed().JSON())
+					}
 				}
-			}
-		})
+			})
 
-		// Compact Mode
-		b.Run(fmt.Sprintf("Compact/Keys=%d", count), func(b *testing.B) {
-			keys := rloc.GetBenchKeys(bitLen, count)
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				lerl, _ := NewCompactLocalExactRangeLocator(keys)
-				if i == 0 {
-					b.Logf("JSON_MEM_REPORT: %s", lerl.MemDetailed().JSON())
+			// Compact Mode
+			b.Run(fmt.Sprintf("Compact/KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := rloc.GetBenchKeys(bitLen, count)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					lerl, _ := NewCompactLocalExactRangeLocator(keys)
+					if i == 0 {
+						b.Logf("JSON_MEM_REPORT: %s", lerl.MemDetailed().JSON())
+					}
 				}
-			}
-		})
+			})
+		}
 	}
 }

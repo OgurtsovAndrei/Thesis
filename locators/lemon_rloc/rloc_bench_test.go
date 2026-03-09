@@ -59,3 +59,22 @@ func BenchmarkLeMonRangeLocator_Query(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkMemoryDetailed(b *testing.B) {
+	for _, bitLen := range rloc.BenchBitLengths {
+		for _, n := range rloc.BenchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, n), func(b *testing.B) {
+				keys := rloc.GetBenchKeys(bitLen, n)
+				b.ResetTimer()
+
+				for i := 0; i < b.N; i++ {
+					zt := zft.Build(keys)
+					rl, _ := NewLeMonRangeLocator(zt)
+					if i == 0 {
+						b.Logf("JSON_MEM_REPORT: %s", rl.MemDetailed().JSON())
+					}
+				}
+			})
+		}
+	}
+}

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	benchKeyCounts = []int{1 << 5, 1 << 8, 1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20, 1 << 23}
+	benchKeyCounts = []int{1 << 10, 1 << 13, 1 << 15, 1 << 18, 1 << 20}
 )
 
 func BenchmarkMonotoneHashWithTrieBuild(b *testing.B) {
@@ -170,25 +170,27 @@ func BenchmarkMonotoneHashWithTrieMemory(b *testing.B) {
 
 // Benchmark detailed memory breakdown for MMPH
 func BenchmarkMemoryDetailed(b *testing.B) {
-	for _, count := range benchKeyCounts {
-		b.Run(fmt.Sprintf("Keys=%d", count), func(b *testing.B) {
-			keys := testutils.GetBenchKeys(64, count)
+	for _, bitLen := range testutils.DefaultBenchBitLengths {
+		for _, count := range benchKeyCounts {
+			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
+				keys := testutils.GetBenchKeys(bitLen, count)
 
-			b.ReportAllocs()
-			b.ResetTimer()
+				b.ReportAllocs()
+				b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
-				table, err := NewMonotoneHashWithTrie[uint8, uint32, uint16](keys)
-				if err != nil {
-					b.Fatalf("Failed to build: %v", err)
+				for i := 0; i < b.N; i++ {
+					table, err := NewMonotoneHashWithTrie[uint8, uint32, uint16](keys)
+					if err != nil {
+						b.Fatalf("Failed to build: %v", err)
+					}
+
+					// Log the detailed report for the analyzer
+					if i == 0 {
+						report := table.MemDetailed()
+						b.Logf("JSON_MEM_REPORT: %s", report.JSON())
+					}
 				}
-
-				// Log the detailed report for the analyzer
-				if i == 0 {
-					report := table.MemDetailed()
-					b.Logf("JSON_MEM_REPORT: %s", report.JSON())
-				}
-			}
-		})
+			})
+		}
 	}
 }
