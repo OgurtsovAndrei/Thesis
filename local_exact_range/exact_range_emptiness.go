@@ -2,6 +2,7 @@ package local_exact_range
 
 import (
 	"Thesis/bits"
+	"Thesis/utils"
 	"fmt"
 	"math"
 	"unsafe"
@@ -249,5 +250,19 @@ func (ere *ExactRangeEmptiness) GetStats() Stats {
 		AvgKeysPerBlock: float64(ere.n) / float64(nonEmpty),
 		MaxKeysInBlock:  maxKeys,
 		EmptyBlockPct:   float64(ere.numBlocks-nonEmpty) / float64(ere.numBlocks) * 100,
+	}
+}
+
+func (ere *ExactRangeEmptiness) MemDetailed() utils.MemReport {
+	if ere == nil || ere.n == 0 { return utils.MemReport{Name: "ExactRangeEmptiness", TotalBytes: 0} }
+	return utils.MemReport{
+		Name: "ExactRangeEmptiness",
+		TotalBytes: ere.ByteSize(),
+		Children: []utils.MemReport{
+			{Name: "metadata", TotalBytes: int(unsafe.Sizeof(*ere))},
+			{Name: "D1_blocks", TotalBytes: ere.D1.AllocSize()},
+			{Name: "D2_counts", TotalBytes: ere.D2.AllocSize()},
+			{Name: "suffixes_packed", TotalBytes: len(ere.packedData) * 8},
+		},
 	}
 }

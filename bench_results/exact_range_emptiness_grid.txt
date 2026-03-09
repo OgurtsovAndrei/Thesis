@@ -1,0 +1,14 @@
+goos: darwin
+goarch: arm64
+pkg: Thesis/local_exact_range
+cpu: Apple M4 Max
+BenchmarkExactRangeEmptinessGrid/KeySize=64/Keys=1000000/Build-16         	       4	 315642719 ns/op	        47.27 bits_per_key	14893972 B/op	     154 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=64/Keys=1000000/Query-16         	 8470416	       141.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=128/Keys=1000000/Build-16        	       2	 619184188 ns/op	       111.3 bits_per_key	22897552 B/op	     154 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=128/Keys=1000000/Query-16        	 8288062	       146.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=256/Keys=1000000/Build-16        	       1	1244247250 ns/op	       239.3 bits_per_key	38896528 B/op	     154 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=256/Keys=1000000/Query-16        	 8610951	       141.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=512/Keys=1000000/Build-16        	       1	2480126792 ns/op	       495.3 bits_per_key	70894480 B/op	     154 allocs/op
+BenchmarkExactRangeEmptinessGrid/KeySize=512/Keys=1000000/Query-16        	 8669958	       139.3 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	Thesis/local_exact_range	20.350s
