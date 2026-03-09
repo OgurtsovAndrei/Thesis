@@ -2,7 +2,15 @@
 
 This package provides space-efficient data structures for answering 1D range emptiness queries: **"Does the interval $[a, b]$ contain any points from set $S$?"**
 
-The implementations are based on the SODA 2015 paper: *["Approximate Range Emptiness in Constant Time and Optimal Space"](https://arxiv.org/abs/1407.2907)* by Goswami et al.
+The implementations are based on the SODA 2015 paper: *["Approximate Range Emptiness in Constant Time and Optimal Space"](https://arxiv.org/abs/1407.2907)* by Goswami, Pagh, Silvestri, and Sivertsen.
+
+> **Note:** This is the first known practical implementation of the Goswami et al. SODA 2015 algorithm.
+> The paper is widely cited as the theoretical gold standard for range filters
+> (e.g., [Grafite, SIGMOD 2024](https://arxiv.org/abs/2311.15380) calls it "the information-theoretically optimal solution"),
+> but prior to this work no public implementation existed due to the complexity of the underlying machinery
+> (succinct bit vectors, Elias-Fano coding, monotone minimal perfect hashing, hollow tries).
+
+**Use case:** Range filters for LSM-tree key-value stores (e.g., RocksDB). Before reading an SST file from disk, the filter answers whether a queried key range *might* intersect the file's key set, avoiding unnecessary I/O with a bounded false positive probability.
 
 ## Data Structures
 
