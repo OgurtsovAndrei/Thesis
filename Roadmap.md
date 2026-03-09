@@ -11,6 +11,22 @@
 - [ ] `ExactRangeEmptiness`
 - [ ] `ApproximateRangeEmptiness`
 
+### `ExactRangeEmptiness` [exact_range_emptiness.md](local_exact_range/exact_range_emptiness.md)
+
+Succinct data structure that answers exact 1D range emptiness queries $[a, b] \cap S \neq \emptyset$ in $O(1)$ time.
+Based on Section 3 of *Approximate Range Emptiness in Constant Time and Optimal Space*.
+Requires dividing the universe into blocks and utilizing `SuccinctBitVector` for summary structures.
+
+#### API
+- `func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*ExactRangeEmptiness, error)`
+    - `keys`: sorted slice of elements $S$.
+    - `universe`: Maximum possible value in the universe $U$ (to support `BitString`s larger than `uint64`).
+    - Builds the block summary structures and succinct representations in $O(n)$ time.
+- `func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool`
+    - Returns `true` if the interval $[a, b]$ contains NO elements from $S$.
+    - Returns `false` if the interval contains at least one element.
+    - Executes in $O(1)$ time (relative to word size / `BitString` operations).
+
 ### `SuccinctBitVector` Лаконичные Битовые Векторы [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.md)
 
 Succinct Bit Vector — это пространственно-эффективная структура данных, позволяющая хранить битовый массив длины $N$,
