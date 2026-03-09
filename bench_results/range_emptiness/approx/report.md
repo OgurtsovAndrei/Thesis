@@ -48,9 +48,9 @@
 
 ## 2. Visualizations
 
-- [Query Latency Plot](plots/are_large_query_latency.svg)
-- [Space Efficiency Plot](plots/are_large_bits_per_key.svg)
-- [Build Throughput Plot](plots/are_large_build_throughput.svg)
+- [Query Latency Plot](are_large_query_latency.svg)
+- [Space Efficiency Plot](are_large_bits_per_key.svg)
+- [Build Throughput Plot](are_large_build_throughput.svg)
 
 ## 3. Observations
 

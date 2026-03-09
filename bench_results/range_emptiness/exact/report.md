@@ -34,8 +34,8 @@ Query performance is nearly constant across bit lengths, as the structure perfor
 
 The following plots were generated from the benchmark data:
 
-- [Query Latency Plot](plots/exact_range_query_latency.svg)
-- [Bits per Key Plot](plots/exact_range_bits_per_key.svg)
+- [Query Latency Plot](exact_range_query_latency.svg)
+- [Bits per Key Plot](exact_range_bits_per_key.svg)
 
 ## 4. Conclusion
 
