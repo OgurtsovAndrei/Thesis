@@ -1,4 +1,4 @@
-package compact_lerloc
+package lemon_lerloc
 
 import (
 	"Thesis/bits"
@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func BenchmarkCompactLocalExactRangeLocator_Build(b *testing.B) {
+func BenchmarkLeMonLocalExactRangeLocator_Build(b *testing.B) {
 	rloc.InitBenchKeys()
 
 	for _, bitLen := range rloc.BenchBitLengths {
@@ -20,7 +20,7 @@ func BenchmarkCompactLocalExactRangeLocator_Build(b *testing.B) {
 				b.ResetTimer()
 
 				for i := 0; i < b.N; i++ {
-					lerl, err := NewCompactLocalExactRangeLocator(keys)
+					lerl, err := NewLeMonLocalExactRangeLocator(keys)
 					if err != nil {
 						b.Fatalf("Failed to build locator: %v", err)
 					}
@@ -34,14 +34,14 @@ func BenchmarkCompactLocalExactRangeLocator_Build(b *testing.B) {
 	}
 }
 
-func BenchmarkCompactLocalExactRangeLocator_Query(b *testing.B) {
+func BenchmarkLeMonLocalExactRangeLocator_Query(b *testing.B) {
 	rloc.InitBenchKeys()
 
 	for _, bitLen := range rloc.BenchBitLengths {
 		for _, count := range rloc.BenchKeyCounts {
 			b.Run(fmt.Sprintf("KeySize=%d/Keys=%d", bitLen, count), func(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, count)
-				lerl, _ := NewCompactLocalExactRangeLocator(keys)
+				lerl, _ := NewLeMonLocalExactRangeLocator(keys)
 
 				queryPrefixes := generateQueryPrefixes(keys)
 
@@ -83,7 +83,7 @@ func BenchmarkMemoryComparison(b *testing.B) {
 
 				for i := 0; i < b.N; i++ {
 					original, _ := lerloc.NewLocalExactRangeLocator(keys)
-					compact, _ := NewCompactLocalExactRangeLocator(keys)
+					compact, _ := NewLeMonLocalExactRangeLocator(keys)
 
 					b.ReportMetric(float64(original.ByteSize())*8/float64(count), "orig_bits_key")
 					b.ReportMetric(float64(compact.ByteSize())*8/float64(count), "lemon_bits_key")
@@ -103,7 +103,7 @@ func BenchmarkMemoryDetailed(b *testing.B) {
 				keys := rloc.GetBenchKeys(bitLen, count)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					lerl, _ := NewCompactLocalExactRangeLocator(keys)
+					lerl, _ := NewLeMonLocalExactRangeLocator(keys)
 					if i == 0 {
 						// Use MemDetailed directly
 						report := lerl.MemDetailed()

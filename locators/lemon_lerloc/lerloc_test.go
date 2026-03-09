@@ -1,4 +1,4 @@
-package compact_lerloc
+package lemon_lerloc
 
 import (
 	"Thesis/bits"
@@ -10,15 +10,15 @@ import (
 )
 
 const (
-	testRuns  = 100
+	testRuns  = 100_000
 	maxKeys   = 256
 	maxBitLen = 64
 )
 
-func TestCompactLocalExactRangeLocator_EmptyKeys(t *testing.T) {
-	lerl, err := NewCompactLocalExactRangeLocator([]bits.BitString{})
+func TestLeMonLocalExactRangeLocator_EmptyKeys(t *testing.T) {
+	lerl, err := NewLeMonLocalExactRangeLocator([]bits.BitString{})
 	if err != nil {
-		t.Fatalf("NewAutoCompactLocalExactRangeLocator failed: %v", err)
+		t.Fatalf("NewAutoLeMonLocalExactRangeLocator failed: %v", err)
 	}
 	start, end, err := lerl.WeakPrefixSearch(bits.NewFromText("test"))
 	if err != nil {
@@ -29,7 +29,7 @@ func TestCompactLocalExactRangeLocator_EmptyKeys(t *testing.T) {
 	}
 }
 
-func TestCompactLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
+func TestLeMonLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 	keys := []bits.BitString{
 		bits.NewFromText("abc"),
 		bits.NewFromText("def"),
@@ -40,9 +40,9 @@ func TestCompactLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 		return keys[i].TrieCompare(keys[j]) < 0
 	})
 
-	lerl, err := NewCompactLocalExactRangeLocator(keys)
+	lerl, err := NewLeMonLocalExactRangeLocator(keys)
 	if err != nil {
-		t.Fatalf("NewAutoCompactLocalExactRangeLocator failed: %v", err)
+		t.Fatalf("NewAutoLeMonLocalExactRangeLocator failed: %v", err)
 	}
 
 	start, end, err := lerl.WeakPrefixSearch(bits.NewFromText(""))
@@ -54,16 +54,16 @@ func TestCompactLocalExactRangeLocator_EmptyPrefix(t *testing.T) {
 	}
 }
 
-func TestCompactLocalExactRangeLocator_AllPrefixes(t *testing.T) {
+func TestLeMonLocalExactRangeLocator_AllPrefixes(t *testing.T) {
 	for run := 0; run < testRuns; run++ {
 		t.Run(fmt.Sprintf("run=%d", run), func(t *testing.T) {
 			t.Parallel()
 			seed := time.Now().UnixNano()
 			keys := rloc.GenUniqueBitStrings(seed, maxKeys, maxBitLen)
 
-			lerl, err := NewCompactLocalExactRangeLocator(keys)
+			lerl, err := NewLeMonLocalExactRangeLocator(keys)
 			if err != nil {
-				t.Fatalf("NewAutoCompactLocalExactRangeLocator failed (seed: %d): %v", seed, err)
+				t.Fatalf("NewAutoLeMonLocalExactRangeLocator failed (seed: %d): %v", seed, err)
 			}
 
 			for _, key := range keys {
