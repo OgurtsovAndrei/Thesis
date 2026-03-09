@@ -32,10 +32,10 @@ Query performance is nearly constant across bit lengths, as the structure perfor
 
 ## 3. Visualizations
 
-The following plots were generated from the benchmark data:
+The following plots show the flat query latency and the linear growth of space required for exact representation:
 
-- [Query Latency Plot](exact_range_query_latency.svg)
-- [Bits per Key Plot](exact_range_bits_per_key.svg)
+![Query Latency](exact_range_query_latency.svg)
+![Bits per Key](exact_range_bits_per_key.svg)
 
 ## 4. Conclusion
 

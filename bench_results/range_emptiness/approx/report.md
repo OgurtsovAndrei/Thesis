@@ -48,9 +48,11 @@
 
 ## 2. Visualizations
 
-- [Query Latency Plot](are_large_query_latency.svg)
-- [Space Efficiency Plot](are_large_bits_per_key.svg)
-- [Build Throughput Plot](are_large_build_throughput.svg)
+The following plots demonstrate the scale-invariant performance of the ARE structure:
+
+![Query Latency](are_large_query_latency.svg)
+![Space Efficiency](are_large_bits_per_key.svg)
+![Build Throughput](are_large_build_throughput.svg)
 
 ## 3. Observations
 
