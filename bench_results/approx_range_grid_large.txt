@@ -1,0 +1,55 @@
+
+--- ExactRangeEmptiness Stats (N=1000000) ---
+Total Blocks:    524288
+Non-Empty:       446648
+Empty:           77640 (14.81%)
+Avg Keys/Block:  2.24
+Max Keys/Block:  12
+--------------------------------------
+
+goos: darwin
+goarch: arm64
+pkg: Thesis/local_exact_range
+cpu: Apple M4 Max
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=262144/Build-16         	      54	  40587269 ns/op	        14.21 bits_per_key	11143072 B/op	     119 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=262144/Query-16         	16848104	       142.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=1048576/Build-16        	      13	 176149324 ns/op	        14.21 bits_per_key	44778400 B/op	     156 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=1048576/Query-16        	16159579	       148.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=4194304/Build-16        	       3	 750380403 ns/op	        14.21 bits_per_key	179890976 B/op	     201 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=4194304/Query-16        	15541016	       155.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=16777216/Build-16       	       1	3002785000 ns/op	        14.21 bits_per_key	721199008 B/op	     253 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=64/Keys=16777216/Query-16       	14455458	       164.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=262144/Build-16        	      57	  41656053 ns/op	        14.21 bits_per_key	11143072 B/op	     119 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=262144/Query-16        	17401328	       139.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=1048576/Build-16       	      12	 182923570 ns/op	        14.21 bits_per_key	44778400 B/op	     156 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=1048576/Query-16       	16460712	       147.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=4194304/Build-16       	       3	 743157778 ns/op	        14.21 bits_per_key	179890976 B/op	     201 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=4194304/Query-16       	14490030	       165.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=16777216/Build-16      	       1	3124339500 ns/op	        14.21 bits_per_key	721207200 B/op	     253 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=128/Keys=16777216/Query-16      	14223538	       170.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=262144/Build-16        	      55	  42081302 ns/op	        14.21 bits_per_key	11143072 B/op	     119 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=262144/Query-16        	16385137	       144.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=1048576/Build-16       	      12	 189554497 ns/op	        14.21 bits_per_key	44778400 B/op	     156 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=1048576/Query-16       	16785847	       142.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=4194304/Build-16       	       3	 754115514 ns/op	        14.21 bits_per_key	179890976 B/op	     201 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=4194304/Query-16       	14838828	       158.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=16777216/Build-16      	       1	4302015459 ns/op	        14.21 bits_per_key	721207200 B/op	     253 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=256/Keys=16777216/Query-16      	14600356	       164.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=262144/Build-16        	      51	  45840661 ns/op	        14.21 bits_per_key	11143072 B/op	     119 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=262144/Query-16        	16776715	       139.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=1048576/Build-16       	      12	 184034021 ns/op	        14.21 bits_per_key	44778400 B/op	     156 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=1048576/Query-16       	16191709	       148.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=4194304/Build-16       	       3	 827920320 ns/op	        14.21 bits_per_key	179899168 B/op	     201 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=4194304/Query-16       	15496742	       156.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=16777216/Build-16      	       1	3274836583 ns/op	        14.21 bits_per_key	721199008 B/op	     253 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=512/Keys=16777216/Query-16      	14406788	       165.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=262144/Build-16       	      49	  47919570 ns/op	        14.21 bits_per_key	11143072 B/op	     119 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=262144/Query-16       	16741956	       144.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=1048576/Build-16      	      13	 181730580 ns/op	        14.21 bits_per_key	44778400 B/op	     156 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=1048576/Query-16      	16249345	       147.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=4194304/Build-16      	       2	1116001625 ns/op	        14.21 bits_per_key	179899168 B/op	     201 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=4194304/Query-16      	15301498	       156.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=16777216/Build-16     	       1	3688914833 ns/op	        14.21 bits_per_key	721199008 B/op	     253 allocs/op
+BenchmarkApproximateRangeEmptiness_Grid/Eps=0.001/KeySize=1024/Keys=16777216/Query-16     	14905736	       169.7 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	Thesis/local_exact_range	234.258s
