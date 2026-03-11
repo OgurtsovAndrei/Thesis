@@ -1,7 +1,8 @@
-package local_exact_range
+package are
 
 import (
 	"Thesis/bits"
+	"Thesis/emptiness/ere"
 	"Thesis/testutils"
 	"fmt"
 	"math/rand"
@@ -34,7 +35,7 @@ func TestApproximateRangeEmptiness_Accuracy(t *testing.T) {
 			// Use a map of prefixes to quickly check if a FP is "expected" due to truncation
 			prefixes := make(map[uint64]bool)
 			for _, k := range keys {
-				prefixes[getBlockIndex(k, are.K)] = true
+				prefixes[ere.GetBlockIndex(k, are.K)] = true
 			}
 
 			for queriesPerformed < numQueries {
@@ -43,7 +44,7 @@ func TestApproximateRangeEmptiness_Accuracy(t *testing.T) {
 				
 				// Skip if it's actually in the set (not a FP)
 				// We'll just use the prefix check for simplicity as it's stricter
-				if prefixes[getBlockIndex(queryBs, are.K)] {
+				if prefixes[ere.GetBlockIndex(queryBs, are.K)] {
 					continue
 				}
 				
