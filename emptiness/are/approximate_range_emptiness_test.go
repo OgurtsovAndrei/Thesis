@@ -1,4 +1,4 @@
-package local_exact_range
+package are
 
 import (
 	"Thesis/bits"

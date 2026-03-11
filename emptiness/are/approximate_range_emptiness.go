@@ -1,7 +1,8 @@
-package local_exact_range
+package are
 
 import (
 	"Thesis/bits"
+	"Thesis/emptiness/ere"
 	"Thesis/utils"
 	"fmt"
 	"math"
@@ -11,7 +12,7 @@ import (
 // queries with a guaranteed upper bound on the false positive probability (\epsilon).
 // It achieves this by truncating the keys (fingerprinting) and storing them in an ExactRangeEmptiness structure.
 type ApproximateRangeEmptiness struct {
-	exact *ExactRangeEmptiness
+	exact *ere.ExactRangeEmptiness
 	K     uint32 // Maximum bit length stored (log2(N) + log2(2/epsilon))
 }
 
@@ -59,7 +60,7 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 	// The universe size for the Exact structure is now bounded by K bits
 	universe := bits.NewBitString(K)
 	
-	exact, err := NewExactRangeEmptiness(truncatedKeys, universe)
+	exact, err := ere.NewExactRangeEmptiness(truncatedKeys, universe)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build underlying exact structure: %w", err)
 	}

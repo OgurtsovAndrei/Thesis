@@ -1,4 +1,4 @@
-package local_exact_range
+package ere
 
 import (
 	"Thesis/bits"

@@ -1,4 +1,4 @@
-package local_exact_range
+package ere
 
 import (
 	"Thesis/bits"
@@ -54,7 +54,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	i := 0
 	for b := 0; b < numBlocks; b++ {
 		countInBlock := 0
-		for i < n && getBlockIndex(keys[i], k) == uint64(b) {
+		for i < n && GetBlockIndex(keys[i], k) == uint64(b) {
 			suffixes = append(suffixes, extractSuffixAsUint64(keys[i], L, w))
 			countInBlock++
 			i++
@@ -86,7 +86,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	}, nil
 }
 
-func getBlockIndex(x bits.BitString, k uint32) uint64 {
+func GetBlockIndex(x bits.BitString, k uint32) uint64 {
 	var idx uint64
 	size := x.Size()
 	// Bit 0 is MSB of index
@@ -120,8 +120,8 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		return true
 	}
 
-	blockA := getBlockIndex(a, ere.k)
-	blockB := getBlockIndex(b, ere.k)
+	blockA := GetBlockIndex(a, ere.k)
+	blockB := GetBlockIndex(b, ere.k)
 
 	// Range exceeds universe
 	if blockA >= uint64(ere.numBlocks) {
