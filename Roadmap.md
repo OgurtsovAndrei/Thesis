@@ -11,7 +11,7 @@
 - [x] `ExactRangeEmptiness`
 - [x] `ApproximateRangeEmptiness`
 
-### `ApproximateRangeEmptiness` [approximate_range_emptiness.md](local_exact_range/approximate_range_emptiness.md)
+### `ApproximateRangeEmptiness` [approximate_range_emptiness.md](emptiness/are/approximate_range_emptiness.md)
 
 Probabilistic data structure that answers range emptiness queries with a false positive probability $\epsilon$.
 Based on Section 4 of *Approximate Range Emptiness in Constant Time and Optimal Space*.
@@ -30,7 +30,7 @@ Breaks the linear space dependence on $L$ by using hashed fingerprints.
     - Returns `true` if $[a, b] \cap S = \emptyset$.
     - Returns `false` with high probability if $[a, b] \cap S \neq \emptyset$.
 
-### `ExactRangeEmptiness` [exact_range_emptiness.md](local_exact_range/exact_range_emptiness.md)
+### `ExactRangeEmptiness` [exact_range_emptiness.md](emptiness/ere/exact_range_emptiness.md)
 
 Succinct data structure that answers exact 1D range emptiness queries $[a, b] \cap S \neq \emptyset$ in $O(1)$ time.
 Based on Section 3 of *Approximate Range Emptiness in Constant Time and Optimal Space*.

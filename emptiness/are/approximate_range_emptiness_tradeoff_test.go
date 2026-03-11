@@ -1,7 +1,8 @@
-package local_exact_range
+package are
 
 import (
 	"Thesis/bits"
+	"Thesis/emptiness/ere"
 	"Thesis/testutils"
 	"fmt"
 	"math/rand"
@@ -103,6 +104,6 @@ func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmpti
 		}
 	}
 	universe := bits.NewBitString(K)
-	exact, _ := NewExactRangeEmptiness(truncatedKeys, universe)
+	exact, _ := ere.NewExactRangeEmptiness(truncatedKeys, universe)
 	return &ApproximateRangeEmptiness{exact: exact, K: K}, nil
 }

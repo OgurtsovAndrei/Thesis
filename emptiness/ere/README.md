@@ -15,14 +15,30 @@ To achieve the information-theoretic lower bound of $n \log(U/n)$ bits, the stru
     *   **$W$-bit Suffixes**: Instead of storing full keys, we only store the suffix $x \pmod{U/n}$ for each key $x$. The length of each suffix is $W = L_{universe} - \lceil \log_2 n \rceil$.
     *   **Packed Storage**: Suffixes are stored in a single, dense `[]uint64` array where bits are packed in-flight using bit-shifts, eliminating the overhead of Go struct headers and pointers.
 
-## 2. Theoretical vs. Practical Decisions
+## 2. Practical Implementation Decisions
 
-### Why no `LERLOC` (Weak Prefix Search) inside blocks?
-The paper theoretically suggests using a Weak Prefix Search structure (like our `LERLOC`) for $O(1)$ worst-case queries inside each non-empty block. However, we've made a pragmatic engineering decision to use **binary search on bit-packed suffixes** for the local level:
-*   **Space Overhead**: Adding an MMPH-based `LERLOC` to each block would add ~3–10 bits/key.
-*   **Distribution Analysis**: With $n$ blocks for $n$ keys, the average number of keys per non-empty block is $\sim 2.24$ (Poisson distribution), with a maximum of ~12 observed for $N=10^6$.
-*   **Performance**: Binary searching through 12 bit-packed suffixes is significantly faster and uses far less memory than computing a hash (MMPH) and performing two Rank-lookups (LERLOC).
-*   **Result**: We achieved **~47 bits/key** (close to the 44-bit theoretical limit) instead of ~60 bits/key with full indexing.
+### Binary Search in Buckets (Local Level)
+The original SODA 2015 paper theoretically suggests using a Weak Prefix Search structure (like a Hollow Z-Fast Trie) for $O(1)$ **worst-case** queries inside each non-empty block.
+
+However, in this implementation, we use **binary search on bit-packed suffixes** for the local search. 
+
+#### Why no `LERLOC` (Weak Prefix Search) inside blocks?
+Our `LERLOC` implementation (based on Hollow Z-Fast Trie and MMPH) provides $O(1)$ worst-case guarantees but comes with overhead:
+*   **Space Overhead**: Adding a trie index to each block would add ~3–10 bits/key. Binary search requires **zero** extra metadata besides the sorted suffixes.
+*   **Performance Trade-off**: For small datasets (like the keys within a single block), the constants of a trie/hash-based approach are higher than a simple binary search over a few CPU cache lines.
+
+**Why Binary Search is the Better Choice Here:**
+*   **Distribution Analysis**: With $n$ blocks for $n$ keys, the number of keys per block follows a Poisson distribution with $\lambda \approx 1$.
+    *   **Average**: ~2.24 keys per non-empty block.
+    *   **Maximum**: Observed ~12 keys for $N=10^6$ in our tests.
+*   **Speed**: Binary searching through ~12 packed values is significantly faster and more cache-friendly than performing multiple rank/select lookups in a trie.
+*   **Result**: This choice allowed us to achieve **~47 bits/key** (very close to the theoretical 44-bit lower bound) while maintaining $O(1)$ expected query time.
+
+**Complexity:**
+*   **Time**: $O(\log(\text{keys per block}))$ which is $O(1)$ expected for uniform distributions.
+*   **Space**: $0$ extra bits per key.
+
+---
 
 ## 3. Complexity Analysis
 

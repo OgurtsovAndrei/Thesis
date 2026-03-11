@@ -14,13 +14,13 @@ The implementations are based on the SODA 2015 paper: *["Approximate Range Empti
 
 ## Data Structures
 
-### 1. [Exact Range Emptiness](exact_range_emptiness.md)
+### 1. [Exact Range Emptiness](ere/exact_range_emptiness.md)
 A succinct structure that answers range queries with **100% accuracy**.
 - **Space:** $O(n \log(U/n))$ bits. Achieving the information-theoretic lower bound.
 - **Technique:** Uses a 2-level hierarchy with Elias-Fano indexing ($D_1, D_2$ bitvectors) and bit-packed suffixes.
 - **Performance:** $O(1)$ expected query time (~140ns for 1M keys).
 
-### 2. [Approximate Range Emptiness (ARE)](approximate_range_emptiness.md)
+### 2. [Approximate Range Emptiness (ARE)](are/approximate_range_emptiness.md)
 A probabilistic filter that allows for a small false positive probability $\epsilon$.
 - **Space:** $O(n \log(1/\epsilon))$ bits. The memory footprint is **independent of key length ($L$)**.
 - **Technique:** Universe reduction via locality-preserving fingerprinting (prefix truncation) coupled with the Exact structure.
@@ -39,16 +39,16 @@ Comprehensive performance analysis and visualizations are available in the [benc
 ## Usage Example
 
 ```go
-import "Thesis/local_exact_range"
+import "Thesis/emptiness/are"
 
 // 1. Prepare sorted keys
 keys := []bits.BitString{...}
 
 // 2. Build Approximate Filter (0.1% error rate)
-are, _ := local_exact_range.NewApproximateRangeEmptiness(keys, 0.001)
+filter, _ := are.NewApproximateRangeEmptiness(keys, 0.001)
 
 // 3. Query interval [a, b]
-if are.IsEmpty(a, b) {
+if filter.IsEmpty(a, b) {
     fmt.Println("Range is definitely empty")
 } else {
     fmt.Println("Range might contain elements")
