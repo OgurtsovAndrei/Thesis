@@ -109,6 +109,52 @@ func TestERE_Property_MassiveSpan(t *testing.T) {
 	})
 }
 
+func TestERE_Property_HeavyBucket(t *testing.T) {
+	t.Parallel()
+	for i := 0; i < 100; i++ {
+		i := i
+		t.Run(fmt.Sprintf("Iter/%d", i), func(t *testing.T) {
+			t.Parallel()
+			rng := rand.New(rand.NewSource(int64(i + 400)))
+			n := 500
+			
+			// Force same 10-bit prefix for all keys
+			// This matches k = 10 for n=500
+			k := uint32(10)
+			fixedPrefix := (rng.Uint64() & ((1 << k) - 1)) << (64 - k)
+			
+			keySet := make(map[uint64]bool)
+			sortedKeys := make([]bits.BitString, 0, n)
+			for len(keySet) < n {
+				// Random suffix (54 bits)
+				suffix := rng.Uint64() & ((1 << (64 - k)) - 1)
+				val := fixedPrefix | suffix
+				if !keySet[val] {
+					keySet[val] = true
+					sortedKeys = append(sortedKeys, bits.NewFromUint64(val))
+				}
+			}
+			sort.Slice(sortedKeys, func(i, j int) bool {
+				return sortedKeys[i].Compare(sortedKeys[j]) < 0
+			})
+
+			universe := bits.NewBitString(64)
+			ere, err := NewExactRangeEmptiness(sortedKeys, universe)
+			if err != nil {
+				t.Fatalf("Failed to build ERE: %v", err)
+			}
+
+			// Verify point queries
+			for j := 0; j < 100; j++ {
+				key := sortedKeys[rng.Intn(n)]
+				if ere.IsEmpty(key, key) {
+					t.Errorf("HeavyBucket: Key %v not found", key)
+				}
+			}
+		})
+	}
+}
+
 // runParallelERE is a helper to run ERE tests in parallel iterations.
 func runParallelERE(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, ere *ExactRangeEmptiness)) {
 	for i := 0; i < testRuns; i++ {
