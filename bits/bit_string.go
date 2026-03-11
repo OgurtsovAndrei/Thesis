@@ -696,6 +696,61 @@ func (bs BitString) Successor() BitString {
 	}
 }
 
+func (bs BitString) Predecessor() BitString {
+	if bs.sizeBits == 0 || bs.IsAllZeros() {
+		return bs
+	}
+
+	// 1. Find the last '1' (the one with the highest index)
+	lastOne := -1
+	for i := int(bs.sizeBits) - 1; i >= 0; i-- {
+		if bs.At(uint32(i)) {
+			lastOne = i
+			break
+		}
+	}
+
+	if lastOne == -1 {
+		return bs // All zeros
+	}
+
+	// 2. Create copy
+	numWords := (bs.sizeBits + 63) / 64
+	newData := make([]uint64, numWords)
+	copy(newData, bs.data[:numWords])
+
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		newData[numWords-1] &= mask
+	}
+
+	// 3. Set bit lastOne to 0
+	wordIdx := lastOne / 64
+	bitIdx := uint32(lastOne % 64)
+	newData[wordIdx] &= ^(uint64(1) << bitIdx)
+
+	// 4. Set all bits after lastOne to 1
+	for i := lastOne + 1; i < int(bs.sizeBits); i++ {
+		wIdx := i / 64
+		bIdx := uint32(i % 64)
+		newData[wIdx] |= (uint64(1) << bIdx)
+	}
+
+	return BitString{
+		data:     newData,
+		sizeBits: bs.sizeBits,
+	}
+}
+
+func (bs BitString) IsAllZeros() bool {
+	for _, w := range bs.data {
+		if w != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func BugIfNotSortedOrHaveDuplicates(bss []BitString) {
 	i := 1
 	for i < len(bss) {
