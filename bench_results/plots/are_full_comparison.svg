@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
 <style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
-<text x="480.0" y="26" text-anchor="middle">Full Range Emptiness Comparison: 3 Filters x 2 Data Types</text>
+<text x="480.0" y="26" text-anchor="middle">Range Emptiness Filters: 3 Architectures x 2 Data Types</text>
 <line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
 <line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
 <line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
@@ -20,73 +20,105 @@
 <line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
 <text class="label" x="82.0" y="59.00" text-anchor="end">10^0</text>
 <line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
-<text class="label" x="90.00" y="485.0" text-anchor="middle">13.6</text>
-<line class="grid" x1="228.25" y1="55.0" x2="228.25" y2="465.0" />
-<text class="label" x="228.25" y="485.0" text-anchor="middle">14.6</text>
-<line class="grid" x1="366.50" y1="55.0" x2="366.50" y2="465.0" />
-<text class="label" x="366.50" y="485.0" text-anchor="middle">15.6</text>
-<line class="grid" x1="366.89" y1="55.0" x2="366.89" y2="465.0" />
-<text class="label" x="366.89" y="485.0" text-anchor="middle">15.6</text>
-<line class="grid" x1="504.75" y1="55.0" x2="504.75" y2="465.0" />
-<text class="label" x="504.75" y="485.0" text-anchor="middle">16.6</text>
-<line class="grid" x1="505.17" y1="55.0" x2="505.17" y2="465.0" />
-<text class="label" x="505.17" y="485.0" text-anchor="middle">16.6</text>
-<line class="grid" x1="643.44" y1="55.0" x2="643.44" y2="465.0" />
-<text class="label" x="643.44" y="485.0" text-anchor="middle">17.6</text>
-<line class="grid" x1="781.72" y1="55.0" x2="781.72" y2="465.0" />
-<text class="label" x="781.72" y="485.0" text-anchor="middle">18.6</text>
+<text class="label" x="90.00" y="485.0" text-anchor="middle">7.5</text>
+<line class="grid" x1="161.48" y1="55.0" x2="161.48" y2="465.0" />
+<text class="label" x="161.48" y="485.0" text-anchor="middle">8.6</text>
+<line class="grid" x1="231.76" y1="55.0" x2="231.76" y2="465.0" />
+<text class="label" x="231.76" y="485.0" text-anchor="middle">9.6</text>
+<line class="grid" x1="301.42" y1="55.0" x2="301.42" y2="465.0" />
+<text class="label" x="301.42" y="485.0" text-anchor="middle">10.6</text>
+<line class="grid" x1="370.43" y1="55.0" x2="370.43" y2="465.0" />
+<text class="label" x="370.43" y="485.0" text-anchor="middle">11.6</text>
+<line class="grid" x1="508.19" y1="55.0" x2="508.19" y2="465.0" />
+<text class="label" x="508.19" y="485.0" text-anchor="middle">13.6</text>
+<line class="grid" x1="508.27" y1="55.0" x2="508.27" y2="465.0" />
+<text class="label" x="508.27" y="485.0" text-anchor="middle">13.6</text>
+<line class="grid" x1="576.94" y1="55.0" x2="576.94" y2="465.0" />
+<text class="label" x="576.94" y="485.0" text-anchor="middle">14.6</text>
+<line class="grid" x1="577.03" y1="55.0" x2="577.03" y2="465.0" />
+<text class="label" x="577.03" y="485.0" text-anchor="middle">14.6</text>
+<line class="grid" x1="645.43" y1="55.0" x2="645.43" y2="465.0" />
+<text class="label" x="645.43" y="485.0" text-anchor="middle">15.6</text>
+<line class="grid" x1="645.53" y1="55.0" x2="645.53" y2="465.0" />
+<text class="label" x="645.53" y="485.0" text-anchor="middle">15.6</text>
+<line class="grid" x1="714.22" y1="55.0" x2="714.22" y2="465.0" />
+<text class="label" x="714.22" y="485.0" text-anchor="middle">16.6</text>
+<line class="grid" x1="782.81" y1="55.0" x2="782.81" y2="465.0" />
+<text class="label" x="782.81" y="485.0" text-anchor="middle">17.6</text>
+<line class="grid" x1="851.41" y1="55.0" x2="851.41" y2="465.0" />
+<text class="label" x="851.41" y="485.0" text-anchor="middle">18.6</text>
 <line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
 <text class="label" x="920.00" y="485.0" text-anchor="middle">19.6</text>
-<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,161.39 228.25,179.80 366.50,194.33 505.17,212.58 643.44,226.94 781.72,237.70 920.00,247.35" />
-<circle cx="90.00" cy="161.39" r="3.5" fill="#2a7fff" />
-<circle cx="228.25" cy="179.80" r="3.5" fill="#2a7fff" />
-<circle cx="366.50" cy="194.33" r="3.5" fill="#2a7fff" />
-<circle cx="505.17" cy="212.58" r="3.5" fill="#2a7fff" />
-<circle cx="643.44" cy="226.94" r="3.5" fill="#2a7fff" />
-<circle cx="781.72" cy="237.70" r="3.5" fill="#2a7fff" />
-<circle cx="920.00" cy="247.35" r="3.5" fill="#2a7fff" />
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="508.19,163.15 577.03,178.86 645.53,194.09 714.22,213.08 782.81,224.04 851.41,233.39 920.00,261.34" />
+<circle cx="508.19" cy="163.15" r="3.5" fill="#2a7fff" />
+<circle cx="577.03" cy="178.86" r="3.5" fill="#2a7fff" />
+<circle cx="645.53" cy="194.09" r="3.5" fill="#2a7fff" />
+<circle cx="714.22" cy="213.08" r="3.5" fill="#2a7fff" />
+<circle cx="782.81" cy="224.04" r="3.5" fill="#2a7fff" />
+<circle cx="851.41" cy="233.39" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="261.34" r="3.5" fill="#2a7fff" />
 <line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
 <text class="label" x="122.0" y="71.0">Adaptive ARE (Unif)</text>
-<polyline fill="none" stroke="#0044aa" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,130.37 228.25,145.50 366.50,170.81 505.17,217.82 643.44,247.35 781.72,222.52 920.00,465.00" />
-<circle cx="90.00" cy="130.37" r="3.5" fill="#0044aa" />
-<circle cx="228.25" cy="145.50" r="3.5" fill="#0044aa" />
-<circle cx="366.50" cy="170.81" r="3.5" fill="#0044aa" />
-<circle cx="505.17" cy="217.82" r="3.5" fill="#0044aa" />
-<circle cx="643.44" cy="247.35" r="3.5" fill="#0044aa" />
-<circle cx="781.72" cy="222.52" r="3.5" fill="#0044aa" />
+<polyline fill="none" stroke="#0044aa" stroke-width="2.5" stroke-dasharray="10,6" points="508.19,465.00 577.03,465.00 645.53,465.00 714.22,465.00 782.81,465.00 851.41,465.00 920.00,465.00" />
+<circle cx="508.19" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="577.03" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="645.53" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="714.22" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="782.81" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="851.41" cy="465.00" r="3.5" fill="#0044aa" />
 <circle cx="920.00" cy="465.00" r="3.5" fill="#0044aa" />
 <line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#0044aa" stroke-width="2.5" stroke-dasharray="10,6" />
 <text class="label" x="122.0" y="89.0">Adaptive ARE (Seq)</text>
-<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,145.95 228.25,161.16 366.89,177.13 504.75,192.57 643.44,214.66 781.72,233.39 920.00,250.47" />
-<circle cx="90.00" cy="145.95" r="3.5" fill="#22a06b" />
-<circle cx="228.25" cy="161.16" r="3.5" fill="#22a06b" />
-<circle cx="366.89" cy="177.13" r="3.5" fill="#22a06b" />
-<circle cx="504.75" cy="192.57" r="3.5" fill="#22a06b" />
-<circle cx="643.44" cy="214.66" r="3.5" fill="#22a06b" />
-<circle cx="781.72" cy="233.39" r="3.5" fill="#22a06b" />
-<circle cx="920.00" cy="250.47" r="3.5" fill="#22a06b" />
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="508.27,143.02 576.94,160.73 645.43,177.19 714.22,197.43 782.81,216.62 851.41,231.23 920.00,248.35" />
+<circle cx="508.27" cy="143.02" r="3.5" fill="#22a06b" />
+<circle cx="576.94" cy="160.73" r="3.5" fill="#22a06b" />
+<circle cx="645.43" cy="177.19" r="3.5" fill="#22a06b" />
+<circle cx="714.22" cy="197.43" r="3.5" fill="#22a06b" />
+<circle cx="782.81" cy="216.62" r="3.5" fill="#22a06b" />
+<circle cx="851.41" cy="231.23" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="248.35" r="3.5" fill="#22a06b" />
 <line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" />
 <text class="label" x="122.0" y="107.0">Original SODA (Unif)</text>
-<polyline fill="none" stroke="#005522" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,465.00 228.25,465.00 366.89,465.00 504.75,465.00 643.44,465.00 781.72,465.00 920.00,465.00" />
-<circle cx="90.00" cy="465.00" r="3.5" fill="#005522" />
-<circle cx="228.25" cy="465.00" r="3.5" fill="#005522" />
-<circle cx="366.89" cy="465.00" r="3.5" fill="#005522" />
-<circle cx="504.75" cy="465.00" r="3.5" fill="#005522" />
-<circle cx="643.44" cy="465.00" r="3.5" fill="#005522" />
-<circle cx="781.72" cy="465.00" r="3.5" fill="#005522" />
+<polyline fill="none" stroke="#005522" stroke-width="2.5" stroke-dasharray="10,6" points="508.27,465.00 576.94,465.00 645.43,465.00 714.22,465.00 782.81,465.00 851.41,465.00 920.00,465.00" />
+<circle cx="508.27" cy="465.00" r="3.5" fill="#005522" />
+<circle cx="576.94" cy="465.00" r="3.5" fill="#005522" />
+<circle cx="645.43" cy="465.00" r="3.5" fill="#005522" />
+<circle cx="714.22" cy="465.00" r="3.5" fill="#005522" />
+<circle cx="782.81" cy="465.00" r="3.5" fill="#005522" />
+<circle cx="851.41" cy="465.00" r="3.5" fill="#005522" />
 <circle cx="920.00" cy="465.00" r="3.5" fill="#005522" />
 <line x1="100.0" y1="121.0" x2="116.0" y2="121.0" stroke="#005522" stroke-width="2.5" stroke-dasharray="10,6" />
 <text class="label" x="122.0" y="125.0">Original SODA (Seq)</text>
-<polyline fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,113.57 228.25,131.20 366.50,154.51 505.17,172.14 643.44,189.77 781.72,213.08 920.00,230.71" />
-<circle cx="90.00" cy="113.57" r="3.5" fill="#ef4444" />
-<circle cx="228.25" cy="131.20" r="3.5" fill="#ef4444" />
-<circle cx="366.50" cy="154.51" r="3.5" fill="#ef4444" />
-<circle cx="505.17" cy="172.14" r="3.5" fill="#ef4444" />
-<circle cx="643.44" cy="189.77" r="3.5" fill="#ef4444" />
-<circle cx="781.72" cy="213.08" r="3.5" fill="#ef4444" />
+<polyline fill="none" stroke="#ffcc00" stroke-width="2.5" points="90.00,72.83 161.48,72.84 231.76,72.85 301.42,72.85 370.43,72.85 508.27,72.85 576.94,72.85" />
+<circle cx="90.00" cy="72.83" r="3.5" fill="#ffcc00" />
+<circle cx="161.48" cy="72.84" r="3.5" fill="#ffcc00" />
+<circle cx="231.76" cy="72.85" r="3.5" fill="#ffcc00" />
+<circle cx="301.42" cy="72.85" r="3.5" fill="#ffcc00" />
+<circle cx="370.43" cy="72.85" r="3.5" fill="#ffcc00" />
+<circle cx="508.27" cy="72.85" r="3.5" fill="#ffcc00" />
+<circle cx="576.94" cy="72.85" r="3.5" fill="#ffcc00" />
+<line x1="100.0" y1="139.0" x2="116.0" y2="139.0" stroke="#ffcc00" stroke-width="2.5" />
+<text class="label" x="122.0" y="143.0">Truncation ARE (Unif)</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,465.00 161.48,465.00 231.76,465.00 301.42,465.00 370.43,465.00 508.27,465.00 576.94,465.00" />
+<circle cx="90.00" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="161.48" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="231.76" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="301.42" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="370.43" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="508.27" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="576.94" cy="465.00" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="157.0" x2="116.0" y2="157.0" stroke="#e4572e" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="161.0">Truncation ARE (Seq)</text>
+<polyline fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="10,6" points="508.19,113.57 577.03,131.20 645.53,154.51 714.22,172.14 782.81,189.77 851.41,213.08 920.00,230.71" />
+<circle cx="508.19" cy="113.57" r="3.5" fill="#ef4444" />
+<circle cx="577.03" cy="131.20" r="3.5" fill="#ef4444" />
+<circle cx="645.53" cy="154.51" r="3.5" fill="#ef4444" />
+<circle cx="714.22" cy="172.14" r="3.5" fill="#ef4444" />
+<circle cx="782.81" cy="189.77" r="3.5" fill="#ef4444" />
+<circle cx="851.41" cy="213.08" r="3.5" fill="#ef4444" />
 <circle cx="920.00" cy="230.71" r="3.5" fill="#ef4444" />
-<line x1="100.0" y1="139.0" x2="116.0" y2="139.0" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="10,6" />
-<text class="label" x="122.0" y="143.0">Theoretical Target</text>
+<line x1="100.0" y1="175.0" x2="116.0" y2="175.0" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="179.0">Theoretical Target</text>
 <text class="label" x="480.0" y="522.0" text-anchor="middle">Bits per Key (bpk)</text>
 <text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
 </svg>

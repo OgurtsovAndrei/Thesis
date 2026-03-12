@@ -30,22 +30,19 @@ def main():
                 
                 # Adaptive
                 b_opt = float(row['BPK_Opt'])
-                if b_opt > 0:
-                    series_data["Adaptive ARE (Unif)"].append((b_opt, float(row['FPR_Opt_Unif']) or 1e-7))
-                    series_data["Adaptive ARE (Seq)"].append((b_opt, float(row['FPR_Opt_Seq']) or 1e-7))
-                    series_data["Theoretical Target"].append((b_opt, eps))
+                series_data["Adaptive ARE (Unif)"].append((b_opt, float(row['FPR_Opt_Unif']) or 1e-7))
+                series_data["Adaptive ARE (Seq)"].append((b_opt, float(row['FPR_Opt_Seq']) or 1e-7))
+                series_data["Theoretical Target"].append((b_opt, eps))
                 
                 # SODA
                 b_soda = float(row['BPK_Soda'])
-                if b_soda > 0:
-                    series_data["Original SODA (Unif)"].append((b_soda, float(row['FPR_Soda_Unif']) or 1e-7))
-                    series_data["Original SODA (Seq)"].append((b_soda, float(row['FPR_Soda_Seq']) or 1e-7))
+                series_data["Original SODA (Unif)"].append((b_soda, float(row['FPR_Soda_Unif']) or 1e-7))
+                series_data["Original SODA (Seq)"].append((b_soda, float(row['FPR_Soda_Seq']) or 1e-7))
                 
                 # Truncation
                 b_trunc = float(row['BPK_Trunc'])
-                if b_trunc > 0:
-                    series_data["Truncation ARE (Unif)"].append((b_trunc, float(row['FPR_Trunc_Unif']) or 1e-7))
-                    series_data["Truncation ARE (Seq)"].append((b_trunc, float(row['FPR_Trunc_Seq']) or 1e-7))
+                series_data["Truncation ARE (Unif)"].append((b_trunc, float(row['FPR_Trunc_Unif']) or 1e-7))
+                series_data["Truncation ARE (Seq)"].append((b_trunc, float(row['FPR_Trunc_Seq']) or 1e-7))
                 
     except Exception as e:
         print(f"Error reading CSV: {e}")
@@ -54,7 +51,6 @@ def main():
     ensure_dir("bench_results/plots")
     output_path = "bench_results/plots/are_full_comparison.svg"
     
-    # Sort points and filter empty series
     final_series = {}
     for name, pts in series_data.items():
         if pts:
@@ -67,7 +63,7 @@ def main():
         "Original SODA (Unif)": "#22a06b", # Green
         "Original SODA (Seq)": "#005522",  # Dark Green
         "Truncation ARE (Unif)": "#ffcc00",# Yellow
-        "Truncation ARE (Seq)": "#e4572e", # Orange (Fail color)
+        "Truncation ARE (Seq)": "#e4572e", # Orange
         "Theoretical Target": "#ef4444"    # Red
     }
     
@@ -80,7 +76,7 @@ def main():
     
     draw_line_chart(
         path=output_path,
-        title="Full Range Emptiness Comparison: 3 Filters x 2 Data Types",
+        title="Range Emptiness Filters: 3 Architectures x 2 Data Types",
         x_label="Bits per Key (bpk)",
         y_label="False Positive Rate (FPR)",
         series=final_series,

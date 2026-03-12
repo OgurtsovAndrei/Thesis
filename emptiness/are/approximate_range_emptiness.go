@@ -58,7 +58,10 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 		if i == 0 || trunc.Compare(lastKey) > 0 {
 			truncatedKeys = append(truncatedKeys, trunc)
 			lastKey = trunc
-		} else if trunc.Compare(lastKey) < 0 {
+		} else if trunc.Compare(lastKey) == 0 {
+			// Skip duplicates after truncation
+			continue
+		} else {
 			return nil, fmt.Errorf("keys must be sorted")
 		}
 	}
