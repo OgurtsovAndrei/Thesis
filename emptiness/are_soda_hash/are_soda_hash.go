@@ -9,10 +9,10 @@ import (
 )
 
 type ApproximateRangeEmptinessSoda struct {
-	ere *ere.ExactRangeEmptiness
-	K   uint32
-	L   uint64
-	n   int
+	ere      *ere.ExactRangeEmptiness
+	K        uint32
+	RangeLen uint64
+	n        int
 }
 
 // hashBlock is a pairwise independent hash for blocks.
@@ -34,14 +34,14 @@ func toKBitString(val uint64, K uint32) bits.BitString {
 	return bits.NewFromUint64(reversed).Prefix(int(K))
 }
 
-func NewApproximateRangeEmptinessSoda(keys []uint64, L uint64, epsilon float64) (*ApproximateRangeEmptinessSoda, error) {
+func NewApproximateRangeEmptinessSoda(keys []uint64, rangeLen uint64, epsilon float64) (*ApproximateRangeEmptinessSoda, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ApproximateRangeEmptinessSoda{n: 0, L: L}, nil
+		return &ApproximateRangeEmptinessSoda{n: 0, RangeLen: rangeLen}, nil
 	}
 
-	// Calculate K where r = 2^K >= n * L / epsilon
-	rTarget := float64(n) * float64(L) / epsilon
+	// Calculate K where r = 2^K >= n * RangeLen / epsilon
+	rTarget := float64(n) * float64(rangeLen) / epsilon
 	K := uint32(math.Ceil(math.Log2(rTarget)))
 	if K > 64 {
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
@@ -85,10 +85,10 @@ func NewApproximateRangeEmptinessSoda(keys []uint64, L uint64, epsilon float64) 
 	}
 
 	return &ApproximateRangeEmptinessSoda{
-		ere: ereFilter,
-		K:   K,
-		L:   L,
-		n:   n,
+		ere:      ereFilter,
+		K:        K,
+		RangeLen: rangeLen,
+		n:        n,
 	}, nil
 }
 
@@ -97,9 +97,8 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 		return true
 	}
 
-	if b-a > are.L {
-		// Fallback for ranges larger than L.
-		// For the sake of standard guarantee, it could be split, but we just return false here.
+	// Interval length is (b - a + 1). SODA guarantees for length <= RangeLen.
+	if b-a >= are.RangeLen {
 		return false
 	}
 
@@ -166,4 +165,11 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 
 		return true
 	}
+}
+
+func (are *ApproximateRangeEmptinessSoda) SizeInBits() uint64 {
+	if are.ere == nil {
+		return 0
+	}
+	return are.ere.SizeInBits()
 }
