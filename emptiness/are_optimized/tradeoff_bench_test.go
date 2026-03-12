@@ -13,28 +13,30 @@ import (
 func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 	n := 10000
 	rangeLen := uint64(100)
-	queryCount := 100000 
+	queryCount := 50000 
 
 	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
 
 	f, _ := os.Create("are_optimized_tradeoff.csv")
 	defer f.Close()
-	fmt.Fprintln(f, "TargetEpsilon,BPK_Opt,FPR_Opt_Unif,FPR_Opt_Seq,BPK_Soda,FPR_Soda_Seq,BPK_Trunc,FPR_Trunc_Seq")
+	fmt.Fprintln(f, "TargetEpsilon,"+
+		"BPK_Opt,FPR_Opt_Unif,FPR_Opt_Seq,"+
+		"BPK_Soda,FPR_Soda_Unif,FPR_Soda_Seq,"+
+		"BPK_Trunc,FPR_Trunc_Unif,FPR_Trunc_Seq")
 
-	fmt.Printf("%-8s | %-6s | %-10s | %-10s | %-10s | %-10s\n", "Eps", "BPK_Opt", "Opt_Unif", "Opt_Seq", "Soda_Seq", "Trunc_Seq")
-	fmt.Println("----------------------------------------------------------------------------")
+	fmt.Printf("%-6s | %-6s | %-10s | %-10s | %-10s | %-10s\n", "Eps", "BPK", "Opt_Seq", "Soda_Seq", "Trunc_Seq", "Trunc_Unif")
+	fmt.Println("---------------------------------------------------------------------------------------")
 
 	for _, eps := range epsilons {
 		r := rand.New(rand.NewSource(42))
-		
-		// Use a large but non-overflowing gap
-		// 10^14 * 10^4 = 10^18 < 2^64 (~1.8*10^19)
-		gap := uint64(100000000000000)
+		gap := uint64(1000000000000)
 		
 		uniformKeysBS := make([]bits.BitString, n)
+		uniformKeysU64 := make([]uint64, n)
 		for i := 0; i < n; i++ {
 			val := r.Uint64()
 			uniformKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
+			uniformKeysU64[i] = val
 		}
 		
 		seqKeysBS := make([]bits.BitString, n)
@@ -45,78 +47,68 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 			seqKeysU64[i] = val
 		}
 
-		// --- 1. Optimized Adaptive ARE ---
-		filterOpt, err := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
-		bpkOpt := 0.0
-		fprOptUnif := 0.0
-		fprOptSeq := 0.0
-		if err == nil && filterOpt != nil {
-			bpkOpt = float64(filterOpt.SizeInBits()) / float64(n)
-			
-			filterOptUnif, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
-			fpOptUnif := 0
+		measure := func(isUnif bool, isEmpty func(a, b uint64) bool) float64 {
+			hits := 0
 			for i := 0; i < queryCount; i++ {
-				a, b := r.Uint64(), r.Uint64()
-				if a > b { a, b = b, a }
-				if b - a > rangeLen { b = a + uint64(r.Intn(int(rangeLen))) }
-				if filterOptUnif.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-					fpOptUnif++
+				var a, b uint64
+				if isUnif {
+					a = r.Uint64()
+					b = a + uint64(r.Intn(int(rangeLen)))
+				} else {
+					keyIdx := r.Intn(n - 1)
+					a = uint64(keyIdx)*gap + 1 
+					b = a + rangeLen
 				}
+				if !isEmpty(a, b) { hits++ }
 			}
-			fprOptUnif = float64(fpOptUnif) / float64(queryCount)
-
-			fpOptSeq := 0
-			for i := 0; i < queryCount; i++ {
-				keyIdx := r.Intn(n-1)
-				a := uint64(keyIdx)*gap + 1
-				b := a + uint64(r.Intn(int(rangeLen)))
-				if filterOpt.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-					fpOptSeq++
-				}
-			}
-			fprOptSeq = float64(fpOptSeq) / float64(queryCount)
+			return float64(hits) / float64(queryCount)
 		}
 
-		// --- 2. Original SODA ARE ---
-		filterSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
-		bpkSoda := 0.0
-		fprSodaSeq := 0.0
-		if errSoda == nil && filterSoda != nil {
-			bpkSoda = float64(filterSoda.SizeInBits()) / float64(n)
-			fpSodaSeq := 0
-			for i := 0; i < queryCount; i++ {
-				keyIdx := r.Intn(n-1)
-				a := uint64(keyIdx)*gap + 1
-				b := a + uint64(r.Intn(int(rangeLen)))
-				if filterSoda.IsEmpty(a, b) == false {
-					fpSodaSeq++
-				}
-			}
-			fprSodaSeq = float64(fpSodaSeq) / float64(queryCount)
+		// 1. Adaptive
+		var bpkOpt, fprOptUnif, fprOptSeq float64
+		fOptU, err1 := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
+		fOptS, err2 := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
+		if err1 == nil && err2 == nil && fOptU != nil && fOptS != nil {
+			bpkOpt = float64(fOptS.SizeInBits()) / float64(n)
+			fprOptUnif = measure(true, func(a, b uint64) bool {
+				return fOptU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
+			})
+			fprOptSeq = measure(false, func(a, b uint64) bool {
+				return fOptS.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
+			})
 		}
 
-		// --- 3. Truncation ARE ---
-		filterTrunc, errTrunc := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
-		bpkTrunc := 0.0
-		fprTruncSeq := 0.0
-		if errTrunc == nil && filterTrunc != nil {
-			bpkTrunc = float64(filterTrunc.SizeInBits()) / float64(n)
-			fpTruncSeq := 0
-			for i := 0; i < queryCount; i++ {
-				keyIdx := r.Intn(n-1)
-				a := uint64(keyIdx)*gap + 1
-				b := a + uint64(r.Intn(int(rangeLen)))
-				if filterTrunc.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-					fpTruncSeq++
-				}
-			}
-			fprTruncSeq = float64(fpTruncSeq) / float64(queryCount)
+		// 2. SODA
+		var bpkSoda, fprSodaUnif, fprSodaSeq float64
+		fSodaU, err3 := are_soda_hash.NewApproximateRangeEmptinessSoda(uniformKeysU64, rangeLen, eps)
+		fSodaS, err4 := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
+		if err3 == nil && err4 == nil && fSodaU != nil && fSodaS != nil {
+			bpkSoda = float64(fSodaS.SizeInBits()) / float64(n)
+			fprSodaUnif = measure(true, func(a, b uint64) bool { return fSodaU.IsEmpty(a, b) })
+			fprSodaSeq = measure(false, func(a, b uint64) bool { return fSodaS.IsEmpty(a, b) })
 		}
 
-		fmt.Printf("%-8.3f | %-7.2f | %-10.6f | %-10.6f | %-10.6f | %-10.6f\n", 
-			eps, bpkOpt, fprOptUnif, fprOptSeq, fprSodaSeq, fprTruncSeq)
+		// 3. Truncation
+		var bpkTrunc, fprTruncUnif, fprTruncSeq float64
+		fTruncU, err5 := are.NewApproximateRangeEmptiness(uniformKeysBS, eps)
+		fTruncS, err6 := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
 		
-		fmt.Fprintf(f, "%f,%f,%f,%f,%f,%f,%f,%f\n", 
-			eps, bpkOpt, fprOptUnif, fprOptSeq, bpkSoda, fprSodaSeq, bpkTrunc, fprTruncSeq)
+		if err5 == nil && fTruncU != nil {
+			bpkTrunc = float64(fTruncU.SizeInBits()) / float64(n)
+			fprTruncUnif = measure(true, func(a, b uint64) bool {
+				return fTruncU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
+			})
+		}
+		if err6 == nil && fTruncS != nil {
+			fprTruncSeq = measure(false, func(a, b uint64) bool {
+				return fTruncS.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
+			})
+		}
+
+		fmt.Printf("%-6.3f | %-6.2f | %-10.4f | %-10.4f | %-10.4f | %-10.4f\n", 
+			eps, bpkOpt, fprOptSeq, fprSodaSeq, fprTruncSeq, fprTruncUnif)
+		
+		fmt.Fprintf(f, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
+			eps, bpkOpt, fprOptUnif, fprOptSeq, bpkSoda, fprSodaUnif, fprSodaSeq, bpkTrunc, fprTruncUnif, fprTruncSeq)
 	}
 }

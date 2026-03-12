@@ -12,11 +12,15 @@ def main():
         print(f"CSV file not found: {csv_file}")
         return
 
-    pts_opt_unif = []
-    pts_opt_seq = []
-    pts_soda_seq = []
-    pts_trunc_seq = []
-    pts_target = []
+    series_data = {
+        "Adaptive ARE (Unif)": [],
+        "Adaptive ARE (Seq)": [],
+        "Original SODA (Unif)": [],
+        "Original SODA (Seq)": [],
+        "Truncation ARE (Unif)": [],
+        "Truncation ARE (Seq)": [],
+        "Theoretical Target": []
+    }
     
     try:
         with open(csv_file, 'r') as f:
@@ -24,74 +28,68 @@ def main():
             for row in reader:
                 eps = float(row['TargetEpsilon'])
                 
-                # Optimized Adaptive ARE (Unif)
+                # Adaptive
                 b_opt = float(row['BPK_Opt'])
-                if b_opt > 1.0:
-                    f_opt_u = float(row['FPR_Opt_Unif'])
-                    pts_opt_unif.append((b_opt, f_opt_u if f_opt_u > 0 else 1e-7))
-                    
-                    f_opt_s = float(row['FPR_Opt_Seq'])
-                    pts_opt_seq.append((b_opt, f_opt_s if f_opt_s > 0 else 1e-7))
-                    
-                    pts_target.append((b_opt, eps))
+                if b_opt > 0:
+                    series_data["Adaptive ARE (Unif)"].append((b_opt, float(row['FPR_Opt_Unif']) or 1e-7))
+                    series_data["Adaptive ARE (Seq)"].append((b_opt, float(row['FPR_Opt_Seq']) or 1e-7))
+                    series_data["Theoretical Target"].append((b_opt, eps))
                 
-                # Original SODA ARE
+                # SODA
                 b_soda = float(row['BPK_Soda'])
-                if b_soda > 1.0:
-                    f_soda = float(row['FPR_Soda_Seq'])
-                    pts_soda_seq.append((b_soda, f_soda if f_soda > 0 else 1e-7))
+                if b_soda > 0:
+                    series_data["Original SODA (Unif)"].append((b_soda, float(row['FPR_Soda_Unif']) or 1e-7))
+                    series_data["Original SODA (Seq)"].append((b_soda, float(row['FPR_Soda_Seq']) or 1e-7))
                 
-                # Truncation ARE
+                # Truncation
                 b_trunc = float(row['BPK_Trunc'])
-                if b_trunc > 1.0:
-                    f_trunc = float(row['FPR_Trunc_Seq'])
-                    pts_trunc_seq.append((b_trunc, f_trunc if f_trunc > 0 else 1e-7))
+                if b_trunc > 0:
+                    series_data["Truncation ARE (Unif)"].append((b_trunc, float(row['FPR_Trunc_Unif']) or 1e-7))
+                    series_data["Truncation ARE (Seq)"].append((b_trunc, float(row['FPR_Trunc_Seq']) or 1e-7))
                 
     except Exception as e:
         print(f"Error reading CSV: {e}")
         return
 
     ensure_dir("bench_results/plots")
-    output_path = "bench_results/plots/are_comparison_tradeoff.svg"
+    output_path = "bench_results/plots/are_full_comparison.svg"
     
-    # Sort points
-    pts_opt_unif.sort()
-    pts_opt_seq.sort()
-    pts_soda_seq.sort()
-    pts_trunc_seq.sort()
-    pts_target.sort()
+    # Sort points and filter empty series
+    final_series = {}
+    for name, pts in series_data.items():
+        if pts:
+            pts.sort()
+            final_series[name] = pts
 
-    series = {}
-    if pts_opt_unif: series["Adaptive ARE (Uniform)"] = pts_opt_unif
-    if pts_opt_seq: series["Adaptive ARE (Sequential)"] = pts_opt_seq
-    if pts_soda_seq: series["Original SODA (Sequential)"] = pts_soda_seq
-    if pts_trunc_seq: series["Truncation ARE (Sequential)"] = pts_trunc_seq
-    if pts_target: series["Theoretical Target"] = pts_target
-    
     colors = {
-        "Adaptive ARE (Uniform)": "#2a7fff",   # Blue
-        "Adaptive ARE (Sequential)": "#e4572e", # Orange
-        "Original SODA (Sequential)": "#22a06b", # Green
-        "Truncation ARE (Sequential)": "#7c3aed", # Purple
-        "Theoretical Target": "#ef4444"         # Red
+        "Adaptive ARE (Unif)": "#2a7fff",   # Blue
+        "Adaptive ARE (Seq)": "#0044aa",    # Dark Blue
+        "Original SODA (Unif)": "#22a06b", # Green
+        "Original SODA (Seq)": "#005522",  # Dark Green
+        "Truncation ARE (Unif)": "#ffcc00",# Yellow
+        "Truncation ARE (Seq)": "#e4572e", # Orange (Fail color)
+        "Theoretical Target": "#ef4444"    # Red
     }
     
     styles = {
-        "Theoretical Target": "dashed"
+        "Theoretical Target": "dashed",
+        "Adaptive ARE (Seq)": "dashed",
+        "Original SODA (Seq)": "dashed",
+        "Truncation ARE (Seq)": "dashed"
     }
     
     draw_line_chart(
         path=output_path,
-        title="Range Emptiness Filters Comparison: FPR vs Space",
+        title="Full Range Emptiness Comparison: 3 Filters x 2 Data Types",
         x_label="Bits per Key (bpk)",
         y_label="False Positive Rate (FPR)",
-        series=series,
+        series=final_series,
         styles=styles,
         colors=colors,
         log_y=True
     )
     
-    print(f"Comparison plot generated: {output_path}")
+    print(f"Full comparison plot generated: {output_path}")
 
 if __name__ == "__main__":
     main()
