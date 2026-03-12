@@ -28,6 +28,7 @@ type seriesData struct {
 	Name   string
 	Color  string
 	Dashed bool
+	Marker string // "circle", "square", "diamond", "triangle"
 	Points []point
 }
 
@@ -114,13 +115,13 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 
 	// Collect results per series
 	allSeries := map[string]*seriesData{
-		"Theoretical":      {Name: "Theoretical", Color: "#ef4444", Dashed: true},
-		"Adaptive (Unif)":  {Name: "Adaptive (Unif)", Color: "#2a7fff"},
-		"Adaptive (Seq)":   {Name: "Adaptive (Seq)", Color: "#0044aa", Dashed: true},
-		"SODA (Unif)":      {Name: "SODA (Unif)", Color: "#22a06b"},
-		"SODA (Seq)":       {Name: "SODA (Seq)", Color: "#005522", Dashed: true},
-		"Truncation (Unif)": {Name: "Truncation (Unif)", Color: "#ffcc00"},
-		"Truncation (Seq)":  {Name: "Truncation (Seq)", Color: "#cc8800", Dashed: true},
+		"Theoretical":       {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+		"Adaptive (Unif)":   {Name: "Adaptive (Unif)", Color: "#2a7fff", Marker: "square"},
+		"Adaptive (Seq)":    {Name: "Adaptive (Seq)", Color: "#2a7fff", Dashed: true, Marker: "square"},
+		"SODA (Unif)":       {Name: "SODA (Unif)", Color: "#22a06b", Marker: "diamond"},
+		"SODA (Seq)":        {Name: "SODA (Seq)", Color: "#22a06b", Dashed: true, Marker: "diamond"},
+		"Truncation (Unif)": {Name: "Truncation (Unif)", Color: "#e6a800", Marker: "triangle"},
+		"Truncation (Seq)":  {Name: "Truncation (Seq)", Color: "#e6a800", Dashed: true, Marker: "triangle"},
 	}
 
 	// CSV output
@@ -335,10 +336,10 @@ func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
 	}
 
 	allSeries := map[string]*seriesData{
-		"Theoretical":  {Name: "Theoretical", Color: "#ef4444", Dashed: true},
-		"Adaptive":     {Name: "Adaptive", Color: "#2a7fff"},
-		"SODA":         {Name: "SODA", Color: "#22a06b"},
-		"Truncation":   {Name: "Truncation", Color: "#ffcc00"},
+		"Theoretical": {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+		"Adaptive":    {Name: "Adaptive", Color: "#2a7fff", Marker: "square"},
+		"SODA":        {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
+		"Truncation":  {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
 	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
@@ -505,20 +506,41 @@ func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outP
 		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.1f" y="%.1f" text-anchor="middle">%.0f</text>`+"\n", px, mT+plotH+16, x))
 	}
 
+	// Helper to draw a marker at (cx, cy)
+	drawMarker := func(sb *strings.Builder, marker, color string, cx, cy float64) {
+		switch marker {
+		case "square":
+			sb.WriteString(fmt.Sprintf(`<rect x="%.1f" y="%.1f" width="6" height="6" fill="%s"/>`+"\n", cx-3, cy-3, color))
+		case "diamond":
+			sb.WriteString(fmt.Sprintf(`<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="%s"/>`+"\n",
+				cx, cy-4, cx+4, cy, cx, cy+4, cx-4, cy, color))
+		case "triangle":
+			sb.WriteString(fmt.Sprintf(`<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="%s"/>`+"\n",
+				cx, cy-4, cx+4, cy+3, cx-4, cy+3, color))
+		default: // circle
+			sb.WriteString(fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="3" fill="%s"/>`+"\n", cx, cy, color))
+		}
+	}
+
 	// Series
 	for _, s := range series {
 		if len(s.Points) == 0 {
 			continue
 		}
-		var pts []string
+		// Filter valid points (skip degenerate BPK < 0.1)
+		var validPts []point
 		for _, p := range s.Points {
-			if p.Y <= 0 {
+			if p.Y <= 0 || p.X < 0.1 {
 				continue
 			}
-			pts = append(pts, fmt.Sprintf("%.1f,%.1f", toX(p.X), toY(p.Y)))
+			validPts = append(validPts, p)
 		}
-		if len(pts) == 0 {
+		if len(validPts) == 0 {
 			continue
+		}
+		var pts []string
+		for _, p := range validPts {
+			pts = append(pts, fmt.Sprintf("%.1f,%.1f", toX(p.X), toY(p.Y)))
 		}
 		dash := ""
 		if s.Dashed {
@@ -526,11 +548,12 @@ func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outP
 		}
 		sb.WriteString(fmt.Sprintf(`<polyline fill="none" stroke="%s" stroke-width="2"%s points="%s"/>`+"\n",
 			s.Color, dash, strings.Join(pts, " ")))
-		for _, p := range s.Points {
-			if p.Y <= 0 {
-				continue
-			}
-			sb.WriteString(fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="3" fill="%s"/>`+"\n", toX(p.X), toY(p.Y), s.Color))
+		marker := s.Marker
+		if marker == "" {
+			marker = "circle"
+		}
+		for _, p := range validPts {
+			drawMarker(&sb, marker, s.Color, toX(p.X), toY(p.Y))
 		}
 	}
 
@@ -547,6 +570,11 @@ func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outP
 		lx := mL + plotW - 220
 		sb.WriteString(fmt.Sprintf(`<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="2"%s/>`+"\n",
 			lx, ly, lx+16, ly, s.Color, dash))
+		marker := s.Marker
+		if marker == "" {
+			marker = "circle"
+		}
+		drawMarker(&sb, marker, s.Color, lx+8, ly)
 		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.0f" y="%.0f">%s</text>`+"\n", lx+22, ly+4, s.Name))
 		ly += 18
 	}
