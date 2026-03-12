@@ -5,6 +5,8 @@ import (
 	"Thesis/emptiness/ere"
 	"fmt"
 	"math"
+	mbits "math/bits"
+	"math/rand"
 	"sort"
 )
 
@@ -16,34 +18,28 @@ type OptimizedApproximateRangeEmptiness struct {
 	TruncateBits uint32
 	IsExactMode  bool
 	n            int
+	hashA        uint64
+	hashB        uint64
 }
 
-// hashBlockAny returns a seed for a block of arbitrary size.
-func hashBlockAny(blockIdx bits.BitString) uint64 {
-	return blockIdx.HashWithSeed(0x9E3779B185EBCA87)
+// pairwiseHash computes a 2-universal hash: top K bits of (a*x + b) in 128-bit arithmetic.
+func pairwiseHash(x, a, b uint64, K uint32) uint64 {
+	hi, lo := mbits.Mul64(a, x)
+	sumLo, carry := mbits.Add64(lo, b, 0)
+	_ = sumLo
+	sumHi := hi + carry
+	return sumHi >> (64 - K)
 }
 
-func toKBitString(val uint64, K uint32) bits.BitString {
-	if K == 0 {
-		return bits.NewBitString(0)
+// hashBlockIndex hashes a block index BitString to a K-bit uint64.
+func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
+	var blockVal uint64
+	if block.SizeBits() <= 64 {
+		blockVal = block.TrieUint64()
+	} else {
+		blockVal = block.HashWithSeed(0)
 	}
-	// Important: toKBitString in our system means converting to BitString
-	// and taking exactly K bits as a prefix for ERE.
-	var reversed uint64
-	for i := uint32(0); i < K; i++ {
-		if (val & (uint64(1) << (K - 1 - i))) != 0 {
-			reversed |= (uint64(1) << i)
-		}
-	}
-	return bits.NewFromUint64(reversed).Prefix(int(K))
-}
-
-func toMBitString(val bits.BitString, M uint32) bits.BitString {
-	// For Exact mode, we don't reverse bits, we just take the prefix.
-	// But ERE expects MSB-first logic in its trie. 
-	// Our BitString already stores words in Little-endian, but Prefix(M) takes 
-	// the first M bits (indices 0 to M-1).
-	return val.Prefix(int(M))
+	return pairwiseHash(blockVal, a, b, K)
 }
 
 func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t uint32) (*OptimizedApproximateRangeEmptiness, error) {
@@ -52,7 +48,7 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		return &OptimizedApproximateRangeEmptiness{n: 0}, nil
 	}
 
-	// 1. Find Min and Max keys
+	// 1. Find Min and Max keys (by Compare = trie order)
 	minKey := keys[0]
 	maxKey := keys[0]
 	for _, k := range keys {
@@ -64,11 +60,12 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		}
 	}
 
-	// 2. Calculate actual data spread M (after truncation)
+	// 2. Calculate data spread M (after subtraction and truncation)
+	// Sub is trie-consistent: minKey is the Compare-minimum, so no underflow
 	spread := maxKey.Sub(minKey).ShiftRight(t)
 	M := spread.BitLength()
 
-	// 3. Calculate target K for SODA robustness (r = 2^K)
+	// 3. Calculate target K for SODA (r = 2^K >= n * effectiveRangeLen / epsilon)
 	effectiveRangeLen := (rangeLen >> t) + 1
 	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
 	K := uint32(math.Ceil(math.Log2(rTarget)))
@@ -76,43 +73,46 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
 	}
 
-	// 4. Adaptive Choice: Exact vs Approximate
+	// 4. Adaptive: Exact vs Approximate
 	isExactMode := (M <= K)
-	
-	// If exact, we only need M bits to distinguish keys perfectly.
-	// If approximate, we need K bits to bound FPR.
 	finalUniverseBits := K
 	if isExactMode {
 		finalUniverseBits = M
 	}
 
+	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	hashA := rng.Uint64() | 1
+	hashB := rng.Uint64()
+
 	hashedKeys := make([]bits.BitString, n)
 	for i, x := range keys {
 		xPrime := x.Sub(minKey).ShiftRight(t)
-		
+
 		if isExactMode {
-			// Exact Mode: No hashing, just use xPrime as is.
-			hashedKeys[i] = toMBitString(xPrime, M)
+			hashedKeys[i] = xPrime.Prefix(int(M))
 		} else {
-			// SODA Mode: (hash(blockIdx) + offset) mod 2^K
+			// SODA hash: h(x) = (u(block) + offset) mod 2^K
+			// Block = trie prefix (first W-K bits), Offset = trie suffix (last K bits)
+			W := xPrime.SizeBits()
+			var block bits.BitString
+			var offsetVal uint64
+
 			rMask := (uint64(1) << K) - 1
 			if K == 64 {
 				rMask = ^uint64(0)
 			}
 
-			var blockIdx bits.BitString
-			var offset uint64
-			if xPrime.SizeBits() > K {
-				blockIdx = xPrime.ShiftRight(K)
-				offset = xPrime.Word(0) // low bits
+			if W > K {
+				block = xPrime.Prefix(int(W - K))
+				offsetVal = xPrime.Suffix(K).TrieUint64()
 			} else {
-				blockIdx = bits.NewBitString(0)
-				offset = xPrime.Word(0)
+				block = bits.NewBitString(0)
+				offsetVal = xPrime.TrieUint64()
 			}
-			
-			u := hashBlockAny(blockIdx)
-			hx := (u + offset) & rMask
-			hashedKeys[i] = toKBitString(hx, K)
+
+			u := hashBlockIndex(block, hashA, hashB, K)
+			hx := (u + offsetVal) & rMask
+			hashedKeys[i] = bits.NewFromTrieUint64(hx, K)
 		}
 	}
 
@@ -143,6 +143,8 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		TruncateBits: t,
 		IsExactMode:  isExactMode,
 		n:            n,
+		hashA:        hashA,
+		hashB:        hashB,
 	}, nil
 }
 
@@ -151,26 +153,23 @@ func (are *OptimizedApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool
 		return true
 	}
 
-	// Normalize and truncate
+	// Normalize
 	var aPrime, bPrime bits.BitString
 	if a.Compare(are.MinKey) < 0 {
 		aPrime = bits.NewBitString(a.SizeBits()).ShiftRight(are.TruncateBits)
 	} else {
 		aPrime = a.Sub(are.MinKey).ShiftRight(are.TruncateBits)
 	}
-	
+
 	if b.Compare(are.MinKey) < 0 {
 		return true
 	}
 	bPrime = b.Sub(are.MinKey).ShiftRight(are.TruncateBits)
 
 	if are.IsExactMode {
-		// Exact Mode: Just a direct ERE query on M bits
-		return are.ere.IsEmpty(toMBitString(aPrime, are.K), toMBitString(bPrime, are.K))
-	} else {
-		// SODA Mode
-		return are.sodaIsEmpty(aPrime, bPrime)
+		return are.ere.IsEmpty(aPrime.Prefix(int(are.K)), bPrime.Prefix(int(are.K)))
 	}
+	return are.sodaIsEmpty(aPrime, bPrime)
 }
 
 func (are *OptimizedApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) bool {
@@ -179,59 +178,72 @@ func (are *OptimizedApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) 
 		rMask = ^uint64(0)
 	}
 
-	blockA := bits.NewBitString(0)
-	if a.SizeBits() > are.K {
-		blockA = a.ShiftRight(are.K)
+	W := a.SizeBits()
+	var blockA, blockB bits.BitString
+	var offA, offB uint64
+
+	if W > are.K {
+		prefixLen := int(W - are.K)
+		blockA = a.Prefix(prefixLen)
+		blockB = b.Prefix(prefixLen)
+		offA = a.Suffix(are.K).TrieUint64()
+		offB = b.Suffix(are.K).TrieUint64()
+	} else {
+		blockA = bits.NewBitString(0)
+		blockB = bits.NewBitString(0)
+		offA = a.TrieUint64()
+		offB = b.TrieUint64()
 	}
-	blockB := bits.NewBitString(0)
-	if b.SizeBits() > are.K {
-		blockB = b.ShiftRight(are.K)
+
+	toBS := func(val uint64) bits.BitString {
+		return bits.NewFromTrieUint64(val, are.K)
 	}
 
 	if blockA.Equal(blockB) {
-		u := hashBlockAny(blockA)
-		hA := (u + a.Word(0)) & rMask
-		hB := (u + b.Word(0)) & rMask
-		
+		u := hashBlockIndex(blockA, are.hashA, are.hashB, are.K)
+		hA := (u + offA) & rMask
+		hB := (u + offB) & rMask
+
 		if hA <= hB {
-			return are.ere.IsEmpty(toKBitString(hA, are.K), toKBitString(hB, are.K))
-		} else {
-			if !are.ere.IsEmpty(toKBitString(hA, are.K), toKBitString(rMask, are.K)) {
-				return false
-			}
-			return are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(hB, are.K))
+			return are.ere.IsEmpty(toBS(hA), toBS(hB))
 		}
+		if !are.ere.IsEmpty(toBS(hA), toBS(rMask)) {
+			return false
+		}
+		return are.ere.IsEmpty(toBS(0), toBS(hB))
 	}
 
-	// Multi-block conservative check
-	uA := hashBlockAny(blockA)
-	hA_start := (uA + a.Word(0)) & rMask
-	hA_end := (uA + rMask) & rMask
-	if hA_start <= hA_end {
-		if !are.ere.IsEmpty(toKBitString(hA_start, are.K), toKBitString(hA_end, are.K)) {
+	// Multi-block: check suffix of first block
+	uA := hashBlockIndex(blockA, are.hashA, are.hashB, are.K)
+	hAStart := (uA + offA) & rMask
+	hAEnd := (uA + rMask) & rMask
+	if hAStart <= hAEnd {
+		if !are.ere.IsEmpty(toBS(hAStart), toBS(hAEnd)) {
 			return false
 		}
 	} else {
-		if !are.ere.IsEmpty(toKBitString(hA_start, are.K), toKBitString(rMask, are.K)) ||
-			!are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(hA_end, are.K)) {
+		if !are.ere.IsEmpty(toBS(hAStart), toBS(rMask)) ||
+			!are.ere.IsEmpty(toBS(0), toBS(hAEnd)) {
 			return false
 		}
 	}
 
-	if !are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(rMask, are.K)) {
+	// Intermediate full blocks
+	if !are.ere.IsEmpty(toBS(0), toBS(rMask)) {
 		return false
 	}
 
-	uB := hashBlockAny(blockB)
-	hB_start := (uB + 0) & rMask
-	hB_end := (uB + b.Word(0)) & rMask
-	if hB_start <= hB_end {
-		if !are.ere.IsEmpty(toKBitString(hB_start, are.K), toKBitString(hB_end, are.K)) {
+	// Prefix of last block
+	uB := hashBlockIndex(blockB, are.hashA, are.hashB, are.K)
+	hBStart := (uB + 0) & rMask
+	hBEnd := (uB + offB) & rMask
+	if hBStart <= hBEnd {
+		if !are.ere.IsEmpty(toBS(hBStart), toBS(hBEnd)) {
 			return false
 		}
 	} else {
-		if !are.ere.IsEmpty(toKBitString(hB_start, are.K), toKBitString(rMask, are.K)) ||
-			!are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(hB_end, are.K)) {
+		if !are.ere.IsEmpty(toBS(hBStart), toBS(rMask)) ||
+			!are.ere.IsEmpty(toBS(0), toBS(hBEnd)) {
 			return false
 		}
 	}
