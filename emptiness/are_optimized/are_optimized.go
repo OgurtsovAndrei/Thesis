@@ -63,7 +63,18 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 	// 2. Calculate data spread M (after subtraction and truncation)
 	// Sub is trie-consistent: minKey is the Compare-minimum, so no underflow
 	spread := maxKey.Sub(minKey).ShiftRight(t)
-	M := spread.BitLength()
+
+	// M = integer bit length of the spread (not storage bit length).
+	// TrieUint64 gives the integer interpretation; for multi-word, force SODA mode.
+	var M uint32
+	if spread.SizeBits() <= 64 {
+		spreadVal := spread.TrieUint64()
+		if spreadVal > 0 {
+			M = uint32(64 - mbits.LeadingZeros64(spreadVal))
+		}
+	} else {
+		M = 65 // multi-word spread → always SODA mode (K ≤ 64)
+	}
 
 	// 3. Calculate target K for SODA (r = 2^K >= n * effectiveRangeLen / epsilon)
 	effectiveRangeLen := (rangeLen >> t) + 1
@@ -89,7 +100,8 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		xPrime := x.Sub(minKey).ShiftRight(t)
 
 		if isExactMode {
-			hashedKeys[i] = xPrime.Prefix(int(M))
+			// Convert to integer value and store as M-bit trie-ordered BitString
+			hashedKeys[i] = bits.NewFromTrieUint64(xPrime.TrieUint64(), M)
 		} else {
 			// SODA hash: h(x) = (u(block) + offset) mod 2^K
 			// Block = trie prefix (first W-K bits), Offset = trie suffix (last K bits)
@@ -167,7 +179,10 @@ func (are *OptimizedApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool
 	bPrime = b.Sub(are.MinKey).ShiftRight(are.TruncateBits)
 
 	if are.IsExactMode {
-		return are.ere.IsEmpty(aPrime.Prefix(int(are.K)), bPrime.Prefix(int(are.K)))
+		// Convert normalized values to integer representation in the M-bit universe
+		aBS := bits.NewFromTrieUint64(aPrime.TrieUint64(), are.K)
+		bBS := bits.NewFromTrieUint64(bPrime.TrieUint64(), are.K)
+		return are.ere.IsEmpty(aBS, bBS)
 	}
 	return are.sodaIsEmpty(aPrime, bPrime)
 }

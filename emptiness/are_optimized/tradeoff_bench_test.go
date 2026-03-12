@@ -5,110 +5,556 @@ import (
 	"Thesis/emptiness/are"
 	"Thesis/emptiness/are_soda_hash"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"sort"
+	"strings"
 	"testing"
 )
 
+// trieBS converts uint64 to a 64-bit BitString where integer order = trie (Compare) order.
+func trieBS(val uint64) bits.BitString {
+	return bits.NewFromTrieUint64(val, 64)
+}
+
+// groundTruth returns true if [a,b] is empty in sorted uint64 keys.
+func groundTruth(keys []uint64, a, b uint64) bool {
+	idx := sort.Search(len(keys), func(i int) bool { return keys[i] >= a })
+	return idx == len(keys) || keys[idx] > b
+}
+
+type seriesData struct {
+	Name   string
+	Color  string
+	Dashed bool
+	Points []point
+}
+
+type point struct {
+	X, Y float64
+}
+
 func TestTradeoff_FPR_vs_BPK(t *testing.T) {
-	n := 10000 
-	rangeLen := uint64(100)
-	queryCount := 50000 
+	const (
+		n          = 10000
+		rangeLen   = uint64(100)
+		queryCount = 100_000
+	)
 
 	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
 
-	f, _ := os.Create("are_optimized_tradeoff.csv")
-	defer f.Close()
-	fmt.Fprintln(f, "TargetEpsilon,"+
-		"BPK_Opt,FPR_Opt_Unif,FPR_Opt_Seq,"+
-		"BPK_Soda,FPR_Soda_Unif,FPR_Soda_Seq,"+
-		"BPK_Trunc,FPR_Trunc_Unif,FPR_Trunc_Seq")
+	// --- Generate keys (once, reused across epsilons) ---
+	rng := rand.New(rand.NewSource(42))
 
-	fmt.Printf("%-6s | %-6s | %-10s | %-10s | %-10s | %-10s\n", "Eps", "BPK", "Opt_Unif", "Soda_Unif", "Trunc_Unif", "Trunc_Seq")
-	fmt.Println("---------------------------------------------------------------------------------------")
+	// Uniform: random uint64 keys
+	unifU64 := make([]uint64, 0, n)
+	seen := make(map[uint64]bool)
+	for len(unifU64) < n {
+		v := rng.Uint64()
+		if !seen[v] {
+			seen[v] = true
+			unifU64 = append(unifU64, v)
+		}
+	}
+	sort.Slice(unifU64, func(i, j int) bool { return unifU64[i] < unifU64[j] })
+	unifBS := make([]bits.BitString, n)
+	for i, v := range unifU64 {
+		unifBS[i] = trieBS(v)
+	}
+
+	// Sequential: evenly spaced keys in a narrow range
+	seqGap := uint64(1000)
+	seqBase := uint64(1) << 40
+	seqU64 := make([]uint64, n)
+	seqBS := make([]bits.BitString, n)
+	for i := 0; i < n; i++ {
+		v := seqBase + uint64(i)*seqGap
+		seqU64[i] = v
+		seqBS[i] = trieBS(v) // NewFromTrieUint64 preserves integer order → already sorted by Compare
+	}
+
+	// Pre-generate query sets (shared across epsilons for consistency)
+	qrngU := rand.New(rand.NewSource(12345))
+	unifQueries := make([][2]uint64, queryCount)
+	for i := range unifQueries {
+		a := qrngU.Uint64()
+		unifQueries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+
+	// Sequential queries: same random ranges as uniform (fair comparison — same queries, different keys)
+	qrngS := rand.New(rand.NewSource(12345))
+	seqQueries := make([][2]uint64, queryCount)
+	for i := range seqQueries {
+		a := qrngS.Uint64()
+		seqQueries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+
+	// Measure FPR with ground truth verification
+	measureFPR := func(keys []uint64, queries [][2]uint64, check func(a, b uint64) bool) float64 {
+		fp, total := 0, 0
+		for _, q := range queries {
+			a, b := q[0], q[1]
+			if b < a {
+				continue // overflow
+			}
+			if !groundTruth(keys, a, b) {
+				continue // skip non-empty ranges
+			}
+			total++
+			if !check(a, b) {
+				fp++
+			}
+		}
+		if total == 0 {
+			return 0
+		}
+		return float64(fp) / float64(total)
+	}
+
+	// Collect results per series
+	allSeries := map[string]*seriesData{
+		"Theoretical":      {Name: "Theoretical", Color: "#ef4444", Dashed: true},
+		"Adaptive (Unif)":  {Name: "Adaptive (Unif)", Color: "#2a7fff"},
+		"Adaptive (Seq)":   {Name: "Adaptive (Seq)", Color: "#0044aa", Dashed: true},
+		"SODA (Unif)":      {Name: "SODA (Unif)", Color: "#22a06b"},
+		"SODA (Seq)":       {Name: "SODA (Seq)", Color: "#005522", Dashed: true},
+		"Truncation (Unif)": {Name: "Truncation (Unif)", Color: "#ffcc00"},
+		"Truncation (Seq)":  {Name: "Truncation (Seq)", Color: "#cc8800", Dashed: true},
+	}
+
+	// CSV output
+	os.MkdirAll("../../bench_results/plots", 0755)
+	csvF, _ := os.Create("../../bench_results/plots/are_tradeoff_data.csv")
+	defer csvF.Close()
+	fmt.Fprintln(csvF, "Epsilon,Series,BPK,FPR")
+
+	// Header
+	fmt.Printf("\n%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
+	fmt.Println(strings.Repeat("-", 55))
 
 	for _, eps := range epsilons {
-		r := rand.New(rand.NewSource(42))
-		
-		// To show Truncation failure: keys with small gap
-		gap := uint64(150)
-		base := uint64(1) << 60 
-		
-		uniformKeysBS := make([]bits.BitString, n)
-		uniformKeysU64 := make([]uint64, n)
-		for i := 0; i < n; i++ {
-			val := r.Uint64()
-			uniformKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
-			uniformKeysU64[i] = val
-		}
-		// SORT inputs for standard filters
-		sort.Slice(uniformKeysBS, func(i, j int) bool { return uniformKeysBS[i].Compare(uniformKeysBS[j]) < 0 })
-		sort.Slice(uniformKeysU64, func(i, j int) bool { return uniformKeysU64[i] < uniformKeysU64[j] })
-		
-		seqKeysBS := make([]bits.BitString, n)
-		seqKeysU64 := make([]uint64, n)
-		for i := 0; i < n; i++ {
-			val := base + uint64(i)*gap
-			seqKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
-			seqKeysU64[i] = val
+		// Theoretical: BPK = lg(L/eps), FPR = eps
+		thBPK := math.Log2(float64(rangeLen) / eps)
+		allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, point{thBPK, eps})
+		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
+		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
+
+		// --- Build filters ---
+		fOptU, errOptU := NewOptimizedARE(unifBS, rangeLen, eps, 0)
+		fOptS, errOptS := NewOptimizedARE(seqBS, rangeLen, eps, 0)
+		fSodaU, errSodaU := are_soda_hash.NewApproximateRangeEmptinessSoda(unifU64, rangeLen, eps)
+		fSodaS, errSodaS := are_soda_hash.NewApproximateRangeEmptinessSoda(seqU64, rangeLen, eps)
+		fTruncU, errTruncU := are.NewApproximateRangeEmptiness(unifBS, eps)
+		fTruncS, errTruncS := are.NewApproximateRangeEmptiness(seqBS, eps)
+
+		// --- Measure each filter ---
+		type measurement struct {
+			name    string
+			err     error
+			bpk     float64
+			fpr     float64
+			keys    []uint64
+			queries [][2]uint64
 		}
 
-		measure := func(isUnif bool, isEmpty func(a, b uint64) bool) float64 {
-			hits := 0
-			for i := 0; i < queryCount; i++ {
-				var a, b uint64
-				if isUnif {
-					a = r.Uint64()
-					b = a + uint64(r.Intn(int(rangeLen)))
-				} else {
-					keyIdx := r.Intn(n - 1)
-					a = base + uint64(keyIdx)*gap + 1 
-					b = a + rangeLen
-				}
-				if !isEmpty(a, b) { hits++ }
+		measures := []measurement{
+			{name: "Adaptive (Unif)", err: errOptU, keys: unifU64, queries: unifQueries},
+			{name: "Adaptive (Seq)", err: errOptS, keys: seqU64, queries: seqQueries},
+			{name: "SODA (Unif)", err: errSodaU, keys: unifU64, queries: unifQueries},
+			{name: "SODA (Seq)", err: errSodaS, keys: seqU64, queries: seqQueries},
+			{name: "Truncation (Unif)", err: errTruncU, keys: unifU64, queries: unifQueries},
+			{name: "Truncation (Seq)", err: errTruncS, keys: seqU64, queries: seqQueries},
+		}
+
+		// Set BPK and measure function per filter
+		if errOptU == nil {
+			measures[0].bpk = float64(fOptU.SizeInBits()) / float64(n)
+		}
+		if errOptS == nil {
+			measures[1].bpk = float64(fOptS.SizeInBits()) / float64(n)
+		}
+		if errSodaU == nil {
+			measures[2].bpk = float64(fSodaU.SizeInBits()) / float64(n)
+		}
+		if errSodaS == nil {
+			measures[3].bpk = float64(fSodaS.SizeInBits()) / float64(n)
+		}
+		if errTruncU == nil {
+			measures[4].bpk = float64(fTruncU.SizeInBits()) / float64(n)
+		}
+		if errTruncS == nil {
+			measures[5].bpk = float64(fTruncS.SizeInBits()) / float64(n)
+		}
+
+		// FPR measurements
+		checkFns := []func(a, b uint64) bool{
+			func(a, b uint64) bool { return fOptU.IsEmpty(trieBS(a), trieBS(b)) },
+			func(a, b uint64) bool { return fOptS.IsEmpty(trieBS(a), trieBS(b)) },
+			func(a, b uint64) bool { return fSodaU.IsEmpty(a, b) },
+			func(a, b uint64) bool { return fSodaS.IsEmpty(a, b) },
+			func(a, b uint64) bool { return fTruncU.IsEmpty(trieBS(a), trieBS(b)) },
+			func(a, b uint64) bool { return fTruncS.IsEmpty(trieBS(a), trieBS(b)) },
+		}
+
+		for i := range measures {
+			m := &measures[i]
+			if m.err != nil {
+				fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, m.name, "N/A", "N/A", m.err)
+				continue
 			}
-			return float64(hits) / float64(queryCount)
+			m.fpr = measureFPR(m.keys, m.queries, checkFns[i])
+
+			allSeries[m.name].Points = append(allSeries[m.name].Points, point{m.bpk, m.fpr})
+			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, m.name, m.bpk, m.fpr)
+			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, m.name, m.bpk, m.fpr)
 		}
-
-		// 1. Adaptive
-		fOptU, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
-		fOptS, _ := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
-		bpkOpt := float64(fOptU.SizeInBits()) / float64(n)
-		fprOptUnif := measure(true, func(a, b uint64) bool {
-			return fOptU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
-		})
-		fprOptSeq := measure(false, func(a, b uint64) bool {
-			return fOptS.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
-		})
-
-		// 2. SODA
-		fSodaU, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(uniformKeysU64, rangeLen, eps)
-		fSodaS, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
-		bpkSoda := float64(fSodaU.SizeInBits()) / float64(n)
-		fprSodaUnif := measure(true, func(a, b uint64) bool { return fSodaU.IsEmpty(a, b) })
-		fprSodaSeq := measure(false, func(a, b uint64) bool { return fSodaS.IsEmpty(a, b) })
-
-		// 3. Truncation
-		fTruncU, errU := are.NewApproximateRangeEmptiness(uniformKeysBS, eps)
-		fTruncS, errS := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
-		var bpkTrunc, fprTruncUnif, fprTruncSeq float64
-		if errU == nil && fTruncU != nil {
-			bpkTrunc = float64(fTruncU.SizeInBits()) / float64(n)
-			fprTruncUnif = measure(true, func(a, b uint64) bool {
-				return fTruncU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
-			})
-		}
-		if errS == nil && fTruncS != nil {
-			fprTruncSeq = measure(false, func(a, b uint64) bool {
-				return fTruncS.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
-			})
-		}
-
-		fmt.Printf("%-6.3f | %-6.2f | %-10.4f | %-10.4f | %-10.4f | %-10.4f\n", 
-			eps, bpkOpt, fprOptUnif, fprSodaUnif, fprTruncUnif, fprTruncSeq)
-		
-		fmt.Fprintf(f, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
-			eps, bpkOpt, fprOptUnif, fprOptSeq, bpkSoda, fprSodaUnif, fprSodaSeq, bpkTrunc, fprTruncUnif, fprTruncSeq)
 	}
+
+	// Generate SVG
+	orderedSeries := []seriesData{
+		*allSeries["Theoretical"],
+		*allSeries["Adaptive (Unif)"],
+		*allSeries["Adaptive (Seq)"],
+		*allSeries["SODA (Unif)"],
+		*allSeries["SODA (Seq)"],
+		*allSeries["Truncation (Unif)"],
+		*allSeries["Truncation (Seq)"],
+	}
+	err := generateTradeoffSVG(
+		"Range Emptiness: FPR vs Bits per Key",
+		"Bits per Key (BPK)",
+		"False Positive Rate (FPR)",
+		orderedSeries,
+		"../../bench_results/plots/are_full_comparison.svg",
+	)
+	if err != nil {
+		t.Errorf("SVG generation failed: %v", err)
+	} else {
+		fmt.Println("\nSVG written to bench_results/plots/are_full_comparison.svg")
+	}
+}
+
+// generateClusterKeys creates n keys from a mixture distribution:
+// ~50% uniform random + ~50% from numClusters Gaussian clusters.
+// Each cluster has a random center and stddev controls width.
+func generateClusterKeys(n int, numClusters int, rng *rand.Rand) []uint64 {
+	seen := make(map[uint64]bool)
+	keys := make([]uint64, 0, n)
+
+	// Half uniform
+	nUnif := n / 2
+	for len(keys) < nUnif {
+		v := rng.Uint64()
+		if !seen[v] {
+			seen[v] = true
+			keys = append(keys, v)
+		}
+	}
+
+	// Half from Gaussian clusters
+	perCluster := (n - nUnif) / numClusters
+	for c := 0; c < numClusters; c++ {
+		center := rng.Uint64()
+		stddev := float64(uint64(1) << (20 + rng.Intn(10))) // stddev from 2^20 to 2^29
+		generated := 0
+		for generated < perCluster || (c == numClusters-1 && len(keys) < n) {
+			offset := int64(rng.NormFloat64() * stddev)
+			var v uint64
+			if offset >= 0 {
+				v = center + uint64(offset)
+				if v < center { // overflow
+					continue
+				}
+			} else {
+				neg := uint64(-offset)
+				if neg > center { // underflow
+					continue
+				}
+				v = center - neg
+			}
+			if !seen[v] {
+				seen[v] = true
+				keys = append(keys, v)
+				generated++
+			}
+			if len(keys) >= n {
+				break
+			}
+		}
+	}
+
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return keys
+}
+
+func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
+	const (
+		n          = 10000
+		rangeLen   = uint64(100)
+		queryCount = 100_000
+		nClusters  = 5
+	)
+
+	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
+
+	rng := rand.New(rand.NewSource(99))
+	clusterU64 := generateClusterKeys(n, nClusters, rng)
+	clusterBS := make([]bits.BitString, len(clusterU64))
+	for i, v := range clusterU64 {
+		clusterBS[i] = trieBS(v)
+	}
+
+	// Queries: random ranges (same as uniform benchmark)
+	qrng := rand.New(rand.NewSource(12345))
+	queries := make([][2]uint64, queryCount)
+	for i := range queries {
+		a := qrng.Uint64()
+		queries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+
+	measureFPR := func(keys []uint64, qs [][2]uint64, check func(a, b uint64) bool) float64 {
+		fp, total := 0, 0
+		for _, q := range qs {
+			a, b := q[0], q[1]
+			if b < a {
+				continue
+			}
+			if !groundTruth(keys, a, b) {
+				continue
+			}
+			total++
+			if !check(a, b) {
+				fp++
+			}
+		}
+		if total == 0 {
+			return 0
+		}
+		return float64(fp) / float64(total)
+	}
+
+	allSeries := map[string]*seriesData{
+		"Theoretical":  {Name: "Theoretical", Color: "#ef4444", Dashed: true},
+		"Adaptive":     {Name: "Adaptive", Color: "#2a7fff"},
+		"SODA":         {Name: "SODA", Color: "#22a06b"},
+		"Truncation":   {Name: "Truncation", Color: "#ffcc00"},
+	}
+
+	os.MkdirAll("../../bench_results/plots", 0755)
+	csvF, _ := os.Create("../../bench_results/plots/are_cluster_data.csv")
+	defer csvF.Close()
+	fmt.Fprintln(csvF, "Epsilon,Series,BPK,FPR")
+
+	fmt.Printf("\n=== Cluster Distribution (%d keys, %d clusters) ===\n", n, nClusters)
+	fmt.Printf("%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
+	fmt.Println(strings.Repeat("-", 55))
+
+	for _, eps := range epsilons {
+		thBPK := math.Log2(float64(rangeLen) / eps)
+		allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, point{thBPK, eps})
+		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
+		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
+
+		fOpt, errOpt := NewOptimizedARE(clusterBS, rangeLen, eps, 0)
+		fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
+		fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
+
+		type m struct {
+			name string
+			err  error
+			bpk  float64
+		}
+		ms := []m{
+			{"Adaptive", errOpt, 0},
+			{"SODA", errSoda, 0},
+			{"Truncation", errTrunc, 0},
+		}
+		if errOpt == nil {
+			ms[0].bpk = float64(fOpt.SizeInBits()) / float64(n)
+		}
+		if errSoda == nil {
+			ms[1].bpk = float64(fSoda.SizeInBits()) / float64(n)
+		}
+		if errTrunc == nil {
+			ms[2].bpk = float64(fTrunc.SizeInBits()) / float64(n)
+		}
+
+		checkFns := []func(a, b uint64) bool{
+			func(a, b uint64) bool { return fOpt.IsEmpty(trieBS(a), trieBS(b)) },
+			func(a, b uint64) bool { return fSoda.IsEmpty(a, b) },
+			func(a, b uint64) bool { return fTrunc.IsEmpty(trieBS(a), trieBS(b)) },
+		}
+
+		for i, me := range ms {
+			if me.err != nil {
+				fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
+				continue
+			}
+			fpr := measureFPR(clusterU64, queries, checkFns[i])
+			allSeries[me.name].Points = append(allSeries[me.name].Points, point{me.bpk, fpr})
+			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, me.name, me.bpk, fpr)
+			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
+		}
+	}
+
+	orderedSeries := []seriesData{
+		*allSeries["Theoretical"],
+		*allSeries["Adaptive"],
+		*allSeries["SODA"],
+		*allSeries["Truncation"],
+	}
+	err := generateTradeoffSVG(
+		"Range Emptiness: FPR vs BPK (Cluster Distribution)",
+		"Bits per Key (BPK)",
+		"False Positive Rate (FPR)",
+		orderedSeries,
+		"../../bench_results/plots/are_cluster_comparison.svg",
+	)
+	if err != nil {
+		t.Errorf("SVG generation failed: %v", err)
+	} else {
+		fmt.Println("\nSVG written to bench_results/plots/are_cluster_comparison.svg")
+	}
+}
+
+func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outPath string) error {
+	w, h := 960.0, 600.0
+	mL, mR, mT, mB := 90.0, 40.0, 40.0, 50.0
+	plotW := w - mL - mR
+	plotH := h - mT - mB
+
+	// Clamp FPR=0 to a minimum value for log-scale plotting
+	const fprFloor = 1e-6
+	for i := range series {
+		for j := range series[i].Points {
+			if series[i].Points[j].Y <= 0 {
+				series[i].Points[j].Y = fprFloor
+			}
+		}
+	}
+
+	// Find data ranges
+	minX, maxX := math.Inf(1), math.Inf(-1)
+	minLogY, maxLogY := math.Inf(1), math.Inf(-1)
+	for _, s := range series {
+		for _, p := range s.Points {
+			if p.X < minX {
+				minX = p.X
+			}
+			if p.X > maxX {
+				maxX = p.X
+			}
+			ly := math.Log10(p.Y)
+			if ly < minLogY {
+				minLogY = ly
+			}
+			if ly > maxLogY {
+				maxLogY = ly
+			}
+		}
+	}
+
+	// Set axis ranges
+	minX = 0
+	maxX = math.Ceil(maxX/2) * 2
+	minLogY = math.Floor(minLogY) - 0.5
+	maxLogY = math.Ceil(maxLogY) + 0.5
+
+	toX := func(x float64) float64 { return mL + plotW*(x-minX)/(maxX-minX) }
+	toY := func(y float64) float64 {
+		ly := math.Log10(y)
+		return mT + plotH*(1-(ly-minLogY)/(maxLogY-minLogY))
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%.0f" height="%.0f" viewBox="0 0 %.0f %.0f">`+"\n", w, h, w, h))
+	sb.WriteString(`<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:11px;fill:#444}</style>` + "\n")
+
+	// Title
+	sb.WriteString(fmt.Sprintf(`<text x="%.0f" y="28" text-anchor="middle" style="font-size:14px;font-weight:bold">%s</text>`+"\n", w/2, title))
+
+	// Axes
+	sb.WriteString(fmt.Sprintf(`<line class="axis" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>`+"\n", mL, mT+plotH, mL+plotW, mT+plotH))
+	sb.WriteString(fmt.Sprintf(`<line class="axis" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>`+"\n", mL, mT, mL, mT+plotH))
+
+	// Y grid (log scale)
+	for e := int(math.Ceil(minLogY)); e <= int(math.Floor(maxLogY)); e++ {
+		py := mT + plotH*(1-(float64(e)-minLogY)/(maxLogY-minLogY))
+		sb.WriteString(fmt.Sprintf(`<line class="grid" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>`+"\n", mL, py, mL+plotW, py))
+		var label string
+		if e == 0 {
+			label = "1"
+		} else if e == -1 {
+			label = "0.1"
+		} else if e == -2 {
+			label = "0.01"
+		} else if e == -3 {
+			label = "10^-3"
+		} else {
+			label = fmt.Sprintf("10^%d", e)
+		}
+		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.1f" y="%.1f" text-anchor="end">%s</text>`+"\n", mL-8, py+4, label))
+	}
+
+	// X grid
+	xStep := 2.0
+	for x := math.Ceil(minX/xStep) * xStep; x <= maxX; x += xStep {
+		px := toX(x)
+		sb.WriteString(fmt.Sprintf(`<line class="grid" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>`+"\n", px, mT, px, mT+plotH))
+		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.1f" y="%.1f" text-anchor="middle">%.0f</text>`+"\n", px, mT+plotH+16, x))
+	}
+
+	// Series
+	for _, s := range series {
+		if len(s.Points) == 0 {
+			continue
+		}
+		var pts []string
+		for _, p := range s.Points {
+			if p.Y <= 0 {
+				continue
+			}
+			pts = append(pts, fmt.Sprintf("%.1f,%.1f", toX(p.X), toY(p.Y)))
+		}
+		if len(pts) == 0 {
+			continue
+		}
+		dash := ""
+		if s.Dashed {
+			dash = ` stroke-dasharray="8,5"`
+		}
+		sb.WriteString(fmt.Sprintf(`<polyline fill="none" stroke="%s" stroke-width="2"%s points="%s"/>`+"\n",
+			s.Color, dash, strings.Join(pts, " ")))
+		for _, p := range s.Points {
+			if p.Y <= 0 {
+				continue
+			}
+			sb.WriteString(fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="3" fill="%s"/>`+"\n", toX(p.X), toY(p.Y), s.Color))
+		}
+	}
+
+	// Legend
+	ly := mT + 20.0
+	for _, s := range series {
+		if len(s.Points) == 0 {
+			continue
+		}
+		dash := ""
+		if s.Dashed {
+			dash = ` stroke-dasharray="8,5"`
+		}
+		lx := mL + plotW - 220
+		sb.WriteString(fmt.Sprintf(`<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="2"%s/>`+"\n",
+			lx, ly, lx+16, ly, s.Color, dash))
+		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.0f" y="%.0f">%s</text>`+"\n", lx+22, ly+4, s.Name))
+		ly += 18
+	}
+
+	// Axis labels
+	sb.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" text-anchor="middle">%s</text>`+"\n", mL+plotW/2, h-10, xLabel))
+	sb.WriteString(fmt.Sprintf(`<text transform="translate(16,%.0f) rotate(-90)" text-anchor="middle">%s</text>`+"\n", mT+plotH/2, yLabel))
+	sb.WriteString("</svg>\n")
+
+	return os.WriteFile(outPath, []byte(sb.String()), 0644)
 }

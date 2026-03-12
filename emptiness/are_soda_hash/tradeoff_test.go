@@ -7,15 +7,9 @@ import (
 	"testing"
 )
 
-// toMSBBitString converts uint64 to a 64-bit BitString with bit 0 as MSB.
-func toMSBBitString(val uint64) bits.BitString {
-	var reversed uint64
-	for i := uint32(0); i < 64; i++ {
-		if (val & (uint64(1) << (63 - i))) != 0 {
-			reversed |= (uint64(1) << i)
-		}
-	}
-	return bits.NewFromUint64(reversed)
+// trieBS converts uint64 to a 64-bit BitString where integer order = trie (Compare) order.
+func trieBS(val uint64) bits.BitString {
+	return bits.NewFromTrieUint64(val, 64)
 }
 
 func TestSequentialSweep_Corrected(t *testing.T) {
@@ -30,7 +24,7 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 	for i := 0; i < n; i++ {
 		val := uint64(i) * step
 		keys[i] = val
-		bsKeys[i] = toMSBBitString(val)
+		bsKeys[i] = trieBS(val)
 	}
 
 	fmt.Printf("\n--- Corrected Sequential Sweep (N=%d, Step=%d, eps=0.01) ---\n", n, step)
@@ -49,7 +43,7 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 			a := keys[i] + 1
 			b := a + L - 1
 			
-			if !filterTrunc.IsEmpty(toMSBBitString(a), toMSBBitString(b)) {
+			if !filterTrunc.IsEmpty(trieBS(a), trieBS(b)) {
 				fpT++
 			}
 			if !filterSoda.IsEmpty(a, b) {

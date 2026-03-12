@@ -78,6 +78,9 @@ func (bs BitString) TrieUint64() uint64 {
 	if bs.sizeBits == 0 {
 		return 0
 	}
+	if bs.sizeBits >= 64 {
+		return bits.Reverse64(bs.Word(0))
+	}
 	return bits.Reverse64(bs.Word(0)) >> (64 - bs.sizeBits)
 }
 

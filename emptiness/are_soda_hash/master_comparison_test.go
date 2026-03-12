@@ -26,7 +26,7 @@ func TestMaster_AccuracyRecalculation(t *testing.T) {
 	for i := 0; i < n; i++ {
 		val := rng.Uint64()
 		keys[i] = val
-		bsKeys[i] = toMSBBitString(val)
+		bsKeys[i] = trieBS(val)
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	sort.Slice(bsKeys, func(i, j int) bool { return bsKeys[i].Compare(bsKeys[j]) < 0 })
@@ -52,7 +52,7 @@ func TestMaster_AccuracyRecalculation(t *testing.T) {
 			if groundTruthCheck(keys, a, b) {
 				queriesDone++
 				// Test Truncation (MSB-corrected)
-				if !filterTrunc.IsEmpty(toMSBBitString(a), toMSBBitString(b)) {
+				if !filterTrunc.IsEmpty(trieBS(a), trieBS(b)) {
 					fpT++
 				}
 				// Test SODA
