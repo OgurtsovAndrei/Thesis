@@ -86,30 +86,16 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	}, nil
 }
 
+// GetBlockIndex extracts the first k bits of x and interprets them as an integer
+// where bit 0 is the MSB. This maps trie-sorted keys to non-decreasing block indices.
 func GetBlockIndex(x bits.BitString, k uint32) uint64 {
-	var idx uint64
-	size := x.Size()
-	// Bit 0 is MSB of index
-	for i := uint32(0); i < k; i++ {
-		if i < size && x.At(i) {
-			idx |= (uint64(1) << (k - 1 - i))
-		}
-	}
-	return idx
+	return x.Prefix(int(k)).TrieUint64()
 }
 
+// extractSuffixAsUint64 extracts the last w bits of bs and interprets them as an integer
+// where the first suffix bit is the MSB. Numeric ordering matches trie ordering of suffixes.
 func extractSuffixAsUint64(bs bits.BitString, KeySize, w uint32) uint64 {
-	var val uint64
-	size := bs.Size()
-	k := KeySize - w
-	// Bit k is MSB of suffix
-	for i := uint32(0); i < w; i++ {
-		pos := k + i
-		if pos < size && bs.At(pos) {
-			val |= (uint64(1) << (w - 1 - i))
-		}
-	}
-	return val
+	return bs.Suffix(w).TrieUint64()
 }
 
 func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
