@@ -24,6 +24,101 @@ func NewBitString(sizeBits uint32) BitString {
 	}
 }
 
+func NewFromUint64WithLength(value uint64, sizeBits uint32) BitString {
+	bs := NewBitString(sizeBits)
+	bs.data[0] = value
+	if sizeBits < 64 {
+		bs.data[0] &= (uint64(1) << sizeBits) - 1
+	}
+	return bs
+}
+
+// Sub subtracts other from bs. Assumes bs >= other and same size.
+func (bs BitString) Sub(other BitString) BitString {
+	if bs.sizeBits != other.sizeBits {
+		panic("BitString sizes must match for subtraction")
+	}
+	result := NewBitString(bs.sizeBits)
+	var borrow uint64
+	for i := 0; i < len(bs.data); i++ {
+		v1 := bs.data[i]
+		v2 := other.data[i]
+		
+		diff, nextBorrow := bits.Sub64(v1, v2, borrow)
+		result.data[i] = diff
+		borrow = nextBorrow
+	}
+	return result
+}
+
+// Add adds other to bs. Assumes same size.
+func (bs BitString) Add(other BitString) BitString {
+	if bs.sizeBits != other.sizeBits {
+		panic("BitString sizes must match for addition")
+	}
+	result := NewBitString(bs.sizeBits)
+	var carry uint64
+	for i := 0; i < len(bs.data); i++ {
+		v1 := bs.data[i]
+		v2 := other.data[i]
+		
+		sum, nextCarry := bits.Add64(v1, v2, carry)
+		result.data[i] = sum
+		carry = nextCarry
+	}
+	return result
+}
+
+func (bs BitString) ShiftRight(t uint32) BitString {
+	if t == 0 {
+		return bs
+	}
+	if t >= bs.sizeBits {
+		return NewBitString(bs.sizeBits)
+	}
+
+	newSize := bs.sizeBits - t
+	result := NewBitString(newSize)
+	
+	wordShift := t / 64
+	bitShift := t % 64
+	
+	for i := uint32(0); i < uint32(len(result.data)); i++ {
+		srcIdx := i + wordShift
+		if srcIdx < uint32(len(bs.data)) {
+			val := bs.data[srcIdx] >> bitShift
+			if bitShift > 0 && srcIdx+1 < uint32(len(bs.data)) {
+				val |= bs.data[srcIdx+1] << (64 - bitShift)
+			}
+			result.data[i] = val
+		}
+	}
+	
+	// Mask the last word
+	if newSize % 64 != 0 {
+		result.data[len(result.data)-1] &= (uint64(1) << (newSize % 64)) - 1
+	}
+
+	return result
+}
+
+func (bs BitString) Word(i uint32) uint64 {
+	if i >= uint32(len(bs.data)) {
+		return 0
+	}
+	word := bs.data[i]
+	// Handle masking for the last word
+	if i == uint32(len(bs.data)-1) && bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		word &= mask
+	}
+	return word
+}
+
+func (bs BitString) SizeBits() uint32 {
+	return bs.sizeBits
+}
+
 // NewFromUint64 creates a BitString from a single uint64 value.
 func NewFromUint64(value uint64) BitString {
 	bs := NewBitString(64)
