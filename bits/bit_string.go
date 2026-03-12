@@ -814,20 +814,37 @@ func (bs BitString) Predecessor() BitString {
 		return bs
 	}
 
-	// 1. Find the last '1' (the one with the highest index)
+	lastWordIdx := int(bs.sizeBits-1) / 64
+
+	// 1. Find the last '1' (highest index) using word-level scan
 	lastOne := -1
-	for i := int(bs.sizeBits) - 1; i >= 0; i-- {
-		if bs.At(uint32(i)) {
-			lastOne = i
-			break
+	{
+		w := bs.data[lastWordIdx]
+		bitsInLastWord := (bs.sizeBits-1)%64 + 1
+		mask := ^uint64(0)
+		if bitsInLastWord < 64 {
+			mask = (uint64(1) << bitsInLastWord) - 1
+		}
+		ones := w & mask
+		if ones != 0 {
+			bitIdx := 63 - bits.LeadingZeros64(ones)
+			lastOne = lastWordIdx*64 + bitIdx
 		}
 	}
-
 	if lastOne == -1 {
-		return bs // All zeros
+		for i := lastWordIdx - 1; i >= 0; i-- {
+			if bs.data[i] != 0 {
+				bitIdx := 63 - bits.LeadingZeros64(bs.data[i])
+				lastOne = i*64 + bitIdx
+				break
+			}
+		}
+	}
+	if lastOne == -1 {
+		return bs
 	}
 
-	// 2. Create copy
+	// 2. Create copy and mask
 	numWords := (bs.sizeBits + 63) / 64
 	newData := make([]uint64, numWords)
 	copy(newData, bs.data[:numWords])
@@ -837,16 +854,23 @@ func (bs BitString) Predecessor() BitString {
 		newData[numWords-1] &= mask
 	}
 
-	// 3. Set bit lastOne to 0
+	// 3. Clear bit lastOne, set all bits after it to 1
 	wordIdx := lastOne / 64
 	bitIdx := uint32(lastOne % 64)
-	newData[wordIdx] &= ^(uint64(1) << bitIdx)
 
-	// 4. Set all bits after lastOne to 1
-	for i := lastOne + 1; i < int(bs.sizeBits); i++ {
-		wIdx := i / 64
-		bIdx := uint32(i % 64)
-		newData[wIdx] |= (uint64(1) << bIdx)
+	// In the word containing lastOne: clear lastOne, set all higher bits to 1
+	newData[wordIdx] |= ^((uint64(1) << bitIdx) - 1) // set bits >= bitIdx to 1
+	newData[wordIdx] ^= uint64(1) << bitIdx           // clear bitIdx (was just set to 1)
+
+	// Set all subsequent words to all-ones
+	for i := wordIdx + 1; i < len(newData); i++ {
+		newData[i] = ^uint64(0)
+	}
+
+	// Mask the last word to sizeBits
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		newData[numWords-1] &= mask
 	}
 
 	return BitString{
@@ -856,8 +880,18 @@ func (bs BitString) Predecessor() BitString {
 }
 
 func (bs BitString) IsAllZeros() bool {
-	for _, w := range bs.data {
-		if w != 0 {
+	if bs.sizeBits == 0 {
+		return true
+	}
+	fullWords := bs.sizeBits / 64
+	for i := uint32(0); i < fullWords; i++ {
+		if bs.data[i] != 0 {
+			return false
+		}
+	}
+	if bs.sizeBits%64 != 0 {
+		mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+		if bs.data[fullWords]&mask != 0 {
 			return false
 		}
 	}

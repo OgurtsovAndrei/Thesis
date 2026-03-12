@@ -356,5 +356,64 @@ func TestBitStringJunkBits(t *testing.T) {
 	
 	// Test Successor
 	require.True(t, prefixStr.Successor().Equal(cleanStr.Successor()), "Successor should ignore junk bits")
+
+	// Test IsAllZeros with junk bits (was a bug: Prefix shares slice, IsAllZeros didn't mask)
+	allZeroLong := NewFromBinary("00000000001111")
+	allZeroPrefix := allZeroLong.Prefix(10) // "0000000000" but underlying word has 1s at positions 10-13
+	require.True(t, allZeroPrefix.IsAllZeros(), "IsAllZeros should ignore junk bits beyond sizeBits")
+
+	// Test IsAllOnes with junk bits
+	allOneLong := NewFromBinary("11111111110000")
+	allOnePrefix := allOneLong.Prefix(10) // "1111111111"
+	require.True(t, allOnePrefix.IsAllOnes(), "IsAllOnes should ignore junk bits beyond sizeBits")
+
+	// Test Predecessor with junk bits
+	require.True(t, prefixStr.Predecessor().Equal(cleanStr.Predecessor()), "Predecessor should ignore junk bits")
+
+	// Test Predecessor on prefix that looks non-zero only because of junk
+	allZeroClean := NewFromBinary("0000000000")
+	require.True(t, allZeroPrefix.Predecessor().Equal(allZeroClean.Predecessor()), "Predecessor on all-zero prefix should match clean")
+	require.True(t, allZeroPrefix.Predecessor().IsAllZeros(), "Predecessor of all-zeros should remain all-zeros")
+}
+
+func TestPredecessorSuccessorRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	cases := []string{
+		"1",
+		"01",
+		"10",
+		"11",
+		"101",
+		"1010",
+		"1001",
+		"1111",
+		"0001",
+		"10101010",
+		"11111111",
+		"00000001",
+		// Multi-word boundary
+		"1010101010101010101010101010101010101010101010101010101010101010" + "1",
+		"1010101010101010101010101010101010101010101010101010101010101010" + "10",
+		"1111111111111111111111111111111111111111111111111111111111111111" + "1111",
+	}
+
+	for _, tc := range cases {
+		bs := NewFromBinary(tc)
+		if bs.IsAllZeros() {
+			continue
+		}
+		// Successor(Predecessor(x)) == x, if x is not all-zeros
+		pred := bs.Predecessor()
+		succ := pred.Successor()
+		// Predecessor may change size for all-ones edge case via Successor growing,
+		// but for general case pred.sizeBits == bs.sizeBits and Successor preserves it
+		if pred.sizeBits == bs.sizeBits {
+			require.True(t, succ.Equal(bs), "Successor(Predecessor(%s)) should == %s, got %s", tc, bs, succ)
+		}
+
+		// Predecessor should be strictly less in Compare order
+		require.Less(t, pred.Compare(bs), 0, "Predecessor(%s) should be < %s", tc, tc)
+	}
 }
 
