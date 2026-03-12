@@ -11,7 +11,7 @@ import (
 )
 
 func TestTradeoff_FPR_vs_BPK(t *testing.T) {
-	n := 10000
+	n := 10000 
 	rangeLen := uint64(100)
 	queryCount := 50000 
 
@@ -29,7 +29,10 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 
 	for _, eps := range epsilons {
 		r := rand.New(rand.NewSource(42))
-		gap := uint64(1000000000000)
+		
+		// To BREAK normalization: first key at 0, others at 2^60
+		base := uint64(1) << 60
+		gap := uint64(200)
 		
 		uniformKeysBS := make([]bits.BitString, n)
 		uniformKeysU64 := make([]uint64, n)
@@ -41,8 +44,10 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 		
 		seqKeysBS := make([]bits.BitString, n)
 		seqKeysU64 := make([]uint64, n)
-		for i := 0; i < n; i++ {
-			val := uint64(i) * gap
+		seqKeysBS[0] = bits.NewFromUint64WithLength(0, 64)
+		seqKeysU64[0] = 0
+		for i := 1; i < n; i++ {
+			val := base + uint64(i)*gap
 			seqKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
 			seqKeysU64[i] = val
 		}
@@ -55,8 +60,8 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 					a = r.Uint64()
 					b = a + uint64(r.Intn(int(rangeLen)))
 				} else {
-					keyIdx := r.Intn(n - 1)
-					a = uint64(keyIdx)*gap + 1 
+					keyIdx := r.Intn(n - 2) + 1 // Pick from keys at 'base'
+					a = base + uint64(keyIdx)*gap + 1 
 					b = a + rangeLen
 				}
 				if !isEmpty(a, b) { hits++ }
@@ -66,9 +71,9 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 
 		// 1. Adaptive
 		var bpkOpt, fprOptUnif, fprOptSeq float64
-		fOptU, err1 := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
-		fOptS, err2 := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
-		if err1 == nil && err2 == nil && fOptU != nil && fOptS != nil {
+		fOptU, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
+		fOptS, _ := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
+		if fOptS != nil {
 			bpkOpt = float64(fOptS.SizeInBits()) / float64(n)
 			fprOptUnif = measure(true, func(a, b uint64) bool {
 				return fOptU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
@@ -80,9 +85,9 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 
 		// 2. SODA
 		var bpkSoda, fprSodaUnif, fprSodaSeq float64
-		fSodaU, err3 := are_soda_hash.NewApproximateRangeEmptinessSoda(uniformKeysU64, rangeLen, eps)
-		fSodaS, err4 := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
-		if err3 == nil && err4 == nil && fSodaU != nil && fSodaS != nil {
+		fSodaU, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(uniformKeysU64, rangeLen, eps)
+		fSodaS, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
+		if fSodaS != nil {
 			bpkSoda = float64(fSodaS.SizeInBits()) / float64(n)
 			fprSodaUnif = measure(true, func(a, b uint64) bool { return fSodaU.IsEmpty(a, b) })
 			fprSodaSeq = measure(false, func(a, b uint64) bool { return fSodaS.IsEmpty(a, b) })
@@ -90,16 +95,15 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 
 		// 3. Truncation
 		var bpkTrunc, fprTruncUnif, fprTruncSeq float64
-		fTruncU, err5 := are.NewApproximateRangeEmptiness(uniformKeysBS, eps)
-		fTruncS, err6 := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
-		
-		if err5 == nil && fTruncU != nil {
+		fTruncU, _ := are.NewApproximateRangeEmptiness(uniformKeysBS, eps)
+		fTruncS, _ := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
+		if fTruncU != nil {
 			bpkTrunc = float64(fTruncU.SizeInBits()) / float64(n)
 			fprTruncUnif = measure(true, func(a, b uint64) bool {
 				return fTruncU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
 			})
 		}
-		if err6 == nil && fTruncS != nil {
+		if fTruncS != nil {
 			fprTruncSeq = measure(false, func(a, b uint64) bool {
 				return fTruncS.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
 			})
