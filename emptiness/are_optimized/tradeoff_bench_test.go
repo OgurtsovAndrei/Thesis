@@ -2,6 +2,8 @@ package are_optimized
 
 import (
 	"Thesis/bits"
+	"Thesis/emptiness/are"
+	"Thesis/emptiness/are_soda_hash"
 	"fmt"
 	"math/rand"
 	"os"
@@ -11,77 +13,98 @@ import (
 func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 	n := 10000
 	rangeLen := uint64(100)
-	queryCount := 100000
+	queryCount := 50000 
 
-	// We'll test across different target epsilons
-	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001, 0.0005, 0.0002, 0.0001}
+	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
 
-	// Output CSV
-	cwd, _ := os.Getwd()
-	fmt.Println("CWD of test:", cwd)
 	f, _ := os.Create("are_optimized_tradeoff.csv")
 	defer f.Close()
-	fmt.Fprintln(f, "TargetEpsilon,BitsPerKey,ActualFPR_Uniform,ActualFPR_Sequential,K,Mode")
+	fmt.Fprintln(f, "TargetEpsilon,BPK_Opt,FPR_Opt_Unif,FPR_Opt_Seq,BPK_Soda,FPR_Soda_Seq,BPK_Trunc,FPR_Trunc_Seq")
 
-	fmt.Printf("%-10s | %-8s | %-12s | %-12s | %-4s | %-10s\n", "Epsilon", "BPK", "FPR_Unif", "FPR_Seq", "K", "Mode")
+	fmt.Printf("%-8s | %-6s | %-10s | %-10s | %-10s | %-10s\n", "Eps", "BPK_Opt", "Opt_Unif", "Opt_Seq", "Soda_Seq", "Trunc_Seq")
 	fmt.Println("----------------------------------------------------------------------------")
 
 	for _, eps := range epsilons {
-		// 1. Uniform Keys
-		uniformKeys := make([]bits.BitString, n)
 		r := rand.New(rand.NewSource(42))
+		
+		gap := uint64(1000000000000)
+		
+		uniformKeysBS := make([]bits.BitString, n)
+		uniformKeysU64 := make([]uint64, n)
 		for i := 0; i < n; i++ {
-			uniformKeys[i] = bits.NewFromUint64WithLength(r.Uint64(), 64)
+			val := r.Uint64()
+			uniformKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
+			uniformKeysU64[i] = val
 		}
 		
-		// 2. Sequential Keys (Adversarial for Truncation, now Robust in SODA)
-		seqKeys := make([]bits.BitString, n)
+		seqKeysBS := make([]bits.BitString, n)
+		seqKeysU64 := make([]uint64, n)
 		for i := 0; i < n; i++ {
-			seqKeys[i] = bits.NewFromUint64WithLength(uint64(i*1000), 64)
+			val := uint64(i) * gap
+			seqKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
+			seqKeysU64[i] = val
 		}
 
-		// Create Filter for Uniform
-		filterUnif, _ := NewOptimizedARE(uniformKeys, rangeLen, eps, 0)
-		bpk := float64(filterUnif.SizeInBits()) / float64(n)
-
-		// Measure FPR for Uniform
-		falsePositivesUnif := 0
-		for i := 0; i < queryCount; i++ {
-			a := r.Uint64()
-			b := a + uint64(r.Intn(int(rangeLen)))
-			
-			// Simple ground truth: for uniform, it's very likely empty
-			// For precise measure, we'd need a map, but for 10k keys in 2^64 it's fine.
-			if filterUnif.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-				falsePositivesUnif++
-			}
-		}
-		actualFPRUnif := float64(falsePositivesUnif) / float64(queryCount)
-
-		// Measure FPR for Sequential
-		filterSeq, _ := NewOptimizedARE(seqKeys, rangeLen, eps, 0)
-		falsePositivesSeq := 0
-		for i := 0; i < queryCount; i++ {
-			// Query in gaps: e.g. [500, 600], [1500, 1600]
-			keyIdx := r.Intn(n - 1)
-			a := uint64(keyIdx*1000 + 500)
-			b := a + uint64(r.Intn(int(rangeLen)))
-			
-			if filterSeq.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-				falsePositivesSeq++
-			}
-		}
-		actualFPRSeq := float64(falsePositivesSeq) / float64(queryCount)
-
-		mode := "SODA"
-		if filterUnif.IsExactMode {
-			mode = "Exact"
-		}
-
-		fmt.Printf("%-10.4f | %-8.2f | %-12.6f | %-12.6f | %-4d | %-10s\n", 
-			eps, bpk, actualFPRUnif, actualFPRSeq, filterUnif.K, mode)
+		// --- 1. Optimized Adaptive ARE ---
+		filterOpt, _ := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
+		bpkOpt := float64(filterOpt.SizeInBits()) / float64(n)
 		
-		fmt.Fprintf(f, "%f,%f,%f,%f,%d,%s\n", 
-			eps, bpk, actualFPRUnif, actualFPRSeq, filterUnif.K, mode)
+		filterOptUnif, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
+		fpOptUnif := 0
+		for i := 0; i < queryCount; i++ {
+			a, b := r.Uint64(), r.Uint64()
+			if a > b { a, b = b, a }
+			if b - a > rangeLen { b = a + uint64(r.Intn(int(rangeLen))) }
+			if filterOptUnif.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
+				fpOptUnif++
+			}
+		}
+		fprOptUnif := float64(fpOptUnif) / float64(queryCount)
+
+		fpOptSeq := 0
+		for i := 0; i < queryCount; i++ {
+			a := uint64(r.Intn(n-1)) * gap + gap/2
+			b := a + uint64(r.Intn(int(rangeLen)))
+			if filterOpt.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
+				fpOptSeq++
+			}
+		}
+		fprOptSeq := float64(fpOptSeq) / float64(queryCount)
+
+		// --- 2. Original SODA ARE ---
+		filterSoda, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
+		bpkSoda := float64(filterSoda.SizeInBits()) / float64(n)
+		fpSodaSeq := 0
+		for i := 0; i < queryCount; i++ {
+			a := uint64(r.Intn(n-1)) * gap + gap/2
+			b := a + uint64(r.Intn(int(rangeLen)))
+			if filterSoda.IsEmpty(a, b) == false {
+				fpSodaSeq++
+			}
+		}
+		fprSodaSeq := float64(fpSodaSeq) / float64(queryCount)
+
+		// --- 3. Truncation ARE (Handle possible errors gracefully) ---
+		bpkTrunc := 0.0
+		fprTruncSeq := 0.0
+		filterTrunc, err := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
+		if err == nil && filterTrunc != nil {
+			bpkTrunc = float64(filterTrunc.SizeInBits()) / float64(n)
+			fpTruncSeq := 0
+			for i := 0; i < queryCount; i++ {
+				a := uint64(r.Intn(n-1)) * gap + gap/2
+				b := a + uint64(r.Intn(int(rangeLen)))
+				if filterTrunc.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
+					fpTruncSeq++
+				}
+			}
+			fprTruncSeq = float64(fpTruncSeq) / float64(queryCount)
+		}
+
+		fmt.Printf("%-8.3f | %-7.2f | %-10.6f | %-10.6f | %-10.6f | %-10.6f\n", 
+			eps, bpkOpt, fprOptUnif, fprOptSeq, fprSodaSeq, fprTruncSeq)
+		
+		fmt.Fprintf(f, "%f,%f,%f,%f,%f,%f,%f,%f\n", 
+			eps, bpkOpt, fprOptUnif, fprOptSeq, bpkSoda, fprSodaSeq, bpkTrunc, fprTruncSeq)
 	}
 }

@@ -12,48 +12,61 @@ def main():
         print(f"CSV file not found: {csv_file}")
         return
 
-    bpk_vals = []
-    fpr_unif = []
-    fpr_seq = []
-    target_eps = []
+    pts_opt_unif = []
+    pts_opt_seq = []
+    pts_soda_seq = []
+    pts_trunc_seq = []
+    pts_target = []
     
     try:
         with open(csv_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                b = float(row['BitsPerKey'])
-                # We use the same bpk for all series since they are measured from the same run
-                bpk_vals.append(b)
+                eps = float(row['TargetEpsilon'])
                 
-                # Floor FPR at 1e-7 for log scale if it's 0
-                fu = float(row['ActualFPR_Uniform'])
-                fpr_unif.append((b, fu if fu > 0 else 1e-7))
+                # Optimized Adaptive ARE (Unif)
+                b_opt = float(row['BPK_Opt'])
+                f_opt_u = float(row['FPR_Opt_Unif'])
+                pts_opt_unif.append((b_opt, f_opt_u if f_opt_u > 0 else 1e-7))
                 
-                fs = float(row['ActualFPR_Sequential'])
-                fpr_seq.append((b, fs if fs > 0 else 1e-7))
+                # Optimized Adaptive ARE (Seq)
+                f_opt_s = float(row['FPR_Opt_Seq'])
+                pts_opt_seq.append((b_opt, f_opt_s if f_opt_s > 0 else 1e-7))
                 
-                te = float(row['TargetEpsilon'])
-                target_eps.append((b, te))
+                # Original SODA ARE
+                b_soda = float(row['BPK_Soda'])
+                f_soda = float(row['FPR_Soda_Seq'])
+                pts_soda_seq.append((b_soda, f_soda if f_soda > 0 else 1e-7))
+                
+                # Truncation ARE
+                b_trunc = float(row['BPK_Trunc'])
+                f_trunc = float(row['FPR_Trunc_Seq'])
+                pts_trunc_seq.append((b_trunc, f_trunc if f_trunc > 0 else 1e-7))
+                
+                pts_target.append((b_opt, eps))
+                
     except Exception as e:
         print(f"Error reading CSV: {e}")
         return
 
     ensure_dir("bench_results/plots")
-    output_path = "bench_results/plots/are_optimized_tradeoff.svg"
+    output_path = "bench_results/plots/are_comparison_tradeoff.svg"
     
     series = {
-        "Uniform Data (Empirical)": fpr_unif,
-        "Sequential Data (Empirical)": fpr_seq,
-        "Target Epsilon (Theoretical)": target_eps
+        "Adaptive ARE (Uniform)": pts_opt_unif,
+        "Adaptive ARE (Sequential)": pts_opt_seq,
+        "Original SODA (Sequential)": pts_soda_seq,
+        "Truncation ARE (Sequential)": pts_trunc_seq,
+        "Theoretical Target": pts_target
     }
     
     styles = {
-        "Target Epsilon (Theoretical)": "dashed"
+        "Theoretical Target": "dashed"
     }
     
     draw_line_chart(
         path=output_path,
-        title="Optimized Adaptive ARE: False Positive Rate vs Space",
+        title="Range Emptiness Filters Comparison: FPR vs Space",
         x_label="Bits per Key (bpk)",
         y_label="False Positive Rate (FPR)",
         series=series,
@@ -61,13 +74,7 @@ def main():
         log_y=True
     )
     
-    print(f"Final tradeoff plot generated: {output_path}")
-    
-    # Cleanup old PNG if it exists
-    old_png = "bench_results/plots/are_optimized_tradeoff.png"
-    if os.path.exists(old_png):
-        os.remove(old_png)
-        print(f"Removed old PNG: {old_png}")
+    print(f"Comparison plot generated: {output_path}")
 
 if __name__ == "__main__":
     main()
