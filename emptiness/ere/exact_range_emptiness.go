@@ -18,7 +18,7 @@ type ExactRangeEmptiness struct {
 
 	n         int
 	numBlocks int
-	L         uint32
+	KeySize   uint32
 	k         uint32
 	w         uint32
 }
@@ -26,7 +26,7 @@ type ExactRangeEmptiness struct {
 func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*ExactRangeEmptiness, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ExactRangeEmptiness{n: 0}, nil
+		return &ExactRangeEmptiness{n: 0, KeySize: universe.Size()}, nil
 	}
 
 	for i := 1; i < n; i++ {
@@ -41,11 +41,11 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	}
 
 	numBlocks := 1 << k
-	L := universe.Size()
-	if L < k {
-		L = k
+	KeySize := universe.Size()
+	if KeySize < k {
+		KeySize = k
 	}
-	w := L - k
+	w := KeySize - k
 
 	D1 := rsdic.New()
 	D2 := rsdic.New()
@@ -55,7 +55,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	for b := 0; b < numBlocks; b++ {
 		countInBlock := 0
 		for i < n && GetBlockIndex(keys[i], k) == uint64(b) {
-			suffixes = append(suffixes, extractSuffixAsUint64(keys[i], L, w))
+			suffixes = append(suffixes, extractSuffixAsUint64(keys[i], KeySize, w))
 			countInBlock++
 			i++
 		}
@@ -80,7 +80,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 		packedData: packed,
 		n:          n,
 		numBlocks:  numBlocks,
-		L:          L,
+		KeySize:    KeySize,
 		k:          k,
 		w:          w,
 	}, nil
@@ -98,10 +98,10 @@ func GetBlockIndex(x bits.BitString, k uint32) uint64 {
 	return idx
 }
 
-func extractSuffixAsUint64(bs bits.BitString, L, w uint32) uint64 {
+func extractSuffixAsUint64(bs bits.BitString, KeySize, w uint32) uint64 {
 	var val uint64
 	size := bs.Size()
-	k := L - w
+	k := KeySize - w
 	// Bit k is MSB of suffix
 	for i := uint32(0); i < w; i++ {
 		pos := k + i
@@ -144,8 +144,8 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	if blockA == blockB {
 		if ere.D1.Bit(blockA) {
 			start, end := ere.getBlockRange(blockA)
-			suffA := extractSuffixAsUint64(a, ere.L, ere.w)
-			suffB := extractSuffixAsUint64(b, ere.L, ere.w)
+			suffA := extractSuffixAsUint64(a, ere.KeySize, ere.w)
+			suffB := extractSuffixAsUint64(b, ere.KeySize, ere.w)
 			if !ere.isRangeEmptyInBlock(start, end, suffA, suffB) {
 				return false
 			}
@@ -154,7 +154,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		// Check blockA for elements in [suffA, max]
 		if ere.D1.Bit(blockA) {
 			start, end := ere.getBlockRange(blockA)
-			suffA := extractSuffixAsUint64(a, ere.L, ere.w)
+			suffA := extractSuffixAsUint64(a, ere.KeySize, ere.w)
 			maxSuff := (uint64(1) << ere.w) - 1
 			if ere.w == 64 {
 				maxSuff = ^uint64(0)
@@ -166,7 +166,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		// Check blockB for elements in [0, suffB]
 		if ere.D1.Bit(blockB) {
 			start, end := ere.getBlockRange(blockB)
-			suffB := extractSuffixAsUint64(b, ere.L, ere.w)
+			suffB := extractSuffixAsUint64(b, ere.KeySize, ere.w)
 			if !ere.isRangeEmptyInBlock(start, end, 0, suffB) {
 				return false
 			}
@@ -238,6 +238,17 @@ func (ere *ExactRangeEmptiness) ByteSize() int {
 	size += ere.D2.AllocSize()
 	size += len(ere.packedData) * 8
 	return size
+}
+
+func (ere *ExactRangeEmptiness) SizeInBits() uint64 {
+	if ere == nil || ere.n == 0 {
+		return 0
+	}
+	// RSDic internal size + packed data
+	d1Bits := uint64(ere.numBlocks)
+	d2Bits := uint64(ere.n + ere.numBlocks)
+	suffixBits := uint64(ere.n) * uint64(ere.w)
+	return d1Bits + d2Bits + suffixBits
 }
 
 type Stats struct {
