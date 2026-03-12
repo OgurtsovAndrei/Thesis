@@ -102,6 +102,24 @@ func (bs BitString) ShiftRight(t uint32) BitString {
 	return result
 }
 
+func (bs BitString) BitLength() uint32 {
+	if bs.sizeBits == 0 {
+		return 0
+	}
+	for i := int(len(bs.data)) - 1; i >= 0; i-- {
+		w := bs.data[i]
+		// Handle masking for the last word
+		if i == int(len(bs.data)-1) && bs.sizeBits%64 != 0 {
+			mask := (uint64(1) << (bs.sizeBits % 64)) - 1
+			w &= mask
+		}
+		if w != 0 {
+			return uint32(i*64) + uint32(64-bits.LeadingZeros64(w))
+		}
+	}
+	return 0
+}
+
 func (bs BitString) Word(i uint32) uint64 {
 	if i >= uint32(len(bs.data)) {
 		return 0
