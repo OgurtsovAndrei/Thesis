@@ -22,10 +22,12 @@ func toKBitString(val uint64, K uint32) bits.BitString {
 	}
 	var reversed uint64
 	for i := uint32(0); i < K; i++ {
+		// Extract bit (63-i) from val and put it into bit i of reversed
 		if (val & (uint64(1) << (63 - i))) != 0 {
 			reversed |= (uint64(1) << i)
 		}
 	}
+	// Now index 0 of BitString will contain numeric bit 63.
 	return bits.NewFromUint64(reversed).Prefix(int(K))
 }
 
@@ -38,31 +40,25 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 	val := (2.0 * float64(n)) / epsilon
 	K := uint32(math.Ceil(math.Log2(val)))
 	if K == 0 { K = 1 }
-	if K > 64 { K = 64 }
+	if K > 64 {
+		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
+	}
 
 	truncatedKeys := make([]bits.BitString, 0, n)
 	var lastKey bits.BitString
-	
 	for i, k := range keys {
-		// IMPORTANT: We must convert keys to MSB-first BitStrings of length K
-		// Since input keys might be LSB-first from NewFromUint64, we need to be careful.
-		// For this implementation, we assume keys are already in a consistent bit order or we re-map them.
-		
-		// To be safe and consistent with IsEmpty, let's use a helper if they are uint64-based.
-		// But here keys is []bits.BitString. Let's assume they are standard.
-		trunc := k
-		if trunc.Size() > K {
-			trunc = trunc.Prefix(int(K))
-		}
+		// CRITICAL FIX: Ensure MSB-first order by using toKBitString
+		// We extract the original uint64 value and re-map it to MSB-first BitString
+		val := k.Word(0)
+		trunc := toKBitString(val, K)
 		
 		if i == 0 || trunc.Compare(lastKey) > 0 {
 			truncatedKeys = append(truncatedKeys, trunc)
 			lastKey = trunc
 		} else if trunc.Compare(lastKey) == 0 {
-			// Skip duplicates after truncation
-			continue
+			continue // Skip duplicates
 		} else {
-			return nil, fmt.Errorf("keys must be sorted")
+			return nil, fmt.Errorf("keys must be sorted (numeric order)")
 		}
 	}
 
@@ -78,10 +74,9 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	if are.exact == nil { return true }
 	
-	truncA := a
-	if truncA.Size() > are.K { truncA = truncA.Prefix(int(are.K)) }
-	truncB := b
-	if truncB.Size() > are.K { truncB = truncB.Prefix(int(are.K)) }
+	// Ensure query keys also follow MSB-first order
+	truncA := toKBitString(a.Word(0), are.K)
+	truncB := toKBitString(b.Word(0), are.K)
 
 	return are.exact.IsEmpty(truncA, truncB)
 }
@@ -100,9 +95,5 @@ func (are *ApproximateRangeEmptiness) MemDetailed() utils.MemReport {
 	if are == nil || are.exact == nil {
 		return utils.MemReport{Name: "ApproximateRangeEmptiness", TotalBytes: 0}
 	}
-	return utils.MemReport{
-		Name:       "ApproximateRangeEmptiness",
-		TotalBytes: are.ByteSize(),
-		Children:   []utils.MemReport{are.exact.MemDetailed()},
-	}
+	return are.exact.MemDetailed()
 }
