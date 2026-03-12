@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	testRuns            = 1000
-	minN                = 100
-	maxExtraN           = 5000
-	fixedBitLen         = 64
+	testRuns           = 1_000
+	minN               = 100
+	maxExtraN          = 5000
+	fixedBitLen        = 64
 	rangeQueriesPerRun = 10
 )
 
@@ -89,7 +89,7 @@ func TestERE_Property_BlockBoundaries(t *testing.T) {
 		for b := uint64(0); b < uint64(ere.numBlocks-1) && found < 5; b++ {
 			if ere.D1.Bit(b) && ere.D1.Bit(b+1) {
 				_, endB := ere.getBlockRange(b)
-				startB1, _ := ere.getBlockRange(b+1)
+				startB1, _ := ere.getBlockRange(b + 1)
 				a, b := keys[endB-1], keys[startB1]
 				if ere.IsEmpty(a, b) {
 					t.Errorf("Boundary range [%v, %v] failed", a, b)
@@ -117,12 +117,12 @@ func TestERE_Property_HeavyBucket(t *testing.T) {
 			t.Parallel()
 			rng := rand.New(rand.NewSource(int64(i + 400)))
 			n := 500
-			
+
 			// Force same 10-bit prefix for all keys
 			// This matches k = 10 for n=500
 			k := uint32(10)
 			fixedPrefix := (rng.Uint64() & ((1 << k) - 1)) << (64 - k)
-			
+
 			keySet := make(map[uint64]bool)
 			sortedKeys := make([]bits.BitString, 0, n)
 			for len(keySet) < n {
@@ -172,6 +172,8 @@ func runParallelERE(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys
 }
 
 func min(a, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

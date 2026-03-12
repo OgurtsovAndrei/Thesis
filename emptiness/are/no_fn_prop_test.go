@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	testRuns            = 1000
-	minN                = 100
-	maxExtraN           = 5000
-	targetEpsilon       = 0.001
+	testRuns      = 1_000
+	minN          = 100
+	maxExtraN     = 5000
+	targetEpsilon = 0.001
 )
 
 func setupAREData(rng *rand.Rand, n, bl int) ([]bits.BitString, *ApproximateRangeEmptiness, error) {
@@ -116,6 +116,8 @@ func randomBitString(rng *rand.Rand, bitLen int) bits.BitString {
 }
 
 func min(a, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

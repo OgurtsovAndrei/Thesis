@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	testRuns      = 100
+	testRuns      = 1_000
 	minN          = 100
 	maxExtraN     = 1000
 	targetEpsilon = 0.001
@@ -72,7 +72,7 @@ func TestSODA_Property_SpanningRanges(t *testing.T) {
 			idx1 := rng.Intn(n - 5)
 			idx2 := idx1 + 1 + rng.Intn(min(n-idx1-1, 50))
 			a, b := keys[idx1], keys[idx2]
-			if b - a > maxQueryLen {
+			if b-a > maxQueryLen {
 				b = a + maxQueryLen // constrain query length
 			}
 			if b >= keys[idx1] && filter.IsEmpty(a, b) {
@@ -98,6 +98,8 @@ func runParallelSoda(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, key
 }
 
 func min(a, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }
