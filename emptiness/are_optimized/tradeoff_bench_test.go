@@ -13,7 +13,7 @@ import (
 func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 	n := 10000
 	rangeLen := uint64(100)
-	queryCount := 50000 
+	queryCount := 100000 
 
 	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
 
@@ -27,14 +27,14 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 	for _, eps := range epsilons {
 		r := rand.New(rand.NewSource(42))
 		
-		gap := uint64(1000000000000)
+		// Use a large but non-overflowing gap
+		// 10^14 * 10^4 = 10^18 < 2^64 (~1.8*10^19)
+		gap := uint64(100000000000000)
 		
 		uniformKeysBS := make([]bits.BitString, n)
-		uniformKeysU64 := make([]uint64, n)
 		for i := 0; i < n; i++ {
 			val := r.Uint64()
 			uniformKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
-			uniformKeysU64[i] = val
 		}
 		
 		seqKeysBS := make([]bits.BitString, n)
@@ -46,53 +46,65 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 		}
 
 		// --- 1. Optimized Adaptive ARE ---
-		filterOpt, _ := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
-		bpkOpt := float64(filterOpt.SizeInBits()) / float64(n)
-		
-		filterOptUnif, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
-		fpOptUnif := 0
-		for i := 0; i < queryCount; i++ {
-			a, b := r.Uint64(), r.Uint64()
-			if a > b { a, b = b, a }
-			if b - a > rangeLen { b = a + uint64(r.Intn(int(rangeLen))) }
-			if filterOptUnif.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-				fpOptUnif++
+		filterOpt, err := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
+		bpkOpt := 0.0
+		fprOptUnif := 0.0
+		fprOptSeq := 0.0
+		if err == nil && filterOpt != nil {
+			bpkOpt = float64(filterOpt.SizeInBits()) / float64(n)
+			
+			filterOptUnif, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
+			fpOptUnif := 0
+			for i := 0; i < queryCount; i++ {
+				a, b := r.Uint64(), r.Uint64()
+				if a > b { a, b = b, a }
+				if b - a > rangeLen { b = a + uint64(r.Intn(int(rangeLen))) }
+				if filterOptUnif.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
+					fpOptUnif++
+				}
 			}
-		}
-		fprOptUnif := float64(fpOptUnif) / float64(queryCount)
+			fprOptUnif = float64(fpOptUnif) / float64(queryCount)
 
-		fpOptSeq := 0
-		for i := 0; i < queryCount; i++ {
-			a := uint64(r.Intn(n-1)) * gap + gap/2
-			b := a + uint64(r.Intn(int(rangeLen)))
-			if filterOpt.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
-				fpOptSeq++
+			fpOptSeq := 0
+			for i := 0; i < queryCount; i++ {
+				keyIdx := r.Intn(n-1)
+				a := uint64(keyIdx)*gap + 1
+				b := a + uint64(r.Intn(int(rangeLen)))
+				if filterOpt.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
+					fpOptSeq++
+				}
 			}
+			fprOptSeq = float64(fpOptSeq) / float64(queryCount)
 		}
-		fprOptSeq := float64(fpOptSeq) / float64(queryCount)
 
 		// --- 2. Original SODA ARE ---
-		filterSoda, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
-		bpkSoda := float64(filterSoda.SizeInBits()) / float64(n)
-		fpSodaSeq := 0
-		for i := 0; i < queryCount; i++ {
-			a := uint64(r.Intn(n-1)) * gap + gap/2
-			b := a + uint64(r.Intn(int(rangeLen)))
-			if filterSoda.IsEmpty(a, b) == false {
-				fpSodaSeq++
+		filterSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
+		bpkSoda := 0.0
+		fprSodaSeq := 0.0
+		if errSoda == nil && filterSoda != nil {
+			bpkSoda = float64(filterSoda.SizeInBits()) / float64(n)
+			fpSodaSeq := 0
+			for i := 0; i < queryCount; i++ {
+				keyIdx := r.Intn(n-1)
+				a := uint64(keyIdx)*gap + 1
+				b := a + uint64(r.Intn(int(rangeLen)))
+				if filterSoda.IsEmpty(a, b) == false {
+					fpSodaSeq++
+				}
 			}
+			fprSodaSeq = float64(fpSodaSeq) / float64(queryCount)
 		}
-		fprSodaSeq := float64(fpSodaSeq) / float64(queryCount)
 
-		// --- 3. Truncation ARE (Handle possible errors gracefully) ---
+		// --- 3. Truncation ARE ---
+		filterTrunc, errTrunc := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
 		bpkTrunc := 0.0
 		fprTruncSeq := 0.0
-		filterTrunc, err := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
-		if err == nil && filterTrunc != nil {
+		if errTrunc == nil && filterTrunc != nil {
 			bpkTrunc = float64(filterTrunc.SizeInBits()) / float64(n)
 			fpTruncSeq := 0
 			for i := 0; i < queryCount; i++ {
-				a := uint64(r.Intn(n-1)) * gap + gap/2
+				keyIdx := r.Intn(n-1)
+				a := uint64(keyIdx)*gap + 1
 				b := a + uint64(r.Intn(int(rangeLen)))
 				if filterTrunc.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64)) == false {
 					fpTruncSeq++
