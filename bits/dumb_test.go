@@ -1,6 +1,7 @@
 package bits
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -374,6 +375,120 @@ func TestBitStringJunkBits(t *testing.T) {
 	allZeroClean := NewFromBinary("0000000000")
 	require.True(t, allZeroPrefix.Predecessor().Equal(allZeroClean.Predecessor()), "Predecessor on all-zero prefix should match clean")
 	require.True(t, allZeroPrefix.Predecessor().IsAllZeros(), "Predecessor of all-zeros should remain all-zeros")
+}
+
+func TestTrieSubAdd(t *testing.T) {
+	t.Parallel()
+
+	t.Run("basic subtraction", func(t *testing.T) {
+		// "1010" - "1000" = "0010" in trie (bit 0 = MSB)
+		// Trie value: 1010=10, 1000=8, diff=2=0010
+		a := NewFromBinary("1010")
+		b := NewFromBinary("1000")
+		diff := a.Sub(b)
+		require.Equal(t, "0010", binaryString(diff))
+	})
+
+	t.Run("basic addition", func(t *testing.T) {
+		// "1000" + "0010" = "1010" in trie
+		a := NewFromBinary("1000")
+		b := NewFromBinary("0010")
+		sum := a.Add(b)
+		require.Equal(t, "1010", binaryString(sum))
+	})
+
+	t.Run("sub then add roundtrip", func(t *testing.T) {
+		cases := []struct{ a, b string }{
+			{"1010", "0010"},
+			{"1111", "0001"},
+			{"1100", "0100"},
+			{"10000000", "00000001"},
+			{"11111111", "10101010"},
+		}
+		for _, tc := range cases {
+			a := NewFromBinary(tc.a)
+			b := NewFromBinary(tc.b)
+			require.True(t, a.Compare(b) >= 0, "%s should be >= %s by Compare", tc.a, tc.b)
+
+			diff := a.Sub(b)
+			sum := diff.Add(b)
+			require.True(t, sum.Equal(a), "(%s - %s) + %s should == %s, got %s", tc.a, tc.b, tc.b, a, sum)
+		}
+	})
+
+	t.Run("sub preserves Compare ordering", func(t *testing.T) {
+		// If a > b > c by Compare, then a-c > b-c by Compare
+		a := NewFromBinary("11100000")
+		b := NewFromBinary("10100000")
+		c := NewFromBinary("01000000")
+		require.Greater(t, a.Compare(b), 0)
+		require.Greater(t, b.Compare(c), 0)
+
+		ac := a.Sub(c)
+		bc := b.Sub(c)
+		require.Greater(t, ac.Compare(bc), 0, "(a-c) should be > (b-c) by Compare")
+	})
+
+	t.Run("multi-word", func(t *testing.T) {
+		// 65-bit values: carry must cross word boundary
+		a := NewFromBinary("1" + strings.Repeat("0", 64)) // bit0=1, rest 0; trie value = 2^64
+		b := NewFromBinary("0" + strings.Repeat("0", 63) + "1") // bit64=1; trie value = 1
+		diff := a.Sub(b)
+		// 2^64 - 1 = trie "0" + 63 "1"s + "1" = all ones except bit 0
+		expected := NewFromBinary("0" + strings.Repeat("1", 64))
+		require.True(t, diff.Equal(expected), "multi-word Sub failed: got %s", diff)
+	})
+}
+
+func TestTrieUint64(t *testing.T) {
+	t.Parallel()
+
+	t.Run("basic", func(t *testing.T) {
+		bs := NewFromBinary("1010") // trie: bit0=1(MSB)=8, bit1=0, bit2=1=2, bit3=0 → 10
+		require.Equal(t, uint64(10), bs.TrieUint64())
+	})
+
+	t.Run("roundtrip", func(t *testing.T) {
+		for K := uint32(1); K <= 16; K++ {
+			for val := uint64(0); val < (1 << K); val++ {
+				bs := NewFromTrieUint64(val, K)
+				require.Equal(t, K, bs.SizeBits(), "size mismatch for val=%d K=%d", val, K)
+				require.Equal(t, val, bs.TrieUint64(), "roundtrip failed for val=%d K=%d", val, K)
+			}
+		}
+	})
+
+	t.Run("ordering preserved", func(t *testing.T) {
+		K := uint32(10)
+		for a := uint64(0); a < 100; a++ {
+			for b := a + 1; b < 100; b++ {
+				bsA := NewFromTrieUint64(a, K)
+				bsB := NewFromTrieUint64(b, K)
+				require.Less(t, bsA.Compare(bsB), 0,
+					"NewFromTrieUint64(%d) should be < NewFromTrieUint64(%d) by Compare", a, b)
+			}
+		}
+	})
+}
+
+func TestSuffix(t *testing.T) {
+	t.Parallel()
+	bs := NewFromBinary("11001010")
+	suf := bs.Suffix(3)
+	require.Equal(t, uint32(3), suf.SizeBits())
+	require.Equal(t, "010", binaryString(suf))
+}
+
+func binaryString(bs BitString) string {
+	var sb strings.Builder
+	for i := uint32(0); i < bs.sizeBits; i++ {
+		if bs.At(i) {
+			sb.WriteByte('1')
+		} else {
+			sb.WriteByte('0')
+		}
+	}
+	return sb.String()
 }
 
 func TestPredecessorSuccessorRoundTrip(t *testing.T) {
