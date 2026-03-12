@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960.0" height="540.0" viewBox="0 0 960.0 540.0">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#ddd;stroke-width:1} .label{font-size:11px;fill:#444}</style>
+<text x="480.0" y="26" text-anchor="middle">Optimized Adaptive ARE: False Positive Rate vs Space</text>
+<line class="axis" x1="90.0" y1="465.0" x2="920.0" y2="465.0" />
+<line class="axis" x1="90.0" y1="55.0" x2="90.0" y2="465.0" />
+<line class="grid" x1="90.0" y1="465.00" x2="920.0" y2="465.00" />
+<text class="label" x="82.0" y="469.00" text-anchor="end">10^-7</text>
+<line class="grid" x1="90.0" y1="406.43" x2="920.0" y2="406.43" />
+<text class="label" x="82.0" y="410.43" text-anchor="end">10^-6</text>
+<line class="grid" x1="90.0" y1="347.86" x2="920.0" y2="347.86" />
+<text class="label" x="82.0" y="351.86" text-anchor="end">10^-5</text>
+<line class="grid" x1="90.0" y1="289.29" x2="920.0" y2="289.29" />
+<text class="label" x="82.0" y="293.29" text-anchor="end">10^-4</text>
+<line class="grid" x1="90.0" y1="230.71" x2="920.0" y2="230.71" />
+<text class="label" x="82.0" y="234.71" text-anchor="end">10^-3</text>
+<line class="grid" x1="90.0" y1="172.14" x2="920.0" y2="172.14" />
+<text class="label" x="82.0" y="176.14" text-anchor="end">10^-2</text>
+<line class="grid" x1="90.0" y1="113.57" x2="920.0" y2="113.57" />
+<text class="label" x="82.0" y="117.57" text-anchor="end">10^-1</text>
+<line class="grid" x1="90.0" y1="55.00" x2="920.0" y2="55.00" />
+<text class="label" x="82.0" y="59.00" text-anchor="end">10^0</text>
+<line class="grid" x1="90.00" y1="55.0" x2="90.00" y2="465.0" />
+<text class="label" x="90.00" y="485.0" text-anchor="middle">13.6</text>
+<line class="grid" x1="173.27" y1="55.0" x2="173.27" y2="465.0" />
+<text class="label" x="173.27" y="485.0" text-anchor="middle">14.6</text>
+<line class="grid" x1="256.12" y1="55.0" x2="256.12" y2="465.0" />
+<text class="label" x="256.12" y="485.0" text-anchor="middle">15.6</text>
+<line class="grid" x1="339.21" y1="55.0" x2="339.21" y2="465.0" />
+<text class="label" x="339.21" y="485.0" text-anchor="middle">16.6</text>
+<line class="grid" x1="422.18" y1="55.0" x2="422.18" y2="465.0" />
+<text class="label" x="422.18" y="485.0" text-anchor="middle">17.6</text>
+<line class="grid" x1="505.15" y1="55.0" x2="505.15" y2="465.0" />
+<text class="label" x="505.15" y="485.0" text-anchor="middle">18.6</text>
+<line class="grid" x1="588.12" y1="55.0" x2="588.12" y2="465.0" />
+<text class="label" x="588.12" y="485.0" text-anchor="middle">19.6</text>
+<line class="grid" x1="671.09" y1="55.0" x2="671.09" y2="465.0" />
+<text class="label" x="671.09" y="485.0" text-anchor="middle">20.6</text>
+<line class="grid" x1="837.03" y1="55.0" x2="837.03" y2="465.0" />
+<text class="label" x="837.03" y="485.0" text-anchor="middle">22.6</text>
+<line class="grid" x1="920.00" y1="55.0" x2="920.00" y2="465.0" />
+<text class="label" x="920.00" y="485.0" text-anchor="middle">23.6</text>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2.5" points="90.00,162.97 173.27,179.39 256.12,195.45 339.21,214.93 422.18,224.63 505.15,238.03 588.12,256.01 671.09,264.98 837.03,270.41 920.00,270.41" />
+<circle cx="90.00" cy="162.97" r="3.5" fill="#2a7fff" />
+<circle cx="173.27" cy="179.39" r="3.5" fill="#2a7fff" />
+<circle cx="256.12" cy="195.45" r="3.5" fill="#2a7fff" />
+<circle cx="339.21" cy="214.93" r="3.5" fill="#2a7fff" />
+<circle cx="422.18" cy="224.63" r="3.5" fill="#2a7fff" />
+<circle cx="505.15" cy="238.03" r="3.5" fill="#2a7fff" />
+<circle cx="588.12" cy="256.01" r="3.5" fill="#2a7fff" />
+<circle cx="671.09" cy="264.98" r="3.5" fill="#2a7fff" />
+<circle cx="837.03" cy="270.41" r="3.5" fill="#2a7fff" />
+<circle cx="920.00" cy="270.41" r="3.5" fill="#2a7fff" />
+<line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
+<text class="label" x="122.0" y="71.0">Uniform Data (Empirical)</text>
+<polyline fill="none" stroke="#e4572e" stroke-width="2.5" points="90.00,465.00 173.27,465.00 256.12,465.00 339.21,465.00 422.18,465.00 505.15,465.00 588.12,465.00 671.09,465.00 837.03,465.00 920.00,465.00" />
+<circle cx="90.00" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="173.27" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="256.12" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="339.21" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="422.18" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="505.15" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="588.12" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="671.09" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="837.03" cy="465.00" r="3.5" fill="#e4572e" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#e4572e" />
+<line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#e4572e" stroke-width="2.5" />
+<text class="label" x="122.0" y="89.0">Sequential Data (Empirical)</text>
+<polyline fill="none" stroke="#22a06b" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,113.57 173.27,131.20 256.12,154.51 339.21,172.14 422.18,189.77 505.15,213.08 588.12,230.71 671.09,248.35 837.03,271.65 920.00,289.29" />
+<circle cx="90.00" cy="113.57" r="3.5" fill="#22a06b" />
+<circle cx="173.27" cy="131.20" r="3.5" fill="#22a06b" />
+<circle cx="256.12" cy="154.51" r="3.5" fill="#22a06b" />
+<circle cx="339.21" cy="172.14" r="3.5" fill="#22a06b" />
+<circle cx="422.18" cy="189.77" r="3.5" fill="#22a06b" />
+<circle cx="505.15" cy="213.08" r="3.5" fill="#22a06b" />
+<circle cx="588.12" cy="230.71" r="3.5" fill="#22a06b" />
+<circle cx="671.09" cy="248.35" r="3.5" fill="#22a06b" />
+<circle cx="837.03" cy="271.65" r="3.5" fill="#22a06b" />
+<circle cx="920.00" cy="289.29" r="3.5" fill="#22a06b" />
+<line x1="100.0" y1="103.0" x2="116.0" y2="103.0" stroke="#22a06b" stroke-width="2.5" stroke-dasharray="10,6" />
+<text class="label" x="122.0" y="107.0">Target Epsilon (Theoretical)</text>
+<text class="label" x="480.0" y="522.0" text-anchor="middle">Bits per Key (bpk)</text>
+<text class="label" transform="translate(20,270.0) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
+</svg>
