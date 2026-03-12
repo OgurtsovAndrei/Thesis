@@ -11,7 +11,7 @@ import (
 )
 
 func TestTradeoff_FPR_vs_BPK(t *testing.T) {
-	n := 10000 
+	n := 5000 
 	rangeLen := uint64(100)
 	queryCount := 50000 
 
@@ -24,15 +24,15 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 		"BPK_Soda,FPR_Soda_Unif,FPR_Soda_Seq,"+
 		"BPK_Trunc,FPR_Trunc_Unif,FPR_Trunc_Seq")
 
-	fmt.Printf("%-6s | %-6s | %-10s | %-10s | %-10s | %-10s\n", "Eps", "BPK", "Opt_Seq", "Soda_Seq", "Trunc_Seq", "Trunc_Unif")
+	fmt.Printf("%-6s | %-6s | %-10s | %-10s | %-10s | %-10s\n", "Eps", "BPK", "Opt_Unif", "Opt_Seq", "Trunc_Unif", "Trunc_Seq")
 	fmt.Println("---------------------------------------------------------------------------------------")
 
 	for _, eps := range epsilons {
 		r := rand.New(rand.NewSource(42))
 		
-		// To BREAK normalization: first key at 0, others at 2^60
-		base := uint64(1) << 60
-		gap := uint64(200)
+		// Large gap but query is inside the prefix of the key
+		gap := uint64(10000000000)
+		base := uint64(1) << 60 
 		
 		uniformKeysBS := make([]bits.BitString, n)
 		uniformKeysU64 := make([]uint64, n)
@@ -44,9 +44,7 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 		
 		seqKeysBS := make([]bits.BitString, n)
 		seqKeysU64 := make([]uint64, n)
-		seqKeysBS[0] = bits.NewFromUint64WithLength(0, 64)
-		seqKeysU64[0] = 0
-		for i := 1; i < n; i++ {
+		for i := 0; i < n; i++ {
 			val := base + uint64(i)*gap
 			seqKeysBS[i] = bits.NewFromUint64WithLength(val, 64)
 			seqKeysU64[i] = val
@@ -60,7 +58,7 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 					a = r.Uint64()
 					b = a + uint64(r.Intn(int(rangeLen)))
 				} else {
-					keyIdx := r.Intn(n - 2) + 1 // Pick from keys at 'base'
+					keyIdx := r.Intn(n - 1)
 					a = base + uint64(keyIdx)*gap + 1 
 					b = a + rangeLen
 				}
@@ -73,8 +71,8 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 		var bpkOpt, fprOptUnif, fprOptSeq float64
 		fOptU, _ := NewOptimizedARE(uniformKeysBS, rangeLen, eps, 0)
 		fOptS, _ := NewOptimizedARE(seqKeysBS, rangeLen, eps, 0)
-		if fOptS != nil {
-			bpkOpt = float64(fOptS.SizeInBits()) / float64(n)
+		if fOptU != nil && fOptS != nil {
+			bpkOpt = float64(fOptU.SizeInBits()) / float64(n)
 			fprOptUnif = measure(true, func(a, b uint64) bool {
 				return fOptU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
 			})
@@ -87,30 +85,30 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 		var bpkSoda, fprSodaUnif, fprSodaSeq float64
 		fSodaU, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(uniformKeysU64, rangeLen, eps)
 		fSodaS, _ := are_soda_hash.NewApproximateRangeEmptinessSoda(seqKeysU64, rangeLen, eps)
-		if fSodaS != nil {
-			bpkSoda = float64(fSodaS.SizeInBits()) / float64(n)
+		if fSodaU != nil && fSodaS != nil {
+			bpkSoda = float64(fSodaU.SizeInBits()) / float64(n)
 			fprSodaUnif = measure(true, func(a, b uint64) bool { return fSodaU.IsEmpty(a, b) })
 			fprSodaSeq = measure(false, func(a, b uint64) bool { return fSodaS.IsEmpty(a, b) })
 		}
 
 		// 3. Truncation
 		var bpkTrunc, fprTruncUnif, fprTruncSeq float64
-		fTruncU, _ := are.NewApproximateRangeEmptiness(uniformKeysBS, eps)
-		fTruncS, _ := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
-		if fTruncU != nil {
+		fTruncU, errU := are.NewApproximateRangeEmptiness(uniformKeysBS, eps)
+		fTruncS, errS := are.NewApproximateRangeEmptiness(seqKeysBS, eps)
+		if errU == nil && fTruncU != nil {
 			bpkTrunc = float64(fTruncU.SizeInBits()) / float64(n)
 			fprTruncUnif = measure(true, func(a, b uint64) bool {
 				return fTruncU.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
 			})
 		}
-		if fTruncS != nil {
+		if errS == nil && fTruncS != nil {
 			fprTruncSeq = measure(false, func(a, b uint64) bool {
 				return fTruncS.IsEmpty(bits.NewFromUint64WithLength(a, 64), bits.NewFromUint64WithLength(b, 64))
 			})
 		}
 
 		fmt.Printf("%-6.3f | %-6.2f | %-10.4f | %-10.4f | %-10.4f | %-10.4f\n", 
-			eps, bpkOpt, fprOptSeq, fprSodaSeq, fprTruncSeq, fprTruncUnif)
+			eps, bpkOpt, fprOptUnif, fprOptSeq, fprTruncUnif, fprTruncSeq)
 		
 		fmt.Fprintf(f, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
 			eps, bpkOpt, fprOptUnif, fprOptSeq, bpkSoda, fprSodaUnif, fprSodaSeq, bpkTrunc, fprTruncUnif, fprTruncSeq)
