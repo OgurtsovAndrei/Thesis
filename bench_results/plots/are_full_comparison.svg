@@ -43,14 +43,14 @@
 <circle cx="920.00" cy="261.34" r="3.5" fill="#2a7fff" />
 <line x1="100.0" y1="67.0" x2="116.0" y2="67.0" stroke="#2a7fff" stroke-width="2.5" />
 <text class="label" x="122.0" y="71.0">Adaptive ARE (Unif)</text>
-<polyline fill="none" stroke="#0044aa" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,124.20 228.33,146.13 366.67,159.19 505.00,181.95 643.33,174.94 781.67,224.84 920.00,255.33" />
-<circle cx="90.00" cy="124.20" r="3.5" fill="#0044aa" />
-<circle cx="228.33" cy="146.13" r="3.5" fill="#0044aa" />
-<circle cx="366.67" cy="159.19" r="3.5" fill="#0044aa" />
-<circle cx="505.00" cy="181.95" r="3.5" fill="#0044aa" />
-<circle cx="643.33" cy="174.94" r="3.5" fill="#0044aa" />
-<circle cx="781.67" cy="224.84" r="3.5" fill="#0044aa" />
-<circle cx="920.00" cy="255.33" r="3.5" fill="#0044aa" />
+<polyline fill="none" stroke="#0044aa" stroke-width="2.5" stroke-dasharray="10,6" points="90.00,465.00 228.33,465.00 366.67,465.00 505.00,465.00 643.33,465.00 781.67,465.00 920.00,465.00" />
+<circle cx="90.00" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="228.33" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="366.67" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="505.00" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="643.33" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="781.67" cy="465.00" r="3.5" fill="#0044aa" />
+<circle cx="920.00" cy="465.00" r="3.5" fill="#0044aa" />
 <line x1="100.0" y1="85.0" x2="116.0" y2="85.0" stroke="#0044aa" stroke-width="2.5" stroke-dasharray="10,6" />
 <text class="label" x="122.0" y="89.0">Adaptive ARE (Seq)</text>
 <polyline fill="none" stroke="#22a06b" stroke-width="2.5" points="90.00,143.02 228.33,160.73 366.67,177.19 505.00,197.43 643.33,216.62 781.67,231.23 920.00,248.35" />
