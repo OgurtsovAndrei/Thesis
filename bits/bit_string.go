@@ -33,40 +33,71 @@ func NewFromUint64WithLength(value uint64, sizeBits uint32) BitString {
 	return bs
 }
 
-// Sub subtracts other from bs. Assumes bs >= other and same size.
+// Sub subtracts other from bs using trie-consistent arithmetic.
+// Bit 0 is the most significant digit (consistent with Compare ordering).
+// Assumes bs >= other by Compare and same size.
 func (bs BitString) Sub(other BitString) BitString {
 	if bs.sizeBits != other.sizeBits {
 		panic("BitString sizes must match for subtraction")
 	}
 	result := NewBitString(bs.sizeBits)
 	var borrow uint64
-	for i := 0; i < len(bs.data); i++ {
-		v1 := bs.data[i]
-		v2 := other.data[i]
-		
+	for i := len(bs.data) - 1; i >= 0; i-- {
+		v1 := bits.Reverse64(bs.data[i])
+		v2 := bits.Reverse64(other.data[i])
 		diff, nextBorrow := bits.Sub64(v1, v2, borrow)
-		result.data[i] = diff
+		result.data[i] = bits.Reverse64(diff)
 		borrow = nextBorrow
 	}
 	return result
 }
 
-// Add adds other to bs. Assumes same size.
+// Add adds other to bs using trie-consistent arithmetic.
+// Bit 0 is the most significant digit (consistent with Compare ordering).
+// Assumes same size.
 func (bs BitString) Add(other BitString) BitString {
 	if bs.sizeBits != other.sizeBits {
 		panic("BitString sizes must match for addition")
 	}
 	result := NewBitString(bs.sizeBits)
 	var carry uint64
-	for i := 0; i < len(bs.data); i++ {
-		v1 := bs.data[i]
-		v2 := other.data[i]
-		
+	for i := len(bs.data) - 1; i >= 0; i-- {
+		v1 := bits.Reverse64(bs.data[i])
+		v2 := bits.Reverse64(other.data[i])
 		sum, nextCarry := bits.Add64(v1, v2, carry)
-		result.data[i] = sum
+		result.data[i] = bits.Reverse64(sum)
 		carry = nextCarry
 	}
 	return result
+}
+
+// TrieUint64 interprets the BitString as an integer where bit 0 is the MSB.
+// The returned value is ordered consistently with Compare.
+// Only valid for BitStrings with SizeBits() <= 64.
+func (bs BitString) TrieUint64() uint64 {
+	if bs.sizeBits == 0 {
+		return 0
+	}
+	return bits.Reverse64(bs.Word(0)) >> (64 - bs.sizeBits)
+}
+
+// NewFromTrieUint64 creates a K-bit BitString from an integer value
+// where the MSB of val corresponds to bit 0 of the BitString.
+// Compare ordering on the result matches numeric ordering of val.
+func NewFromTrieUint64(val uint64, K uint32) BitString {
+	if K == 0 {
+		return BitString{}
+	}
+	word := bits.Reverse64(val << (64 - K))
+	return NewFromUint64WithLength(word, K)
+}
+
+// Suffix returns the last k bits of the BitString (the least significant trie characters).
+func (bs BitString) Suffix(k uint32) BitString {
+	if k >= bs.sizeBits {
+		return bs
+	}
+	return bs.ShiftRight(bs.sizeBits - k)
 }
 
 func (bs BitString) ShiftRight(t uint32) BitString {
