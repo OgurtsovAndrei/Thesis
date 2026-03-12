@@ -24,5 +24,7 @@ $$x_1 < x_2 \implies F(x_1) < F(x_2)$$
 - **Query Latency**: Computing $F(x)$ for every `IsEmpty(a, b)` call adds overhead compared to simple bitwise operations.
 - **Data Drift**: If the distribution of incoming keys changes, the model becomes suboptimal, potentially increasing the False Positive Rate.
 
-## 5. Relationship to SODA Hash
-SODA Hash can be viewed as a **stochastic piecewise-constant** approximation of a distribution. Instead of learning the "true" shape of data, it breaks the universe into blocks and applies random shifts to destroy any structured regularities. A true Distribution-Aware approach would be the deterministic, "learned" evolution of this idea.
+## 6. Automatic Resolution Scaling (Zero-Cost Precision)
+Currently, the truncation parameter $t$ is user-defined. A future optimization is to make $t$ adaptive:
+- **Idea**: If the spread $(Max - Min)$ already fits within the target $K$ bits (calculated for $\epsilon$), the filter should automatically set $t=0$.
+- **Benefit**: This provides 100% precision (Exact mode) whenever the data density allows it, without requiring the user to guess the optimal $t$. The filter would only start "losing" precision (increasing $t$) when the data spread exceeds the memory budget.
