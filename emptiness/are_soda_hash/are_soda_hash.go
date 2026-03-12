@@ -97,11 +97,10 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 		return true
 	}
 
-	// Interval length is (b - a + 1). SODA guarantees for length <= RangeLen.
-	if b-a >= are.RangeLen {
-		return false
-	}
-
+	// SODA guarantees accuracy for ranges up to RangeLen.
+	// For much larger ranges (approaching 2^K), FPR will degrade towards 100% 
+	// because full blocks map to the entire hashed universe.
+	
 	rMask := ^uint64(0)
 	if are.K < 64 {
 		rMask = (uint64(1) << are.K) - 1
@@ -118,53 +117,74 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 	}
 
 	if blockA == blockB {
-		// One interval
+		// Case 1: Range is within a single SODA block
 		u := hashBlock(blockA)
 		hA := (u + a) & rMask
 		hB := (u + b) & rMask
 		
-		bsA := toKBitString(hA, are.K)
-		bsB := toKBitString(hB, are.K)
-		return are.ere.IsEmpty(bsA, bsB)
-	} else {
-		// Two intervals
-		uA := hashBlock(blockA)
-		// Calculate max element of blockA avoiding overflow
-		var maxA uint64
-		if are.K == 64 {
-			maxA = ^uint64(0)
+		// Note: SODA is a cyclic shift. If hA > hB, it wraps around r.
+		if hA <= hB {
+			return are.ere.IsEmpty(toKBitString(hA, are.K), toKBitString(hB, are.K))
 		} else {
-			nextBlock := blockA + 1
-			if nextBlock == 1<<(64-are.K) {
-				maxA = ^uint64(0)
-			} else {
-				maxA = (nextBlock << are.K) - 1
+			// Wrapped range [hA, rMask] U [0, hB]
+			if !are.ere.IsEmpty(toKBitString(hA, are.K), toKBitString(rMask, are.K)) {
+				return false
 			}
+			return are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(hB, are.K))
 		}
-		
-		hA_start := (uA + a) & rMask
-		hA_end := (uA + maxA) & rMask
-		bsA_start := toKBitString(hA_start, are.K)
-		bsA_end := toKBitString(hA_end, are.K)
-		if !are.ere.IsEmpty(bsA_start, bsA_end) {
-			return false
-		}
-
-		uB := hashBlock(blockB)
-		var minB uint64
-		if are.K < 64 {
-			minB = blockB << are.K
-		}
-		hB_start := (uB + minB) & rMask
-		hB_end := (uB + b) & rMask
-		bsB_start := toKBitString(hB_start, are.K)
-		bsB_end := toKBitString(hB_end, are.K)
-		if !are.ere.IsEmpty(bsB_start, bsB_end) {
-			return false
-		}
-
-		return true
 	}
+
+	// Case 2: Multi-block range
+	// 2.1 Check suffix of the first block
+	uA := hashBlock(blockA)
+	var maxA uint64
+	if are.K == 64 {
+		maxA = ^uint64(0)
+	} else {
+		maxA = ((blockA + 1) << are.K) - 1
+	}
+	hA_start := (uA + a) & rMask
+	hA_end := (uA + maxA) & rMask
+	if hA_start <= hA_end {
+		if !are.ere.IsEmpty(toKBitString(hA_start, are.K), toKBitString(hA_end, are.K)) {
+			return false
+		}
+	} else {
+		if !are.ere.IsEmpty(toKBitString(hA_start, are.K), toKBitString(rMask, are.K)) ||
+			!are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(hA_end, are.K)) {
+			return false
+		}
+	}
+
+	// 2.2 Check intermediate full blocks
+	// Optimization: If there's any key in the filter, any full block query returns false.
+	// This is because a full block always maps to the entire hashed universe [0, rMask].
+	if blockB > blockA+1 {
+		if !are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(rMask, are.K)) {
+			return false
+		}
+	}
+
+	// 2.3 Check prefix of the last block
+	uB := hashBlock(blockB)
+	var minB uint64
+	if are.K < 64 {
+		minB = blockB << are.K
+	}
+	hB_start := (uB + minB) & rMask
+	hB_end := (uB + b) & rMask
+	if hB_start <= hB_end {
+		if !are.ere.IsEmpty(toKBitString(hB_start, are.K), toKBitString(hB_end, are.K)) {
+			return false
+		}
+	} else {
+		if !are.ere.IsEmpty(toKBitString(hB_start, are.K), toKBitString(rMask, are.K)) ||
+			!are.ere.IsEmpty(toKBitString(0, are.K), toKBitString(hB_end, are.K)) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (are *ApproximateRangeEmptinessSoda) SizeInBits() uint64 {
