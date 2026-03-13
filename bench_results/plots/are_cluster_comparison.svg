@@ -51,6 +51,38 @@
 <rect x="819.0" y="350.3" width="6" height="6" fill="#2a7fff"/>
 <rect x="860.5" y="377.4" width="6" height="6" fill="#2a7fff"/>
 <rect x="902.0" y="420.1" width="6" height="6" fill="#2a7fff"/>
+<polyline fill="none" stroke="#6495ED" stroke-width="2" stroke-dasharray="8,5" points="614.0,188.5 655.6,219.7 697.2,248.8 738.9,284.2 780.4,309.1 822.0,353.3 863.5,380.4"/>
+<rect x="611.0" y="185.5" width="6" height="6" fill="#6495ED"/>
+<rect x="652.6" y="216.7" width="6" height="6" fill="#6495ED"/>
+<rect x="694.2" y="245.8" width="6" height="6" fill="#6495ED"/>
+<rect x="735.9" y="281.2" width="6" height="6" fill="#6495ED"/>
+<rect x="777.4" y="306.1" width="6" height="6" fill="#6495ED"/>
+<rect x="819.0" y="350.3" width="6" height="6" fill="#6495ED"/>
+<rect x="860.5" y="377.4" width="6" height="6" fill="#6495ED"/>
+<polyline fill="none" stroke="#4169E1" stroke-width="2" stroke-dasharray="8,5" points="572.2,160.9 614.0,188.5 655.6,219.7 697.2,248.8 738.9,284.2 780.4,309.1 822.0,353.3"/>
+<rect x="569.2" y="157.9" width="6" height="6" fill="#4169E1"/>
+<rect x="611.0" y="185.5" width="6" height="6" fill="#4169E1"/>
+<rect x="652.6" y="216.7" width="6" height="6" fill="#4169E1"/>
+<rect x="694.2" y="245.8" width="6" height="6" fill="#4169E1"/>
+<rect x="735.9" y="281.2" width="6" height="6" fill="#4169E1"/>
+<rect x="777.4" y="306.1" width="6" height="6" fill="#4169E1"/>
+<rect x="819.0" y="350.3" width="6" height="6" fill="#4169E1"/>
+<polyline fill="none" stroke="#1E3A8A" stroke-width="2" stroke-dasharray="8,5" points="530.6,134.5 572.2,160.9 614.0,188.5 655.6,219.7 697.2,248.8 738.9,284.2 780.4,309.1"/>
+<rect x="527.6" y="131.5" width="6" height="6" fill="#1E3A8A"/>
+<rect x="569.2" y="157.9" width="6" height="6" fill="#1E3A8A"/>
+<rect x="611.0" y="185.5" width="6" height="6" fill="#1E3A8A"/>
+<rect x="652.6" y="216.7" width="6" height="6" fill="#1E3A8A"/>
+<rect x="694.2" y="245.8" width="6" height="6" fill="#1E3A8A"/>
+<rect x="735.9" y="281.2" width="6" height="6" fill="#1E3A8A"/>
+<rect x="777.4" y="306.1" width="6" height="6" fill="#1E3A8A"/>
+<polyline fill="none" stroke="#0F1D45" stroke-width="2" stroke-dasharray="8,5" points="488.6,112.7 530.6,134.5 572.2,160.9 614.0,188.5 655.6,219.7 738.9,284.2 780.4,309.1"/>
+<rect x="485.6" y="109.7" width="6" height="6" fill="#0F1D45"/>
+<rect x="527.6" y="131.5" width="6" height="6" fill="#0F1D45"/>
+<rect x="569.2" y="157.9" width="6" height="6" fill="#0F1D45"/>
+<rect x="611.0" y="185.5" width="6" height="6" fill="#0F1D45"/>
+<rect x="652.6" y="216.7" width="6" height="6" fill="#0F1D45"/>
+<rect x="735.9" y="281.2" width="6" height="6" fill="#0F1D45"/>
+<rect x="777.4" y="306.1" width="6" height="6" fill="#0F1D45"/>
 <polyline fill="none" stroke="#22a06b" stroke-width="2" points="655.6,219.7 697.2,248.8 738.9,284.2 780.4,309.1 822.0,353.3 863.5,380.4 905.0,423.1"/>
 <polygon points="655.6,215.7 659.6,219.7 655.6,223.7 651.6,219.7" fill="#22a06b"/>
 <polygon points="697.2,244.8 701.2,248.8 697.2,252.8 693.2,248.8" fill="#22a06b"/>
@@ -72,13 +104,25 @@
 <text class="label" x="722" y="64">Theoretical</text>
 <line x1="700" y1="78" x2="716" y2="78" stroke="#2a7fff" stroke-width="2"/>
 <rect x="705.0" y="75.0" width="6" height="6" fill="#2a7fff"/>
-<text class="label" x="722" y="82">Adaptive</text>
-<line x1="700" y1="96" x2="716" y2="96" stroke="#22a06b" stroke-width="2"/>
-<polygon points="708.0,92.0 712.0,96.0 708.0,100.0 704.0,96.0" fill="#22a06b"/>
-<text class="label" x="722" y="100">SODA</text>
-<line x1="700" y1="114" x2="716" y2="114" stroke="#e6a800" stroke-width="2"/>
-<polygon points="708.0,110.0 712.0,117.0 704.0,117.0" fill="#e6a800"/>
-<text class="label" x="722" y="118">Truncation</text>
+<text class="label" x="722" y="82">Adaptive (t=0)</text>
+<line x1="700" y1="96" x2="716" y2="96" stroke="#6495ED" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="705.0" y="93.0" width="6" height="6" fill="#6495ED"/>
+<text class="label" x="722" y="100">Adaptive (t=1)</text>
+<line x1="700" y1="114" x2="716" y2="114" stroke="#4169E1" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="705.0" y="111.0" width="6" height="6" fill="#4169E1"/>
+<text class="label" x="722" y="118">Adaptive (t=2)</text>
+<line x1="700" y1="132" x2="716" y2="132" stroke="#1E3A8A" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="705.0" y="129.0" width="6" height="6" fill="#1E3A8A"/>
+<text class="label" x="722" y="136">Adaptive (t=3)</text>
+<line x1="700" y1="150" x2="716" y2="150" stroke="#0F1D45" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="705.0" y="147.0" width="6" height="6" fill="#0F1D45"/>
+<text class="label" x="722" y="154">Adaptive (t=4)</text>
+<line x1="700" y1="168" x2="716" y2="168" stroke="#22a06b" stroke-width="2"/>
+<polygon points="708.0,164.0 712.0,168.0 708.0,172.0 704.0,168.0" fill="#22a06b"/>
+<text class="label" x="722" y="172">SODA</text>
+<line x1="700" y1="186" x2="716" y2="186" stroke="#e6a800" stroke-width="2"/>
+<polygon points="708.0,182.0 712.0,189.0 704.0,189.0" fill="#e6a800"/>
+<text class="label" x="722" y="190">Truncation</text>
 <text x="505" y="590" text-anchor="middle">Bits per Key (BPK)</text>
 <text transform="translate(16,295) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
 </svg>
