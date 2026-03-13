@@ -2,6 +2,8 @@ github.com/SaveTheRbtz/mph v0.1.2 h1:5l3W496Up+7BNOVJQnJhzcGBh+wWfxWdmPUAkx3WmaM
 github.com/SaveTheRbtz/mph v0.1.2/go.mod h1:V4+WtKQPe2+dEA5os1WnGsEB0NR9qgqqgIiSt73+sT4=
 github.com/aelaguiz/mph v0.0.0-20250402012813-21e28ac1cef5 h1:VVVxpStuJHHjrKS8DbrUp02f0Uj0ifKFEOXfMWxXRLo=
 github.com/aelaguiz/mph v0.0.0-20250402012813-21e28ac1cef5/go.mod h1:ikC0AneU0EK45LDXHfbZ2cAbanI8n5f6wYmfFft2ZdU=
+github.com/agnivade/pgm v0.0.0-20210528073050-e2df0d9cb72d h1:HBym5IKqeUtHu8QnvblhGJKjNAPhAQoi522eO80Bp1M=
+github.com/agnivade/pgm v0.0.0-20210528073050-e2df0d9cb72d/go.mod h1:JU0YG39EbGJvO/IV/k167N1znGxyWHeWrsDjLsB3w1I=
 github.com/alecthomas/unsafeslice v0.2.0 h1:iCDDpbohRZvgciXn5jkrpDCKv8fYu66+RivRhe6remQ=
 github.com/alecthomas/unsafeslice v0.2.0/go.mod h1:H7s9N0gAbfiwu02rQEexZbN/YMxm+2l3rVRa/zE2DM8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
