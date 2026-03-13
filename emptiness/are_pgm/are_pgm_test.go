@@ -2,6 +2,7 @@ package are_pgm
 
 import (
 	"Thesis/emptiness/are_soda_hash"
+	"Thesis/testutils"
 	"math/rand"
 	"sort"
 	"testing"
@@ -63,50 +64,26 @@ func TestPGMARE_NoFalseNegatives(t *testing.T) {
 	}
 }
 
-func safeGaussUint64(center uint64, stddev float64, rng *rand.Rand) uint64 {
-	off := rng.NormFloat64() * stddev
-	if off >= 0 {
-		v := center + uint64(off)
-		if v < center { // overflow
-			return ^uint64(0)
-		}
-		return v
+// generateQueries pre-generates a [][2]uint64 slice using a callback query generator.
+func generateQueries(queryGen func(rng *rand.Rand) (uint64, uint64), seed int64, numQueries int) [][2]uint64 {
+	rng := rand.New(rand.NewSource(seed))
+	queries := make([][2]uint64, numQueries)
+	for i := range queries {
+		a, b := queryGen(rng)
+		queries[i] = [2]uint64{a, b}
 	}
-	abs := uint64(-off)
-	if abs > center {
-		return 0
-	}
-	return center - abs
+	return queries
 }
 
-func measureFPR(t *testing.T, filter *PGMApproximateRangeEmptiness, sortedKeys []uint64,
-	queryGen func(rng *rand.Rand) (uint64, uint64), seed int64, numQueries int) (fpr float64, trueEmptyCount int) {
-	rng := rand.New(rand.NewSource(seed))
-	n := len(sortedKeys)
-	fp := 0
-	trueEmpty := 0
-
-	for q := 0; q < numQueries; q++ {
-		a, b := queryGen(rng)
-		if b < a {
-			continue
-		}
-
-		idx := sort.Search(n, func(i int) bool { return sortedKeys[i] >= a })
-		reallyEmpty := idx >= n || sortedKeys[idx] > b
-
-		if reallyEmpty {
-			trueEmpty++
-			if !filter.IsEmpty(a, b) {
-				fp++
-			}
+// countTrueEmpty counts how many queries represent truly empty ranges.
+func countTrueEmpty(sortedKeys []uint64, queries [][2]uint64) int {
+	count := 0
+	for _, q := range queries {
+		if q[1] >= q[0] && testutils.GroundTruth(sortedKeys, q[0], q[1]) {
+			count++
 		}
 	}
-
-	if trueEmpty == 0 {
-		return 0, 0
-	}
-	return float64(fp) / float64(trueEmpty), trueEmpty
+	return count
 }
 
 func TestPGMARE_FPR_Uniform(t *testing.T) {
@@ -130,7 +107,7 @@ func TestPGMARE_FPR_Uniform(t *testing.T) {
 		copy(sorted, keys)
 		sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
 
-		fpr, trueEmpty := measureFPR(t, filter, sorted, func(rng *rand.Rand) (uint64, uint64) {
+		queries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 			a := rng.Uint64() >> 16
 			b := a + rangeLen
 			if b < a {
@@ -139,6 +116,8 @@ func TestPGMARE_FPR_Uniform(t *testing.T) {
 			return a, b
 		}, 999, 100000)
 
+		fpr := testutils.MeasureFPR(sorted, queries, filter.IsEmpty)
+		trueEmpty := countTrueEmpty(sorted, queries)
 		bpk := float64(filter.TotalSizeInBits()) / float64(n)
 
 		t.Logf("Uniform pgmEps=%d: K=%d, FPR=%.4f (target %.4f), BPK=%.2f (ERE=%.2f + CDF=%.2f), trueEmpty=%d",
@@ -158,7 +137,7 @@ func TestPGMARE_FPR_Cluster(t *testing.T) {
 	perCluster := n / len(centers)
 	for _, c := range centers {
 		for j := 0; j < perCluster; j++ {
-			keys = append(keys, safeGaussUint64(c, float64(1<<20), rng))
+			keys = append(keys, testutils.SampleGaussian(c, float64(1<<20), rng))
 		}
 	}
 
@@ -174,13 +153,15 @@ func TestPGMARE_FPR_Cluster(t *testing.T) {
 			t.Fatalf("pgmEps=%d: %v", pgmEps, err)
 		}
 
-		fpr, trueEmpty := measureFPR(t, filter, sorted, func(rng *rand.Rand) (uint64, uint64) {
+		queries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 			center := centers[rng.Intn(len(centers))]
-			a := safeGaussUint64(center, float64(1<<22), rng)
+			a := testutils.SampleGaussian(center, float64(1<<22), rng)
 			b := a + rangeLen
 			return a, b
 		}, 789, 100000)
 
+		fpr := testutils.MeasureFPR(sorted, queries, filter.IsEmpty)
+		trueEmpty := countTrueEmpty(sorted, queries)
 		bpk := float64(filter.TotalSizeInBits()) / float64(n)
 
 		t.Logf("Cluster pgmEps=%d: K=%d, FPR=%.4f (target %.4f), BPK=%.2f (ERE=%.2f + CDF=%.2f), trueEmpty=%d",
@@ -213,7 +194,7 @@ func TestPGMARE_FPR_SmallL_Uniform(t *testing.T) {
 				t.Fatalf("L=%d pgmEps=%d: %v", rangeLen, pgmEps, err)
 			}
 
-			fpr, trueEmpty := measureFPR(t, filter, sorted, func(rng *rand.Rand) (uint64, uint64) {
+			queries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 				a := rng.Uint64() >> 16
 				b := a + rangeLen
 				if b < a {
@@ -222,6 +203,8 @@ func TestPGMARE_FPR_SmallL_Uniform(t *testing.T) {
 				return a, b
 			}, 999, 200000)
 
+			fpr := testutils.MeasureFPR(sorted, queries, filter.IsEmpty)
+			trueEmpty := countTrueEmpty(sorted, queries)
 			bpk := float64(filter.TotalSizeInBits()) / float64(n)
 			t.Logf("  pgmEps=%3d: K=%2d, FPR=%.4f (target %.4f), BPK=%.2f (ERE=%.2f + CDF=%.2f), trueEmpty=%d",
 				pgmEps, filter.K, fpr, epsilon, bpk,
@@ -241,7 +224,7 @@ func TestPGMARE_FPR_SmallL_Cluster(t *testing.T) {
 	perCluster := n / len(centers)
 	for _, c := range centers {
 		for j := 0; j < perCluster; j++ {
-			keys = append(keys, safeGaussUint64(c, float64(1<<20), rng))
+			keys = append(keys, testutils.SampleGaussian(c, float64(1<<20), rng))
 		}
 	}
 
@@ -258,13 +241,15 @@ func TestPGMARE_FPR_SmallL_Cluster(t *testing.T) {
 				t.Fatalf("L=%d pgmEps=%d: %v", rangeLen, pgmEps, err)
 			}
 
-			fpr, trueEmpty := measureFPR(t, filter, sorted, func(rng *rand.Rand) (uint64, uint64) {
+			queries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 				center := centers[rng.Intn(len(centers))]
-				a := safeGaussUint64(center, float64(1<<20), rng)
+				a := testutils.SampleGaussian(center, float64(1<<20), rng)
 				b := a + rangeLen
 				return a, b
 			}, 789, 200000)
 
+			fpr := testutils.MeasureFPR(sorted, queries, filter.IsEmpty)
+			trueEmpty := countTrueEmpty(sorted, queries)
 			bpk := float64(filter.TotalSizeInBits()) / float64(n)
 			t.Logf("  pgmEps=%3d: K=%2d, FPR=%.4f (target %.4f), BPK=%.2f (ERE=%.2f + CDF=%.2f), trueEmpty=%d",
 				pgmEps, filter.K, fpr, epsilon, bpk,
@@ -284,7 +269,7 @@ func TestPGMARE_FPR_SmallL_Cluster_Smoothing(t *testing.T) {
 	perCluster := n / len(centers)
 	for _, c := range centers {
 		for j := 0; j < perCluster; j++ {
-			keys = append(keys, safeGaussUint64(c, float64(1<<20), rng))
+			keys = append(keys, testutils.SampleGaussian(c, float64(1<<20), rng))
 		}
 	}
 
@@ -302,13 +287,15 @@ func TestPGMARE_FPR_SmallL_Cluster_Smoothing(t *testing.T) {
 			t.Fatalf("smooth=%.2f: %v", smooth, err)
 		}
 
-		fpr, trueEmpty := measureFPR(t, filter, sorted, func(rng *rand.Rand) (uint64, uint64) {
+		queries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 			center := centers[rng.Intn(len(centers))]
-			a := safeGaussUint64(center, float64(1<<20), rng)
+			a := testutils.SampleGaussian(center, float64(1<<20), rng)
 			b := a + rangeLen
 			return a, b
 		}, 789, 200000)
 
+		fpr := testutils.MeasureFPR(sorted, queries, filter.IsEmpty)
+		trueEmpty := countTrueEmpty(sorted, queries)
 		bpk := float64(filter.TotalSizeInBits()) / float64(n)
 		t.Logf("smooth=%.2f: K=%2d, FPR=%.4f (target %.4f), BPK=%.2f (ERE=%.2f + CDF=%.2f), trueEmpty=%d",
 			smooth, filter.K, fpr, epsilon, bpk,
@@ -316,38 +303,6 @@ func TestPGMARE_FPR_SmallL_Cluster_Smoothing(t *testing.T) {
 			float64(filter.CDFSizeInBits())/float64(n),
 			trueEmpty)
 	}
-}
-
-type rangeFilter interface {
-	IsEmpty(a, b uint64) bool
-}
-
-func measureFPRGeneric(sortedKeys []uint64, filter rangeFilter,
-	queryGen func(rng *rand.Rand) (uint64, uint64), seed int64, numQueries int) (fpr float64, trueEmptyCount int) {
-	rng := rand.New(rand.NewSource(seed))
-	n := len(sortedKeys)
-	fp := 0
-	trueEmpty := 0
-
-	for q := 0; q < numQueries; q++ {
-		a, b := queryGen(rng)
-		if b < a {
-			continue
-		}
-		idx := sort.Search(n, func(i int) bool { return sortedKeys[i] >= a })
-		reallyEmpty := idx >= n || sortedKeys[idx] > b
-
-		if reallyEmpty {
-			trueEmpty++
-			if !filter.IsEmpty(a, b) {
-				fp++
-			}
-		}
-	}
-	if trueEmpty == 0 {
-		return 0, 0
-	}
-	return float64(fp) / float64(trueEmpty), trueEmpty
 }
 
 func TestPGMARE_vs_SODA(t *testing.T) {
@@ -372,7 +327,7 @@ func TestPGMARE_vs_SODA(t *testing.T) {
 	perCluster := n / len(centers)
 	for _, c := range centers {
 		for j := 0; j < perCluster; j++ {
-			clusterKeys = append(clusterKeys, safeGaussUint64(c, float64(1<<20), rngC))
+			clusterKeys = append(clusterKeys, testutils.SampleGaussian(c, float64(1<<20), rngC))
 		}
 	}
 	sortedCluster := make([]uint64, len(clusterKeys))
@@ -402,39 +357,41 @@ func TestPGMARE_vs_SODA(t *testing.T) {
 			t.Fatalf("CDF cluster: %v", err)
 		}
 
-		// Uniform queries
-		uniformQuery := func(rng *rand.Rand) (uint64, uint64) {
+		// Pre-generate queries
+		uniformQueries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 			a := rng.Uint64() >> 16
 			b := a + rangeLen
 			if b < a {
 				b = ^uint64(0) >> 16
 			}
 			return a, b
-		}
-		// Cluster queries (σ = σ_data)
-		clusterQuery := func(rng *rand.Rand) (uint64, uint64) {
+		}, 999, numQueries)
+
+		clusterQueries := generateQueries(func(rng *rand.Rand) (uint64, uint64) {
 			center := centers[rng.Intn(len(centers))]
-			a := safeGaussUint64(center, float64(1<<20), rng)
+			a := testutils.SampleGaussian(center, float64(1<<20), rng)
 			b := a + rangeLen
 			return a, b
-		}
+		}, 789, numQueries)
 
 		// Uniform data, uniform queries
-		fpr, te := measureFPRGeneric(sortedUniform, sodaU, uniformQuery, 999, numQueries)
+		fpr := testutils.MeasureFPR(sortedUniform, uniformQueries, sodaU.IsEmpty)
+		te := countTrueEmpty(sortedUniform, uniformQueries)
 		t.Logf("  SODA    uniform-data uniform-query: K=%2d, FPR=%.4f, BPK=%.2f, trueEmpty=%d",
 			sodaU.K, fpr, float64(sodaU.SizeInBits())/float64(n), te)
 
-		fpr, te = measureFPRGeneric(sortedUniform, cdfU, uniformQuery, 999, numQueries)
+		fpr = testutils.MeasureFPR(sortedUniform, uniformQueries, cdfU.IsEmpty)
 		t.Logf("  CDF-ARE uniform-data uniform-query: K=%2d, FPR=%.4f, BPK=%.2f (ERE=%.2f+CDF=%.2f), trueEmpty=%d",
 			cdfU.K, fpr, float64(cdfU.TotalSizeInBits())/float64(n),
 			float64(cdfU.SizeInBits())/float64(n), float64(cdfU.CDFSizeInBits())/float64(n), te)
 
 		// Cluster data, cluster queries
-		fpr, te = measureFPRGeneric(sortedCluster, sodaC, clusterQuery, 789, numQueries)
+		fpr = testutils.MeasureFPR(sortedCluster, clusterQueries, sodaC.IsEmpty)
+		te = countTrueEmpty(sortedCluster, clusterQueries)
 		t.Logf("  SODA    cluster-data cluster-query: K=%2d, FPR=%.4f, BPK=%.2f, trueEmpty=%d",
 			sodaC.K, fpr, float64(sodaC.SizeInBits())/float64(n), te)
 
-		fpr, te = measureFPRGeneric(sortedCluster, cdfC, clusterQuery, 789, numQueries)
+		fpr = testutils.MeasureFPR(sortedCluster, clusterQueries, cdfC.IsEmpty)
 		t.Logf("  CDF-ARE cluster-data cluster-query: K=%2d, FPR=%.4f, BPK=%.2f (ERE=%.2f+CDF=%.2f), trueEmpty=%d",
 			cdfC.K, fpr, float64(cdfC.TotalSizeInBits())/float64(n),
 			float64(cdfC.SizeInBits())/float64(n), float64(cdfC.CDFSizeInBits())/float64(n), te)

@@ -3,14 +3,10 @@ package are_soda_hash
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/are"
+	"Thesis/testutils"
 	"fmt"
 	"testing"
 )
-
-// trieBS converts uint64 to a 64-bit BitString where integer order = trie (Compare) order.
-func trieBS(val uint64) bits.BitString {
-	return bits.NewFromTrieUint64(val, 64)
-}
 
 func TestSequentialSweep_Corrected(t *testing.T) {
 	n := 10000
@@ -24,7 +20,7 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 	for i := 0; i < n; i++ {
 		val := uint64(i) * step
 		keys[i] = val
-		bsKeys[i] = trieBS(val)
+		bsKeys[i] = testutils.TrieBS(val)
 	}
 
 	fmt.Printf("\n--- Corrected Sequential Sweep (N=%d, Step=%d, eps=0.01) ---\n", n, step)
@@ -43,7 +39,7 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 			a := keys[i] + 1
 			b := a + L - 1
 			
-			if !filterTrunc.IsEmpty(trieBS(a), trieBS(b)) {
+			if !filterTrunc.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) {
 				fpT++
 			}
 			if !filterSoda.IsEmpty(a, b) {
