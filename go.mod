@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/agnivade/pgm v0.0.0-20210528073050-e2df0d9cb72d // indirect
 	github.com/alecthomas/unsafeslice v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/siphash v1.2.1 // indirect
