@@ -394,6 +394,182 @@ func TestScalability_Hybrid(t *testing.T) {
 	}
 }
 
+func TestTradeoff_Hybrid_Uniform(t *testing.T) {
+	const (
+		n          = 10000
+		rangeLen   = uint64(100)
+		queryCount = 100_000
+	)
+
+	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
+
+	rng := rand.New(rand.NewSource(42))
+	seen := make(map[uint64]bool)
+	unifU64 := make([]uint64, 0, n)
+	for len(unifU64) < n {
+		v := rng.Uint64()
+		if !seen[v] {
+			seen[v] = true
+			unifU64 = append(unifU64, v)
+		}
+	}
+	sort.Slice(unifU64, func(i, j int) bool { return unifU64[i] < unifU64[j] })
+	unifBS := make([]bits.BitString, n)
+	for i, v := range unifU64 {
+		unifBS[i] = trieBS(v)
+	}
+
+	qrng := rand.New(rand.NewSource(12345))
+	queries := make([][2]uint64, queryCount)
+	for i := range queries {
+		a := qrng.Uint64()
+		queries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+
+	measureFPR := func(keys []uint64, qs [][2]uint64, check func(a, b uint64) bool) float64 {
+		fp, total := 0, 0
+		for _, q := range qs {
+			a, b := q[0], q[1]
+			if b < a {
+				continue
+			}
+			if !groundTruth(keys, a, b) {
+				continue
+			}
+			total++
+			if !check(a, b) {
+				fp++
+			}
+		}
+		if total == 0 {
+			return 0
+		}
+		return float64(fp) / float64(total)
+	}
+
+	allSeries := map[string]*seriesData{
+		"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+		"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
+		"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
+		"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
+		"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
+	}
+
+	os.MkdirAll("../../bench_results/plots", 0755)
+	csvF, _ := os.Create("../../bench_results/plots/are_hybrid_uniform_data.csv")
+	defer csvF.Close()
+	fmt.Fprintln(csvF, "Epsilon,Series,BPK,FPR")
+
+	fmt.Printf("\n=== Hybrid vs Others (Uniform Distribution, %d keys) ===\n", n)
+	fmt.Printf("%-6s | %-20s | %8s | %12s | %12s | %8s | %12s\n",
+		"Eps", "Series", "BPK", "FPR", "Query(ns/op)", "Clusters", "FallbackFrac")
+	fmt.Println(strings.Repeat("-", 95))
+
+	for _, eps := range epsilons {
+		thBPK := math.Log2(float64(rangeLen) / eps)
+		allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, point{thBPK, eps})
+		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
+		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f | %12s | %8s | %12s\n",
+			eps, "Theoretical", thBPK, eps, "-", "-", "-")
+
+		fAdapt, errAdapt := are_optimized.NewOptimizedARE(unifBS, rangeLen, eps, 0)
+		fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(unifU64, rangeLen, eps)
+		fTrunc, errTrunc := are.NewApproximateRangeEmptiness(unifBS, eps)
+		fHybrid, errHybrid := are_hybrid.NewHybridARE(unifBS, rangeLen, eps)
+
+		type m struct {
+			name         string
+			err          error
+			bpk          float64
+			check        func(a, b uint64) bool
+			clusterInfo  string
+			fallbackInfo string
+		}
+
+		var ms []m
+
+		if errAdapt == nil {
+			f := fAdapt
+			ms = append(ms, m{name: "Adaptive (t=0)", bpk: float64(f.SizeInBits()) / float64(n),
+				check: func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
+				clusterInfo: "-", fallbackInfo: "-"})
+		} else {
+			ms = append(ms, m{name: "Adaptive (t=0)", err: errAdapt})
+		}
+
+		if errSoda == nil {
+			f := fSoda
+			ms = append(ms, m{name: "SODA", bpk: float64(f.SizeInBits()) / float64(n),
+				check: func(a, b uint64) bool { return f.IsEmpty(a, b) },
+				clusterInfo: "-", fallbackInfo: "-"})
+		} else {
+			ms = append(ms, m{name: "SODA", err: errSoda})
+		}
+
+		if errTrunc == nil {
+			f := fTrunc
+			ms = append(ms, m{name: "Truncation", bpk: float64(f.SizeInBits()) / float64(n),
+				check: func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
+				clusterInfo: "-", fallbackInfo: "-"})
+		} else {
+			ms = append(ms, m{name: "Truncation", err: errTrunc})
+		}
+
+		if errHybrid == nil {
+			f := fHybrid
+			nc, nf, nt := f.Stats()
+			ms = append(ms, m{name: "Hybrid", bpk: float64(f.SizeInBits()) / float64(n),
+				check:        func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
+				clusterInfo:  fmt.Sprintf("%d", nc),
+				fallbackInfo: fmt.Sprintf("%.1f%%", 100*float64(nf)/float64(nt))})
+		} else {
+			ms = append(ms, m{name: "Hybrid", err: errHybrid})
+		}
+
+		for _, me := range ms {
+			if me.err != nil {
+				fmt.Printf("%-6.3f | %-20s | %8s | %12s | %12s | %8s | %12s (err: %v)\n",
+					eps, me.name, "N/A", "N/A", "N/A", "-", "-", me.err)
+				continue
+			}
+			fpr := measureFPR(unifU64, queries, me.check)
+
+			// Query latency
+			queryStart := time.Now()
+			for _, q := range queries {
+				me.check(q[0], q[1])
+			}
+			queryNs := float64(time.Since(queryStart).Nanoseconds()) / float64(queryCount)
+
+			allSeries[me.name].Points = append(allSeries[me.name].Points, point{me.bpk, fpr})
+			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, me.name, me.bpk, fpr)
+			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f | %12.1f | %8s | %12s\n",
+				eps, me.name, me.bpk, fpr, queryNs, me.clusterInfo, me.fallbackInfo)
+		}
+	}
+
+	orderedSeries := []seriesData{
+		*allSeries["Theoretical"],
+		*allSeries["Adaptive (t=0)"],
+		*allSeries["SODA"],
+		*allSeries["Truncation"],
+		*allSeries["Hybrid"],
+	}
+
+	err := generateTradeoffSVG(
+		"Range Emptiness: FPR vs BPK (Hybrid, Uniform Distribution)",
+		"Bits per Key (BPK)",
+		"False Positive Rate (FPR)",
+		orderedSeries,
+		"../../bench_results/plots/are_hybrid_uniform_comparison.svg",
+	)
+	if err != nil {
+		t.Errorf("SVG generation failed: %v", err)
+	} else {
+		fmt.Println("\nSVG written to bench_results/plots/are_hybrid_uniform_comparison.svg")
+	}
+}
+
 func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outPath string) error {
 	w, h := 960.0, 600.0
 	mL, mR, mT, mB := 90.0, 40.0, 40.0, 50.0
