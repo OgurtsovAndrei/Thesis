@@ -163,6 +163,9 @@ func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 		return float64(fp) / float64(total)
 	}
 
+	tValues := []uint32{1, 2, 3, 4}
+	adaptiveColors := []string{"#6495ED", "#4169E1", "#1E3A8A", "#0F1D45"}
+
 	allSeries := map[string]*seriesData{
 		"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
 		"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
@@ -170,114 +173,104 @@ func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 		"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
 		"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
 	}
+	for i, tv := range tValues {
+		name := fmt.Sprintf("Adaptive (t=%d)", tv)
+		allSeries[name] = &seriesData{Name: name, Color: adaptiveColors[i], Dashed: true, Marker: "square"}
+	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
-	csvF, _ := os.Create("../../bench_results/plots/are_hybrid_cluster_data.csv")
+	csvF, _ := os.Create("../../bench_results/plots/are_cluster_data.csv")
 	defer csvF.Close()
 	fmt.Fprintln(csvF, "Epsilon,Series,BPK,FPR")
 
-	fmt.Printf("\n=== Hybrid vs Others (Cluster Distribution, %d keys, %d clusters) ===\n", n, nClusters)
-	fmt.Printf("%-6s | %-20s | %8s | %12s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR", "Clusters", "FallbackFrac")
-	fmt.Println(strings.Repeat("-", 80))
+	fmt.Printf("\n=== Cluster Distribution (%d keys, %d clusters) ===\n", n, nClusters)
+	fmt.Printf("%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
+	fmt.Println(strings.Repeat("-", 55))
 
 	for _, eps := range epsilons {
 		thBPK := math.Log2(float64(rangeLen) / eps)
 		allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, point{thBPK, eps})
 		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
-		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f | %8s | %12s\n", eps, "Theoretical", thBPK, eps, "-", "-")
+		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
 
-		// Build all filters
-		fAdapt, errAdapt := are_optimized.NewOptimizedARE(clusterBS, rangeLen, eps, 0)
 		fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
 		fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
 		fHybrid, errHybrid := are_hybrid.NewHybridARE(clusterBS, rangeLen, eps)
 
 		type m struct {
-			name         string
-			err          error
-			bpk          float64
-			check        func(a, b uint64) bool
-			clusterInfo  string
-			fallbackInfo string
+			name  string
+			err   error
+			bpk   float64
+			check func(a, b uint64) bool
 		}
 
+		// Adaptive t=0..4
 		var ms []m
-
-		// Adaptive (t=0)
-		if errAdapt == nil {
-			f := fAdapt
-			ms = append(ms, m{name: "Adaptive (t=0)", bpk: float64(f.SizeInBits()) / float64(n),
-				check: func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
-				clusterInfo: "-", fallbackInfo: "-"})
-		} else {
-			ms = append(ms, m{name: "Adaptive (t=0)", err: errAdapt})
+		for _, tv := range append([]uint32{0}, tValues...) {
+			name := fmt.Sprintf("Adaptive (t=%d)", tv)
+			f, err := are_optimized.NewOptimizedARE(clusterBS, rangeLen, eps, tv)
+			var bpk float64
+			if err == nil {
+				bpk = float64(f.SizeInBits()) / float64(n)
+			}
+			fCopy := f
+			ms = append(ms, m{name, err, bpk, func(a, b uint64) bool { return fCopy.IsEmpty(trieBS(a), trieBS(b)) }})
 		}
 
 		// SODA
 		if errSoda == nil {
-			f := fSoda
-			ms = append(ms, m{name: "SODA", bpk: float64(f.SizeInBits()) / float64(n),
-				check: func(a, b uint64) bool { return f.IsEmpty(a, b) },
-				clusterInfo: "-", fallbackInfo: "-"})
+			fCopy := fSoda
+			ms = append(ms, m{"SODA", nil, float64(fSoda.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
 		} else {
-			ms = append(ms, m{name: "SODA", err: errSoda})
+			ms = append(ms, m{"SODA", errSoda, 0, nil})
 		}
-
 		// Truncation
 		if errTrunc == nil {
-			f := fTrunc
-			ms = append(ms, m{name: "Truncation", bpk: float64(f.SizeInBits()) / float64(n),
-				check: func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
-				clusterInfo: "-", fallbackInfo: "-"})
+			fCopy := fTrunc
+			ms = append(ms, m{"Truncation", nil, float64(fTrunc.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(trieBS(a), trieBS(b)) }})
 		} else {
-			ms = append(ms, m{name: "Truncation", err: errTrunc})
+			ms = append(ms, m{"Truncation", errTrunc, 0, nil})
 		}
-
 		// Hybrid
 		if errHybrid == nil {
-			f := fHybrid
-			nc, nf, nt := f.Stats()
-			ms = append(ms, m{name: "Hybrid", bpk: float64(f.SizeInBits()) / float64(n),
-				check:        func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
-				clusterInfo:  fmt.Sprintf("%d", nc),
-				fallbackInfo: fmt.Sprintf("%.1f%%", 100*float64(nf)/float64(nt))})
+			fCopy := fHybrid
+			ms = append(ms, m{"Hybrid", nil, float64(fHybrid.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(trieBS(a), trieBS(b)) }})
 		} else {
-			ms = append(ms, m{name: "Hybrid", err: errHybrid})
+			ms = append(ms, m{"Hybrid", errHybrid, 0, nil})
 		}
 
 		for _, me := range ms {
 			if me.err != nil {
-				fmt.Printf("%-6.3f | %-20s | %8s | %12s | %8s | %12s (err: %v)\n",
-					eps, me.name, "N/A", "N/A", "-", "-", me.err)
+				fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
 				continue
 			}
 			fpr := measureFPR(clusterU64, queries, me.check)
 			allSeries[me.name].Points = append(allSeries[me.name].Points, point{me.bpk, fpr})
 			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, me.name, me.bpk, fpr)
-			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f | %8s | %12s\n",
-				eps, me.name, me.bpk, fpr, me.clusterInfo, me.fallbackInfo)
+			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
 		}
 	}
 
 	orderedSeries := []seriesData{
 		*allSeries["Theoretical"],
 		*allSeries["Adaptive (t=0)"],
-		*allSeries["SODA"],
-		*allSeries["Truncation"],
-		*allSeries["Hybrid"],
 	}
+	for _, tv := range tValues {
+		orderedSeries = append(orderedSeries, *allSeries[fmt.Sprintf("Adaptive (t=%d)", tv)])
+	}
+	orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"])
 
 	err := generateTradeoffSVG(
-		"Range Emptiness: FPR vs BPK (Hybrid, Cluster Distribution)",
+		"Range Emptiness: FPR vs BPK (Cluster Distribution)",
 		"Bits per Key (BPK)",
 		"False Positive Rate (FPR)",
 		orderedSeries,
-		"../../bench_results/plots/are_hybrid_cluster_comparison.svg",
+		"../../bench_results/plots/are_cluster_comparison.svg",
 	)
 	if err != nil {
 		t.Errorf("SVG generation failed: %v", err)
 	} else {
-		fmt.Println("\nSVG written to bench_results/plots/are_hybrid_cluster_comparison.svg")
+		fmt.Println("\nSVG written to bench_results/plots/are_cluster_comparison.svg")
 	}
 }
 
@@ -447,127 +440,149 @@ func TestTradeoff_Hybrid_Uniform(t *testing.T) {
 		return float64(fp) / float64(total)
 	}
 
+	// Sequential: evenly spaced keys in a narrow range
+	seqGap := uint64(1000)
+	seqBase := uint64(1) << 40
+	seqU64 := make([]uint64, n)
+	seqBS := make([]bits.BitString, n)
+	for i := 0; i < n; i++ {
+		v := seqBase + uint64(i)*seqGap
+		seqU64[i] = v
+		seqBS[i] = trieBS(v)
+	}
+
+	qrngS := rand.New(rand.NewSource(12345))
+	seqQueries := make([][2]uint64, queryCount)
+	for i := range seqQueries {
+		a := qrngS.Uint64()
+		seqQueries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+
 	allSeries := map[string]*seriesData{
-		"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
-		"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
-		"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
-		"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
-		"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
+		"Theoretical":       {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+		"Adaptive (Unif)":   {Name: "Adaptive (Unif)", Color: "#2a7fff", Marker: "square"},
+		"Adaptive (Seq)":    {Name: "Adaptive (Seq)", Color: "#2a7fff", Dashed: true, Marker: "square"},
+		"SODA (Unif)":       {Name: "SODA (Unif)", Color: "#22a06b", Marker: "diamond"},
+		"SODA (Seq)":        {Name: "SODA (Seq)", Color: "#22a06b", Dashed: true, Marker: "diamond"},
+		"Truncation (Unif)": {Name: "Truncation (Unif)", Color: "#e6a800", Marker: "triangle"},
+		"Truncation (Seq)":  {Name: "Truncation (Seq)", Color: "#e6a800", Dashed: true, Marker: "triangle"},
+		"Hybrid (Unif)":     {Name: "Hybrid (Unif)", Color: "#9b59b6", Marker: "star"},
+		"Hybrid (Seq)":      {Name: "Hybrid (Seq)", Color: "#9b59b6", Dashed: true, Marker: "star"},
 	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
-	csvF, _ := os.Create("../../bench_results/plots/are_hybrid_uniform_data.csv")
+	csvF, _ := os.Create("../../bench_results/plots/are_tradeoff_data.csv")
 	defer csvF.Close()
 	fmt.Fprintln(csvF, "Epsilon,Series,BPK,FPR")
 
-	fmt.Printf("\n=== Hybrid vs Others (Uniform Distribution, %d keys) ===\n", n)
-	fmt.Printf("%-6s | %-20s | %8s | %12s | %12s | %8s | %12s\n",
-		"Eps", "Series", "BPK", "FPR", "Query(ns/op)", "Clusters", "FallbackFrac")
-	fmt.Println(strings.Repeat("-", 95))
+	fmt.Printf("\n=== Full Comparison (Uniform + Sequential, %d keys) ===\n", n)
+	fmt.Printf("%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
+	fmt.Println(strings.Repeat("-", 55))
 
 	for _, eps := range epsilons {
 		thBPK := math.Log2(float64(rangeLen) / eps)
 		allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, point{thBPK, eps})
 		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
-		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f | %12s | %8s | %12s\n",
-			eps, "Theoretical", thBPK, eps, "-", "-", "-")
+		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
 
-		fAdapt, errAdapt := are_optimized.NewOptimizedARE(unifBS, rangeLen, eps, 0)
-		fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(unifU64, rangeLen, eps)
-		fTrunc, errTrunc := are.NewApproximateRangeEmptiness(unifBS, eps)
-		fHybrid, errHybrid := are_hybrid.NewHybridARE(unifBS, rangeLen, eps)
+		fOptU, errOptU := are_optimized.NewOptimizedARE(unifBS, rangeLen, eps, 0)
+		fOptS, errOptS := are_optimized.NewOptimizedARE(seqBS, rangeLen, eps, 0)
+		fSodaU, errSodaU := are_soda_hash.NewApproximateRangeEmptinessSoda(unifU64, rangeLen, eps)
+		fSodaS, errSodaS := are_soda_hash.NewApproximateRangeEmptinessSoda(seqU64, rangeLen, eps)
+		fTruncU, errTruncU := are.NewApproximateRangeEmptiness(unifBS, eps)
+		fTruncS, errTruncS := are.NewApproximateRangeEmptiness(seqBS, eps)
+		fHybridU, errHybridU := are_hybrid.NewHybridARE(unifBS, rangeLen, eps)
+		fHybridS, errHybridS := are_hybrid.NewHybridARE(seqBS, rangeLen, eps)
 
-		type m struct {
-			name         string
-			err          error
-			bpk          float64
-			check        func(a, b uint64) bool
-			clusterInfo  string
-			fallbackInfo string
+		type mm struct {
+			name    string
+			err     error
+			bpk     float64
+			keys    []uint64
+			queries [][2]uint64
+			check   func(a, b uint64) bool
 		}
 
-		var ms []m
-
-		if errAdapt == nil {
-			f := fAdapt
-			ms = append(ms, m{name: "Adaptive (t=0)", bpk: float64(f.SizeInBits()) / float64(n),
-				check: func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
-				clusterInfo: "-", fallbackInfo: "-"})
-		} else {
-			ms = append(ms, m{name: "Adaptive (t=0)", err: errAdapt})
+		var ms []mm
+		add := func(name string, err error, sizeBits uint64, keys []uint64, qs [][2]uint64, fn func(a, b uint64) bool) {
+			var bpk float64
+			if err == nil {
+				bpk = float64(sizeBits) / float64(n)
+			}
+			ms = append(ms, mm{name, err, bpk, keys, qs, fn})
 		}
 
-		if errSoda == nil {
-			f := fSoda
-			ms = append(ms, m{name: "SODA", bpk: float64(f.SizeInBits()) / float64(n),
-				check: func(a, b uint64) bool { return f.IsEmpty(a, b) },
-				clusterInfo: "-", fallbackInfo: "-"})
-		} else {
-			ms = append(ms, m{name: "SODA", err: errSoda})
-		}
-
-		if errTrunc == nil {
-			f := fTrunc
-			ms = append(ms, m{name: "Truncation", bpk: float64(f.SizeInBits()) / float64(n),
-				check: func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
-				clusterInfo: "-", fallbackInfo: "-"})
-		} else {
-			ms = append(ms, m{name: "Truncation", err: errTrunc})
-		}
-
-		if errHybrid == nil {
-			f := fHybrid
-			nc, nf, nt := f.Stats()
-			ms = append(ms, m{name: "Hybrid", bpk: float64(f.SizeInBits()) / float64(n),
-				check:        func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) },
-				clusterInfo:  fmt.Sprintf("%d", nc),
-				fallbackInfo: fmt.Sprintf("%.1f%%", 100*float64(nf)/float64(nt))})
-		} else {
-			ms = append(ms, m{name: "Hybrid", err: errHybrid})
-		}
+		add("Adaptive (Unif)", errOptU, safeSize(fOptU), unifU64, queries, func(a, b uint64) bool { return fOptU.IsEmpty(trieBS(a), trieBS(b)) })
+		add("Adaptive (Seq)", errOptS, safeSize(fOptS), seqU64, seqQueries, func(a, b uint64) bool { return fOptS.IsEmpty(trieBS(a), trieBS(b)) })
+		add("SODA (Unif)", errSodaU, safeSizeSoda(fSodaU), unifU64, queries, func(a, b uint64) bool { return fSodaU.IsEmpty(a, b) })
+		add("SODA (Seq)", errSodaS, safeSizeSoda(fSodaS), seqU64, seqQueries, func(a, b uint64) bool { return fSodaS.IsEmpty(a, b) })
+		add("Truncation (Unif)", errTruncU, safeSizeTrunc(fTruncU), unifU64, queries, func(a, b uint64) bool { return fTruncU.IsEmpty(trieBS(a), trieBS(b)) })
+		add("Truncation (Seq)", errTruncS, safeSizeTrunc(fTruncS), seqU64, seqQueries, func(a, b uint64) bool { return fTruncS.IsEmpty(trieBS(a), trieBS(b)) })
+		add("Hybrid (Unif)", errHybridU, safeSizeHybrid(fHybridU), unifU64, queries, func(a, b uint64) bool { return fHybridU.IsEmpty(trieBS(a), trieBS(b)) })
+		add("Hybrid (Seq)", errHybridS, safeSizeHybrid(fHybridS), seqU64, seqQueries, func(a, b uint64) bool { return fHybridS.IsEmpty(trieBS(a), trieBS(b)) })
 
 		for _, me := range ms {
 			if me.err != nil {
-				fmt.Printf("%-6.3f | %-20s | %8s | %12s | %12s | %8s | %12s (err: %v)\n",
-					eps, me.name, "N/A", "N/A", "N/A", "-", "-", me.err)
+				fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
 				continue
 			}
-			fpr := measureFPR(unifU64, queries, me.check)
-
-			// Query latency
-			queryStart := time.Now()
-			for _, q := range queries {
-				me.check(q[0], q[1])
-			}
-			queryNs := float64(time.Since(queryStart).Nanoseconds()) / float64(queryCount)
-
+			fpr := measureFPR(me.keys, me.queries, me.check)
 			allSeries[me.name].Points = append(allSeries[me.name].Points, point{me.bpk, fpr})
 			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, me.name, me.bpk, fpr)
-			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f | %12.1f | %8s | %12s\n",
-				eps, me.name, me.bpk, fpr, queryNs, me.clusterInfo, me.fallbackInfo)
+			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
 		}
 	}
 
 	orderedSeries := []seriesData{
 		*allSeries["Theoretical"],
-		*allSeries["Adaptive (t=0)"],
-		*allSeries["SODA"],
-		*allSeries["Truncation"],
-		*allSeries["Hybrid"],
+		*allSeries["Adaptive (Unif)"],
+		*allSeries["Adaptive (Seq)"],
+		*allSeries["SODA (Unif)"],
+		*allSeries["SODA (Seq)"],
+		*allSeries["Truncation (Unif)"],
+		*allSeries["Truncation (Seq)"],
+		*allSeries["Hybrid (Unif)"],
+		*allSeries["Hybrid (Seq)"],
 	}
 
 	err := generateTradeoffSVG(
-		"Range Emptiness: FPR vs BPK (Hybrid, Uniform Distribution)",
+		"Range Emptiness: FPR vs Bits per Key",
 		"Bits per Key (BPK)",
 		"False Positive Rate (FPR)",
 		orderedSeries,
-		"../../bench_results/plots/are_hybrid_uniform_comparison.svg",
+		"../../bench_results/plots/are_full_comparison.svg",
 	)
 	if err != nil {
 		t.Errorf("SVG generation failed: %v", err)
 	} else {
-		fmt.Println("\nSVG written to bench_results/plots/are_hybrid_uniform_comparison.svg")
+		fmt.Println("\nSVG written to bench_results/plots/are_full_comparison.svg")
 	}
+}
+
+// Safe size helpers to avoid nil dereference when build failed
+func safeSize(f *are_optimized.OptimizedApproximateRangeEmptiness) uint64 {
+	if f == nil {
+		return 0
+	}
+	return f.SizeInBits()
+}
+func safeSizeSoda(f *are_soda_hash.ApproximateRangeEmptinessSoda) uint64 {
+	if f == nil {
+		return 0
+	}
+	return f.SizeInBits()
+}
+func safeSizeTrunc(f *are.ApproximateRangeEmptiness) uint64 {
+	if f == nil {
+		return 0
+	}
+	return f.SizeInBits()
+}
+func safeSizeHybrid(f *are_hybrid.HybridARE) uint64 {
+	if f == nil {
+		return 0
+	}
+	return f.SizeInBits()
 }
 
 func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outPath string) error {
