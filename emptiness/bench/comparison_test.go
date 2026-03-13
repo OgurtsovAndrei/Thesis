@@ -526,7 +526,7 @@ func TestBuildTimePerKey(t *testing.T) {
 		XLabel: "Number of Keys (n)",
 		YLabel: "Build Time (ns/key)",
 		XScale: testutils.Log10,
-		YScale: testutils.Linear,
+		YScale: testutils.Log10,
 	}, allSeries, "../../bench_results/plots/build_time_per_key.svg")
 	if err != nil {
 		t.Errorf("SVG generation failed: %v", err)
@@ -536,7 +536,7 @@ func TestBuildTimePerKey(t *testing.T) {
 }
 
 func TestQueryTimeVsRangeLen(t *testing.T) {
-	rangeLens := []uint64{16, 64, 256, 1024, 4096, 16384}
+	rangeLens := []uint64{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024}
 	const (
 		n          = 1 << 16
 		queryCount = 200_000

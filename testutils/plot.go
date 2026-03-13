@@ -40,8 +40,8 @@ type PlotConfig struct {
 
 // GeneratePerformanceSVG creates an SVG plot with configurable axis scales.
 func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string) error {
-	w, h := 960.0, 600.0
-	mL, mR, mT, mB := 90.0, 40.0, 40.0, 50.0
+	w, h := 1020.0, 600.0
+	mL, mR, mT, mB := 90.0, 150.0, 40.0, 50.0
 	plotW := w - mL - mR
 	plotH := h - mT - mB
 
@@ -75,15 +75,23 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 	switch cfg.XScale {
 	case Log10:
 		lMin := math.Floor(math.Log10(minX))
-		lMax := math.Ceil(math.Log10(maxX))
+		lMax := math.Log10(maxX)
+		if lMax == math.Floor(lMax) {
+			lMax += 0.1
+		}
+		lMaxCeil := math.Ceil(lMax)
 		xToPlot = func(x float64) float64 {
 			if x <= 0 {
 				x = minX
 			}
-			return mL + plotW*(math.Log10(x)-lMin)/(lMax-lMin)
+			return mL + plotW*(math.Log10(x)-lMin)/(lMaxCeil-lMin)
 		}
-		for e := int(lMin); e <= int(lMax); e++ {
-			xTicks = append(xTicks, math.Pow(10, float64(e)))
+		for e := int(lMin); e <= int(lMaxCeil); e++ {
+			v := math.Pow(10, float64(e))
+			if v > maxX*1.5 {
+				break
+			}
+			xTicks = append(xTicks, v)
 			xTickLabels = append(xTickLabels, fmtPow10(e))
 		}
 	default:
@@ -256,6 +264,7 @@ func drawSeriesLines(sb *strings.Builder, series []SeriesData, toX, toY func(flo
 }
 
 func drawLegend(sb *strings.Builder, series []SeriesData, mL, mT, plotW float64) {
+	lx := mL + plotW + 16
 	ly := mT + 20.0
 	for _, s := range series {
 		if len(s.Points) == 0 {
@@ -265,7 +274,6 @@ func drawLegend(sb *strings.Builder, series []SeriesData, mL, mT, plotW float64)
 		if s.Dashed {
 			dash = ` stroke-dasharray="8,5"`
 		}
-		lx := mL + plotW - 220
 		sb.WriteString(fmt.Sprintf(`<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="2"%s/>`+"\n",
 			lx, ly, lx+16, ly, s.Color, dash))
 		marker := s.Marker
