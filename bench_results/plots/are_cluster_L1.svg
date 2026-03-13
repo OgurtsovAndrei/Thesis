@@ -107,6 +107,14 @@
 <circle cx="727.7" cy="290.7" r="3" fill="#e05d10"/>
 <circle cx="781.3" cy="304.2" r="3" fill="#e05d10"/>
 <circle cx="834.5" cy="311.2" r="3" fill="#e05d10"/>
+<polyline fill="none" stroke="#888888" stroke-width="2" stroke-dasharray="8,5" points="295.4,192.3 372.1,221.8 473.5,265.5 550.2,294.4 626.9,326.3 728.4,362.1 805.1,398.3"/>
+<circle cx="295.4" cy="192.3" r="3" fill="#888888"/>
+<circle cx="372.1" cy="221.8" r="3" fill="#888888"/>
+<circle cx="473.5" cy="265.5" r="3" fill="#888888"/>
+<circle cx="550.2" cy="294.4" r="3" fill="#888888"/>
+<circle cx="626.9" cy="326.3" r="3" fill="#888888"/>
+<circle cx="728.4" cy="362.1" r="3" fill="#888888"/>
+<circle cx="805.1" cy="398.3" r="3" fill="#888888"/>
 <line x1="886" y1="60" x2="902" y2="60" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,5"/>
 <circle cx="894.0" cy="60.0" r="3" fill="#ef4444"/>
 <text class="label" x="908" y="64">Theoretical</text>
@@ -137,6 +145,9 @@
 <line x1="886" y1="222" x2="902" y2="222" stroke="#e05d10" stroke-width="2"/>
 <circle cx="894.0" cy="222.0" r="3" fill="#e05d10"/>
 <text class="label" x="908" y="226">CDF-ARE</text>
+<line x1="886" y1="240" x2="902" y2="240" stroke="#888888" stroke-width="2" stroke-dasharray="8,5"/>
+<circle cx="894.0" cy="240.0" r="3" fill="#888888"/>
+<text class="label" x="908" y="244">Bloom V3</text>
 <text x="480" y="590" text-anchor="middle">Bits per Key (BPK)</text>
 <text transform="translate(16,295) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
 </svg>

@@ -3,6 +3,7 @@ package bench_test
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/are"
+	"Thesis/emptiness/are_bloom"
 	"Thesis/emptiness/are_hybrid"
 	"Thesis/emptiness/are_optimized"
 	"Thesis/emptiness/are_pgm"
@@ -53,6 +54,7 @@ func TestTradeoff_Cluster(t *testing.T) {
 				"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
 				"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
 				"CDF-ARE":        {Name: "CDF-ARE", Color: "#e05d10", Marker: "circle"},
+				"Bloom V3":       {Name: "Bloom V3", Color: "#888888", Dashed: true, Marker: "circle"},
 			}
 			for i, tv := range tValues {
 				name := fmt.Sprintf("Adaptive (t=%d)", tv)
@@ -116,6 +118,13 @@ func TestTradeoff_Cluster(t *testing.T) {
 				} else {
 					ms = append(ms, m{"CDF-ARE", errCdf, 0, nil})
 				}
+				fBloom, errBloom := are_bloom.NewBloomARE(clusterU64, rangeLen, eps)
+				if errBloom == nil {
+					fCopy := fBloom
+					ms = append(ms, m{"Bloom V3", nil, float64(fBloom.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
+				} else {
+					ms = append(ms, m{"Bloom V3", errBloom, 0, nil})
+				}
 
 				for _, me := range ms {
 					if me.err != nil {
@@ -135,7 +144,7 @@ func TestTradeoff_Cluster(t *testing.T) {
 			for _, tv := range tValues {
 				orderedSeries = append(orderedSeries, *allSeries[fmt.Sprintf("Adaptive (t=%d)", tv)])
 			}
-			orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"], *allSeries["CDF-ARE"])
+			orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"], *allSeries["CDF-ARE"], *allSeries["Bloom V3"])
 
 			svgPath := fmt.Sprintf("../../bench_results/plots/are_cluster_L%d.svg", rangeLen)
 			err := testutils.GenerateTradeoffSVG(
@@ -206,6 +215,13 @@ func TestScalability(t *testing.T) {
 				return nil, 0, "", err
 			}
 			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, f.TotalSizeInBits(), "-", nil
+		}},
+		{"Bloom V3", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
+			f, err := are_bloom.NewBloomARE(u64, rangeLen, eps)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, f.SizeInBits(), "-", nil
 		}},
 	}
 
@@ -336,6 +352,8 @@ func TestTradeoff_Full(t *testing.T) {
 		"Hybrid (Seq)":      {Name: "Hybrid (Seq)", Color: "#9b59b6", Dashed: true, Marker: "star"},
 		"CDF-ARE (Unif)":    {Name: "CDF-ARE (Unif)", Color: "#e05d10", Marker: "circle"},
 		"CDF-ARE (Seq)":     {Name: "CDF-ARE (Seq)", Color: "#e05d10", Dashed: true, Marker: "circle"},
+		"Bloom V3 (Unif)":      {Name: "Bloom V3 (Unif)", Color: "#888888", Marker: "circle"},
+		"Bloom V3 (Seq)":       {Name: "Bloom V3 (Seq)", Color: "#888888", Dashed: true, Marker: "circle"},
 	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
@@ -363,6 +381,8 @@ func TestTradeoff_Full(t *testing.T) {
 		fHybridS, errHybridS := are_hybrid.NewHybridARE(seqBS, rangeLen, eps)
 		fCdfU, errCdfU := are_pgm.NewPGMApproximateRangeEmptiness(unifU64, rangeLen, eps, 64)
 		fCdfS, errCdfS := are_pgm.NewPGMApproximateRangeEmptiness(seqU64, rangeLen, eps, 64)
+		fBloomU, errBloomU := are_bloom.NewBloomARE(unifU64, rangeLen, eps)
+		fBloomS, errBloomS := are_bloom.NewBloomARE(seqU64, rangeLen, eps)
 
 		type mm struct {
 			name    string
@@ -392,6 +412,8 @@ func TestTradeoff_Full(t *testing.T) {
 		add("Hybrid (Seq)", errHybridS, safeSizeHybrid(fHybridS), seqU64, seqQueries, func(a, b uint64) bool { return fHybridS.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) })
 		add("CDF-ARE (Unif)", errCdfU, safeSizeCdf(fCdfU), unifU64, queries, func(a, b uint64) bool { return fCdfU.IsEmpty(a, b) })
 		add("CDF-ARE (Seq)", errCdfS, safeSizeCdf(fCdfS), seqU64, seqQueries, func(a, b uint64) bool { return fCdfS.IsEmpty(a, b) })
+		add("Bloom V3 (Unif)", errBloomU, safeSizeBloom(fBloomU), unifU64, queries, func(a, b uint64) bool { return fBloomU.IsEmpty(a, b) })
+		add("Bloom V3 (Seq)", errBloomS, safeSizeBloom(fBloomS), seqU64, seqQueries, func(a, b uint64) bool { return fBloomS.IsEmpty(a, b) })
 
 		for _, me := range ms {
 			if me.err != nil {
@@ -417,6 +439,8 @@ func TestTradeoff_Full(t *testing.T) {
 		*allSeries["Hybrid (Seq)"],
 		*allSeries["CDF-ARE (Unif)"],
 		*allSeries["CDF-ARE (Seq)"],
+		*allSeries["Bloom V3 (Unif)"],
+		*allSeries["Bloom V3 (Seq)"],
 	}
 
 	err := testutils.GenerateTradeoffSVG(
@@ -469,13 +493,18 @@ func TestBuildTimePerKey(t *testing.T) {
 			_, err := are_pgm.NewPGMApproximateRangeEmptiness(u64, rangeLen, eps, 64)
 			return err
 		}},
+		{"Bloom V3", "#888888", func(_ []bits.BitString, u64 []uint64) error {
+			_, err := are_bloom.NewBloomARE(u64, rangeLen, eps)
+			return err
+		}},
 	}
 
-	markers := []string{"square", "diamond", "triangle", "star", "circle"}
+	markers := []string{"square", "diamond", "triangle", "star", "circle", "circle"}
 	var allSeries []testutils.SeriesData
 	for i, f := range filters {
+		dashed := f.name == "Bloom V3"
 		allSeries = append(allSeries, testutils.SeriesData{
-			Name: f.name, Color: f.color, Marker: markers[i%len(markers)],
+			Name: f.name, Color: f.color, Marker: markers[i%len(markers)], Dashed: dashed,
 		})
 	}
 
@@ -587,13 +616,21 @@ func TestQueryTimeVsRangeLen(t *testing.T) {
 			}
 			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, nil
 		}},
+		{"Bloom V3", "#888888", func(L uint64) (func(a, b uint64) bool, error) {
+			f, err := are_bloom.NewBloomARE(keysU64, L, eps)
+			if err != nil {
+				return nil, err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, nil
+		}},
 	}
 
-	markers := []string{"square", "diamond", "triangle", "star", "circle"}
+	markers := []string{"square", "diamond", "triangle", "star", "circle", "circle"}
 	var allSeries []testutils.SeriesData
 	for i, f := range filters {
+		dashed := f.name == "Bloom V3"
 		allSeries = append(allSeries, testutils.SeriesData{
-			Name: f.name, Color: f.color, Marker: markers[i%len(markers)],
+			Name: f.name, Color: f.color, Marker: markers[i%len(markers)], Dashed: dashed,
 		})
 	}
 
@@ -624,7 +661,9 @@ func TestQueryTimeVsRangeLen(t *testing.T) {
 			dur := time.Since(start)
 			nsPerQuery := float64(dur.Nanoseconds()) / float64(queryCount)
 
-			allSeries[fi].Points = append(allSeries[fi].Points, testutils.Point{X: float64(L), Y: nsPerQuery})
+			if fd.name != "Bloom V3" || nsPerQuery <= 500 {
+				allSeries[fi].Points = append(allSeries[fi].Points, testutils.Point{X: float64(L), Y: nsPerQuery})
+			}
 			fmt.Printf(" | %8.1f ns", nsPerQuery)
 		}
 		fmt.Println()
@@ -675,4 +714,10 @@ func safeSizeCdf(f *are_pgm.PGMApproximateRangeEmptiness) uint64 {
 		return 0
 	}
 	return f.TotalSizeInBits()
+}
+func safeSizeBloom(f *are_bloom.BloomARE) uint64 {
+	if f == nil {
+		return 0
+	}
+	return f.SizeInBits()
 }
