@@ -19,18 +19,16 @@ import (
 )
 
 func TestTradeoff_Cluster(t *testing.T) {
+	rangeLens := []uint64{1, 16, 128, 1024}
 	const (
 		n          = 1 << 16
-		rangeLen   = uint64(100)
 		queryCount = 200_000
 		nClusters  = 5
+		unifFrac   = 0.15
 	)
 
 	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
 
-	const unifFrac = 0.15
-
-	// Same seeds as are_optimized/tradeoff_bench_test.go for identical data
 	rng := rand.New(rand.NewSource(99))
 	clusterU64, clusters := testutils.GenerateClusterDistribution(n, nClusters, unifFrac, rng)
 	clusterBS := make([]bits.BitString, len(clusterU64))
@@ -38,126 +36,121 @@ func TestTradeoff_Cluster(t *testing.T) {
 		clusterBS[i] = testutils.TrieBS(v)
 	}
 
-	qrng := rand.New(rand.NewSource(12345))
-	queries := testutils.GenerateClusterQueries(queryCount, clusters, unifFrac, rangeLen, qrng)
-
 	tValues := []uint32{1, 2, 3, 4}
 	adaptiveColors := []string{"#6495ED", "#4169E1", "#1E3A8A", "#0F1D45"}
 
-	allSeries := map[string]*testutils.SeriesData{
-		"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
-		"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
-		"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
-		"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
-		"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
-		"CDF-ARE":        {Name: "CDF-ARE", Color: "#e05d10", Marker: "circle"},
-	}
-	for i, tv := range tValues {
-		name := fmt.Sprintf("Adaptive (t=%d)", tv)
-		allSeries[name] = &testutils.SeriesData{Name: name, Color: adaptiveColors[i], Dashed: true, Marker: "square"}
-	}
-
 	os.MkdirAll("../../bench_results/plots", 0755)
-	csvF, _ := os.Create("../../bench_results/plots/are_cluster_data.csv")
-	defer csvF.Close()
-	fmt.Fprintln(csvF, "Epsilon,Series,BPK,FPR")
 
-	fmt.Printf("\n=== Cluster Distribution (%d keys, %d clusters) ===\n", n, nClusters)
-	fmt.Printf("%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
-	fmt.Println(strings.Repeat("-", 55))
+	for _, rangeLen := range rangeLens {
+		t.Run(fmt.Sprintf("L=%d", rangeLen), func(t *testing.T) {
+			qrng := rand.New(rand.NewSource(12345))
+			queries := testutils.GenerateClusterQueries(queryCount, clusters, unifFrac, rangeLen, qrng)
 
-	for _, eps := range epsilons {
-		thBPK := math.Log2(float64(rangeLen) / eps)
-		allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, testutils.Point{X: thBPK, Y: eps})
-		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
-		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
-
-		fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
-		fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
-		fHybrid, errHybrid := are_hybrid.NewHybridARE(clusterBS, rangeLen, eps)
-
-		type m struct {
-			name  string
-			err   error
-			bpk   float64
-			check func(a, b uint64) bool
-		}
-
-		// Adaptive t=0..4
-		var ms []m
-		for _, tv := range append([]uint32{0}, tValues...) {
-			name := fmt.Sprintf("Adaptive (t=%d)", tv)
-			f, err := are_optimized.NewOptimizedARE(clusterBS, rangeLen, eps, tv)
-			var bpk float64
-			if err == nil {
-				bpk = float64(f.SizeInBits()) / float64(n)
+			allSeries := map[string]*testutils.SeriesData{
+				"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+				"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
+				"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
+				"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
+				"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
+				"CDF-ARE":        {Name: "CDF-ARE", Color: "#e05d10", Marker: "circle"},
 			}
-			fCopy := f
-			ms = append(ms, m{name, err, bpk, func(a, b uint64) bool { return fCopy.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
-		}
-
-		// SODA
-		if errSoda == nil {
-			fCopy := fSoda
-			ms = append(ms, m{"SODA", nil, float64(fSoda.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
-		} else {
-			ms = append(ms, m{"SODA", errSoda, 0, nil})
-		}
-		// Truncation
-		if errTrunc == nil {
-			fCopy := fTrunc
-			ms = append(ms, m{"Truncation", nil, float64(fTrunc.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
-		} else {
-			ms = append(ms, m{"Truncation", errTrunc, 0, nil})
-		}
-		// Hybrid
-		if errHybrid == nil {
-			fCopy := fHybrid
-			ms = append(ms, m{"Hybrid", nil, float64(fHybrid.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
-		} else {
-			ms = append(ms, m{"Hybrid", errHybrid, 0, nil})
-		}
-		// CDF-ARE
-		fCdf, errCdf := are_pgm.NewPGMApproximateRangeEmptiness(clusterU64, rangeLen, eps, 64)
-		if errCdf == nil {
-			fCopy := fCdf
-			ms = append(ms, m{"CDF-ARE", nil, float64(fCdf.TotalSizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
-		} else {
-			ms = append(ms, m{"CDF-ARE", errCdf, 0, nil})
-		}
-
-		for _, me := range ms {
-			if me.err != nil {
-				fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
-				continue
+			for i, tv := range tValues {
+				name := fmt.Sprintf("Adaptive (t=%d)", tv)
+				allSeries[name] = &testutils.SeriesData{Name: name, Color: adaptiveColors[i], Dashed: true, Marker: "square"}
 			}
-			fpr := testutils.MeasureFPR(clusterU64, queries, me.check)
-			allSeries[me.name].Points = append(allSeries[me.name].Points, testutils.Point{X: me.bpk, Y: fpr})
-			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, me.name, me.bpk, fpr)
-			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
-		}
-	}
 
-	orderedSeries := []testutils.SeriesData{
-		*allSeries["Theoretical"],
-		*allSeries["Adaptive (t=0)"],
-	}
-	for _, tv := range tValues {
-		orderedSeries = append(orderedSeries, *allSeries[fmt.Sprintf("Adaptive (t=%d)", tv)])
-	}
-	orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"], *allSeries["CDF-ARE"])
+			fmt.Printf("\n=== Cluster Distribution (%d keys, %d clusters, L=%d) ===\n", n, nClusters, rangeLen)
+			fmt.Printf("%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
+			fmt.Println(strings.Repeat("-", 55))
 
-	err := testutils.GenerateTradeoffSVG(
-		"Range Emptiness: FPR vs BPK (Cluster Distribution)",
-		"Bits per Key (BPK)",
-		"False Positive Rate (FPR)",
-		orderedSeries,
-		"../../bench_results/plots/are_cluster_comparison.svg",
-	)
-	if err != nil {
-		t.Errorf("SVG generation failed: %v", err)
-	} else {
-		fmt.Println("\nSVG written to bench_results/plots/are_cluster_comparison.svg")
+			for _, eps := range epsilons {
+				thBPK := math.Log2(float64(rangeLen) / eps)
+				allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, testutils.Point{X: thBPK, Y: eps})
+				fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
+
+				fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
+				fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
+				fHybrid, errHybrid := are_hybrid.NewHybridARE(clusterBS, rangeLen, eps)
+
+				type m struct {
+					name  string
+					err   error
+					bpk   float64
+					check func(a, b uint64) bool
+				}
+
+				var ms []m
+				for _, tv := range append([]uint32{0}, tValues...) {
+					name := fmt.Sprintf("Adaptive (t=%d)", tv)
+					f, err := are_optimized.NewOptimizedARE(clusterBS, rangeLen, eps, tv)
+					var bpk float64
+					if err == nil {
+						bpk = float64(f.SizeInBits()) / float64(n)
+					}
+					fCopy := f
+					ms = append(ms, m{name, err, bpk, func(a, b uint64) bool { return fCopy.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
+				}
+
+				if errSoda == nil {
+					fCopy := fSoda
+					ms = append(ms, m{"SODA", nil, float64(fSoda.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
+				} else {
+					ms = append(ms, m{"SODA", errSoda, 0, nil})
+				}
+				if errTrunc == nil {
+					fCopy := fTrunc
+					ms = append(ms, m{"Truncation", nil, float64(fTrunc.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
+				} else {
+					ms = append(ms, m{"Truncation", errTrunc, 0, nil})
+				}
+				if errHybrid == nil {
+					fCopy := fHybrid
+					ms = append(ms, m{"Hybrid", nil, float64(fHybrid.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
+				} else {
+					ms = append(ms, m{"Hybrid", errHybrid, 0, nil})
+				}
+				fCdf, errCdf := are_pgm.NewPGMApproximateRangeEmptiness(clusterU64, rangeLen, eps, 64)
+				if errCdf == nil {
+					fCopy := fCdf
+					ms = append(ms, m{"CDF-ARE", nil, float64(fCdf.TotalSizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
+				} else {
+					ms = append(ms, m{"CDF-ARE", errCdf, 0, nil})
+				}
+
+				for _, me := range ms {
+					if me.err != nil {
+						fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
+						continue
+					}
+					fpr := testutils.MeasureFPR(clusterU64, queries, me.check)
+					allSeries[me.name].Points = append(allSeries[me.name].Points, testutils.Point{X: me.bpk, Y: fpr})
+					fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
+				}
+			}
+
+			orderedSeries := []testutils.SeriesData{
+				*allSeries["Theoretical"],
+				*allSeries["Adaptive (t=0)"],
+			}
+			for _, tv := range tValues {
+				orderedSeries = append(orderedSeries, *allSeries[fmt.Sprintf("Adaptive (t=%d)", tv)])
+			}
+			orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"], *allSeries["CDF-ARE"])
+
+			svgPath := fmt.Sprintf("../../bench_results/plots/are_cluster_L%d.svg", rangeLen)
+			err := testutils.GenerateTradeoffSVG(
+				fmt.Sprintf("FPR vs BPK — Cluster (n=%d, L=%d)", n, rangeLen),
+				"Bits per Key (BPK)",
+				"False Positive Rate (FPR)",
+				orderedSeries,
+				svgPath,
+			)
+			if err != nil {
+				t.Errorf("SVG generation failed: %v", err)
+			} else {
+				fmt.Printf("\nSVG written to %s\n", svgPath)
+			}
+		})
 	}
 }
 

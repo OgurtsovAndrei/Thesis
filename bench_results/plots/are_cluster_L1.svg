@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="600" viewBox="0 0 1020 600">
+<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:11px;fill:#444}</style>
+<text x="510" y="28" text-anchor="middle" style="font-size:14px;font-weight:bold">FPR vs BPK — Cluster (n=65536, L=1)</text>
+<line class="axis" x1="90.0" y1="550.0" x2="870.0" y2="550.0"/>
+<line class="axis" x1="90.0" y1="40.0" x2="90.0" y2="550.0"/>
+<line class="grid" x1="90.0" y1="499.0" x2="870.0" y2="499.0"/>
+<text class="label" x="82.0" y="503.0" text-anchor="end">10^-4</text>
+<line class="grid" x1="90.0" y1="397.0" x2="870.0" y2="397.0"/>
+<text class="label" x="82.0" y="401.0" text-anchor="end">10^-3</text>
+<line class="grid" x1="90.0" y1="295.0" x2="870.0" y2="295.0"/>
+<text class="label" x="82.0" y="299.0" text-anchor="end">10^-2</text>
+<line class="grid" x1="90.0" y1="193.0" x2="870.0" y2="193.0"/>
+<text class="label" x="82.0" y="197.0" text-anchor="end">10^-1</text>
+<line class="grid" x1="90.0" y1="91.0" x2="870.0" y2="91.0"/>
+<text class="label" x="82.0" y="95.0" text-anchor="end">1</text>
+<line class="grid" x1="146.9" y1="40.0" x2="146.9" y2="550.0"/>
+<text class="label" x="146.9" y="566.0" text-anchor="middle">2</text>
+<line class="grid" x1="253.2" y1="40.0" x2="253.2" y2="550.0"/>
+<text class="label" x="253.2" y="566.0" text-anchor="middle">4</text>
+<line class="grid" x1="359.6" y1="40.0" x2="359.6" y2="550.0"/>
+<text class="label" x="359.6" y="566.0" text-anchor="middle">6</text>
+<line class="grid" x1="465.9" y1="40.0" x2="465.9" y2="550.0"/>
+<text class="label" x="465.9" y="566.0" text-anchor="middle">8</text>
+<line class="grid" x1="572.3" y1="40.0" x2="572.3" y2="550.0"/>
+<text class="label" x="572.3" y="566.0" text-anchor="middle">10</text>
+<line class="grid" x1="678.6" y1="40.0" x2="678.6" y2="550.0"/>
+<text class="label" x="678.6" y="566.0" text-anchor="middle">12</text>
+<line class="grid" x1="785.0" y1="40.0" x2="785.0" y2="550.0"/>
+<text class="label" x="785.0" y="566.0" text-anchor="middle">14</text>
+<polyline fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,5" points="217.2,193.0 270.3,223.7 340.6,264.3 393.8,295.0 447.0,325.7 517.3,366.3 570.5,397.0"/>
+<circle cx="217.2" cy="193.0" r="3" fill="#ef4444"/>
+<circle cx="270.3" cy="223.7" r="3" fill="#ef4444"/>
+<circle cx="340.6" cy="264.3" r="3" fill="#ef4444"/>
+<circle cx="393.8" cy="295.0" r="3" fill="#ef4444"/>
+<circle cx="447.0" cy="325.7" r="3" fill="#ef4444"/>
+<circle cx="517.3" cy="366.3" r="3" fill="#ef4444"/>
+<circle cx="570.5" cy="397.0" r="3" fill="#ef4444"/>
+<polyline fill="none" stroke="#2a7fff" stroke-width="2" points="460.2,245.2 516.0,275.4 570.7,306.4 624.7,339.5 678.2,371.2 731.6,407.7 784.9,441.6"/>
+<rect x="457.2" y="242.2" width="6" height="6" fill="#2a7fff"/>
+<rect x="513.0" y="272.4" width="6" height="6" fill="#2a7fff"/>
+<rect x="567.7" y="303.4" width="6" height="6" fill="#2a7fff"/>
+<rect x="621.7" y="336.5" width="6" height="6" fill="#2a7fff"/>
+<rect x="675.2" y="368.2" width="6" height="6" fill="#2a7fff"/>
+<rect x="728.6" y="404.7" width="6" height="6" fill="#2a7fff"/>
+<rect x="781.9" y="438.6" width="6" height="6" fill="#2a7fff"/>
+<polyline fill="none" stroke="#6495ED" stroke-width="2" stroke-dasharray="8,5" points="403.1,215.4 460.2,245.2 516.0,275.4 570.7,306.4 624.7,339.5 678.2,371.2 731.6,407.7"/>
+<rect x="400.1" y="212.4" width="6" height="6" fill="#6495ED"/>
+<rect x="457.2" y="242.2" width="6" height="6" fill="#6495ED"/>
+<rect x="513.0" y="272.4" width="6" height="6" fill="#6495ED"/>
+<rect x="567.7" y="303.4" width="6" height="6" fill="#6495ED"/>
+<rect x="621.7" y="336.5" width="6" height="6" fill="#6495ED"/>
+<rect x="675.2" y="368.2" width="6" height="6" fill="#6495ED"/>
+<rect x="728.6" y="404.7" width="6" height="6" fill="#6495ED"/>
+<polyline fill="none" stroke="#4169E1" stroke-width="2" stroke-dasharray="8,5" points="403.1,215.4 460.2,245.2 516.0,275.4 570.7,306.4 624.7,339.5 678.2,371.2 731.6,407.7"/>
+<rect x="400.1" y="212.4" width="6" height="6" fill="#4169E1"/>
+<rect x="457.2" y="242.2" width="6" height="6" fill="#4169E1"/>
+<rect x="513.0" y="272.4" width="6" height="6" fill="#4169E1"/>
+<rect x="567.7" y="303.4" width="6" height="6" fill="#4169E1"/>
+<rect x="621.7" y="336.5" width="6" height="6" fill="#4169E1"/>
+<rect x="675.2" y="368.2" width="6" height="6" fill="#4169E1"/>
+<rect x="728.6" y="404.7" width="6" height="6" fill="#4169E1"/>
+<polyline fill="none" stroke="#1E3A8A" stroke-width="2" stroke-dasharray="8,5" points="403.1,215.4 460.2,245.2 516.0,275.4 570.7,306.4 624.7,339.5 678.2,371.2 731.6,407.7"/>
+<rect x="400.1" y="212.4" width="6" height="6" fill="#1E3A8A"/>
+<rect x="457.2" y="242.2" width="6" height="6" fill="#1E3A8A"/>
+<rect x="513.0" y="272.4" width="6" height="6" fill="#1E3A8A"/>
+<rect x="567.7" y="303.4" width="6" height="6" fill="#1E3A8A"/>
+<rect x="621.7" y="336.5" width="6" height="6" fill="#1E3A8A"/>
+<rect x="675.2" y="368.2" width="6" height="6" fill="#1E3A8A"/>
+<rect x="728.6" y="404.7" width="6" height="6" fill="#1E3A8A"/>
+<polyline fill="none" stroke="#0F1D45" stroke-width="2" stroke-dasharray="8,5" points="403.1,215.4 460.2,245.2 516.0,275.4 570.7,306.4 624.7,339.5 678.2,371.2 731.6,407.7"/>
+<rect x="400.1" y="212.4" width="6" height="6" fill="#0F1D45"/>
+<rect x="457.2" y="242.2" width="6" height="6" fill="#0F1D45"/>
+<rect x="513.0" y="272.4" width="6" height="6" fill="#0F1D45"/>
+<rect x="567.7" y="303.4" width="6" height="6" fill="#0F1D45"/>
+<rect x="621.7" y="336.5" width="6" height="6" fill="#0F1D45"/>
+<rect x="675.2" y="368.2" width="6" height="6" fill="#0F1D45"/>
+<rect x="728.6" y="404.7" width="6" height="6" fill="#0F1D45"/>
+<polyline fill="none" stroke="#22a06b" stroke-width="2" points="403.1,215.4 460.2,245.2 516.0,275.4 570.7,306.4 624.7,339.5 678.2,371.2 731.6,407.7"/>
+<polygon points="403.1,211.4 407.1,215.4 403.1,219.4 399.1,215.4" fill="#22a06b"/>
+<polygon points="460.2,241.2 464.2,245.2 460.2,249.2 456.2,245.2" fill="#22a06b"/>
+<polygon points="516.0,271.4 520.0,275.4 516.0,279.4 512.0,275.4" fill="#22a06b"/>
+<polygon points="570.7,302.4 574.7,306.4 570.7,310.4 566.7,306.4" fill="#22a06b"/>
+<polygon points="624.7,335.5 628.7,339.5 624.7,343.5 620.7,339.5" fill="#22a06b"/>
+<polygon points="678.2,367.2 682.2,371.2 678.2,375.2 674.2,371.2" fill="#22a06b"/>
+<polygon points="731.6,403.7 735.6,407.7 731.6,411.7 727.6,407.7" fill="#22a06b"/>
+<polyline fill="none" stroke="#e6a800" stroke-width="2" points="125.5,98.2 133.5,98.2 141.5,98.2 149.5,98.2 157.5,98.2 165.5,98.2 173.5,98.2"/>
+<polygon points="125.5,94.2 129.5,101.2 121.5,101.2" fill="#e6a800"/>
+<polygon points="133.5,94.2 137.5,101.2 129.5,101.2" fill="#e6a800"/>
+<polygon points="141.5,94.2 145.5,101.2 137.5,101.2" fill="#e6a800"/>
+<polygon points="149.5,94.2 153.5,101.2 145.5,101.2" fill="#e6a800"/>
+<polygon points="157.5,94.2 161.5,101.2 153.5,101.2" fill="#e6a800"/>
+<polygon points="165.5,94.2 169.5,101.2 161.5,101.2" fill="#e6a800"/>
+<polygon points="173.5,94.2 177.5,101.2 169.5,101.2" fill="#e6a800"/>
+<polyline fill="none" stroke="#9b59b6" stroke-width="2" points="433.2,233.4 489.2,263.5 590.1,320.8 643.9,352.5 697.5,383.0 758.8,426.8 812.1,461.1"/>
+<polygon points="433.2,228.4 432.0,231.8 428.5,231.9 431.3,234.0 430.3,237.5 433.2,235.4 436.2,237.5 435.1,234.0 438.0,231.9 434.4,231.8" fill="#9b59b6"/>
+<polygon points="489.2,258.5 488.1,261.8 484.5,261.9 487.3,264.1 486.3,267.5 489.2,265.5 492.2,267.5 491.1,264.1 494.0,261.9 490.4,261.8" fill="#9b59b6"/>
+<polygon points="590.1,315.8 588.9,319.2 585.3,319.3 588.2,321.5 587.1,324.9 590.1,322.8 593.0,324.9 592.0,321.5 594.8,319.3 591.2,319.2" fill="#9b59b6"/>
+<polygon points="643.9,347.5 642.7,350.9 639.1,351.0 641.9,353.1 640.9,356.5 643.9,354.5 646.8,356.5 645.8,353.1 648.6,351.0 645.0,350.9" fill="#9b59b6"/>
+<polygon points="697.5,378.0 696.3,381.4 692.7,381.5 695.6,383.7 694.6,387.1 697.5,385.0 700.4,387.1 699.4,383.7 702.3,381.5 698.7,381.4" fill="#9b59b6"/>
+<polygon points="758.8,421.8 757.7,425.2 754.1,425.3 756.9,427.4 755.9,430.9 758.8,428.8 761.8,430.9 760.7,427.4 763.6,425.3 760.0,425.2" fill="#9b59b6"/>
+<polygon points="812.1,456.1 810.9,459.5 807.3,459.6 810.2,461.8 809.1,465.2 812.1,463.1 815.0,465.2 814.0,461.8 816.8,459.6 813.3,459.5" fill="#9b59b6"/>
+<polyline fill="none" stroke="#e05d10" stroke-width="2" points="504.1,195.8 562.4,223.3 618.7,249.4 673.6,271.8 727.7,290.7 781.3,304.2 834.5,311.2"/>
+<circle cx="504.1" cy="195.8" r="3" fill="#e05d10"/>
+<circle cx="562.4" cy="223.3" r="3" fill="#e05d10"/>
+<circle cx="618.7" cy="249.4" r="3" fill="#e05d10"/>
+<circle cx="673.6" cy="271.8" r="3" fill="#e05d10"/>
+<circle cx="727.7" cy="290.7" r="3" fill="#e05d10"/>
+<circle cx="781.3" cy="304.2" r="3" fill="#e05d10"/>
+<circle cx="834.5" cy="311.2" r="3" fill="#e05d10"/>
+<line x1="886" y1="60" x2="902" y2="60" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,5"/>
+<circle cx="894.0" cy="60.0" r="3" fill="#ef4444"/>
+<text class="label" x="908" y="64">Theoretical</text>
+<line x1="886" y1="78" x2="902" y2="78" stroke="#2a7fff" stroke-width="2"/>
+<rect x="891.0" y="75.0" width="6" height="6" fill="#2a7fff"/>
+<text class="label" x="908" y="82">Adaptive (t=0)</text>
+<line x1="886" y1="96" x2="902" y2="96" stroke="#6495ED" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="891.0" y="93.0" width="6" height="6" fill="#6495ED"/>
+<text class="label" x="908" y="100">Adaptive (t=1)</text>
+<line x1="886" y1="114" x2="902" y2="114" stroke="#4169E1" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="891.0" y="111.0" width="6" height="6" fill="#4169E1"/>
+<text class="label" x="908" y="118">Adaptive (t=2)</text>
+<line x1="886" y1="132" x2="902" y2="132" stroke="#1E3A8A" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="891.0" y="129.0" width="6" height="6" fill="#1E3A8A"/>
+<text class="label" x="908" y="136">Adaptive (t=3)</text>
+<line x1="886" y1="150" x2="902" y2="150" stroke="#0F1D45" stroke-width="2" stroke-dasharray="8,5"/>
+<rect x="891.0" y="147.0" width="6" height="6" fill="#0F1D45"/>
+<text class="label" x="908" y="154">Adaptive (t=4)</text>
+<line x1="886" y1="168" x2="902" y2="168" stroke="#22a06b" stroke-width="2"/>
+<polygon points="894.0,164.0 898.0,168.0 894.0,172.0 890.0,168.0" fill="#22a06b"/>
+<text class="label" x="908" y="172">SODA</text>
+<line x1="886" y1="186" x2="902" y2="186" stroke="#e6a800" stroke-width="2"/>
+<polygon points="894.0,182.0 898.0,189.0 890.0,189.0" fill="#e6a800"/>
+<text class="label" x="908" y="190">Truncation</text>
+<line x1="886" y1="204" x2="902" y2="204" stroke="#9b59b6" stroke-width="2"/>
+<polygon points="894.0,199.0 892.8,202.4 889.2,202.5 892.1,204.6 891.1,208.0 894.0,206.0 896.9,208.0 895.9,204.6 898.8,202.5 895.2,202.4" fill="#9b59b6"/>
+<text class="label" x="908" y="208">Hybrid</text>
+<line x1="886" y1="222" x2="902" y2="222" stroke="#e05d10" stroke-width="2"/>
+<circle cx="894.0" cy="222.0" r="3" fill="#e05d10"/>
+<text class="label" x="908" y="226">CDF-ARE</text>
+<text x="480" y="590" text-anchor="middle">Bits per Key (BPK)</text>
+<text transform="translate(16,295) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
+</svg>
