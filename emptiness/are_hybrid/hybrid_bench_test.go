@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 func trieBS(val uint64) bits.BitString {
@@ -277,6 +278,119 @@ func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 		t.Errorf("SVG generation failed: %v", err)
 	} else {
 		fmt.Println("\nSVG written to bench_results/plots/are_hybrid_cluster_comparison.svg")
+	}
+}
+
+func TestScalability_Hybrid(t *testing.T) {
+	sizes := []int{1 << 16, 1 << 20}
+	const (
+		rangeLen   = uint64(100)
+		queryCount = 500_000
+		nClusters  = 5
+		unifFrac   = 0.15
+		eps        = 0.01
+	)
+
+	type filterEntry struct {
+		name  string
+		build func(keysBS []bits.BitString, keysU64 []uint64) (func(a, b uint64) bool, uint64, string, error)
+	}
+
+	filters := []filterEntry{
+		{"Adaptive(t=0)", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
+			f, err := are_optimized.NewOptimizedARE(bs, rangeLen, eps, 0)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) }, f.SizeInBits(), "-", nil
+		}},
+		{"SODA", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
+			f, err := are_soda_hash.NewApproximateRangeEmptinessSoda(u64, rangeLen, eps)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, f.SizeInBits(), "-", nil
+		}},
+		{"Truncation", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
+			f, err := are.NewApproximateRangeEmptiness(bs, eps)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) }, f.SizeInBits(), "-", nil
+		}},
+		{"Hybrid", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
+			f, err := are_hybrid.NewHybridARE(bs, rangeLen, eps)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			nc, nf, nt := f.Stats()
+			info := fmt.Sprintf("%dc/%d%%fb", nc, 100*nf/nt)
+			return func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) }, f.SizeInBits(), info, nil
+		}},
+	}
+
+	for _, n := range sizes {
+		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
+			rng := rand.New(rand.NewSource(99))
+			keysU64, clusters := generateClusterDistribution(n, nClusters, unifFrac, rng)
+			keysBS := make([]bits.BitString, len(keysU64))
+			for i, v := range keysU64 {
+				keysBS[i] = trieBS(v)
+			}
+
+			qrng := rand.New(rand.NewSource(12345))
+			queries := generateClusterQueries(queryCount, clusters, unifFrac, rangeLen, qrng)
+
+			fmt.Printf("\n=== n=%d (ε=%.3f, rangeLen=%d, %d queries) ===\n", n, eps, rangeLen, queryCount)
+			fmt.Printf("%-16s | %8s | %12s | %12s | %12s | %s\n",
+				"Filter", "BPK", "FPR", "Build(ms)", "Query(ns/op)", "Info")
+			fmt.Println(strings.Repeat("-", 90))
+
+			for _, fe := range filters {
+				// Build
+				buildStart := time.Now()
+				check, sizeBits, info, err := fe.build(keysBS, keysU64)
+				buildDur := time.Since(buildStart)
+				if err != nil {
+					fmt.Printf("%-16s | %8s | %12s | %12s | %12s | err: %v\n",
+						fe.name, "N/A", "N/A", "N/A", "N/A", err)
+					continue
+				}
+
+				bpk := float64(sizeBits) / float64(n)
+
+				// Measure FPR
+				fp, totalEmpty := 0, 0
+				for _, q := range queries {
+					a, b := q[0], q[1]
+					if b < a {
+						continue
+					}
+					if !groundTruth(keysU64, a, b) {
+						continue
+					}
+					totalEmpty++
+					if !check(a, b) {
+						fp++
+					}
+				}
+				var fpr float64
+				if totalEmpty > 0 {
+					fpr = float64(fp) / float64(totalEmpty)
+				}
+
+				// Measure query latency (warm, on all queries — not just empty)
+				queryStart := time.Now()
+				for _, q := range queries {
+					check(q[0], q[1])
+				}
+				queryDur := time.Since(queryStart)
+				queryNs := float64(queryDur.Nanoseconds()) / float64(queryCount)
+
+				fmt.Printf("%-16s | %8.2f | %12.6f | %12.1f | %12.1f | %s\n",
+					fe.name, bpk, fpr, float64(buildDur.Milliseconds()), queryNs, info)
+			}
+		})
 	}
 }
 
