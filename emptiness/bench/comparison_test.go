@@ -42,33 +42,40 @@ func TestTradeoff_Cluster(t *testing.T) {
 
 	os.MkdirAll("../../bench_results/plots", 0755)
 
+	makeSeriesMap := func() map[string]*testutils.SeriesData {
+		m := map[string]*testutils.SeriesData{
+			"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+			"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
+			"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
+			"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
+			"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
+			"CDF-ARE":        {Name: "CDF-ARE", Color: "#e05d10", Marker: "circle"},
+			"Bloom V3":       {Name: "Bloom V3", Color: "#888888", Dashed: true, Marker: "circle"},
+		}
+		for i, tv := range tValues {
+			name := fmt.Sprintf("Adaptive (t=%d)", tv)
+			m[name] = &testutils.SeriesData{Name: name, Color: adaptiveColors[i], Dashed: true, Marker: "square"}
+		}
+		return m
+	}
+
 	for _, rangeLen := range rangeLens {
 		t.Run(fmt.Sprintf("L=%d", rangeLen), func(t *testing.T) {
 			qrng := rand.New(rand.NewSource(12345))
 			queries := testutils.GenerateClusterQueries(queryCount, clusters, unifFrac, rangeLen, qrng)
 
-			allSeries := map[string]*testutils.SeriesData{
-				"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
-				"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
-				"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
-				"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
-				"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
-				"CDF-ARE":        {Name: "CDF-ARE", Color: "#e05d10", Marker: "circle"},
-				"Bloom V3":       {Name: "Bloom V3", Color: "#888888", Dashed: true, Marker: "circle"},
-			}
-			for i, tv := range tValues {
-				name := fmt.Sprintf("Adaptive (t=%d)", tv)
-				allSeries[name] = &testutils.SeriesData{Name: name, Color: adaptiveColors[i], Dashed: true, Marker: "square"}
-			}
+			allSeries := makeSeriesMap()
+			allSeriesShrink := makeSeriesMap()
 
 			fmt.Printf("\n=== Cluster Distribution (%d keys, %d clusters, L=%d) ===\n", n, nClusters, rangeLen)
-			fmt.Printf("%-6s | %-20s | %8s | %12s\n", "Eps", "Series", "BPK", "FPR")
-			fmt.Println(strings.Repeat("-", 55))
+			fmt.Printf("%-6s | %-20s | %8s | %14s | %14s\n", "Eps", "Series", "BPK", "FPR(skip)", "FPR(shrink)")
+			fmt.Println(strings.Repeat("-", 72))
 
 			for _, eps := range epsilons {
 				thBPK := math.Log2(float64(rangeLen) / eps)
 				allSeries["Theoretical"].Points = append(allSeries["Theoretical"].Points, testutils.Point{X: thBPK, Y: eps})
-				fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
+				allSeriesShrink["Theoretical"].Points = append(allSeriesShrink["Theoretical"].Points, testutils.Point{X: thBPK, Y: eps})
+				fmt.Printf("%-6.3f | %-20s | %8.2f | %14.6f | %14s\n", eps, "Theoretical", thBPK, eps, "-")
 
 				fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
 				fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
@@ -128,12 +135,14 @@ func TestTradeoff_Cluster(t *testing.T) {
 
 				for _, me := range ms {
 					if me.err != nil {
-						fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
+						fmt.Printf("%-6.3f | %-20s | %8s | %14s | %14s (err: %v)\n", eps, me.name, "N/A", "N/A", "N/A", me.err)
 						continue
 					}
 					fpr := testutils.MeasureFPR(clusterU64, queries, me.check)
+					fprShrink := testutils.MeasureFPRShrink(clusterU64, queries, me.check)
 					allSeries[me.name].Points = append(allSeries[me.name].Points, testutils.Point{X: me.bpk, Y: fpr})
-					fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
+					allSeriesShrink[me.name].Points = append(allSeriesShrink[me.name].Points, testutils.Point{X: me.bpk, Y: fprShrink})
+					fmt.Printf("%-6.3f | %-20s | %8.2f | %14.6f | %14.6f\n", eps, me.name, me.bpk, fpr, fprShrink)
 				}
 			}
 
@@ -158,6 +167,31 @@ func TestTradeoff_Cluster(t *testing.T) {
 				t.Errorf("SVG generation failed: %v", err)
 			} else {
 				fmt.Printf("\nSVG written to %s\n", svgPath)
+			}
+
+			orderedSeriesShrink := []testutils.SeriesData{
+				*allSeriesShrink["Theoretical"],
+				*allSeriesShrink["Adaptive (t=0)"],
+			}
+			for _, tv := range tValues {
+				orderedSeriesShrink = append(orderedSeriesShrink, *allSeriesShrink[fmt.Sprintf("Adaptive (t=%d)", tv)])
+			}
+			orderedSeriesShrink = append(orderedSeriesShrink,
+				*allSeriesShrink["SODA"], *allSeriesShrink["Truncation"],
+				*allSeriesShrink["Hybrid"], *allSeriesShrink["CDF-ARE"], *allSeriesShrink["Bloom V3"],
+			)
+
+			svgPathShrink := fmt.Sprintf("../../bench_results/plots/are_cluster_L%d_shrink.svg", rangeLen)
+			if err := testutils.GenerateTradeoffSVG(
+				fmt.Sprintf("FPR vs BPK — Cluster shrink mode (n=%d, L=%d)", n, rangeLen),
+				"Bits per Key (BPK)",
+				"False Positive Rate (FPR)",
+				orderedSeriesShrink,
+				svgPathShrink,
+			); err != nil {
+				t.Errorf("SVG generation failed: %v", err)
+			} else {
+				fmt.Printf("SVG written to %s\n", svgPathShrink)
 			}
 		})
 	}
