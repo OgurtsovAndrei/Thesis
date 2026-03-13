@@ -440,6 +440,218 @@ func TestTradeoff_Full(t *testing.T) {
 	}
 }
 
+func TestBuildTimePerKey(t *testing.T) {
+	sizes := []int{1 << 10, 1 << 12, 1 << 14, 1 << 16, 1 << 18, 1 << 20}
+	const (
+		rangeLen  = uint64(100)
+		nClusters = 5
+		unifFrac  = 0.15
+		eps       = 0.01
+	)
+
+	type filterDef struct {
+		name  string
+		color string
+		build func(bs []bits.BitString, u64 []uint64) error
+	}
+
+	filters := []filterDef{
+		{"Adaptive(t=0)", "#2a7fff", func(bs []bits.BitString, _ []uint64) error {
+			_, err := are_optimized.NewOptimizedARE(bs, rangeLen, eps, 0)
+			return err
+		}},
+		{"SODA", "#22a06b", func(_ []bits.BitString, u64 []uint64) error {
+			_, err := are_soda_hash.NewApproximateRangeEmptinessSoda(u64, rangeLen, eps)
+			return err
+		}},
+		{"Truncation", "#e6a800", func(bs []bits.BitString, _ []uint64) error {
+			_, err := are.NewApproximateRangeEmptiness(bs, eps)
+			return err
+		}},
+		{"Hybrid", "#9b59b6", func(bs []bits.BitString, _ []uint64) error {
+			_, err := are_hybrid.NewHybridARE(bs, rangeLen, eps)
+			return err
+		}},
+		{"CDF-ARE", "#e05d10", func(_ []bits.BitString, u64 []uint64) error {
+			_, err := are_pgm.NewPGMApproximateRangeEmptiness(u64, rangeLen, eps, 64)
+			return err
+		}},
+	}
+
+	markers := []string{"square", "diamond", "triangle", "star", "circle"}
+	var allSeries []testutils.SeriesData
+	for i, f := range filters {
+		allSeries = append(allSeries, testutils.SeriesData{
+			Name: f.name, Color: f.color, Marker: markers[i%len(markers)],
+		})
+	}
+
+	fmt.Printf("\n=== Build Time per Key (ε=%.3f, L=%d) ===\n", eps, rangeLen)
+	fmt.Printf("%-16s", "Filter")
+	for _, n := range sizes {
+		fmt.Printf(" | %10s", fmt.Sprintf("n=%d", n))
+	}
+	fmt.Println()
+	fmt.Println(strings.Repeat("-", 16+len(sizes)*13))
+
+	for fi, fd := range filters {
+		fmt.Printf("%-16s", fd.name)
+		for _, n := range sizes {
+			rng := rand.New(rand.NewSource(99))
+			keysU64, _ := testutils.GenerateClusterDistribution(n, nClusters, unifFrac, rng)
+			keysBS := make([]bits.BitString, len(keysU64))
+			for i, v := range keysU64 {
+				keysBS[i] = testutils.TrieBS(v)
+			}
+
+			start := time.Now()
+			err := fd.build(keysBS, keysU64)
+			dur := time.Since(start)
+
+			if err != nil {
+				fmt.Printf(" | %10s", "err")
+				continue
+			}
+
+			nsPerKey := float64(dur.Nanoseconds()) / float64(n)
+			allSeries[fi].Points = append(allSeries[fi].Points, testutils.Point{X: float64(n), Y: nsPerKey})
+			fmt.Printf(" | %8.1f ns", nsPerKey)
+		}
+		fmt.Println()
+	}
+
+	os.MkdirAll("../../bench_results/plots", 0755)
+	err := testutils.GeneratePerformanceSVG(testutils.PlotConfig{
+		Title:  fmt.Sprintf("Build Time per Key (ε=%.3f, L=%d)", eps, rangeLen),
+		XLabel: "Number of Keys (n)",
+		YLabel: "Build Time (ns/key)",
+		XScale: testutils.Log10,
+		YScale: testutils.Linear,
+	}, allSeries, "../../bench_results/plots/build_time_per_key.svg")
+	if err != nil {
+		t.Errorf("SVG generation failed: %v", err)
+	} else {
+		fmt.Println("\nSVG written to bench_results/plots/build_time_per_key.svg")
+	}
+}
+
+func TestQueryTimeVsRangeLen(t *testing.T) {
+	rangeLens := []uint64{16, 64, 256, 1024, 4096, 16384}
+	const (
+		n          = 1 << 16
+		queryCount = 200_000
+		nClusters  = 5
+		unifFrac   = 0.15
+		eps        = 0.01
+	)
+
+	rng := rand.New(rand.NewSource(99))
+	keysU64, clusters := testutils.GenerateClusterDistribution(n, nClusters, unifFrac, rng)
+	keysBS := make([]bits.BitString, len(keysU64))
+	for i, v := range keysU64 {
+		keysBS[i] = testutils.TrieBS(v)
+	}
+
+	type filterDef struct {
+		name  string
+		color string
+		build func(L uint64) (func(a, b uint64) bool, error)
+	}
+
+	filters := []filterDef{
+		{"Adaptive(t=0)", "#2a7fff", func(L uint64) (func(a, b uint64) bool, error) {
+			f, err := are_optimized.NewOptimizedARE(keysBS, L, eps, 0)
+			if err != nil {
+				return nil, err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }, nil
+		}},
+		{"SODA", "#22a06b", func(L uint64) (func(a, b uint64) bool, error) {
+			f, err := are_soda_hash.NewApproximateRangeEmptinessSoda(keysU64, L, eps)
+			if err != nil {
+				return nil, err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, nil
+		}},
+		{"Truncation", "#e6a800", func(_ uint64) (func(a, b uint64) bool, error) {
+			f, err := are.NewApproximateRangeEmptiness(keysBS, eps)
+			if err != nil {
+				return nil, err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }, nil
+		}},
+		{"Hybrid", "#9b59b6", func(L uint64) (func(a, b uint64) bool, error) {
+			f, err := are_hybrid.NewHybridARE(keysBS, L, eps)
+			if err != nil {
+				return nil, err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }, nil
+		}},
+		{"CDF-ARE", "#e05d10", func(L uint64) (func(a, b uint64) bool, error) {
+			f, err := are_pgm.NewPGMApproximateRangeEmptiness(keysU64, L, eps, 64)
+			if err != nil {
+				return nil, err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, nil
+		}},
+	}
+
+	markers := []string{"square", "diamond", "triangle", "star", "circle"}
+	var allSeries []testutils.SeriesData
+	for i, f := range filters {
+		allSeries = append(allSeries, testutils.SeriesData{
+			Name: f.name, Color: f.color, Marker: markers[i%len(markers)],
+		})
+	}
+
+	fmt.Printf("\n=== Query Time vs Range Length (n=%d, ε=%.3f) ===\n", n, eps)
+	fmt.Printf("%-16s", "Filter")
+	for _, L := range rangeLens {
+		fmt.Printf(" | %10s", fmt.Sprintf("L=%d", L))
+	}
+	fmt.Println()
+	fmt.Println(strings.Repeat("-", 16+len(rangeLens)*13))
+
+	for fi, fd := range filters {
+		fmt.Printf("%-16s", fd.name)
+		for _, L := range rangeLens {
+			qrng := rand.New(rand.NewSource(12345))
+			queries := testutils.GenerateClusterQueries(queryCount, clusters, unifFrac, L, qrng)
+
+			check, err := fd.build(L)
+			if err != nil {
+				fmt.Printf(" | %10s", "err")
+				continue
+			}
+
+			start := time.Now()
+			for _, q := range queries {
+				check(q[0], q[1])
+			}
+			dur := time.Since(start)
+			nsPerQuery := float64(dur.Nanoseconds()) / float64(queryCount)
+
+			allSeries[fi].Points = append(allSeries[fi].Points, testutils.Point{X: float64(L), Y: nsPerQuery})
+			fmt.Printf(" | %8.1f ns", nsPerQuery)
+		}
+		fmt.Println()
+	}
+
+	os.MkdirAll("../../bench_results/plots", 0755)
+	err := testutils.GeneratePerformanceSVG(testutils.PlotConfig{
+		Title:  fmt.Sprintf("Query Time vs Range Length (n=%d, ε=%.3f)", n, eps),
+		XLabel: "Range Length (L)",
+		YLabel: "Query Time (ns/op)",
+		XScale: testutils.Log10,
+		YScale: testutils.Linear,
+	}, allSeries, "../../bench_results/plots/query_time_vs_rangelen.svg")
+	if err != nil {
+		t.Errorf("SVG generation failed: %v", err)
+	} else {
+		fmt.Println("\nSVG written to bench_results/plots/query_time_vs_rangelen.svg")
+	}
+}
+
 // Safe size helpers to avoid nil dereference when build failed
 func safeSize(f *are_optimized.OptimizedApproximateRangeEmptiness) uint64 {
 	if f == nil {
