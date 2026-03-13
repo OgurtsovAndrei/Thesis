@@ -366,11 +366,18 @@ func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
 		return float64(fp) / float64(total)
 	}
 
+	tValues := []uint32{1, 2, 3, 4}
+	adaptiveColors := []string{"#6495ED", "#4169E1", "#1E3A8A", "#0F1D45"}
+
 	allSeries := map[string]*seriesData{
-		"Theoretical": {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
-		"Adaptive":    {Name: "Adaptive", Color: "#2a7fff", Marker: "square"},
-		"SODA":        {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
-		"Truncation":  {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
+		"Theoretical":    {Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "circle"},
+		"Adaptive (t=0)": {Name: "Adaptive (t=0)", Color: "#2a7fff", Marker: "square"},
+		"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
+		"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
+	}
+	for i, tv := range tValues {
+		name := fmt.Sprintf("Adaptive (t=%d)", tv)
+		allSeries[name] = &seriesData{Name: name, Color: adaptiveColors[i], Dashed: true, Marker: "square"}
 	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
@@ -388,42 +395,49 @@ func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
 		fmt.Fprintf(csvF, "%f,Theoretical,%f,%f\n", eps, thBPK, eps)
 		fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, "Theoretical", thBPK, eps)
 
-		fOpt, errOpt := NewOptimizedARE(clusterBS, rangeLen, eps, 0)
 		fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
 		fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
 
 		type m struct {
-			name string
-			err  error
-			bpk  float64
+			name  string
+			err   error
+			bpk   float64
+			check func(a, b uint64) bool
 		}
-		ms := []m{
-			{"Adaptive", errOpt, 0},
-			{"SODA", errSoda, 0},
-			{"Truncation", errTrunc, 0},
+
+		// Adaptive t=0..4
+		var ms []m
+		for _, tv := range append([]uint32{0}, tValues...) {
+			name := fmt.Sprintf("Adaptive (t=%d)", tv)
+			f, err := NewOptimizedARE(clusterBS, rangeLen, eps, tv)
+			var bpk float64
+			if err == nil {
+				bpk = float64(f.SizeInBits()) / float64(n)
+			}
+			fCopy := f
+			ms = append(ms, m{name, err, bpk, func(a, b uint64) bool { return fCopy.IsEmpty(trieBS(a), trieBS(b)) }})
 		}
-		if errOpt == nil {
-			ms[0].bpk = float64(fOpt.SizeInBits()) / float64(n)
-		}
+
+		// SODA and Truncation
 		if errSoda == nil {
-			ms[1].bpk = float64(fSoda.SizeInBits()) / float64(n)
+			fCopy := fSoda
+			ms = append(ms, m{"SODA", nil, float64(fSoda.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
+		} else {
+			ms = append(ms, m{"SODA", errSoda, 0, nil})
 		}
 		if errTrunc == nil {
-			ms[2].bpk = float64(fTrunc.SizeInBits()) / float64(n)
+			fCopy := fTrunc
+			ms = append(ms, m{"Truncation", nil, float64(fTrunc.SizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(trieBS(a), trieBS(b)) }})
+		} else {
+			ms = append(ms, m{"Truncation", errTrunc, 0, nil})
 		}
 
-		checkFns := []func(a, b uint64) bool{
-			func(a, b uint64) bool { return fOpt.IsEmpty(trieBS(a), trieBS(b)) },
-			func(a, b uint64) bool { return fSoda.IsEmpty(a, b) },
-			func(a, b uint64) bool { return fTrunc.IsEmpty(trieBS(a), trieBS(b)) },
-		}
-
-		for i, me := range ms {
+		for _, me := range ms {
 			if me.err != nil {
 				fmt.Printf("%-6.3f | %-20s | %8s | %12s (err: %v)\n", eps, me.name, "N/A", "N/A", me.err)
 				continue
 			}
-			fpr := measureFPR(clusterU64, queries, checkFns[i])
+			fpr := measureFPR(clusterU64, queries, me.check)
 			allSeries[me.name].Points = append(allSeries[me.name].Points, point{me.bpk, fpr})
 			fmt.Fprintf(csvF, "%f,%s,%f,%f\n", eps, me.name, me.bpk, fpr)
 			fmt.Printf("%-6.3f | %-20s | %8.2f | %12.6f\n", eps, me.name, me.bpk, fpr)
@@ -432,10 +446,13 @@ func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
 
 	orderedSeries := []seriesData{
 		*allSeries["Theoretical"],
-		*allSeries["Adaptive"],
-		*allSeries["SODA"],
-		*allSeries["Truncation"],
+		*allSeries["Adaptive (t=0)"],
 	}
+	for _, tv := range tValues {
+		orderedSeries = append(orderedSeries, *allSeries[fmt.Sprintf("Adaptive (t=%d)", tv)])
+	}
+	orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"])
+
 	err := generateTradeoffSVG(
 		"Range Emptiness: FPR vs BPK (Cluster Distribution)",
 		"Bits per Key (BPK)",
