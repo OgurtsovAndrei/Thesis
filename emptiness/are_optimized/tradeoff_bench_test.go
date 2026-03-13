@@ -236,15 +236,18 @@ func TestTradeoff_FPR_vs_BPK(t *testing.T) {
 	}
 }
 
-// generateClusterKeys creates n keys from a mixture distribution:
-// ~50% uniform random + ~50% from numClusters Gaussian clusters.
-// Each cluster has a random center and stddev controls width.
-func generateClusterKeys(n int, numClusters int, rng *rand.Rand) []uint64 {
+type clusterInfo struct {
+	center uint64
+	stddev float64
+}
+
+// generateClusterDistribution creates n keys: unifFrac uniform + rest from Gaussian clusters.
+// Returns sorted keys and cluster metadata (for query generation).
+func generateClusterDistribution(n int, numClusters int, unifFrac float64, rng *rand.Rand) ([]uint64, []clusterInfo) {
 	seen := make(map[uint64]bool)
 	keys := make([]uint64, 0, n)
 
-	// Half uniform
-	nUnif := n / 2
+	nUnif := int(float64(n) * unifFrac)
 	for len(keys) < nUnif {
 		v := rng.Uint64()
 		if !seen[v] {
@@ -253,26 +256,18 @@ func generateClusterKeys(n int, numClusters int, rng *rand.Rand) []uint64 {
 		}
 	}
 
-	// Half from Gaussian clusters
+	clusters := make([]clusterInfo, numClusters)
 	perCluster := (n - nUnif) / numClusters
 	for c := 0; c < numClusters; c++ {
-		center := rng.Uint64()
-		stddev := float64(uint64(1) << (20 + rng.Intn(10))) // stddev from 2^20 to 2^29
+		clusters[c] = clusterInfo{
+			center: rng.Uint64(),
+			stddev: float64(uint64(1) << (20 + rng.Intn(10))),
+		}
 		generated := 0
 		for generated < perCluster || (c == numClusters-1 && len(keys) < n) {
-			offset := int64(rng.NormFloat64() * stddev)
-			var v uint64
-			if offset >= 0 {
-				v = center + uint64(offset)
-				if v < center { // overflow
-					continue
-				}
-			} else {
-				neg := uint64(-offset)
-				if neg > center { // underflow
-					continue
-				}
-				v = center - neg
+			v := sampleGaussian(clusters[c].center, clusters[c].stddev, rng)
+			if v == 0 && clusters[c].center != 0 {
+				continue // overflow/underflow sentinel
 			}
 			if !seen[v] {
 				seen[v] = true
@@ -286,7 +281,46 @@ func generateClusterKeys(n int, numClusters int, rng *rand.Rand) []uint64 {
 	}
 
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return keys
+	return keys, clusters
+}
+
+// sampleGaussian returns center + NormFloat64()*stddev, with overflow protection.
+func sampleGaussian(center uint64, stddev float64, rng *rand.Rand) uint64 {
+	offset := int64(rng.NormFloat64() * stddev)
+	if offset >= 0 {
+		v := center + uint64(offset)
+		if v < center {
+			return 0
+		}
+		return v
+	}
+	neg := uint64(-offset)
+	if neg > center {
+		return 0
+	}
+	return center - neg
+}
+
+// generateClusterQueries generates queries matching the cluster distribution:
+// unifFrac fully random, rest near cluster centers.
+func generateClusterQueries(count int, clusters []clusterInfo, unifFrac float64, rangeLen uint64, rng *rand.Rand) [][2]uint64 {
+	queries := make([][2]uint64, count)
+	nUnif := int(float64(count) * unifFrac)
+
+	for i := 0; i < nUnif; i++ {
+		a := rng.Uint64()
+		queries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+
+	for i := nUnif; i < count; i++ {
+		cl := clusters[rng.Intn(len(clusters))]
+		a := sampleGaussian(cl.center, cl.stddev, rng)
+		if a == 0 {
+			a = rng.Uint64()
+		}
+		queries[i] = [2]uint64{a, a + rangeLen - 1}
+	}
+	return queries
 }
 
 func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
@@ -299,20 +333,17 @@ func TestTradeoff_FPR_vs_BPK_Cluster(t *testing.T) {
 
 	epsilons := []float64{0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001}
 
+	const unifFrac = 0.15 // 15% uniform background, 85% from clusters
+
 	rng := rand.New(rand.NewSource(99))
-	clusterU64 := generateClusterKeys(n, nClusters, rng)
+	clusterU64, clusters := generateClusterDistribution(n, nClusters, unifFrac, rng)
 	clusterBS := make([]bits.BitString, len(clusterU64))
 	for i, v := range clusterU64 {
 		clusterBS[i] = trieBS(v)
 	}
 
-	// Queries: random ranges (same as uniform benchmark)
 	qrng := rand.New(rand.NewSource(12345))
-	queries := make([][2]uint64, queryCount)
-	for i := range queries {
-		a := qrng.Uint64()
-		queries[i] = [2]uint64{a, a + rangeLen - 1}
-	}
+	queries := generateClusterQueries(queryCount, clusters, unifFrac, rangeLen, qrng)
 
 	measureFPR := func(keys []uint64, qs [][2]uint64, check func(a, b uint64) bool) float64 {
 		fp, total := 0, 0
