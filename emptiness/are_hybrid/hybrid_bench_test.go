@@ -5,6 +5,7 @@ import (
 	"Thesis/emptiness/are"
 	"Thesis/emptiness/are_hybrid"
 	"Thesis/emptiness/are_optimized"
+	"Thesis/emptiness/are_pgm"
 	"Thesis/emptiness/are_soda_hash"
 	"fmt"
 	"math"
@@ -121,9 +122,9 @@ type point struct {
 
 func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 	const (
-		n          = 10000
+		n          = 1 << 16
 		rangeLen   = uint64(100)
-		queryCount = 100_000
+		queryCount = 200_000
 		nClusters  = 5
 	)
 
@@ -172,6 +173,7 @@ func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 		"SODA":           {Name: "SODA", Color: "#22a06b", Marker: "diamond"},
 		"Truncation":     {Name: "Truncation", Color: "#e6a800", Marker: "triangle"},
 		"Hybrid":         {Name: "Hybrid", Color: "#9b59b6", Marker: "star"},
+		"CDF-ARE":        {Name: "CDF-ARE", Color: "#e05d10", Marker: "circle"},
 	}
 	for i, tv := range tValues {
 		name := fmt.Sprintf("Adaptive (t=%d)", tv)
@@ -238,6 +240,14 @@ func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 		} else {
 			ms = append(ms, m{"Hybrid", errHybrid, 0, nil})
 		}
+		// CDF-ARE
+		fCdf, errCdf := are_pgm.NewPGMApproximateRangeEmptiness(clusterU64, rangeLen, eps, 64)
+		if errCdf == nil {
+			fCopy := fCdf
+			ms = append(ms, m{"CDF-ARE", nil, float64(fCdf.TotalSizeInBits()) / float64(n), func(a, b uint64) bool { return fCopy.IsEmpty(a, b) }})
+		} else {
+			ms = append(ms, m{"CDF-ARE", errCdf, 0, nil})
+		}
 
 		for _, me := range ms {
 			if me.err != nil {
@@ -258,7 +268,7 @@ func TestTradeoff_Hybrid_Cluster(t *testing.T) {
 	for _, tv := range tValues {
 		orderedSeries = append(orderedSeries, *allSeries[fmt.Sprintf("Adaptive (t=%d)", tv)])
 	}
-	orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"])
+	orderedSeries = append(orderedSeries, *allSeries["SODA"], *allSeries["Truncation"], *allSeries["Hybrid"], *allSeries["CDF-ARE"])
 
 	err := generateTradeoffSVG(
 		"Range Emptiness: FPR vs BPK (Cluster Distribution)",
@@ -319,6 +329,13 @@ func TestScalability_Hybrid(t *testing.T) {
 			nc, nf, nt := f.Stats()
 			info := fmt.Sprintf("%dc/%d%%fb", nc, 100*nf/nt)
 			return func(a, b uint64) bool { return f.IsEmpty(trieBS(a), trieBS(b)) }, f.SizeInBits(), info, nil
+		}},
+		{"CDF-ARE", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
+			f, err := are_pgm.NewPGMApproximateRangeEmptiness(u64, rangeLen, eps, 64)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, f.TotalSizeInBits(), "-", nil
 		}},
 	}
 
@@ -468,6 +485,8 @@ func TestTradeoff_Hybrid_Uniform(t *testing.T) {
 		"Truncation (Seq)":  {Name: "Truncation (Seq)", Color: "#e6a800", Dashed: true, Marker: "triangle"},
 		"Hybrid (Unif)":     {Name: "Hybrid (Unif)", Color: "#9b59b6", Marker: "star"},
 		"Hybrid (Seq)":      {Name: "Hybrid (Seq)", Color: "#9b59b6", Dashed: true, Marker: "star"},
+		"CDF-ARE (Unif)":    {Name: "CDF-ARE (Unif)", Color: "#e05d10", Marker: "circle"},
+		"CDF-ARE (Seq)":     {Name: "CDF-ARE (Seq)", Color: "#e05d10", Dashed: true, Marker: "circle"},
 	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
@@ -493,6 +512,8 @@ func TestTradeoff_Hybrid_Uniform(t *testing.T) {
 		fTruncS, errTruncS := are.NewApproximateRangeEmptiness(seqBS, eps)
 		fHybridU, errHybridU := are_hybrid.NewHybridARE(unifBS, rangeLen, eps)
 		fHybridS, errHybridS := are_hybrid.NewHybridARE(seqBS, rangeLen, eps)
+		fCdfU, errCdfU := are_pgm.NewPGMApproximateRangeEmptiness(unifU64, rangeLen, eps, 64)
+		fCdfS, errCdfS := are_pgm.NewPGMApproximateRangeEmptiness(seqU64, rangeLen, eps, 64)
 
 		type mm struct {
 			name    string
@@ -520,6 +541,8 @@ func TestTradeoff_Hybrid_Uniform(t *testing.T) {
 		add("Truncation (Seq)", errTruncS, safeSizeTrunc(fTruncS), seqU64, seqQueries, func(a, b uint64) bool { return fTruncS.IsEmpty(trieBS(a), trieBS(b)) })
 		add("Hybrid (Unif)", errHybridU, safeSizeHybrid(fHybridU), unifU64, queries, func(a, b uint64) bool { return fHybridU.IsEmpty(trieBS(a), trieBS(b)) })
 		add("Hybrid (Seq)", errHybridS, safeSizeHybrid(fHybridS), seqU64, seqQueries, func(a, b uint64) bool { return fHybridS.IsEmpty(trieBS(a), trieBS(b)) })
+		add("CDF-ARE (Unif)", errCdfU, safeSizeCdf(fCdfU), unifU64, queries, func(a, b uint64) bool { return fCdfU.IsEmpty(a, b) })
+		add("CDF-ARE (Seq)", errCdfS, safeSizeCdf(fCdfS), seqU64, seqQueries, func(a, b uint64) bool { return fCdfS.IsEmpty(a, b) })
 
 		for _, me := range ms {
 			if me.err != nil {
@@ -543,6 +566,8 @@ func TestTradeoff_Hybrid_Uniform(t *testing.T) {
 		*allSeries["Truncation (Seq)"],
 		*allSeries["Hybrid (Unif)"],
 		*allSeries["Hybrid (Seq)"],
+		*allSeries["CDF-ARE (Unif)"],
+		*allSeries["CDF-ARE (Seq)"],
 	}
 
 	err := generateTradeoffSVG(
@@ -583,6 +608,12 @@ func safeSizeHybrid(f *are_hybrid.HybridARE) uint64 {
 		return 0
 	}
 	return f.SizeInBits()
+}
+func safeSizeCdf(f *are_pgm.PGMApproximateRangeEmptiness) uint64 {
+	if f == nil {
+		return 0
+	}
+	return f.TotalSizeInBits()
 }
 
 func generateTradeoffSVG(title, xLabel, yLabel string, series []seriesData, outPath string) error {

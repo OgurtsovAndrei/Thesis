@@ -95,6 +95,22 @@
 <polygon points="572.5,263.0 571.3,266.3 567.7,266.4 570.6,268.6 569.6,272.0 572.5,270.0 575.4,272.0 574.4,268.6 577.3,266.4 573.7,266.3" fill="#9b59b6"/>
 <polygon points="655.9,306.2 654.8,309.5 651.2,309.6 654.0,311.8 653.0,315.2 655.9,313.2 658.9,315.2 657.8,311.8 660.7,309.6 657.1,309.5" fill="#9b59b6"/>
 <polygon points="697.4,323.2 696.3,326.6 692.7,326.7 695.5,328.8 694.5,332.3 697.4,330.2 700.4,332.3 699.3,328.8 702.2,326.7 698.6,326.6" fill="#9b59b6"/>
+<polyline fill="none" stroke="#e05d10" stroke-width="2" points="441.7,159.3 486.4,180.8 530.1,202.5 572.6,223.0 614.7,246.9 698.3,287.9 739.8,309.6"/>
+<circle cx="441.7" cy="159.3" r="3" fill="#e05d10"/>
+<circle cx="486.4" cy="180.8" r="3" fill="#e05d10"/>
+<circle cx="530.1" cy="202.5" r="3" fill="#e05d10"/>
+<circle cx="572.6" cy="223.0" r="3" fill="#e05d10"/>
+<circle cx="614.7" cy="246.9" r="3" fill="#e05d10"/>
+<circle cx="698.3" cy="287.9" r="3" fill="#e05d10"/>
+<circle cx="739.8" cy="309.6" r="3" fill="#e05d10"/>
+<polyline fill="none" stroke="#e05d10" stroke-width="2" stroke-dasharray="8,5" points="449.4,513.6 490.9,513.6 532.4,513.6 573.9,513.6 615.4,513.6 698.4,513.6 739.9,513.6"/>
+<circle cx="449.4" cy="513.6" r="3" fill="#e05d10"/>
+<circle cx="490.9" cy="513.6" r="3" fill="#e05d10"/>
+<circle cx="532.4" cy="513.6" r="3" fill="#e05d10"/>
+<circle cx="573.9" cy="513.6" r="3" fill="#e05d10"/>
+<circle cx="615.4" cy="513.6" r="3" fill="#e05d10"/>
+<circle cx="698.4" cy="513.6" r="3" fill="#e05d10"/>
+<circle cx="739.9" cy="513.6" r="3" fill="#e05d10"/>
 <line x1="700" y1="60" x2="716" y2="60" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,5"/>
 <circle cx="708.0" cy="60.0" r="3" fill="#ef4444"/>
 <text class="label" x="722" y="64">Theoretical</text>
@@ -122,6 +138,12 @@
 <line x1="700" y1="204" x2="716" y2="204" stroke="#9b59b6" stroke-width="2" stroke-dasharray="8,5"/>
 <polygon points="708.0,199.0 706.8,202.4 703.2,202.5 706.1,204.6 705.1,208.0 708.0,206.0 710.9,208.0 709.9,204.6 712.8,202.5 709.2,202.4" fill="#9b59b6"/>
 <text class="label" x="722" y="208">Hybrid (Seq)</text>
+<line x1="700" y1="222" x2="716" y2="222" stroke="#e05d10" stroke-width="2"/>
+<circle cx="708.0" cy="222.0" r="3" fill="#e05d10"/>
+<text class="label" x="722" y="226">CDF-ARE (Unif)</text>
+<line x1="700" y1="240" x2="716" y2="240" stroke="#e05d10" stroke-width="2" stroke-dasharray="8,5"/>
+<circle cx="708.0" cy="240.0" r="3" fill="#e05d10"/>
+<text class="label" x="722" y="244">CDF-ARE (Seq)</text>
 <text x="505" y="590" text-anchor="middle">Bits per Key (BPK)</text>
 <text transform="translate(16,295) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
 </svg>

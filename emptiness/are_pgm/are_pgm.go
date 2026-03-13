@@ -29,12 +29,13 @@ type CDFPoint struct {
 // Limitation: keys must fit in uint64; float64 conversion in PGM
 // loses precision for keys > 2^53.
 type PGMApproximateRangeEmptiness struct {
-	cdf    []CDFPoint
-	ere    *ere.ExactRangeEmptiness
-	K      uint32
-	n      int
-	minKey uint64
-	maxKey uint64
+	cdf       []CDFPoint
+	ere       *ere.ExactRangeEmptiness
+	K         uint32
+	n         int
+	minKey    uint64
+	maxKey    uint64
+	smoothing float64 // 0 = pure CDF, 1 = pure uniform
 }
 
 // NewPGMApproximateRangeEmptiness builds a CDF-mapped range emptiness filter.
@@ -45,7 +46,15 @@ type PGMApproximateRangeEmptiness struct {
 //   - epsilon: target false positive rate
 //   - pgmEpsilon: PGM approximation error bound (controls CDF granularity;
 //     smaller = more CDF points = better approximation but more storage)
+func NewPGMApproximateRangeEmptinessSmooth(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
+	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, smoothing)
+}
+
 func NewPGMApproximateRangeEmptiness(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int) (*PGMApproximateRangeEmptiness, error) {
+	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, 0)
+}
+
+func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
 	n := len(keys)
 	if n == 0 {
 		return &PGMApproximateRangeEmptiness{n: 0}, nil
@@ -62,15 +71,25 @@ func NewPGMApproximateRangeEmptiness(keys []uint64, rangeLen uint64, epsilon flo
 	}
 	pgmIdx := pgm.NewIndex(fkeys, pgmEpsilon)
 
-	// Sample PGM at each key and fix monotonicity
+	// Sample PGM at each key and fix monotonicity.
+	//
+	// BUG(agnivade/pgm): Search panics on large datasets (n ≥ ~65K) due to
+	// negative pos from computePos (float64 rounding of key*slope + intercept).
+	// In pgm_index.go:76-77:
+	//   lo := max(pos-ind.epsilon, 0)       // clamped OK
+	//   hi := min(pos+ind.epsilon, len(...)) // NOT clamped to 0 → negative slice bound
+	// We recover from the panic and fall back to pos=i (linear CDF).
+	// TODO: fork agnivade/pgm and fix: add hi = max(hi, 0) after line 77.
 	rawPos := make([]int, n)
 	for i, k := range sorted {
-		ap, err := pgmIdx.Search(float64(k))
-		if err != nil {
-			rawPos[i] = i
-		} else {
-			rawPos[i] = ap.Pos
-		}
+		pos := i // fallback: linear CDF
+		func() {
+			defer func() { recover() }()
+			if ap, err := pgmIdx.Search(float64(k)); err == nil {
+				pos = ap.Pos
+			}
+		}()
+		rawPos[i] = pos
 	}
 
 	// Enforce weak monotonicity via running max
@@ -133,11 +152,12 @@ func NewPGMApproximateRangeEmptiness(keys []uint64, rangeLen uint64, epsilon flo
 	}
 
 	filter := &PGMApproximateRangeEmptiness{
-		cdf:    cdf,
-		K:      K,
-		n:      n,
-		minKey: sorted[0],
-		maxKey: sorted[n-1],
+		cdf:       cdf,
+		K:         K,
+		n:         n,
+		minKey:    sorted[0],
+		maxKey:    sorted[n-1],
+		smoothing: smoothing,
 	}
 
 	// Map all keys through the same cdfMap used for queries (consistency!)
@@ -202,6 +222,12 @@ func (p *PGMApproximateRangeEmptiness) cdfMap(x uint64) uint64 {
 	} else {
 		frac := float64(x-segs[lo].Key) / keyRange
 		cdfVal = segs[lo].Rank + frac*rankRange
+	}
+
+	// Blend CDF with uniform: mapped = (1-smooth)*CDF + smooth*uniform
+	if p.smoothing > 0 && p.maxKey > p.minKey {
+		uniformVal := float64(x-p.minKey) / float64(p.maxKey-p.minKey)
+		cdfVal = (1-p.smoothing)*cdfVal + p.smoothing*uniformVal
 	}
 
 	uMax := p.universeMax()
