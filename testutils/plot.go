@@ -257,8 +257,10 @@ func drawSeriesLines(sb *strings.Builder, series []SeriesData, toX, toY func(flo
 		if marker == "" {
 			marker = "circle"
 		}
-		for _, p := range s.Points {
-			drawMarker(sb, marker, s.Color, toX(p.X), toY(p.Y))
+		if marker != "none" {
+			for _, p := range s.Points {
+				drawMarker(sb, marker, s.Color, toX(p.X), toY(p.Y))
+			}
 		}
 	}
 }
