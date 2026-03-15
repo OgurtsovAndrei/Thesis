@@ -14,11 +14,11 @@ import (
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
 type ApproximateRangeEmptiness struct {
-	exact      *ere.ExactRangeEmptiness
-	K          uint32
-	minKey     bits.BitString
-	maxKey     bits.BitString
-	spreadBits uint32 // bit-width of (maxKey - minKey); 0 means single-key set
+	exact       *ere.ExactRangeEmptiness
+	K           uint32
+	minKey      bits.BitString
+	maxKey      bits.BitString
+	spreadStart uint32 // trie position of first significant bit in (maxKey - minKey)
 }
 
 func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*ApproximateRangeEmptiness, error) {
@@ -33,25 +33,16 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 		K = 1
 	}
 
-	// Keys must be sorted by Compare; minKey is keys[0], maxKey is keys[n-1].
 	minKey := keys[0]
 	maxKey := keys[n-1]
 
-	// Compute spread = maxKey - minKey and its significant bit-width.
 	spread := maxKey.Sub(minKey)
-	spreadVal := spread.TrieUint64()
-	var spreadBits uint32
-	if spreadVal > 0 {
-		spreadBits = uint32(64 - mbits.LeadingZeros64(spreadVal))
-	}
+	spreadStart := trieFirstSetBit(spread)
 
-	// Normalize and truncate to K bits.
-	// Each normalized value is left-shifted so its spreadBits significant bits
-	// sit at the top of a 64-bit integer, then Prefix(K) takes the top K of those.
 	truncatedKeys := make([]bits.BitString, 0, n)
 	var lastKey bits.BitString
 	for i, k := range keys {
-		trunc := normalizeToK(k, minKey, spreadBits, K)
+		trunc := normalizeToK(k, minKey, spreadStart, K)
 
 		if i == 0 || trunc.Compare(lastKey) > 0 {
 			truncatedKeys = append(truncatedKeys, trunc)
@@ -70,29 +61,34 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 	}
 
 	return &ApproximateRangeEmptiness{
-		exact:      exact,
-		K:          K,
-		minKey:     minKey,
-		maxKey:     maxKey,
-		spreadBits: spreadBits,
+		exact:       exact,
+		K:           K,
+		minKey:      minKey,
+		maxKey:      maxKey,
+		spreadStart: spreadStart,
 	}, nil
+}
+
+// trieFirstSetBit returns the trie position of the first set bit (MSB in trie order).
+// Returns bs.SizeBits() if the value is zero.
+func trieFirstSetBit(bs bits.BitString) uint32 {
+	W := bs.SizeBits()
+	numWords := (W + 63) / 64
+	for i := uint32(0); i < numWords; i++ {
+		w := bs.Word(i)
+		if w != 0 {
+			return i*64 + uint32(mbits.TrailingZeros64(w))
+		}
+	}
+	return W
 }
 
 // normalizeToK maps key into a K-bit prefix by:
 //  1. Subtracting minKey (so the minimum maps to 0)
-//  2. Left-shifting the spread to fill the top spreadBits bits of a 64-bit integer
-//  3. Taking the top K bits as a K-bit BitString
-func normalizeToK(key, minKey bits.BitString, spreadBits, K uint32) bits.BitString {
-	normVal := key.Sub(minKey).TrieUint64()
-	// Shift left so spreadBits significant bits fill from the MSB of a 64-bit uint.
-	// Then the top K bits of that 64-bit value become our K-bit prefix.
-	var shifted uint64
-	if spreadBits > 0 && spreadBits < 64 {
-		shifted = normVal << (64 - spreadBits)
-	} else {
-		shifted = normVal // spreadBits==0 (all identical) or spreadBits==64
-	}
-	return bits.NewFromTrieUint64(shifted>>uint32(64-K), K)
+//  2. Extracting K bits starting at spreadStart (first significant bit of the spread)
+func normalizeToK(key, minKey bits.BitString, spreadStart, K uint32) bits.BitString {
+	offset := key.Sub(minKey)
+	return offset.BitRange(spreadStart, K)
 }
 
 func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
@@ -100,25 +96,22 @@ func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		return true
 	}
 
-	// If b < minKey, the query range is entirely below all stored keys.
 	if b.Compare(are.minKey) < 0 {
 		return true
 	}
 
-	// Normalize a: clamp to minKey if below it (normalized value = 0).
 	var truncA bits.BitString
 	if a.Compare(are.minKey) < 0 {
 		truncA = bits.NewBitString(are.K)
 	} else {
-		truncA = normalizeToK(a, are.minKey, are.spreadBits, are.K)
+		truncA = normalizeToK(a, are.minKey, are.spreadStart, are.K)
 	}
 
-	// Normalize b: clamp to maxKey if above it.
 	var truncB bits.BitString
 	if b.Compare(are.maxKey) > 0 {
-		truncB = normalizeToK(are.maxKey, are.minKey, are.spreadBits, are.K)
+		truncB = normalizeToK(are.maxKey, are.minKey, are.spreadStart, are.K)
 	} else {
-		truncB = normalizeToK(b, are.minKey, are.spreadBits, are.K)
+		truncB = normalizeToK(b, are.minKey, are.spreadStart, are.K)
 	}
 
 	return are.exact.IsEmpty(truncA, truncB)

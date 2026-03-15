@@ -100,7 +100,29 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - `Build(sorted_keys []string)` - построение за O(n log w)
 - `Rank(key string) -> int` - получение ранга ключа
 
-## TODO:
+## TODO (defense preparation):
+
+- [ ] Сравнение query & build time с индустрией (Grafite, SNARF, SuRF) на всех распределениях и N
+- [ ] Добавить чисто Truncation ARE на графики industry comparison (сейчас только в internal bench)
+- [ ] Добавить ещё точек на распределения (больше значений epsilon / bpk для плотности кривых)
+- [ ] Сравнить на real-world данных (SOSD benchmark datasets — см. ниже)
+- [ ] CPU & memory profiling (pprof) для Hybrid ARE build+query — найти узкие места
+- [ ] Сделать линейный поиск в ere
+
+### Real-world datasets
+
+Варианты:
+1. **SOSD** (https://github.com/learnedsystems/SOSD) — 200M+ uint64 ключей из реальных систем:
+   - `fb` — Facebook user IDs
+   - `wiki` — Wikipedia article timestamps
+   - `osm` — OpenStreetMap cell IDs
+   - `books` — Amazon book popularity ranks
+   Скачать binary, прочитать как `[]uint64`, взять первые 1M, прогнать через `runTradeoffBench`.
+2. **Дамп LSM-tree** — RocksDB/LevelDB SSTable keys из реального приложения.
+
+---
+
+## TODO (old):
 
 Check:
 

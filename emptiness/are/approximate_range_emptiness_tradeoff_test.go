@@ -5,7 +5,6 @@ import (
 	"Thesis/emptiness/ere"
 	"Thesis/testutils"
 	"fmt"
-	mbits "math/bits"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -97,15 +96,12 @@ func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmpti
 	}
 	minKey := keys[0]
 	maxKey := keys[n-1]
-	spreadVal := maxKey.Sub(minKey).TrieUint64()
-	var spreadBits uint32
-	if spreadVal > 0 {
-		spreadBits = uint32(64 - mbits.LeadingZeros64(spreadVal))
-	}
+	spread := maxKey.Sub(minKey)
+	spreadStart := trieFirstSetBit(spread)
 	truncatedKeys := make([]bits.BitString, 0, n)
 	var lastKey bits.BitString
 	for i, k := range keys {
-		trunc := normalizeToK(k, minKey, spreadBits, K)
+		trunc := normalizeToK(k, minKey, spreadStart, K)
 		if i == 0 || trunc.Compare(lastKey) > 0 {
 			truncatedKeys = append(truncatedKeys, trunc)
 			lastKey = trunc
@@ -113,5 +109,5 @@ func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmpti
 	}
 	universe := bits.NewBitString(K)
 	exact, _ := ere.NewExactRangeEmptiness(truncatedKeys, universe)
-	return &ApproximateRangeEmptiness{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadBits: spreadBits}, nil
+	return &ApproximateRangeEmptiness{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadStart: spreadStart}, nil
 }

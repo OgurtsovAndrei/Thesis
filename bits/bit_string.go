@@ -932,6 +932,41 @@ func (bs BitString) IsAllZeros() bool {
 	return true
 }
 
+// BitRange extracts count bits starting at trie position start,
+// returning a new BitString of width count.
+// Zero-padded if start+count extends beyond sizeBits.
+func (bs BitString) BitRange(start, count uint32) BitString {
+	if count == 0 {
+		return BitString{}
+	}
+	result := NewBitString(count)
+
+	wordOff := start / 64
+	bitOff := start % 64
+	numResult := uint32(len(result.data))
+	numSrc := uint32(len(bs.data))
+
+	for i := uint32(0); i < numResult; i++ {
+		srcIdx := wordOff + i
+		if srcIdx >= numSrc {
+			break
+		}
+		if bitOff == 0 {
+			result.data[i] = bs.Word(srcIdx)
+		} else {
+			result.data[i] = bs.Word(srcIdx) >> bitOff
+			if srcIdx+1 < numSrc {
+				result.data[i] |= bs.Word(srcIdx+1) << (64 - bitOff)
+			}
+		}
+	}
+
+	if count%64 != 0 {
+		result.data[numResult-1] &= (uint64(1) << (count % 64)) - 1
+	}
+	return result
+}
+
 func BugIfNotSortedOrHaveDuplicates(bss []BitString) {
 	i := 1
 	for i < len(bss) {
