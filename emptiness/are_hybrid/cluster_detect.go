@@ -13,15 +13,14 @@ type clusterSegment struct {
 
 // detectClusters splits pre-sorted keys into dense segments (clusters) and sparse leftovers (fallback).
 //
-// Algorithm: gap-based segmentation.
+// Algorithm: gap-based segmentation with percentile threshold.
 //  1. Compute gaps between consecutive keys.
-//  2. Find large gaps (> threshold) that indicate segment boundaries.
-//     Threshold = percentile-based: we pick the top splitFrac of gaps as "big".
+//  2. Find large gaps (>= P(gapPercentile)) that indicate segment boundaries.
 //  3. Split key array at big gaps → contiguous segments.
-//  4. Segments with >= smallClusterFrac*n keys → clusters, rest → fallback.
+//  4. Segments with >= minClusterFrac*n keys → clusters, rest → fallback.
 //
 // O(n log n) due to gap sorting; O(n) for everything else.
-func detectClusters(keys []bits.BitString, minClusterSize int, smallClusterFrac float64) ([]clusterSegment, []bits.BitString) {
+func detectClusters(keys []bits.BitString, gapPercentile float64, minClusterFrac float64) ([]clusterSegment, []bits.BitString) {
 	n := len(keys)
 
 	keys64 := make([]uint64, n)
@@ -35,27 +34,16 @@ func detectClusters(keys []bits.BitString, minClusterSize int, smallClusterFrac 
 		gaps[i] = keys64[i+1] - keys64[i]
 	}
 
-	// Find the split threshold: we want to separate "intra-cluster" gaps from
-	// "inter-cluster/inter-uniform" gaps. Use the largest jump in sorted gaps
-	// as a natural elbow detector.
+	// Percentile-based threshold: gaps at or above P(gapPercentile) are "big".
 	gapsSorted := make([]uint64, len(gaps))
 	copy(gapsSorted, gaps)
 	sort.Slice(gapsSorted, func(i, j int) bool { return gapsSorted[i] < gapsSorted[j] })
 
-	// Find the index with the largest ratio between consecutive sorted gaps.
-	// This is the "elbow" separating small (intra-cluster) from large (inter-cluster) gaps.
-	threshold := gapsSorted[len(gapsSorted)-1] // default: only the very largest gap is a split
-	bestRatio := 0.0
-	for i := 1; i < len(gapsSorted); i++ {
-		if gapsSorted[i-1] == 0 {
-			continue
-		}
-		ratio := float64(gapsSorted[i]) / float64(gapsSorted[i-1])
-		if ratio > bestRatio {
-			bestRatio = ratio
-			threshold = gapsSorted[i]
-		}
+	idx := int(gapPercentile * float64(len(gapsSorted)))
+	if idx >= len(gapsSorted) {
+		idx = len(gapsSorted) - 1
 	}
+	threshold := gapsSorted[idx]
 
 	// Split at gaps >= threshold
 	type segment struct {
@@ -72,9 +60,9 @@ func detectClusters(keys []bits.BitString, minClusterSize int, smallClusterFrac 
 	segments = append(segments, segment{segStart, n - 1})
 
 	// Classify: large segments → clusters, small → fallback
-	sizeThreshold := int(smallClusterFrac * float64(n))
-	if sizeThreshold < minClusterSize {
-		sizeThreshold = minClusterSize
+	sizeThreshold := int(minClusterFrac * float64(n))
+	if sizeThreshold < 2 {
+		sizeThreshold = 2
 	}
 
 	assigned := make([]bool, n)

@@ -26,15 +26,31 @@ func GenerateClusterDistribution(n int, numClusters int, unifFrac float64, rng *
 		}
 	}
 
+	// Dirichlet-like split: randomize cluster sizes via exponential weights
+	nClust := n - nUnif
+	weights := make([]float64, numClusters)
+	var wSum float64
+	for i := range weights {
+		weights[i] = rng.ExpFloat64()
+		wSum += weights[i]
+	}
+	clusterSizes := make([]int, numClusters)
+	assigned := 0
+	for i := range clusterSizes {
+		clusterSizes[i] = int(weights[i] / wSum * float64(nClust))
+		assigned += clusterSizes[i]
+	}
+	// Distribute remainder to last cluster
+	clusterSizes[numClusters-1] += nClust - assigned
+
 	clusters := make([]ClusterInfo, numClusters)
-	perCluster := (n - nUnif) / numClusters
 	for c := 0; c < numClusters; c++ {
 		clusters[c] = ClusterInfo{
 			Center: rng.Uint64(),
 			Stddev: float64(uint64(1) << (20 + rng.Intn(10))),
 		}
 		generated := 0
-		for generated < perCluster || (c == numClusters-1 && len(keys) < n) {
+		for generated < clusterSizes[c] {
 			v := SampleGaussian(clusters[c].Center, clusters[c].Stddev, rng)
 			if v == 0 && clusters[c].Center != 0 {
 				continue

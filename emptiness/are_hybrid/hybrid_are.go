@@ -39,12 +39,7 @@ func NewHybridARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*Hyb
 		return h, nil
 	}
 
-	minPts := n / 100
-	if minPts < 10 {
-		minPts = 10
-	}
-
-	segments, fallbackKeys := detectClusters(keys, minPts, 0.05)
+	segments, fallbackKeys := detectClusters(keys, 0.95, 0.01)
 
 	// Build cluster filters
 	h.clusters = make([]clusterFilter, 0, len(segments))
