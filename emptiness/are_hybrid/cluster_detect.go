@@ -2,7 +2,7 @@ package are_hybrid
 
 import (
 	"Thesis/bits"
-	"sort"
+	"math/rand"
 )
 
 type clusterSegment struct {
@@ -19,7 +19,7 @@ type clusterSegment struct {
 //  3. Split key array at big gaps → contiguous segments.
 //  4. Segments with >= minClusterFrac*n keys → clusters, rest → fallback.
 //
-// O(n log n) due to gap sorting; O(n) for everything else.
+// O(n) via quickselect for percentile; O(n) for everything else.
 func detectClusters(keys []bits.BitString, gapPercentile float64, minClusterFrac float64) ([]clusterSegment, []bits.BitString) {
 	n := len(keys)
 
@@ -34,16 +34,14 @@ func detectClusters(keys []bits.BitString, gapPercentile float64, minClusterFrac
 		gaps[i] = keys64[i+1] - keys64[i]
 	}
 
-	// Percentile-based threshold: gaps at or above P(gapPercentile) are "big".
-	gapsSorted := make([]uint64, len(gaps))
-	copy(gapsSorted, gaps)
-	sort.Slice(gapsSorted, func(i, j int) bool { return gapsSorted[i] < gapsSorted[j] })
-
-	idx := int(gapPercentile * float64(len(gapsSorted)))
-	if idx >= len(gapsSorted) {
-		idx = len(gapsSorted) - 1
+	// Percentile-based threshold via quickselect: O(n) average.
+	k := int(gapPercentile * float64(len(gaps)))
+	if k >= len(gaps) {
+		k = len(gaps) - 1
 	}
-	threshold := gapsSorted[idx]
+	gapsCopy := make([]uint64, len(gaps))
+	copy(gapsCopy, gaps)
+	threshold := quickselect(gapsCopy, k)
 
 	// Split at gaps >= threshold
 	type segment struct {
@@ -90,4 +88,36 @@ func detectClusters(keys []bits.BitString, gapPercentile float64, minClusterFrac
 	}
 
 	return clusters, fallback
+}
+
+// quickselect returns the k-th smallest element (0-indexed).
+// Mutates the input slice. Average O(n), worst O(n²).
+func quickselect(a []uint64, k int) uint64 {
+	rng := rand.New(rand.NewSource(42))
+	lo, hi := 0, len(a)-1
+	for lo < hi {
+		pivot := a[lo+rng.Intn(hi-lo+1)]
+		i, j := lo, hi
+		for i <= j {
+			for a[i] < pivot {
+				i++
+			}
+			for a[j] > pivot {
+				j--
+			}
+			if i <= j {
+				a[i], a[j] = a[j], a[i]
+				i++
+				j--
+			}
+		}
+		if k <= j {
+			hi = j
+		} else if k >= i {
+			lo = i
+		} else {
+			break
+		}
+	}
+	return a[k]
 }
