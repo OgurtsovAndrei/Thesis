@@ -5,6 +5,7 @@ import (
 	"Thesis/emptiness/ere"
 	"Thesis/testutils"
 	"fmt"
+	mbits "math/bits"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -91,13 +92,20 @@ func isTrulyEmptyFinal(keys []bits.BitString, a, b bits.BitString) bool {
 
 func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmptiness, error) {
 	n := len(keys)
+	if n == 0 {
+		return &ApproximateRangeEmptiness{K: K}, nil
+	}
+	minKey := keys[0]
+	maxKey := keys[n-1]
+	spreadVal := maxKey.Sub(minKey).TrieUint64()
+	var spreadBits uint32
+	if spreadVal > 0 {
+		spreadBits = uint32(64 - mbits.LeadingZeros64(spreadVal))
+	}
 	truncatedKeys := make([]bits.BitString, 0, n)
 	var lastKey bits.BitString
 	for i, k := range keys {
-		trunc := k
-		if uint32(trunc.Size()) > K {
-			trunc = k.Prefix(int(K))
-		}
+		trunc := normalizeToK(k, minKey, spreadBits, K)
 		if i == 0 || trunc.Compare(lastKey) > 0 {
 			truncatedKeys = append(truncatedKeys, trunc)
 			lastKey = trunc
@@ -105,5 +113,5 @@ func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmpti
 	}
 	universe := bits.NewBitString(K)
 	exact, _ := ere.NewExactRangeEmptiness(truncatedKeys, universe)
-	return &ApproximateRangeEmptiness{exact: exact, K: K}, nil
+	return &ApproximateRangeEmptiness{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadBits: spreadBits}, nil
 }
