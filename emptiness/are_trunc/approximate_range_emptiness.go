@@ -111,6 +111,9 @@ func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	if b.Compare(are.minKey) < 0 {
 		return true
 	}
+	if a.Compare(are.maxKey) > 0 {
+		return true
+	}
 
 	var truncA bits.BitString
 	if a.Compare(are.minKey) < 0 {
