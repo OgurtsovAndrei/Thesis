@@ -65,7 +65,7 @@ This is why we experiment with different hash functions: each makes different tr
 |-----------------------------------|----------------------------------------------------------------------|
 | [`ere`](ere/)                     | Exact Range Emptiness (Layer 2). Zero error, space $O(n \log(U/n))$. |
 | [`are_trunc`](are_trunc/)         | ARE via prefix truncation.                                           |
-| [`are_optimized`](are_optimized/) | ARE via adaptive prefix truncation with threshold $t$.               |
+| [`are_adaptive`](are_adaptive/) | ARE via adaptive prefix truncation with threshold $t$.               |
 | [`are_soda_hash`](are_soda_hash/) | ARE via the SODA 2015 pairwise-independent hash.                     |
 | [`are_pgm`](are_pgm/)             | ARE via CDF mapping (PGM index).                                     |
 | [`are_hybrid`](are_hybrid/)       | ARE with per-cluster segmentation.                                   |

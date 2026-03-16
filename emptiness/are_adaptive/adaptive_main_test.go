@@ -1,4 +1,4 @@
-package are_optimized
+package are_adaptive
 
 import (
 	"Thesis/bits"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestOptimizedARE_NormalizationAndTruncation(t *testing.T) {
+func TestAdaptiveARE_NormalizationAndTruncation(t *testing.T) {
 	// Keys with a large base offset to test normalization (minKey subtraction)
 	base := bits.NewFromTrieUint64(1<<50, 64)
 
@@ -20,12 +20,12 @@ func TestOptimizedARE_NormalizationAndTruncation(t *testing.T) {
 	epsilon := 0.01
 	truncateBits := uint32(5)
 
-	filter, err := NewOptimizedARE(keys, rangeLen, epsilon, truncateBits)
+	filter, err := NewAdaptiveARE(keys, rangeLen, epsilon, truncateBits)
 	if err != nil {
 		t.Fatalf("Failed to create filter: %v", err)
 	}
 
-	fmt.Printf("\n--- Optimized ARE Test ---\n")
+	fmt.Printf("\n--- Adaptive ARE Test ---\n")
 	fmt.Printf("Keys: %d, RangeLen: %d, Truncate: %d bits\n", n, rangeLen, truncateBits)
 	fmt.Printf("SODA K: %d bits, ExactMode: %v\n", filter.K, filter.IsExactMode)
 	fmt.Printf("Total Size: %d bits (%.2f bits/key)\n", filter.SizeInBits(), float64(filter.SizeInBits())/float64(n))

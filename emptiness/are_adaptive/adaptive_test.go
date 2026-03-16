@@ -1,4 +1,4 @@
-package are_optimized
+package are_adaptive
 
 import (
 	"Thesis/bits"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestOptimizedARE_AdaptiveMode(t *testing.T) {
+func TestAdaptiveARE_AdaptiveMode(t *testing.T) {
 	n := 100
 	rangeLen := uint64(100)
 	epsilon := 0.01
@@ -20,7 +20,7 @@ func TestOptimizedARE_AdaptiveMode(t *testing.T) {
 		keysCompact[i] = bits.NewFromTrieUint64(uint64(1000+i*10), 64)
 	}
 
-	filterCompact, err := NewOptimizedARE(keysCompact, rangeLen, epsilon, 0)
+	filterCompact, err := NewAdaptiveARE(keysCompact, rangeLen, epsilon, 0)
 	if err != nil {
 		t.Fatalf("Compact: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestOptimizedARE_AdaptiveMode(t *testing.T) {
 		keysSpread[i] = bits.NewFromTrieUint64(uint64(i)*1_000_000_000_000, 64)
 	}
 
-	filterSpread, err := NewOptimizedARE(keysSpread, rangeLen, epsilon, 0)
+	filterSpread, err := NewAdaptiveARE(keysSpread, rangeLen, epsilon, 0)
 	if err != nil {
 		t.Fatalf("Spread: %v", err)
 	}

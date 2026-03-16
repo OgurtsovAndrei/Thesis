@@ -14,9 +14,9 @@
 
 ### Testing gaps
 
-- [x] `are_optimized`: add systematic no-FN property tests (multiple seeds/sizes, clustered dist)
-- [ ] `are_optimized`: add FPR accuracy test
-- [ ] `are_optimized`: add Build/N and Query/N benchmarks
+- [x] `are_adaptive`: add systematic no-FN property tests (multiple seeds/sizes, clustered dist)
+- [ ] `are_adaptive`: add FPR accuracy test
+- [ ] `are_adaptive`: add Build/N and Query/N benchmarks
 - [ ] `are_soda_hash`: add Build/N and Query/N benchmarks
 - [ ] `are_pgm`: add Build/N and Query/N benchmarks
 - [ ] `are_bloom`: add Build/N and Query/N benchmarks
@@ -41,9 +41,9 @@
 
 ### Code duplication
 
-- [ ] `pairwiseHash` copy-pasted in `are_soda_hash:23` and `are_optimized:26` — extract to shared `internal/hash`
+- [ ] `pairwiseHash` copy-pasted in `are_soda_hash:23` and `are_adaptive:26` — extract to shared `internal/hash`
 - [ ] `no_fn_prop_test.go` triple-clone across `are_trunc`, `are_hybrid`, `are_soda_hash` — extract shared test harness
-- [ ] Key hashing + dedup loop duplicated in `are_soda_hash` and `are_optimized` constructors
+- [ ] Key hashing + dedup loop duplicated in `are_soda_hash` and `are_adaptive` constructors
 
 ### Naming inconsistencies
 
@@ -54,7 +54,7 @@
 
 ### Style
 
-- [ ] `are_optimized`: exported struct fields (`K`, `RangeLen`, `MinKey`, `TruncateBits`, `IsExactMode`) not read outside package — make private or add accessor methods
+- [ ] `are_adaptive`: exported struct fields (`K`, `RangeLen`, `MinKey`, `TruncateBits`, `IsExactMode`) not read outside package — make private or add accessor methods
 - [ ] `are_soda_hash:56`: `// odd` comment on `| 1` — either remove or explain why odd is required for 2-universal hash
 
 ### Outdated documentation

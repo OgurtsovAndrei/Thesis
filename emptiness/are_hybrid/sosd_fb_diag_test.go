@@ -347,8 +347,8 @@ func TestHybrid_SOSD_FB_Diagnostic(t *testing.T) {
 			t.Logf("")
 			t.Logf("FIX OPTIONS:")
 			t.Logf("  1. Use relative encoding in the fallback: subtract minKey before truncation.")
-			t.Logf("     (Same approach as OptimizedARE.NewOptimizedARE — normalize to [0, spread] before hashing/truncating)")
-			t.Logf("  2. Detect when all keys share the same prefix and fall back to OptimizedARE instead.")
+			t.Logf("     (Same approach as AdaptiveARE.NewAdaptiveARE — normalize to [0, spread] before hashing/truncating)")
+			t.Logf("  2. Detect when all keys share the same prefix and fall back to AdaptiveARE instead.")
 			t.Logf("  3. In HybridARE, pass the global key min/max to the fallback builder so it can normalize.")
 		}
 	})

@@ -3,14 +3,14 @@ package are_hybrid
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/are_trunc"
-	"Thesis/emptiness/are_optimized"
+	"Thesis/emptiness/are_adaptive"
 	"fmt"
 	"math"
 	"sort"
 )
 
 type clusterFilter struct {
-	filter *are_optimized.OptimizedApproximateRangeEmptiness
+	filter *are_adaptive.AdaptiveApproximateRangeEmptiness
 	minKey uint64
 	maxKey uint64
 }
@@ -61,7 +61,7 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 	// Build cluster filters
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_optimized.NewOptimizedAREFromK(seg.keys, rangeLen, K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, rangeLen, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}

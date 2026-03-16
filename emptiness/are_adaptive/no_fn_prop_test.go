@@ -1,4 +1,4 @@
-package are_optimized
+package are_adaptive
 
 import (
 	"Thesis/bits"
@@ -18,7 +18,7 @@ const (
 	propTruncateBits  = uint32(0)
 )
 
-func setupOptimizedData(rng *rand.Rand, n, bl int) ([]bits.BitString, *OptimizedApproximateRangeEmptiness, error) {
+func setupAdaptiveData(rng *rand.Rand, n, bl int) ([]bits.BitString, *AdaptiveApproximateRangeEmptiness, error) {
 	keySet := make(map[string]bool)
 	sortedKeys := make([]bits.BitString, 0, n)
 	for len(sortedKeys) < n {
@@ -33,21 +33,21 @@ func setupOptimizedData(rng *rand.Rand, n, bl int) ([]bits.BitString, *Optimized
 		return sortedKeys[i].Compare(sortedKeys[j]) < 0
 	})
 
-	filter, err := NewOptimizedARE(sortedKeys, propRangeLen, propTargetEpsilon, propTruncateBits)
+	filter, err := NewAdaptiveARE(sortedKeys, propRangeLen, propTargetEpsilon, propTruncateBits)
 	return sortedKeys, filter, err
 }
 
-func setupOptimizedDataClustered(rng *rand.Rand, n int) ([]bits.BitString, *OptimizedApproximateRangeEmptiness, error) {
+func setupAdaptiveDataClustered(rng *rand.Rand, n int) ([]bits.BitString, *AdaptiveApproximateRangeEmptiness, error) {
 	keys64, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
 	keysBS := make([]bits.BitString, len(keys64))
 	for i, k := range keys64 {
 		keysBS[i] = bits.NewFromTrieUint64(k, 64)
 	}
-	filter, err := NewOptimizedARE(keysBS, propRangeLen, propTargetEpsilon, propTruncateBits)
+	filter, err := NewAdaptiveARE(keysBS, propRangeLen, propTargetEpsilon, propTruncateBits)
 	return keysBS, filter, err
 }
 
-func runParallelOptimized(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness)) {
+func runParallelAdaptive(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness)) {
 	bitLens := []int{64, 128, 256, 512}
 	for i := 0; i < propTestRuns; i++ {
 		i := i
@@ -55,7 +55,7 @@ func runParallelOptimized(t *testing.T, testFn func(t *testing.T, rng *rand.Rand
 		t.Run(fmt.Sprintf("BitLen%d/Iter%d", bl, i), func(t *testing.T) {
 			t.Parallel()
 			rng := rand.New(rand.NewSource(int64(i + 200)))
-			keys, filter, err := setupOptimizedData(rng, propMinN+rng.Intn(propMaxExtraN), bl)
+			keys, filter, err := setupAdaptiveData(rng, propMinN+rng.Intn(propMaxExtraN), bl)
 			if err != nil {
 				t.Fatalf("Setup failed: %v", err)
 			}
@@ -64,7 +64,7 @@ func runParallelOptimized(t *testing.T, testFn func(t *testing.T, rng *rand.Rand
 	}
 }
 
-func runParallelOptimizedClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness)) {
+func runParallelAdaptiveClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness)) {
 	const clusterTestRuns = 200
 	for i := 0; i < clusterTestRuns; i++ {
 		i := i
@@ -72,7 +72,7 @@ func runParallelOptimizedClustered(t *testing.T, testFn func(t *testing.T, rng *
 			t.Parallel()
 			rng := rand.New(rand.NewSource(int64(i + 9000)))
 			n := propMinN + rng.Intn(propMaxExtraN)
-			keys, filter, err := setupOptimizedDataClustered(rng, n)
+			keys, filter, err := setupAdaptiveDataClustered(rng, n)
 			if err != nil {
 				t.Fatalf("Setup failed: %v", err)
 			}
@@ -81,9 +81,9 @@ func runParallelOptimizedClustered(t *testing.T, testFn func(t *testing.T, rng *
 	}
 }
 
-func TestOptimized_Property_PointInclusion(t *testing.T) {
+func TestAdaptive_Property_PointInclusion(t *testing.T) {
 	t.Parallel()
-	runParallelOptimized(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if filter.IsEmpty(key, key) {
@@ -93,9 +93,9 @@ func TestOptimized_Property_PointInclusion(t *testing.T) {
 	})
 }
 
-func TestOptimized_Property_TightOverhang(t *testing.T) {
+func TestAdaptive_Property_TightOverhang(t *testing.T) {
 	t.Parallel()
-	runParallelOptimized(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if !key.IsAllZeros() {
@@ -114,9 +114,9 @@ func TestOptimized_Property_TightOverhang(t *testing.T) {
 	})
 }
 
-func TestOptimized_Property_SpanningRanges(t *testing.T) {
+func TestAdaptive_Property_SpanningRanges(t *testing.T) {
 	t.Parallel()
-	runParallelOptimized(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		n := len(keys)
 		for j := 0; j < 10; j++ {
 			idx1 := rng.Intn(n - 5)
@@ -129,18 +129,18 @@ func TestOptimized_Property_SpanningRanges(t *testing.T) {
 	})
 }
 
-func TestOptimized_Property_MassiveSpan(t *testing.T) {
+func TestAdaptive_Property_MassiveSpan(t *testing.T) {
 	t.Parallel()
-	runParallelOptimized(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
 			t.Errorf("Massive span failed")
 		}
 	})
 }
 
-func TestOptimized_Property_PointInclusion_Clustered(t *testing.T) {
+func TestAdaptive_Property_PointInclusion_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelOptimizedClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if filter.IsEmpty(key, key) {
@@ -150,9 +150,9 @@ func TestOptimized_Property_PointInclusion_Clustered(t *testing.T) {
 	})
 }
 
-func TestOptimized_Property_SpanningRanges_Clustered(t *testing.T) {
+func TestAdaptive_Property_SpanningRanges_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelOptimizedClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		n := len(keys)
 		for j := 0; j < 10; j++ {
 			idx1 := rng.Intn(n - 5)
@@ -165,9 +165,9 @@ func TestOptimized_Property_SpanningRanges_Clustered(t *testing.T) {
 	})
 }
 
-func TestOptimized_Property_MassiveSpan_Clustered(t *testing.T) {
+func TestAdaptive_Property_MassiveSpan_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelOptimizedClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *OptimizedApproximateRangeEmptiness) {
+	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
 		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
 			t.Errorf("Massive span failed")
 		}

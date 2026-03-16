@@ -1,4 +1,4 @@
-package are_optimized
+package are_adaptive
 
 import (
 	"Thesis/bits"
@@ -10,7 +10,7 @@ import (
 	"sort"
 )
 
-type OptimizedApproximateRangeEmptiness struct {
+type AdaptiveApproximateRangeEmptiness struct {
 	ere          *ere.ExactRangeEmptiness
 	K            uint32
 	RangeLen     uint64
@@ -42,10 +42,10 @@ func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
 	return pairwiseHash(blockVal, a, b, K)
 }
 
-func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t uint32) (*OptimizedApproximateRangeEmptiness, error) {
+func NewAdaptiveARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t uint32) (*AdaptiveApproximateRangeEmptiness, error) {
 	n := len(keys)
 	if n == 0 {
-		return &OptimizedApproximateRangeEmptiness{n: 0}, nil
+		return &AdaptiveApproximateRangeEmptiness{n: 0}, nil
 	}
 
 	effectiveRangeLen := (rangeLen >> t) + 1
@@ -55,13 +55,13 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
 	}
 
-	return NewOptimizedAREFromK(keys, rangeLen, K, t)
+	return NewAdaptiveAREFromK(keys, rangeLen, K, t)
 }
 
-func NewOptimizedAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uint32) (*OptimizedApproximateRangeEmptiness, error) {
+func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uint32) (*AdaptiveApproximateRangeEmptiness, error) {
 	n := len(keys)
 	if n == 0 {
-		return &OptimizedApproximateRangeEmptiness{n: 0}, nil
+		return &AdaptiveApproximateRangeEmptiness{n: 0}, nil
 	}
 	if K > 64 {
 		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
@@ -152,7 +152,7 @@ func NewOptimizedAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t ui
 		return nil, err
 	}
 
-	return &OptimizedApproximateRangeEmptiness{
+	return &AdaptiveApproximateRangeEmptiness{
 		ere:          ereFilter,
 		K:            finalUniverseBits,
 		RangeLen:     rangeLen,
@@ -165,7 +165,7 @@ func NewOptimizedAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t ui
 	}, nil
 }
 
-func (are *OptimizedApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
+func (are *AdaptiveApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	if are.n == 0 || a.Compare(b) > 0 {
 		return true
 	}
@@ -192,7 +192,7 @@ func (are *OptimizedApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool
 	return are.sodaIsEmpty(aPrime, bPrime)
 }
 
-func (are *OptimizedApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) bool {
+func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) bool {
 	rMask := (uint64(1) << are.K) - 1
 	if are.K == 64 {
 		rMask = ^uint64(0)
@@ -271,7 +271,7 @@ func (are *OptimizedApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) 
 	return true
 }
 
-func (are *OptimizedApproximateRangeEmptiness) SizeInBits() uint64 {
+func (are *AdaptiveApproximateRangeEmptiness) SizeInBits() uint64 {
 	if are.ere == nil {
 		return 0
 	}

@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.getcwd(), "scripts"))
 from bench_lib.plotter import draw_line_chart, ensure_dir
 
 def main():
-    csv_file = "emptiness/are_optimized/are_optimized_tradeoff.csv"
+    csv_file = "emptiness/are_adaptive/are_adaptive_tradeoff.csv"
     if not os.path.exists(csv_file):
         print(f"CSV file not found: {csv_file}")
         return
