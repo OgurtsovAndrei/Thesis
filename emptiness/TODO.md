@@ -11,6 +11,7 @@
   - `books_200M_uint32` (200M keys, uint32)
 - [ ] Compare all ARE filters + industry filters (Grafite, SNARF, SuRF) on real data
 - [ ] Data path: `Thesis-Bench-industry/bench/sosd_data/`
+- [ ] Add industry results cache, as they are consistent, and no need to rerun them every time.
 
 ### Testing gaps
 
@@ -22,7 +23,7 @@
 - [ ] `are_bloom`: add Build/N and Query/N benchmarks
 - [ ] ALL packages: add Query/L benchmark (sweep range length L) — missing everywhere
 - [ ] `are_hybrid`: Query/N benchmark only at fixed N=2^20, add N-sweep
-- [x] Standardize no-FN tests to use clustered distribution (all packages now have uniform + clustered)
+- [x] Standardize no-FN tests to use clustered distribution (all packages now have uniform + clustered) 
 
 ### Hybrid cluster detection
 
