@@ -2,6 +2,7 @@ package are_trunc
 
 import (
 	"Thesis/bits"
+	"Thesis/testutils"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -106,6 +107,69 @@ func runParallelARE(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys
 			testFn(t, rng, keys, filter)
 		})
 	}
+}
+
+func setupAREDataClustered(rng *rand.Rand, n int) ([]bits.BitString, *ApproximateRangeEmptiness, error) {
+	keys64, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
+	keysBS := make([]bits.BitString, len(keys64))
+	for i, k := range keys64 {
+		keysBS[i] = bits.NewFromTrieUint64(k, 64)
+	}
+	filter, err := NewApproximateRangeEmptiness(keysBS, targetEpsilon)
+	return keysBS, filter, err
+}
+
+func runParallelAREClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *ApproximateRangeEmptiness)) {
+	const clusterTestRuns = 200
+	for i := 0; i < clusterTestRuns; i++ {
+		i := i
+		t.Run(fmt.Sprintf("Clustered/Iter%d", i), func(t *testing.T) {
+			t.Parallel()
+			rng := rand.New(rand.NewSource(int64(i + 9000)))
+			n := minN + rng.Intn(maxExtraN)
+			keys, filter, err := setupAREDataClustered(rng, n)
+			if err != nil {
+				t.Fatalf("Setup failed: %v", err)
+			}
+			testFn(t, rng, keys, filter)
+		})
+	}
+}
+
+func TestARE_Property_PointInclusion_Clustered(t *testing.T) {
+	t.Parallel()
+	runParallelAREClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *ApproximateRangeEmptiness) {
+		for j := 0; j < 20; j++ {
+			key := keys[rng.Intn(len(keys))]
+			if filter.IsEmpty(key, key) {
+				t.Errorf("Key %v not found", key)
+			}
+		}
+	})
+}
+
+func TestARE_Property_SpanningRanges_Clustered(t *testing.T) {
+	t.Parallel()
+	runParallelAREClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *ApproximateRangeEmptiness) {
+		n := len(keys)
+		for j := 0; j < 10; j++ {
+			idx1 := rng.Intn(n - 5)
+			idx2 := idx1 + 1 + rng.Intn(min(n-idx1-1, 50))
+			a, b := keys[idx1], keys[idx2]
+			if filter.IsEmpty(a, b) {
+				t.Errorf("Spanning range [%v, %v] failed", a, b)
+			}
+		}
+	})
+}
+
+func TestARE_Property_MassiveSpan_Clustered(t *testing.T) {
+	t.Parallel()
+	runParallelAREClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *ApproximateRangeEmptiness) {
+		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
+			t.Errorf("Massive span failed")
+		}
+	})
 }
 
 func randomBitString(rng *rand.Rand, bitLen int) bits.BitString {

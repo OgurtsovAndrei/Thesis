@@ -1,11 +1,13 @@
 package are_pgm
 
 import (
-	"Thesis/emptiness/are_soda_hash"
-	"Thesis/testutils"
+	"fmt"
 	"math/rand"
 	"sort"
 	"testing"
+
+	"Thesis/emptiness/are_soda_hash"
+	"Thesis/testutils"
 )
 
 func TestPGMARE_Basic(t *testing.T) {
@@ -395,6 +397,66 @@ func TestPGMARE_vs_SODA(t *testing.T) {
 		t.Logf("  CDF-ARE cluster-data cluster-query: K=%2d, FPR=%.4f, BPK=%.2f (ERE=%.2f+CDF=%.2f), trueEmpty=%d",
 			cdfC.K, fpr, float64(cdfC.TotalSizeInBits())/float64(n),
 			float64(cdfC.SizeInBits())/float64(n), float64(cdfC.CDFSizeInBits())/float64(n), te)
+	}
+}
+
+func TestPGMARE_NoFN_MultiSeed_Uniform(t *testing.T) {
+	t.Parallel()
+	for i := 0; i < 100; i++ {
+		i := i
+		t.Run(fmt.Sprintf("Iter%d", i), func(t *testing.T) {
+			t.Parallel()
+			rng := rand.New(rand.NewSource(int64(i + 1000)))
+			n := 500 + rng.Intn(1501)
+			keys := make([]uint64, n)
+			for j := range keys {
+				keys[j] = rng.Uint64()
+			}
+			rangeLen := uint64(1 << 20)
+			filter, err := NewPGMApproximateRangeEmptiness(keys, rangeLen, 0.01, 64)
+			if err != nil {
+				t.Fatalf("build failed: %v", err)
+			}
+			sort.Slice(keys, func(a, b int) bool { return keys[a] < keys[b] })
+			for _, k := range keys {
+				if filter.IsEmpty(k, k) {
+					t.Errorf("false negative: key %d reported empty", k)
+				}
+			}
+			for j := 0; j < len(keys)-1; j++ {
+				if filter.IsEmpty(keys[j], keys[j+1]) {
+					t.Errorf("false negative: spanning range [%d, %d] reported empty", keys[j], keys[j+1])
+				}
+			}
+		})
+	}
+}
+
+func TestPGMARE_NoFN_MultiSeed_Clustered(t *testing.T) {
+	t.Parallel()
+	for i := 0; i < 100; i++ {
+		i := i
+		t.Run(fmt.Sprintf("Iter%d", i), func(t *testing.T) {
+			t.Parallel()
+			rng := rand.New(rand.NewSource(int64(i + 2000)))
+			n := 500 + rng.Intn(1501)
+			keys, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
+			rangeLen := uint64(1 << 20)
+			filter, err := NewPGMApproximateRangeEmptiness(keys, rangeLen, 0.01, 64)
+			if err != nil {
+				t.Fatalf("build failed: %v", err)
+			}
+			for _, k := range keys {
+				if filter.IsEmpty(k, k) {
+					t.Errorf("false negative: key %d reported empty", k)
+				}
+			}
+			for j := 0; j < len(keys)-1; j++ {
+				if filter.IsEmpty(keys[j], keys[j+1]) {
+					t.Errorf("false negative: spanning range [%d, %d] reported empty", keys[j], keys[j+1])
+				}
+			}
+		})
 	}
 }
 

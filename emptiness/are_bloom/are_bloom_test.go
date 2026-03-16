@@ -1,11 +1,14 @@
 package are_bloom
 
 import (
+	"fmt"
 	"math/rand"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"Thesis/testutils"
 )
 
 func TestNoFalseNegatives(t *testing.T) {
@@ -95,4 +98,60 @@ func TestSizeInBits(t *testing.T) {
 	f, err := NewBloomARE(keys, 100, 0.01)
 	require.NoError(t, err)
 	require.Greater(t, f.SizeInBits(), uint64(0))
+}
+
+func TestBloomARE_NoFN_MultiSeed_Uniform(t *testing.T) {
+	t.Parallel()
+	for i := 0; i < 100; i++ {
+		i := i
+		t.Run(fmt.Sprintf("Iter%d", i), func(t *testing.T) {
+			t.Parallel()
+			rng := rand.New(rand.NewSource(int64(i + 3000)))
+			n := 500 + rng.Intn(1501)
+			keys := make([]uint64, n)
+			seen := make(map[uint64]bool, n)
+			for j := 0; j < n; {
+				v := rng.Uint64()
+				if !seen[v] {
+					seen[v] = true
+					keys[j] = v
+					j++
+				}
+			}
+			sort.Slice(keys, func(a, b int) bool { return keys[a] < keys[b] })
+
+			f, err := NewBloomARE(keys, 10, 0.01)
+			require.NoError(t, err)
+
+			for _, k := range keys {
+				require.False(t, f.IsEmpty(k, k), "Iter%d: key %d reported empty", i, k)
+				if k >= 5 {
+					require.False(t, f.IsEmpty(k-5, k+5), "Iter%d: range around key %d reported empty", i, k)
+				}
+			}
+		})
+	}
+}
+
+func TestBloomARE_NoFN_MultiSeed_Clustered(t *testing.T) {
+	t.Parallel()
+	for i := 0; i < 100; i++ {
+		i := i
+		t.Run(fmt.Sprintf("Iter%d", i), func(t *testing.T) {
+			t.Parallel()
+			rng := rand.New(rand.NewSource(int64(i + 4000)))
+			n := 500 + rng.Intn(1501)
+			keys, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
+
+			f, err := NewBloomARE(keys, 10, 0.01)
+			require.NoError(t, err)
+
+			for _, k := range keys {
+				require.False(t, f.IsEmpty(k, k), "Iter%d: key %d reported empty", i, k)
+				if k >= 5 {
+					require.False(t, f.IsEmpty(k-5, k+5), "Iter%d: range around key %d reported empty", i, k)
+				}
+			}
+		})
+	}
 }
