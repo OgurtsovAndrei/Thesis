@@ -4,7 +4,7 @@
 
 ### Testing gaps
 
-- [ ] `are_optimized`: add systematic no-FN property tests (multiple seeds/sizes, clustered dist)
+- [x] `are_optimized`: add systematic no-FN property tests (multiple seeds/sizes, clustered dist)
 - [ ] `are_optimized`: add FPR accuracy test
 - [ ] `are_optimized`: add Build/N and Query/N benchmarks
 - [ ] `are_soda_hash`: add Build/N and Query/N benchmarks
@@ -12,7 +12,11 @@
 - [ ] `are_bloom`: add Build/N and Query/N benchmarks
 - [ ] ALL packages: add Query/L benchmark (sweep range length L) — missing everywhere
 - [ ] `are_hybrid`: Query/N benchmark only at fixed N=2^20, add N-sweep
-- [ ] Standardize no-FN tests to use clustered distribution (currently only `are_hybrid` does)
+- [x] Standardize no-FN tests to use clustered distribution (all packages now have uniform + clustered)
+
+### Hybrid cluster detection
+
+- [ ] `are_hybrid`: `detectClusters` fails on sequential (evenly-spaced) distributions — all gaps are equal, elbow detector finds no split, 0 clusters detected, everything falls back to plain Truncation ARE. Need a more robust gap threshold algorithm (e.g. percentile-based or density-based) that handles uniform-gap distributions gracefully.
 
 ### Dead code / bugs
 
@@ -51,8 +55,5 @@
 
 ## Low Priority / Structural
 
-- [ ] `emptiness/bench/` — contains comparison_test.go (757 lines) that runs benchmarks, not tests. Runs on `go test ./...` which is undesirable. Options:
-  - Move to `Thesis-Bench-industry/bench/` (preferred — benchmarks belong there)
-  - Add `//go:build bench` tag so `go test ./...` skips it
-  - Delete if fully superseded by `Thesis-Bench-industry/bench/comparison_test.go`
+- [x] `emptiness/bench/` — migrated to `Thesis-Bench-industry/bench/performance_test.go`, deleted from submodule
 - [ ] `are_trunc` does not accept `rangeLen` — implicitly hardcodes L=2 in K formula, unlike all other ARE packages
