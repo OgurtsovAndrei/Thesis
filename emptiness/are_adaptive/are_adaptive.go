@@ -42,6 +42,20 @@ func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
 	return pairwiseHash(blockVal, a, b, K)
 }
 
+// ExactModeViable reports whether exact mode would trigger for a segment
+// with the given spread, without building the filter.
+// spread is max(S) - min(S) in the original key space.
+func ExactModeViable(spread uint64, rangeLen uint64, K uint32) bool {
+	if K == 0 || K > 64 {
+		return false
+	}
+	var M uint32
+	if spread > 0 {
+		M = uint32(64 - mbits.LeadingZeros64(spread))
+	}
+	return M <= K
+}
+
 func NewAdaptiveARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t uint32) (*AdaptiveApproximateRangeEmptiness, error) {
 	n := len(keys)
 	if n == 0 {
