@@ -68,5 +68,6 @@ This is why we experiment with different hash functions: each makes different tr
 | [`are_adaptive`](are_adaptive/) | ARE via adaptive prefix truncation with threshold $t$.               |
 | [`are_soda_hash`](are_soda_hash/) | ARE via the SODA 2015 pairwise-independent hash.                     |
 | [`are_pgm`](are_pgm/)             | ARE via CDF mapping (PGM index).                                     |
-| [`are_hybrid`](are_hybrid/)       | ARE with per-cluster segmentation.                                   |
+| [`are_hybrid`](are_hybrid/)       | ARE with per-cluster segmentation (gap-percentile).                  |
+| [`are_hybrid_scan`](are_hybrid_scan/) | **Best implementation.** 1D DBSCAN segmentation + dual fallback. |
 | [`are_bloom`](are_bloom/)         | Bloom filter baseline.                                               |
