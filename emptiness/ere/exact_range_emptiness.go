@@ -55,7 +55,7 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	for b := 0; b < numBlocks; b++ {
 		countInBlock := 0
 		for i < n && GetBlockIndex(keys[i], k) == uint64(b) {
-			suffixes = append(suffixes, extractSuffixAsUint64(keys[i], KeySize, w))
+			suffixes = append(suffixes, extractSuffixAsUint64(keys[i], w))
 			countInBlock++
 			i++
 		}
@@ -94,7 +94,7 @@ func GetBlockIndex(x bits.BitString, k uint32) uint64 {
 
 // extractSuffixAsUint64 extracts the last w bits of bs and interprets them as an integer
 // where the first suffix bit is the MSB. Numeric ordering matches trie ordering of suffixes.
-func extractSuffixAsUint64(bs bits.BitString, KeySize, w uint32) uint64 {
+func extractSuffixAsUint64(bs bits.BitString, w uint32) uint64 {
 	return bs.Suffix(w).TrieUint64()
 }
 
@@ -130,8 +130,8 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	if blockA == blockB {
 		if ere.D1.Bit(blockA) {
 			start, end := ere.getBlockRange(blockA)
-			suffA := extractSuffixAsUint64(a, ere.KeySize, ere.w)
-			suffB := extractSuffixAsUint64(b, ere.KeySize, ere.w)
+			suffA := extractSuffixAsUint64(a, ere.w)
+			suffB := extractSuffixAsUint64(b, ere.w)
 			if !ere.isRangeEmptyInBlock(start, end, suffA, suffB) {
 				return false
 			}
@@ -140,7 +140,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		// Check blockA for elements in [suffA, max]
 		if ere.D1.Bit(blockA) {
 			start, end := ere.getBlockRange(blockA)
-			suffA := extractSuffixAsUint64(a, ere.KeySize, ere.w)
+			suffA := extractSuffixAsUint64(a, ere.w)
 			maxSuff := (uint64(1) << ere.w) - 1
 			if ere.w == 64 {
 				maxSuff = ^uint64(0)
@@ -152,7 +152,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		// Check blockB for elements in [0, suffB]
 		if ere.D1.Bit(blockB) {
 			start, end := ere.getBlockRange(blockB)
-			suffB := extractSuffixAsUint64(b, ere.KeySize, ere.w)
+			suffB := extractSuffixAsUint64(b, ere.w)
 			if !ere.isRangeEmptyInBlock(start, end, 0, suffB) {
 				return false
 			}
