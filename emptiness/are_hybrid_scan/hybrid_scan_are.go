@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	defaultMinClusterFrac = 0.01
-	defaultMinPtsFloor    = 256
-	epsMultiplier         = 10
+	dbscanMinPts       = 10  // DBSCAN core threshold: neighbors in eps-window
+	minClusterSize     = 256 // post-filter: clusters smaller than this → fallback
+	epsMultiplier      = 10
 )
 
 type clusterFilter struct {
@@ -83,12 +83,7 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, eps uint
 		return h, nil
 	}
 
-	minPts := int(defaultMinClusterFrac * float64(n))
-	if minPts < defaultMinPtsFloor {
-		minPts = defaultMinPtsFloor
-	}
-
-	segments, fallbackKeys := detectClustersDBSCAN(keys, eps, minPts)
+	segments, fallbackKeys := detectClustersDBSCAN(keys, eps, dbscanMinPts, minClusterSize)
 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {

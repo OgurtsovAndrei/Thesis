@@ -49,8 +49,7 @@ func TestDBSCAN_Sequential(t *testing.T) {
 	bs := makeSortedBS(keys)
 	// rangeLen=100, epsilon=0.01 -> eps = 100/0.01*10 = 100_000
 	eps := testEps(100, 0.01)
-	minPts := 256
-	clusters, fallback := detectClustersDBSCAN(bs, eps, minPts)
+	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
 
 	t.Logf("Sequential: eps=%d, %d clusters, %d fallback keys", eps, len(clusters), len(fallback))
 	for i, c := range clusters {
@@ -90,8 +89,7 @@ func TestDBSCAN_ClusteredData(t *testing.T) {
 
 	bs := makeSortedBS(keys)
 	eps := testEps(100, 0.01)
-	minPts := 256
-	clusters, fallback := detectClustersDBSCAN(bs, eps, minPts)
+	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
 
 	t.Logf("Clustered: eps=%d, %d clusters, %d fallback keys (total %d)", eps, len(clusters), len(fallback), len(keys))
 	for i, c := range clusters {
@@ -130,8 +128,7 @@ func TestDBSCAN_UniformRandom(t *testing.T) {
 	// eps = 100/0.01*10 = 100_000, avg gap for 1000 uniform uint64 keys ~ 2^47
 	// So no clusters should form — everything goes to fallback (trunc).
 	eps := testEps(100, 0.01)
-	minPts := 256
-	clusters, fallback := detectClustersDBSCAN(bs, eps, minPts)
+	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
 
 	t.Logf("Uniform random: eps=%d, %d clusters, %d fallback keys", eps, len(clusters), len(fallback))
 
@@ -164,8 +161,7 @@ func TestDBSCAN_SingleClusterPlusScattered(t *testing.T) {
 
 	bs := makeSortedBS(keys)
 	eps := testEps(100, 0.01)
-	minPts := 256
-	clusters, fallback := detectClustersDBSCAN(bs, eps, minPts)
+	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
 
 	t.Logf("Single cluster + scattered: eps=%d, %d clusters, %d fallback keys (total %d)", eps, len(clusters), len(fallback), len(keys))
 	for i, c := range clusters {
@@ -196,7 +192,7 @@ func TestDBSCAN_SmallN_BelowMinPts(t *testing.T) {
 	}
 
 	bs := makeSortedBS(keys)
-	clusters, fallback := detectClustersDBSCAN(bs, 10, 256)
+	clusters, fallback := detectClustersDBSCAN(bs, 10, 10, 256)
 
 	if len(clusters) != 0 {
 		t.Errorf("expected 0 clusters for n < minPts, got %d", len(clusters))

@@ -2,6 +2,7 @@ package are_hybrid_scan
 
 import (
 	"Thesis/bits"
+	"sort"
 )
 
 type clusterSegment struct {
@@ -19,8 +20,12 @@ type clusterSegment struct {
 //  2. Contiguous runs of core points form cluster cores.
 //  3. Non-core points adjacent to (within eps of) a core point are border points
 //     and join the nearest cluster.
-//  4. Everything else is noise and goes to fallback.
-func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int) ([]clusterSegment, []bits.BitString) {
+//  4. Clusters smaller than minClusterSize are dissolved into fallback.
+//  5. Everything else is noise and goes to fallback.
+//
+// minPts is the DBSCAN core threshold (typically 5-10).
+// minClusterSize is the post-filter: clusters below this size go to fallback.
+func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClusterSize int) ([]clusterSegment, []bits.BitString) {
 	n := len(keys)
 	if n < 2 {
 		return nil, append([]bits.BitString{}, keys...)
@@ -108,7 +113,25 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int) ([]clus
 		}
 	}
 
-	// Phase 4: collect noise (fallback).
+	// Phase 4: post-filter — dissolve clusters smaller than minClusterSize.
+	// Rebuild assigned from scratch using only kept clusters.
+	var filtered []clusterSegment
+	for i := range assigned {
+		assigned[i] = false
+	}
+	for _, c := range clusters {
+		if len(c.keys) < minClusterSize {
+			continue
+		}
+		filtered = append(filtered, c)
+		// Find index range via binary search on minKey.
+		lo := sort.Search(n, func(j int) bool { return keys64[j] >= c.minKey })
+		for j := lo; j < n && keys64[j] <= c.maxKey; j++ {
+			assigned[j] = true
+		}
+	}
+
+	// Phase 5: collect noise + dissolved small clusters (fallback).
 	var fallback []bits.BitString
 	for i := 0; i < n; i++ {
 		if !assigned[i] {
@@ -116,5 +139,5 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int) ([]clus
 		}
 	}
 
-	return clusters, fallback
+	return filtered, fallback
 }
