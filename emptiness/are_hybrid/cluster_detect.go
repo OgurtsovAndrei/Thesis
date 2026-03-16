@@ -13,13 +13,15 @@ type clusterSegment struct {
 
 // detectClusters splits pre-sorted keys into dense segments (clusters) and sparse leftovers (fallback).
 //
-// Algorithm: gap-based segmentation with percentile threshold.
-//  1. Compute gaps between consecutive keys.
-//  2. Find large gaps (>= P(gapPercentile)) that indicate segment boundaries.
-//  3. Split key array at big gaps → contiguous segments.
-//  4. Segments with >= minClusterFrac*n keys → clusters, rest → fallback.
+// Algorithm: 1D DBSCAN-inspired segmentation, O(n).
 //
-// O(n) via quickselect for percentile; O(n) for everything else.
+//  1. Compute gaps between consecutive sorted keys.
+//  2. Derive eps = gap at the gapPercentile-th position (via quickselect).
+//  3. Split at gaps strictly greater than eps — consecutive keys with gap <= eps
+//     stay in the same segment. Using strict '>' ensures that data with uniform
+//     spacing (all gaps equal) forms a single segment rather than n segments of 1.
+//  4. Segments with >= minPts keys become clusters; the rest go to fallback.
+//     minPts = max(2, minClusterFrac * n).
 func detectClusters(keys []bits.BitString, gapPercentile float64, minClusterFrac float64) ([]clusterSegment, []bits.BitString) {
 	n := len(keys)
 
@@ -28,46 +30,47 @@ func detectClusters(keys []bits.BitString, gapPercentile float64, minClusterFrac
 		keys64[i] = k.TrieUint64()
 	}
 
-	// Compute gaps
+	// Compute gaps between consecutive keys.
 	gaps := make([]uint64, n-1)
 	for i := 0; i < n-1; i++ {
 		gaps[i] = keys64[i+1] - keys64[i]
 	}
 
-	// Percentile-based threshold via quickselect: O(n) average.
+	// eps = gap at the given percentile, computed via quickselect O(n).
 	k := int(gapPercentile * float64(len(gaps)))
 	if k >= len(gaps) {
 		k = len(gaps) - 1
 	}
 	gapsCopy := make([]uint64, len(gaps))
 	copy(gapsCopy, gaps)
-	threshold := quickselect(gapsCopy, k)
+	eps := quickselect(gapsCopy, k)
 
-	// Split at gaps >= threshold
+	// minPts: minimum segment size to qualify as a cluster.
+	minPts := int(minClusterFrac * float64(n))
+	if minPts < 2 {
+		minPts = 2
+	}
+
+	// Split at gaps strictly greater than eps.
 	type segment struct {
 		start, end int // inclusive indices into keys
 	}
 	var segments []segment
 	segStart := 0
 	for i := 0; i < len(gaps); i++ {
-		if gaps[i] >= threshold {
+		if gaps[i] > eps {
 			segments = append(segments, segment{segStart, i})
 			segStart = i + 1
 		}
 	}
 	segments = append(segments, segment{segStart, n - 1})
 
-	// Classify: large segments → clusters, small → fallback
-	sizeThreshold := int(minClusterFrac * float64(n))
-	if sizeThreshold < 2 {
-		sizeThreshold = 2
-	}
-
+	// Classify: segments with enough points become clusters, rest go to fallback.
 	assigned := make([]bool, n)
 	var clusters []clusterSegment
 	for _, seg := range segments {
 		size := seg.end - seg.start + 1
-		if size < sizeThreshold {
+		if size < minPts {
 			continue
 		}
 		clusters = append(clusters, clusterSegment{

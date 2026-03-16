@@ -79,8 +79,6 @@ func TestHybridARE_FPR_Accuracy(t *testing.T) {
 
 				// --- Sequential distribution ---
 				t.Run("sequential", func(t *testing.T) {
-					t.Skip("sequential distribution not yet supported by cluster detector")
-
 					const base = uint64(1000)
 					const gap = uint64(1_000_000)
 					sortedU64 := make([]uint64, n)
