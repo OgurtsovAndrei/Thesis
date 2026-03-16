@@ -2,6 +2,16 @@
 
 ## High Priority
 
+### Full-size SOSD benchmarks
+
+- [ ] Run all benchmarks (BPK vs FPR, build time, query time) on full SOSD datasets at native sizes:
+  - `fb_200M_uint64` (200M keys)
+  - `wiki_ts_200M_uint64` (200M keys)
+  - `osm_cellids_800M_uint64` (800M keys)
+  - `books_200M_uint32` (200M keys, uint32)
+- [ ] Compare all ARE filters + industry filters (Grafite, SNARF, SuRF) on real data
+- [ ] Data path: `Thesis-Bench-industry/bench/sosd_data/`
+
 ### Testing gaps
 
 - [x] `are_optimized`: add systematic no-FN property tests (multiple seeds/sizes, clustered dist)
