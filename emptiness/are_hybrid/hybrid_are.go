@@ -5,6 +5,7 @@ import (
 	"Thesis/emptiness/are"
 	"Thesis/emptiness/are_optimized"
 	"fmt"
+	"math"
 	"sort"
 )
 
@@ -24,12 +25,28 @@ type HybridARE struct {
 
 func NewHybridARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*HybridARE, error) {
 	n := len(keys)
+	if n == 0 {
+		return &HybridARE{n: 0}, nil
+	}
+
+	// Compute K for clusters (SODA formula) — use the larger of the two
+	effectiveRangeLen := rangeLen + 1
+	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
+	K := uint32(math.Ceil(math.Log2(rTarget)))
+	if K > 64 {
+		K = 64
+	}
+
+	return NewHybridAREFromK(keys, rangeLen, K)
+}
+
+func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*HybridARE, error) {
+	n := len(keys)
 	h := &HybridARE{n: n}
 
 	if n < 2 {
-		// Too few keys for cluster detection — all to fallback
 		if n > 0 {
-			fb, err := are.NewApproximateRangeEmptiness(keys, epsilon)
+			fb, err := are.NewApproximateRangeEmptinessFromK(keys, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -44,7 +61,7 @@ func NewHybridARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*Hyb
 	// Build cluster filters
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_optimized.NewOptimizedARE(seg.keys, rangeLen, epsilon, 0)
+		f, err := are_optimized.NewOptimizedAREFromK(seg.keys, rangeLen, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -58,7 +75,7 @@ func NewHybridARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*Hyb
 
 	// Build fallback filter
 	if len(fallbackKeys) > 0 {
-		fb, err := are.NewApproximateRangeEmptiness(fallbackKeys, epsilon)
+		fb, err := are.NewApproximateRangeEmptinessFromK(fallbackKeys, K)
 		if err != nil {
 			return nil, fmt.Errorf("fallback build: %w", err)
 		}
@@ -114,4 +131,16 @@ func (h *HybridARE) SizeInBits() uint64 {
 
 func (h *HybridARE) Stats() (numClusters, fallbackKeys, totalKeys int) {
 	return h.nClusters, h.nFallback, h.n
+}
+
+// NewHybridAREFromBPK builds a HybridARE targeting a given bits-per-key budget.
+func NewHybridAREFromBPK(keys []bits.BitString, rangeLen uint64, targetBPK float64) (*HybridARE, error) {
+	K := uint32(math.Ceil(targetBPK))
+	if K == 0 {
+		K = 1
+	}
+	if K > 64 {
+		K = 64
+	}
+	return NewHybridAREFromK(keys, rangeLen, K)
 }

@@ -40,6 +40,18 @@ func NewApproximateRangeEmptinessSoda(keys []uint64, rangeLen uint64, epsilon fl
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
 	}
 
+	return NewApproximateRangeEmptinessSodaFromK(keys, rangeLen, K)
+}
+
+func NewApproximateRangeEmptinessSodaFromK(keys []uint64, rangeLen uint64, K uint32) (*ApproximateRangeEmptinessSoda, error) {
+	n := len(keys)
+	if n == 0 {
+		return &ApproximateRangeEmptinessSoda{n: 0, RangeLen: rangeLen}, nil
+	}
+	if K > 64 {
+		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
+	}
+
 	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()

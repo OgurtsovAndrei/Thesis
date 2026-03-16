@@ -48,6 +48,25 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		return &OptimizedApproximateRangeEmptiness{n: 0}, nil
 	}
 
+	effectiveRangeLen := (rangeLen >> t) + 1
+	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
+	K := uint32(math.Ceil(math.Log2(rTarget)))
+	if K > 64 {
+		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
+	}
+
+	return NewOptimizedAREFromK(keys, rangeLen, K, t)
+}
+
+func NewOptimizedAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uint32) (*OptimizedApproximateRangeEmptiness, error) {
+	n := len(keys)
+	if n == 0 {
+		return &OptimizedApproximateRangeEmptiness{n: 0}, nil
+	}
+	if K > 64 {
+		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
+	}
+
 	// 1. Find Min and Max keys (by Compare = trie order)
 	minKey := keys[0]
 	maxKey := keys[0]
@@ -61,11 +80,8 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 	}
 
 	// 2. Calculate data spread M (after subtraction and truncation)
-	// Sub is trie-consistent: minKey is the Compare-minimum, so no underflow
 	spread := maxKey.Sub(minKey).ShiftRight(t)
 
-	// M = integer bit length of the spread (not storage bit length).
-	// TrieUint64 gives the integer interpretation; for multi-word, force SODA mode.
 	var M uint32
 	if spread.SizeBits() <= 64 {
 		spreadVal := spread.TrieUint64()
@@ -76,15 +92,7 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		M = 65 // multi-word spread → always SODA mode (K ≤ 64)
 	}
 
-	// 3. Calculate target K for SODA (r = 2^K >= n * effectiveRangeLen / epsilon)
-	effectiveRangeLen := (rangeLen >> t) + 1
-	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
-	K := uint32(math.Ceil(math.Log2(rTarget)))
-	if K > 64 {
-		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
-	}
-
-	// 4. Adaptive: Exact vs Approximate
+	// 3. Adaptive: Exact vs Approximate
 	isExactMode := (M <= K)
 	finalUniverseBits := K
 	if isExactMode {
@@ -100,11 +108,8 @@ func NewOptimizedARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t 
 		xPrime := x.Sub(minKey).ShiftRight(t)
 
 		if isExactMode {
-			// Convert to integer value and store as M-bit trie-ordered BitString
 			hashedKeys[i] = bits.NewFromTrieUint64(xPrime.TrieUint64(), M)
 		} else {
-			// SODA hash: h(x) = (u(block) + offset) mod 2^K
-			// Block = trie prefix (first W-K bits), Offset = trie suffix (last K bits)
 			W := xPrime.SizeBits()
 			var block bits.BitString
 			var offsetVal uint64

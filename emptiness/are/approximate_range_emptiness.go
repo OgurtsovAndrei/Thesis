@@ -33,6 +33,18 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 		K = 1
 	}
 
+	return NewApproximateRangeEmptinessFromK(keys, K)
+}
+
+func NewApproximateRangeEmptinessFromK(keys []bits.BitString, K uint32) (*ApproximateRangeEmptiness, error) {
+	n := len(keys)
+	if n == 0 {
+		return &ApproximateRangeEmptiness{exact: nil, K: 0}, nil
+	}
+	if K == 0 {
+		K = 1
+	}
+
 	minKey := keys[0]
 	maxKey := keys[n-1]
 
