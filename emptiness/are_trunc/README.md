@@ -1,56 +1,59 @@
-# Approximate Range Emptiness (SODA 2015 §4)
+# ARE — Prefix Truncation
 
-This package implements the **probabilistic** 1D range emptiness data structure described in Section 4 of the paper *Approximate Range Emptiness in Constant Time and Optimal Space*.
+Locality-preserving hash via prefix truncation: $h(x) = \lfloor x / 2^t \rfloor$, keeping the top $K = L - t$ bits.
 
-## 1. Architectural Overview: $K$-bit Truncation
+## Core Idea: Contiguous Phantoms
 
-The core of the Approximate structure is **locality-preserving hashing** via $K$-bit truncation. Unlike standard cryptographic hashes (like SHA-256) which scramble the order of keys, prefix truncation preserves the lexicographical order.
+Recall from [the parent README](../README.md): a false positive occurs when a point $y \in Y$ collides with
+some $x' \in S'$ under the hash $h$. We call such $y$ **phantom points** of $x$ — points where $h(y) = h(x)$.
 
-### How it Works
-1.  **Prefix Selection**: For each key $x$, we retain only the first $K$ bits. 
-    - Mathematically: $h(x) = \text{Prefix}_K(x) = \lfloor x \cdot 2^{K-L} \rfloor$.
-2.  **Order Preservation**: If $x < y$, then $h(x) \le h(y)$. This property allows us to map range queries $[a, b]$ in the original space directly to $[h(a), h(b)]$ in the truncated space.
-3.  **Universe Reduction**: We transform a massive universe (e.g., $2^{256}$ for 256-bit keys) into a manageable universe of size $2^K$.
+With truncation, the $2^t$ phantom points of each stored key $x$ form a **contiguous interval** of length $2^t$ in the
+original universe $U$ (all points sharing the same K-bit prefix).
 
-### The False Positive Mechanism
-False positives in this structure occur only at the **boundaries** of the query range. 
+This is the key difference from a random hash:
 
-If we query an interval $[a, b]$ that is actually empty in the original set $S$, a false positive happens if:
-- There is a key $x \in S$ such that $x < a$ (just before the range), but after truncation, $h(x) = h(a)$.
-- There is a key $y \in S$ such that $y > b$ (just after the range), but after truncation, $h(y) = h(b)$.
+![Phantom comparison](phantom_comparison.svg)
 
-### Optimal $K$ Selection
-To bound the false positive rate by $\epsilon$, we choose:
-$$K = \lceil \log_2(2n / \epsilon) \rceil$$
+**Random hash (SODA §3.1):** phantoms of $x$ are scattered uniformly across $U$. A query range of length $\mathcal{L}$
+can hit each phantom independently. The number of query positions that overlap with at least one
+phantom $\approx \mathcal{L} \times 2^t$.
 
-This formula ensures that the probability of a collision at either the lower or upper boundary is sufficiently low.
+**Truncation:** phantoms of $x$ are a single contiguous block. A query range of length $\mathcal{L}$ either overlaps
+this block or doesn't. The number of query positions that overlap $\approx \mathcal{L} + 2^t$.
 
-**Key Advantage**: The required $K$ depends on $n$ and $\epsilon$, but **is independent of the original bit-length $L$**. This allows the structure to achieve a flat memory profile even for arbitrarily long keys (e.g., long strings or large hashes).
+Per stored key, the "collision zone" is $\mathcal{L} + 2^t$ instead of $\mathcal{L} \times 2^t$. This eliminates
+the $\mathcal{L}$ factor from the space formula:
 
----
+|             | Collision zone per key   | $K$ for FPR $\leq \varepsilon$     | BPK                                      |
+|-------------|--------------------------|------------------------------------|------------------------------------------|
+| Random hash | $\mathcal{L} \times 2^t$ | $\log_2(n\mathcal{L}/\varepsilon)$ | $\log_2(\mathcal{L}/\varepsilon) + O(1)$ |
+| Truncation  | $\mathcal{L} + 2^t$      | $\log_2(2n/\varepsilon)$           | $\log_2(1/\varepsilon) + O(1)$           |
 
-## 2. False Positive Bounds
+Truncation saves $\log_2(\mathcal{L})$ bits per key compared to the paper's hash.
 
-A false positive occurs if the query interval $[a, b]$ is empty, but the underlying exact structure reports it is not. 
-Because the mapping preserves order (it's just a prefix truncation), the only way a false positive can happen is if:
-1. There is a key $x \in S$ just outside the interval $[a, b]$ (e.g., $x < a$ or $x > b$).
-2. The truncation of $x$ is identical to the truncation of $a$ or $b$.
+### Empirical Confirmation (uniform keys, n=262144)
 
-By setting $K = \lceil \log_2(2n / \epsilon) \rceil$, the probability of such a collision at the boundaries is bounded by $\epsilon$.
+![FPR vs BPK — L=128](tradeoff_uniform_L128.svg)
 
-## 3. Performance Characteristics
+At $\mathcal{L}=128$, the SODA curve is shifted right by $\approx \log_2(128) = 7$ BPK relative to Truncation — matching the theory. Both track the theoretical bound closely on uniform data.
 
-The most important characteristic of this structure is the **flat memory footprint** relative to key length.
+## Limitation: Data-Dependent FPR
 
-### Memory Profile (N = 1,000,000)
+The contiguous-phantom argument assumes keys are **spread** across the universe — so that truncated prefixes uniformly
+cover $[0, 2^K)$.
 
-| $\epsilon$ | Fingerprint Length ($K$) | Total Bits/Key | Time (ns/op) |
-| :--- | :--- | :--- | :--- |
-| **0.01** (1%) | ~28 bits | **~11.3 bits** | ~145 ns |
-| **0.001** (0.1%) | ~31 bits | **~14.3 bits** | ~145 ns |
+When keys are sequential ($x, x+1, x+2, \ldots$), consecutive keys share the same $K$-bit prefix. The phantom intervals
+overlap, the separation between $S'$ and $Y'$ collapses, and FPR can reach 100%.
 
-*Note: The actual `Bits/Key` is lower than $K$ because the Exact structure compresses the fingerprints further using blocks, and truncation inherently reduces the number of unique entries.*
+The SODA hash (see [`are_soda_hash`](../are_soda_hash/)) avoids this via pairwise independence: collision probability is
+exactly $1/r$ regardless of key structure, at the cost of $\log_2(\mathcal{L})$ extra bits per key.
 
-### Comparison to Exact Structure
-For 512-bit keys, the Exact structure requires **~495 bits/key**.
-By accepting a $0.1\%$ false positive rate, this Approximate structure requires only **~14.3 bits/key**—a **~34x reduction in memory**.
+## Implementation
+
+1. **Normalize:** subtract $\min(S)$ from all keys, find `spreadStart` — the first significant bit
+   of $\max(S) - \min(S)$.
+2. **Truncate:** extract $K$ bits starting at `spreadStart` from each shifted key.
+3. **Build ERE** over the $K$-bit fingerprints.
+4. **Query:** normalize endpoints the same way, forward to ERE.
+
+$K = \lceil \log_2(2n/\varepsilon) \rceil$ (see `NewApproximateRangeEmptiness`).

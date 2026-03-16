@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" font-family="sans-serif" font-size="13">
+
+  <!-- Title -->
+  <text x="360" y="24" text-anchor="middle" font-size="15" font-weight="bold">Phantom points and FP-causing query ranges (for a single stored key x)</text>
+
+  <!-- ============================== -->
+  <!-- U' axis (middle) with point x' -->
+  <!-- ============================== -->
+  <text x="20" y="62" font-weight="bold" font-size="13">U' (projected universe)</text>
+
+  <!-- axis -->
+  <line x1="60" y1="85" x2="680" y2="85" stroke="#333" stroke-width="2"/>
+  <!-- point x' -->
+  <circle cx="360" cy="85" r="6" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/>
+  <text x="360" y="75" text-anchor="middle" font-size="12" font-weight="bold" fill="#e65100">x'</text>
+
+  <!-- arrows from phantoms to x' -->
+  <!-- these will be drawn per section -->
+
+  <!-- ======================== -->
+  <!-- RANDOM HASH (top half)   -->
+  <!-- ======================== -->
+  <text x="20" y="130" font-weight="bold" font-size="14">Random hash — phantoms in U</text>
+  <text x="20" y="148" font-size="11" fill="#555">Points y ∈ Y mapped to x' are scattered across U</text>
+
+  <!-- U axis -->
+  <line x1="60" y1="190" x2="680" y2="190" stroke="#333" stroke-width="1.5"/>
+  <text x="50" y="194" text-anchor="end" font-size="11" fill="#666">U</text>
+
+  <!-- L-strips (danger zones) — one per phantom -->
+  <!-- phantom 1 at ~150 -->
+  <rect x="80" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="150" cy="190" r="5" fill="#d32f2f"/>
+  <text x="115" y="225" text-anchor="middle" font-size="10" fill="#d32f2f">L</text>
+
+  <!-- phantom 2 at ~260 -->
+  <rect x="190" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="260" cy="190" r="5" fill="#d32f2f"/>
+  <text x="225" y="225" text-anchor="middle" font-size="10" fill="#d32f2f">L</text>
+
+  <!-- phantom 3 at ~380 -->
+  <rect x="310" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="380" cy="190" r="5" fill="#d32f2f"/>
+  <text x="345" y="225" text-anchor="middle" font-size="10" fill="#d32f2f">L</text>
+
+  <!-- phantom 4 at ~500 -->
+  <rect x="430" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="500" cy="190" r="5" fill="#d32f2f"/>
+  <text x="465" y="225" text-anchor="middle" font-size="10" fill="#d32f2f">L</text>
+
+  <!-- phantom 5 at ~610 -->
+  <rect x="540" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="610" cy="190" r="5" fill="#d32f2f"/>
+  <text x="575" y="225" text-anchor="middle" font-size="10" fill="#d32f2f">L</text>
+
+  <!-- arrows from phantoms down to x' -->
+  <line x1="150" y1="170" x2="358" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="260" y1="170" x2="359" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="380" y1="170" x2="360" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="500" y1="170" x2="361" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="610" y1="170" x2="362" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- annotation -->
+  <text x="370" y="248" text-anchor="middle" font-size="12" fill="#d32f2f">
+    Total FP zone ≈ L × 2&#x1D57; (strips don't overlap)
+  </text>
+
+  <!-- divider -->
+  <line x1="40" y1="268" x2="700" y2="268" stroke="#ccc" stroke-width="1" stroke-dasharray="6,4"/>
+
+  <!-- ======================== -->
+  <!-- TRUNCATION (bottom half) -->
+  <!-- ======================== -->
+  <text x="20" y="295" font-weight="bold" font-size="14">Truncation — phantoms in U</text>
+  <text x="20" y="313" font-size="11" fill="#555">Points y ∈ Y mapped to x' form one contiguous block of size 2&#x1D57;</text>
+
+  <!-- U axis -->
+  <line x1="60" y1="355" x2="680" y2="355" stroke="#333" stroke-width="1.5"/>
+  <text x="50" y="359" text-anchor="end" font-size="11" fill="#666">U</text>
+
+  <!-- contiguous phantom block -->
+  <rect x="310" y="343" width="100" height="24" fill="#2a7fff" opacity="0.35" rx="2"/>
+  <circle cx="320" cy="355" r="4" fill="#1565c0"/>
+  <circle cx="340" cy="355" r="4" fill="#1565c0"/>
+  <circle cx="360" cy="355" r="4" fill="#1565c0"/>
+  <circle cx="380" cy="355" r="4" fill="#1565c0"/>
+  <circle cx="400" cy="355" r="4" fill="#1565c0"/>
+
+  <!-- arrows from block up to x' -->
+  <line x1="320" y1="343" x2="358" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="360" y1="343" x2="360" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="400" y1="343" x2="362" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- 2^t bracket under block -->
+  <line x1="310" y1="373" x2="410" y2="373" stroke="#1565c0" stroke-width="1.5"/>
+  <line x1="310" y1="369" x2="310" y2="377" stroke="#1565c0" stroke-width="1.5"/>
+  <line x1="410" y1="369" x2="410" y2="377" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="360" y="388" text-anchor="middle" font-size="10" fill="#1565c0">2&#x1D57;</text>
+
+  <!-- single FP zone: L to the left of block + block itself -->
+  <rect x="240" y="335" width="170" height="40" fill="#4caf50" opacity="0.18" rx="2" stroke="#4caf50" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- L bracket -->
+  <line x1="240" y1="400" x2="310" y2="400" stroke="#4caf50" stroke-width="1.5"/>
+  <line x1="240" y1="396" x2="240" y2="404" stroke="#4caf50" stroke-width="1.5"/>
+  <line x1="310" y1="396" x2="310" y2="404" stroke="#4caf50" stroke-width="1.5"/>
+  <text x="275" y="416" text-anchor="middle" font-size="10" fill="#388e3c">L</text>
+
+  <!-- total bracket -->
+  <line x1="240" y1="430" x2="410" y2="430" stroke="#333" stroke-width="1"/>
+  <line x1="240" y1="426" x2="240" y2="434" stroke="#333" stroke-width="1"/>
+  <line x1="410" y1="426" x2="410" y2="434" stroke="#333" stroke-width="1"/>
+  <text x="325" y="450" text-anchor="middle" font-size="12" fill="#333">Total FP zone ≈ L + 2&#x1D57;</text>
+
+  <!-- h(y) = x' label on U' axis -->
+  <text x="440" y="80" font-size="11" fill="#888">h(y) = x' for all phantoms y</text>
+
+</svg>
