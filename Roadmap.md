@@ -108,6 +108,8 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - [ ] Сравнить на real-world данных (SOSD benchmark datasets — см. ниже)
 - [ ] CPU & memory profiling (pprof) для Hybrid ARE build+query — найти узкие места
 - [ ] Сделать линейный поиск в ere
+- [ ] Сделать 1 << 30 ключей в DS
+- [ ] 
 
 ### Real-world datasets
 
