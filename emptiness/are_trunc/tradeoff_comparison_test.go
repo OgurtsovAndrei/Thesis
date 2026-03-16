@@ -15,6 +15,7 @@ import (
 )
 
 func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
+	t.Skip("skip: overwrites SVGs with manual annotations")
 	const (
 		n          = 1 << 18
 		queryCount = 1 << 18

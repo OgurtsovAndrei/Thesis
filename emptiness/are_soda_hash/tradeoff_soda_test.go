@@ -15,6 +15,7 @@ import (
 const mask60 = (uint64(1) << 60) - 1
 
 func TestTradeoff_SodaPlots(t *testing.T) {
+	t.Skip("skip: overwrites SVGs with manual annotations")
 	const (
 		n          = 1 << 18
 		queryCount = 1 << 18
