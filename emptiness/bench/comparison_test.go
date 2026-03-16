@@ -2,12 +2,12 @@ package bench_test
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/are"
 	"Thesis/emptiness/are_bloom"
 	"Thesis/emptiness/are_hybrid"
 	"Thesis/emptiness/are_optimized"
 	"Thesis/emptiness/are_pgm"
 	"Thesis/emptiness/are_soda_hash"
+	"Thesis/emptiness/are_trunc"
 	"Thesis/testutils"
 	"fmt"
 	"math"
@@ -78,7 +78,7 @@ func TestTradeoff_Cluster(t *testing.T) {
 				fmt.Printf("%-6.3f | %-20s | %8.2f | %14.6f | %14s\n", eps, "Theoretical", thBPK, eps, "-")
 
 				fSoda, errSoda := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterU64, rangeLen, eps)
-				fTrunc, errTrunc := are.NewApproximateRangeEmptiness(clusterBS, eps)
+				fTrunc, errTrunc := are_trunc.NewApproximateRangeEmptiness(clusterBS, eps)
 				fHybrid, errHybrid := are_hybrid.NewHybridARE(clusterBS, rangeLen, eps)
 
 				type m struct {
@@ -198,13 +198,13 @@ func TestTradeoff_Cluster(t *testing.T) {
 }
 
 func TestScalability(t *testing.T) {
-	sizes := []int{1 << 16, 1 << 20}
+	sizes := []int{1 << 20}
 	const (
-		rangeLen   = uint64(100)
-		queryCount = 500_000
+		rangeLen   = uint64(128)
+		queryCount = 1_000_000
 		nClusters  = 5
 		unifFrac   = 0.15
-		eps        = 0.01
+		eps        = 0.001
 	)
 
 	type filterEntry struct {
@@ -228,7 +228,7 @@ func TestScalability(t *testing.T) {
 			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, f.SizeInBits(), "-", nil
 		}},
 		{"Truncation", func(bs []bits.BitString, u64 []uint64) (func(a, b uint64) bool, uint64, string, error) {
-			f, err := are.NewApproximateRangeEmptiness(bs, eps)
+			f, err := are_trunc.NewApproximateRangeEmptiness(bs, eps)
 			if err != nil {
 				return nil, 0, "", err
 			}
@@ -386,8 +386,8 @@ func TestTradeoff_Full(t *testing.T) {
 		"Hybrid (Seq)":      {Name: "Hybrid (Seq)", Color: "#9b59b6", Dashed: true, Marker: "star"},
 		"CDF-ARE (Unif)":    {Name: "CDF-ARE (Unif)", Color: "#e05d10", Marker: "circle"},
 		"CDF-ARE (Seq)":     {Name: "CDF-ARE (Seq)", Color: "#e05d10", Dashed: true, Marker: "circle"},
-		"Bloom V3 (Unif)":      {Name: "Bloom V3 (Unif)", Color: "#888888", Marker: "circle"},
-		"Bloom V3 (Seq)":       {Name: "Bloom V3 (Seq)", Color: "#888888", Dashed: true, Marker: "circle"},
+		"Bloom V3 (Unif)":   {Name: "Bloom V3 (Unif)", Color: "#888888", Marker: "circle"},
+		"Bloom V3 (Seq)":    {Name: "Bloom V3 (Seq)", Color: "#888888", Dashed: true, Marker: "circle"},
 	}
 
 	os.MkdirAll("../../bench_results/plots", 0755)
@@ -409,8 +409,8 @@ func TestTradeoff_Full(t *testing.T) {
 		fOptS, errOptS := are_optimized.NewOptimizedARE(seqBS, rangeLen, eps, 0)
 		fSodaU, errSodaU := are_soda_hash.NewApproximateRangeEmptinessSoda(unifU64, rangeLen, eps)
 		fSodaS, errSodaS := are_soda_hash.NewApproximateRangeEmptinessSoda(seqU64, rangeLen, eps)
-		fTruncU, errTruncU := are.NewApproximateRangeEmptiness(unifBS, eps)
-		fTruncS, errTruncS := are.NewApproximateRangeEmptiness(seqBS, eps)
+		fTruncU, errTruncU := are_trunc.NewApproximateRangeEmptiness(unifBS, eps)
+		fTruncS, errTruncS := are_trunc.NewApproximateRangeEmptiness(seqBS, eps)
 		fHybridU, errHybridU := are_hybrid.NewHybridARE(unifBS, rangeLen, eps)
 		fHybridS, errHybridS := are_hybrid.NewHybridARE(seqBS, rangeLen, eps)
 		fCdfU, errCdfU := are_pgm.NewPGMApproximateRangeEmptiness(unifU64, rangeLen, eps, 64)
@@ -516,7 +516,7 @@ func TestBuildTimePerKey(t *testing.T) {
 			return err
 		}},
 		{"Truncation", "#e6a800", func(bs []bits.BitString, _ []uint64) error {
-			_, err := are.NewApproximateRangeEmptiness(bs, eps)
+			_, err := are_trunc.NewApproximateRangeEmptiness(bs, eps)
 			return err
 		}},
 		{"Hybrid", "#9b59b6", func(bs []bits.BitString, _ []uint64) error {
@@ -630,7 +630,7 @@ func TestQueryTimeVsRangeLen(t *testing.T) {
 			return func(a, b uint64) bool { return f.IsEmpty(a, b) }, nil
 		}},
 		{"Truncation", "#e6a800", func(_ uint64) (func(a, b uint64) bool, error) {
-			f, err := are.NewApproximateRangeEmptiness(keysBS, eps)
+			f, err := are_trunc.NewApproximateRangeEmptiness(keysBS, eps)
 			if err != nil {
 				return nil, err
 			}
@@ -731,7 +731,7 @@ func safeSizeSoda(f *are_soda_hash.ApproximateRangeEmptinessSoda) uint64 {
 	}
 	return f.SizeInBits()
 }
-func safeSizeTrunc(f *are.ApproximateRangeEmptiness) uint64 {
+func safeSizeTrunc(f *are_trunc.ApproximateRangeEmptiness) uint64 {
 	if f == nil {
 		return 0
 	}

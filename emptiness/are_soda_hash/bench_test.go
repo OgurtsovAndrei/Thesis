@@ -2,7 +2,7 @@ package are_soda_hash
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/are"
+	"Thesis/emptiness/are_trunc"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -25,7 +25,7 @@ func BenchmarkARE_Comparison(b *testing.B) {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	sort.Slice(bsKeys, func(i, j int) bool { return bsKeys[i].Compare(bsKeys[j]) < 0 })
 
-	filterTrunc, _ := are.NewApproximateRangeEmptiness(bsKeys, epsilon)
+	filterTrunc, _ := are_trunc.NewApproximateRangeEmptiness(bsKeys, epsilon)
 	filterSoda, _ := NewApproximateRangeEmptinessSoda(keys, L, epsilon)
 
 	fmt.Printf("\n--- Space Analysis (N=%d, eps=%f, L=%d) ---\n", n, epsilon, L)

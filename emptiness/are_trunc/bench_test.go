@@ -1,4 +1,4 @@
-package are
+package are_trunc
 
 import (
 	"Thesis/bits"

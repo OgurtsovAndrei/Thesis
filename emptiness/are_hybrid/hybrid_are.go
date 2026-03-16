@@ -2,7 +2,7 @@ package are_hybrid
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/are"
+	"Thesis/emptiness/are_trunc"
 	"Thesis/emptiness/are_optimized"
 	"fmt"
 	"math"
@@ -17,7 +17,7 @@ type clusterFilter struct {
 
 type HybridARE struct {
 	clusters  []clusterFilter
-	fallback  *are.ApproximateRangeEmptiness
+	fallback  *are_trunc.ApproximateRangeEmptiness
 	nClusters int
 	nFallback int
 	n         int
@@ -46,7 +46,7 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are.NewApproximateRangeEmptinessFromK(keys, K)
+			fb, err := are_trunc.NewApproximateRangeEmptinessFromK(keys, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -75,7 +75,7 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	// Build fallback filter
 	if len(fallbackKeys) > 0 {
-		fb, err := are.NewApproximateRangeEmptinessFromK(fallbackKeys, K)
+		fb, err := are_trunc.NewApproximateRangeEmptinessFromK(fallbackKeys, K)
 		if err != nil {
 			return nil, fmt.Errorf("fallback build: %w", err)
 		}
