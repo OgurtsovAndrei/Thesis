@@ -37,16 +37,28 @@ Truncation saves $\log_2(\mathcal{L})$ bits per key compared to the paper's hash
 
 At $\mathcal{L}=128$, the SODA curve is shifted right by $\approx \log_2(128) = 7$ BPK relative to Truncation — matching the theory. Both track the theoretical bound closely on uniform data.
 
-## Limitation: Data-Dependent FPR
+## The Price of Contiguity
 
-The contiguous-phantom argument assumes keys are **spread** across the universe — so that truncated prefixes uniformly
-cover $[0, 2^K)$.
+The same property that saves $\log_2(\mathcal{L})$ BPK — phantoms are adjacent to the key — is also the fundamental weakness.
 
-When keys are sequential ($x, x+1, x+2, \ldots$), consecutive keys share the same $K$-bit prefix. The phantom intervals
-overlap, the separation between $S'$ and $Y'$ collapses, and FPR can reach 100%.
+**All false positives are concentrated near stored keys.** For a stored key $x$, its phantom interval
+$[x - 2^t, x + 2^t]$ is the only region that can produce FP. Any query that lands near a key is almost guaranteed
+to hit a phantom. Conversely, queries far from any key never produce FP.
 
-The SODA hash (see [`are_soda_hash`](../are_soda_hash/)) avoids this via pairwise independence: collision probability is
-exactly $1/r$ regardless of key structure, at the cost of $\log_2(\mathcal{L})$ extra bits per key.
+This means:
+
+- **Sequential keys** ($x, x+1, x+2, \ldots$): phantom intervals of neighboring keys overlap completely.
+  Every gap between consecutive keys is covered by phantoms from both sides → **FPR = 100%**.
+- **Clustered keys**: phantom intervals of nearby keys merge into large continuous phantom zones.
+  Queries within clusters (the most common workload) see severely degraded FPR.
+- **Only uniformly spread keys** with gaps $\gg 2^t$ between them give the theoretical FPR.
+
+In practice, this limits truncation to high-entropy data (UUIDs, random hashes) with uniformly distributed queries —
+a narrow use case.
+
+The baseline SODA hash ([`are_soda_hash`](../are_soda_hash/)) avoids this entirely: pairwise independence scatters
+phantoms uniformly across $U$, giving $\Pr[h(x_1) = h(x_2)] \leq 1/r$ regardless of data distribution.
+The cost is $\log_2(\mathcal{L})$ extra bits per key — exactly the bits that truncation saves.
 
 ## Implementation
 

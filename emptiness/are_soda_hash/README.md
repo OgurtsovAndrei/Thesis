@@ -1,54 +1,42 @@
-# ARE Robust: SODA 2015 Locality-Preserving Hash
+# ARE — SODA 2015 Pairwise-Independent Hash
 
-This package implements the **Robust Approximate Range Emptiness** filter using the locality-preserving hash function described in Section 3.1 of the SODA 2015 paper.
+The paper's original locality-preserving hash ([§3.1](https://arxiv.org/pdf/1407.2907)):
 
-## 1. The Limitation of Simple Truncation
-In the basic `are` package, we use simple prefix truncation. While efficient, it suffers from **100% False Positive Rate** on sequential data (e.g., $x$ and $x+1$). 
+$$h(x) = (u(\lfloor x/r \rfloor) + x) \bmod r, \quad r = 2^K$$
 
-If a key $x$ and its neighbor $x+1$ share the same prefix after truncation, the filter cannot distinguish between them. This creates "blind spots" where any query for a gap between keys will always return a false positive.
+where $u: [U/r] \to [r]$ is drawn from a pairwise independent family.
 
-## 2. The SODA 2015 Solution: Randomized Locality
-The Robust version solves this by applying a randomized, but order-preserving, shift to each block of the universe.
+## Guarantees
 
-### The Hash Function
-For a key $x$ in a universe divided into blocks of size $r$, the hash $h(x)$ is defined as:
-$$h(x) = (\text{hash}(\lfloor x/r \rfloor) + x) \pmod r$$
+This is the baseline construction from the paper. It provides:
 
-- **Within a block**: The order of keys is preserved perfectly (it's just a cyclic shift).
-- **Across blocks**: Each block is shifted by a random value $u = \text{hash}(\text{block\_idx})$, effectively "scrambling" the relative positions of prefixes across the global universe.
+- **FPR $\leq \varepsilon$ for any data distribution** — sequential, clustered, adversarial, anything.
+  Pairwise independence gives $\Pr[h(x_1) = h(x_2)] \leq 1/r$ regardless of key structure.
+- **No false negatives** — $h$ is locality-preserving: $h([a,b])$ is a union of at most 2 intervals in $[r]$.
+- **$K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$**, giving **BPK $= \log_2(\mathcal{L}/\varepsilon) + O(1)$** — matching
+  the information-theoretic lower bound from [§2](https://arxiv.org/pdf/1407.2907).
 
-### Why it Works
-This transformation ensures that the probability of two neighbors ($x$ and $x+1$) colliding after hashing is exactly $1/r$, regardless of their original prefix similarity. This eliminates the adversarial patterns that break simple truncation.
+## Space Overhead
 
----
+The hash itself stores only two 64-bit coefficients $(a, b)$ — **$O(1)$ bits**, independent of $n$.
 
-## 3. Features & Guarantees
+The overhead comes from the ERE layer (see [`ere`](../ere/)): bitvectors $D_1$ ($n$ bits) and $D_2$ ($\sim 2n$ bits)
+for block indexing add **$\approx 3$ bits per key** on top of the theoretical minimum.
 
-### Range Sensitivity ($RangeLen$)
-Unlike simple truncation, the Robust ARE is built with a target **maximum range length** ($L$ or `RangeLen`). 
-- It guarantees an upper bound on the False Positive Rate ($\epsilon$) for any query of length $\le L$.
-- Memory consumption scales logarithmically with $L$: adding **1 bit/key** for every doubling of $L$.
+Total: $\log_2(\mathcal{L}/\varepsilon) + \sim 3$ bits per key.
 
-### Multi-Block Range Support
-This implementation supports queries of **any length**, even those exceeding $L$ or spanning multiple SODA blocks ($2^K$):
-1.  **Small Ranges**: Handled with 1 or 2 ERE queries (high precision).
-2.  **Large Ranges**: Handled by checking block boundaries and intermediate full blocks.
-    - *Note*: For ranges exceeding the block size $2^K$, the filter conservatively reports "Not Empty" if the filter contains any keys.
+### Empirical (n=262144, L=128)
 
-### Space-Optimal Succinctness
-The structure is **independent of the original key size** (e.g., 64, 128, or 256 bits). It only stores the "entropy" needed to distinguish $n$ keys with error $\epsilon$ over range $L$.
+![FPR vs BPK — uniform](tradeoff_uniform_L128.svg)
 
----
+![FPR vs BPK — clustered](tradeoff_clustered_L128.svg)
 
-## 4. Performance & Accuracy Comparison
+SODA tracks the theoretical bound on both distributions. On uniform data the gap is ~3 BPK (ERE overhead from $D_1$, $D_2$). On clustered data it narrows to ~1 BPK: hash collisions within clusters reduce the number of unique fingerprints, making ERE more compact per key.
 
-| Metric | Fast ARE (Truncation) | Robust ARE (SODA Hash) |
-| :--- | :--- | :--- |
-| **Uniform Data FPR** | ~0.3% | ~0.6% |
-| **Sequential Data FPR** | **100% (Fail)** | **0% (Pass)** |
-| **Memory (L=100)** | ~11 bits/key | ~16 bits/key |
-| **Query Time** | ~150 ns | ~250-400 ns |
+## Implementation (see [are_soda_hash.go](are_soda_hash.go))
 
-## 5. Usage Guidelines
-- Use **`are` (Fast)** if your data is naturally high-entropy (UUIDs, random hashes) and query speed is paramount.
-- Use **`are_soda_hash` (Robust)** for structured data (Auto-increment IDs, timestamps, sorted sequences) or when range-query reliability is critical.
+1. Divide $U$ into blocks of size $r = 2^K$.
+2. For each block, compute pairwise-independent shift: top $K$ bits of $(a \cdot \text{blockIdx} + b)$.
+3. Hash each key: $h(x) = (u(\lfloor x/r \rfloor) + x) \bmod r$.
+4. Sort, deduplicate, build ERE over $[0, 2^K)$.
+5. Query: hash both endpoints. Cyclic shift may split a range into two intervals — check both.
