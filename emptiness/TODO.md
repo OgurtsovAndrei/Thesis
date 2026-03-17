@@ -11,7 +11,7 @@
   - `books_200M_uint32` (200M keys, uint32)
 - [ ] Compare all ARE filters + industry filters (Grafite, SNARF, SuRF) on real data
 - [ ] Data path: `Thesis-Bench-industry/bench/sosd_data/`
-- [ ] Add industry results cache, as they are consistent, and no need to rerun them every time.
+- [x] Add industry results cache, as they are consistent, and no need to rerun them every time. (selective rebuild with ONLY/SKIP env vars)
 
 ### Testing gaps
 
@@ -27,7 +27,7 @@
 
 ### Hybrid cluster detection
 
-- [ ] `are_hybrid`: `detectClusters` fails on sequential (evenly-spaced) distributions — all gaps are equal, elbow detector finds no split, 0 clusters detected, everything falls back to plain Truncation ARE. Need a more robust gap threshold algorithm (e.g. percentile-based or density-based) that handles uniform-gap distributions gracefully.
+- [x] `are_hybrid`: `detectClusters` fails on sequential — fixed with `>` instead of `>=`. New `are_hybrid_scan` package with 1D DBSCAN addresses all limitations (merging, equidistant, dual fallback).
 
 ### Dead code / bugs
 
@@ -62,7 +62,7 @@
 
 - [ ] `are_hybrid/hybrid_are.go:32`: "use the larger of the two" — no second formula exists
 - [ ] `are_pgm/are_pgm.go:41-51`: doc comment attached to `Smooth` variant instead of plain
-- [ ] `emptiness/README.md`: only mentions `ere` and `are`, missing 5 packages
+- [x] `emptiness/README.md`: updated — now lists all packages including are_hybrid_scan
 
 ## Low Priority / Structural
 
