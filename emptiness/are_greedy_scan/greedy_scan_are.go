@@ -38,13 +38,25 @@ func NewGreedyScanARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (
 	return NewGreedyScanAREFromK(keys, rangeLen, K)
 }
 
+// NewGreedyScanAREFromKRaw builds without the merge pass — pure greedy split only.
+func NewGreedyScanAREFromKRaw(keys []bits.BitString, rangeLen uint64, K uint32) (*GreedyScanARE, error) {
+	return buildGreedy(keys, rangeLen, K, false)
+}
+
 func NewGreedyScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*GreedyScanARE, error) {
+	return buildGreedy(keys, rangeLen, K, true)
+}
+
+func buildGreedy(keys []bits.BitString, rangeLen uint64, K uint32, merge bool) (*GreedyScanARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &GreedyScanARE{}, nil
 	}
 
-	segments := mergeSmallClusters(segmentBySpread(keys, K), K)
+	segments := segmentBySpread(keys, K)
+	if merge {
+		segments = mergeSmallClusters(segments, K)
+	}
 
 	clusters := make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
