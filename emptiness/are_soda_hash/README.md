@@ -13,6 +13,10 @@ This is the baseline construction from the paper. It provides:
 - **FPR $\leq \varepsilon$ for any data distribution** — sequential, clustered, adversarial, anything.
   Pairwise independence gives $\Pr[h(x_1) = h(x_2)] \leq 1/r$ regardless of key structure.
 - **No false negatives** — $h$ is locality-preserving: $h([a,b])$ is a union of at most 2 intervals in $[r]$.
+  Why at most 2: the hash applies a per-block cyclic shift $u(\text{block})$, so consecutive keys
+  within the same block map to consecutive positions in $[r]$. A query range $[a, b]$ spans at most
+  2 blocks (the one containing $a$ and the one containing $b$), producing at most 2 contiguous
+  intervals in the mapped space.
 - **$K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$**, giving **BPK $= \log_2(\mathcal{L}/\varepsilon) + O(1)$** — matching
   the information-theoretic lower bound from [§2](https://arxiv.org/pdf/1407.2907).
 

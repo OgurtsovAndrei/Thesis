@@ -47,8 +47,9 @@ to hit a phantom. Conversely, queries far from any key never produce FP.
 
 This means:
 
-- **Sequential keys** ($x, x+1, x+2, \ldots$): phantom intervals of neighboring keys overlap completely.
-  Every gap between consecutive keys is covered by phantoms from both sides → **FPR = 100%**.
+- **Sequential keys** ($x, x+1, x+2, \ldots$): when the inter-key gap is smaller than the phantom
+  size $2^t$, phantom intervals of neighboring keys overlap completely.
+  Every gap is covered by phantoms from both sides → **FPR approaches 100%**.
 - **Clustered keys**: phantom intervals of nearby keys merge into large continuous phantom zones.
   Queries within clusters (the most common workload) see severely degraded FPR.
 - **Only uniformly spread keys** with gaps $\gg 2^t$ between them give the theoretical FPR.

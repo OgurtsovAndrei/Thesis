@@ -67,7 +67,8 @@ the entire algorithm reduces to two-pointer sweeps:
 3. **Core runs:** contiguous core points with gap $\leq$ eps form cluster cores.
 4. **Merge:** adjacent cores within eps of each other are joined — this naturally
    merges nearby dense regions that gap-based methods would keep separate.
-5. **Border expansion:** non-core points within eps of a core join the nearest cluster.
+5. **Border expansion:** non-core points within eps of a core point (called *border points*)
+   join the nearest cluster.
 6. **Post-filter:** clusters with fewer than `minClusterSize` keys dissolve back to fallback.
 
 Two separate parameters (unlike classic DBSCAN which conflates them):
@@ -134,4 +135,7 @@ Each sub-filter independently targets FPR $\leq \varepsilon$:
 - Fallback trunc: bounded when `truncSafe` = true
 - Fallback adaptive: SODA guarantee (FPR $\leq \varepsilon$)
 
-Overall FPR $\leq \varepsilon \times$ (number of sub-filters queried per query), typically 1--2.
+By a [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality), if each sub-filter
+independently has FPR $\leq \varepsilon$ and a query touches at most $C$ sub-filters,
+the overall FPR $\leq C\varepsilon$. In practice most queries touch only one sub-filter
+(either one cluster or just the fallback), so $C = 1$ and FPR $\approx \varepsilon$.

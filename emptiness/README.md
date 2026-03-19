@@ -5,12 +5,14 @@ Data structures for answering 1D range emptiness queries: **"Does $[a, b]$ conta
 Based on: *["Approximate Range Emptiness in Constant Time and Optimal Space"](https://arxiv.org/abs/1407.2907)*,
 Goswami, Pagh, Silvestri, Sivertsen (SODA 2015).
 
-> **Note:** This is the first known practical implementation of the SODA 2015 algorithm.
-> The paper is widely cited as the theoretical gold standard for range filters
-> (e.g., [Grafite, SIGMOD 2024](https://arxiv.org/abs/2311.15380) calls it "the information-theoretically optimal
-> solution"),
-> but prior to this work no public implementation existed due to the complexity of the underlying machinery
-> (succinct bit vectors, Elias-Fano coding, monotone minimal perfect hashing, hollow tries).
+> **Note:** To the best of our knowledge (as of March 2025), this is the first practical implementation
+> of the SODA 2015 algorithm. A search of GitHub, artifact links in citing papers
+> ([Grafite](https://arxiv.org/abs/2311.15380), [Rosetta](https://dl.acm.org/doi/10.1145/3389400.3389431),
+> [SuRF](https://dl.acm.org/doi/10.1145/3183713.3196759)), and the authors' own repositories found
+> no public implementation. The paper is widely cited as the theoretical gold standard for range filters
+> (e.g., Grafite, SIGMOD 2024 calls it "the information-theoretically optimal solution"),
+> but the complexity of the underlying machinery (succinct bit vectors, Elias-Fano coding,
+> monotone minimal perfect hashing, hollow tries) appears to have prevented prior implementations.
 
 **Use case:** Range filters for LSM-tree key-value stores (e.g., RocksDB). Before reading an SST file from disk, the
 filter answers whether a queried key range *might* intersect the file's key set, avoiding unnecessary I/O with a bounded
@@ -60,7 +62,8 @@ The hash $h$ projects the universe $U$ down to $U' = [r]$. Under this projection
 - $Y = U \setminus S$ maps to $Y' = h(Y)$ — fingerprints of non-keys.
 
 **A false positive occurs when $Y'$ overlaps with $S'$:** a query point $y \in Y$ has $h(y) \in S'$, so the structure
-cannot distinguish it from a real key. The fewer collisions between $Y'$ and $S'$, the lower the FPR.
+cannot distinguish it from a real key. We call the pre-images of a stored fingerprint $x' \in S'$ its **phantom
+points** — all keys $y$ such that $h(y) = x'$. The fewer phantoms overlap with $Y'$, the lower the FPR.
 
 The ideal hash would map $S'$ and $Y'$ to completely disjoint regions of $U'$ — zero overlap, zero false positives. In
 practice this is impossible within the space budget, but **the choice of $h$ determines how well $S'$ and $Y'$ separate
@@ -71,13 +74,26 @@ well it separates $S'$ from $Y'$ across different key distributions. See each pa
 
 ## Packages
 
+Recommended reading order (top to bottom):
+
 | Package                                        | Description                                                          |
 |------------------------------------------------|----------------------------------------------------------------------|
 | [`ere`](ere/README.md)                         | Exact Range Emptiness (Layer 2). Zero error, space $O(n \log(U/n))$. |
+| [`are_soda_hash`](are_soda_hash/README.md)     | ARE via the SODA 2015 pairwise-independent hash (paper baseline).    |
+| [`are_pgm`](are_pgm/README.md)                 | ARE via CDF mapping (PGM index). Experimental.                       |
 | [`are_trunc`](are_trunc/README.md)             | ARE via prefix truncation.                                           |
 | [`are_adaptive`](are_adaptive/README.md)       | ARE via adaptive prefix truncation with threshold $t$.               |
-| [`are_soda_hash`](are_soda_hash/README.md)     | ARE via the SODA 2015 pairwise-independent hash.                     |
-| [`are_pgm`](are_pgm/README.md)                 | ARE via CDF mapping (PGM index).                                     |
 | [`are_hybrid`](are_hybrid/README.md)           | ARE with per-cluster segmentation (gap-percentile).                  |
 | [`are_hybrid_scan`](are_hybrid_scan/README.md) | **Best implementation.** 1D DBSCAN segmentation + dual fallback.     |
 | [`are_bloom`](are_bloom/README.md)             | Bloom filter baseline.                                               |
+
+### Advanced topics
+
+The following packages require familiarity with the [SODA 2015 paper](https://arxiv.org/abs/1407.2907)
+and the references therein (succinct bit vectors, Elias-Fano coding, monotone minimal perfect hashing,
+hollow tries, Z-fast tries):
+
+| Package                                                   | Description                                                 |
+|-----------------------------------------------------------|-------------------------------------------------------------|
+| [`lerloc`](../locators/lerloc/)                           | LERLOC — Range Locator via Weak Prefix Search (MMPH + Hollow Z-Fast Trie). |
+| [`ere_theoretical`](ere_theoretical/)                     | Theoretical ERE baseline using LERLOC for $O(1)$ worst-case queries. |

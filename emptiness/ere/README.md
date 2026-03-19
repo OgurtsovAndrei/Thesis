@@ -22,8 +22,10 @@ The original SODA 2015 paper theoretically suggests using a Weak Prefix Search s
 
 However, in this implementation, we use **binary search on bit-packed suffixes** for the local search. 
 
-#### Why no `LERLOC` (Weak Prefix Search) inside blocks?
-Our `LERLOC` implementation (based on Hollow Z-Fast Trie and MMPH) provides $O(1)$ worst-case guarantees but comes with overhead:
+#### Why no LERLOC (Weak Prefix Search) inside blocks?
+LERLOC (**L**ocator for **E**xact **R**ange emptiness using **LOC**ators) is our implementation
+of a Weak Prefix Search structure (based on Hollow Z-Fast Trie and MMPH) that provides
+$O(1)$ worst-case guarantees but comes with overhead:
 *   **Space Overhead**: Adding a trie index to each block would add ~3–10 bits/key. Binary search requires **zero** extra metadata besides the sorted suffixes.
 *   **Performance Trade-off**: For small datasets (like the keys within a single block), the constants of a trie/hash-based approach are higher than a simple binary search over a few CPU cache lines.
 
@@ -53,6 +55,8 @@ The total space is the sum of metadata and bit-packed suffixes:
 2.  **Data (Suffixes):** $O(n \cdot (L - \log n))$ bits.
     *   Each of the $n$ keys stores only its suffix of length $W = L - \log_2 n$.
 3.  **Total Formula:** $Space \approx n \cdot (L - \log_2 n + 3.2)$ bits.
+
+Measured with $n = 10^6$ keys ($\log_2 n \approx 19.93$):
 
 | $L$ (Key Bits) | Suffix Bits ($L - 19.93$) | Metadata (Observed) | Total Bits/Key |
 | :--- | :--- | :--- | :--- |

@@ -52,13 +52,17 @@ As we write in the [parent README](../README.md#the-role-of-the-hash-function):
 A false positive occurs when a non-key (gray point on the top panel) gets mapped
 to the same position as a real key in the compressed universe $U'$. The CDF
 compresses sparse regions — so non-keys from the gaps get squeezed together into
-narrow "pillars" in the mapped space. These pillars of non-keys land next to
-**other non-keys**, not next to real keys. Collisions are maximally grouped
-around the non-key peaks, away from the uniformly spread keys.
+narrow "pillars" in the mapped space.
 
-In the cluster regions (where most queries land), non-keys are sparse after
-mapping — there are simply fewer of them per unit of mapped space to collide
-with stored keys. The result: queries in dense regions see fewer false positives.
+The intuition: in dense regions (where most queries land), there are fewer non-keys
+per unit of mapped space after stretching, so fewer candidates for collision with
+stored keys. Conversely, non-keys from gaps pile up in the compressed regions —
+but queries rarely land there.
+
+**Caveat:** this argument is informal. Because the CDF maps everything monotonically,
+keys and non-keys are still interleaved in $U'$ — there is no strict separation.
+The FPR reduction depends on the query distribution matching the data distribution
+and is not formally bounded (see [Limitations](#limitations)).
 
 The CDF is monotonic by construction: $x_1 < x_2 \Rightarrow h(x_1) \leq h(x_2)$,
 so range queries are preserved — **zero false negatives** guaranteed.
@@ -71,9 +75,14 @@ so range queries are preserved — **zero false negatives** guaranteed.
 3. **Fix monotonicity** — PGM positions may be non-monotone due to float64 rounding;
    enforce via running max.
 4. **Sample CDF control points** every `pgmEpsilon` keys → piecewise-linear model.
-5. **Compute $L_\text{eff}$** — effective range length after mapping:
+5. **Compute $L_\text{eff}$** — the effective range length after CDF distortion.
+   A query of length $\mathcal{L}$ in the original space maps to a range of variable
+   width in $U'$, depending on the local CDF slope. In the worst case (densest CDF
+   segment), the mapped range is longest:
    $L_\text{eff} = \mathcal{L} \times \max_\text{segment} \text{density}$, where
-   density = $\Delta\text{rank} / \Delta\text{key} \times n$.
+   density = $\Delta\text{rank} / \Delta\text{key} \times n$ (local slope of the CDF
+   scaled by $n$). We use the maximum over all segments to guarantee $K$ is sufficient
+   everywhere.
 6. **Set $K$** $= \lceil \log_2(n \cdot L_\text{eff} / \varepsilon) \rceil$.
 7. **Map keys** through piecewise-linear CDF → deduplicate → build [ERE](../ere/).
 8. **Query:** map both endpoints through the same CDF, forward to ERE.
