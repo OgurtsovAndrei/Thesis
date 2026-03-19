@@ -1,0 +1,26 @@
+\newpage
+\section{Methodology}
+\markboth{Methodology}{}
+
+To achieve the set goals, I will use a methodology combining theoretical analysis and low-level system optimization. The focus is not on improving asymptotic complexity, which is already optimal, but on reducing time constants in Big-O notation through processor cache optimization (Memory Layout) and SIMD instruction usage.
+
+\subsection*{Tools and Technology Stack}
+
+The project will be implemented in \textbf{Go}, leveraging its facilities for direct memory manipulation and assembly integration.
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Language:} Go, using pointers for direct memory management and bypassing Garbage Collection (GC) in critical sections.
+    \item \textbf{Assembly:} Using \texttt{Go ASM} to access \textbf{BMI2} (\texttt{PDEP}, \texttt{PEXT}) and \textbf{AVX-512 BMI} instructions.
+    \item \textbf{Profiling:} Using \texttt{perf} (Linux) to analyze L1/L2 cache misses and branch prediction errors.
+    \item \textbf{Test Stand:} Server based on Intel Xeon architecture supporting AVX512-BITALG and AVX512-VBMI instruction sets.
+\end{itemize}
+
+\subsection*{Metrics and Success Criteria}
+
+The solution will be evaluated based on the following parameters:
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Query Latency:} Measuring the 50th and 99th percentiles of query execution time. The goal is to achieve less than 1000ns latency per request with a filter size of $10^7$ keys.
+    \item \textbf{Space Efficiency:} Measuring memory consumption in bits per key. The target is to achieve better compression than SuRF-compatible accuracy levels.
+    \item \textbf{Build Time:} The time required to construct the structure from a sorted iterator must be linear. This is critical for the Compaction process in LSM-trees.
+\end{itemize}

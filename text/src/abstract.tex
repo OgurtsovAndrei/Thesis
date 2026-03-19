@@ -1,0 +1,18 @@
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\markboth{Abstract}{}
+
+\begin{center}
+    \textbf{\Large Abstract}
+\end{center}
+
+In this dissertation, I implement and evaluate \textbf{Range Filters} for LSM-tree--based (Log-Structured Merge-tree) storage systems, focusing on real CPU performance. The focus of the research is on the implementation of the \textbf{Hollow Z Fast Trie} \cite{belazzougui2010fast} structure, combined with Monotone Minimal Perfect Hashing (\textbf{MMPH}) algorithms \cite{belazzougui2009monotone}, with a performance study.
+
+Unlike most academic works that focus on improving theoretical asymptotics, I measure and reduce CPU-level costs, doing ``non-asymptotic`` optimizations, working with constant-factor costs on real CPUs: data placement in memory (\textit{Memory Layout}), minimizing branch prediction errors (\textit{branch mispredictions}), and using specialized BMI instructions of processors (\textbf{BMI2, AVX512}).
+
+My goal is to research is that possible to reduce CPU operation time in range filters using specific optimizations. The data structure, that was chosen for experiments has the lowest possible memory usage limit. I expect the application of hardware and algorithmic optimizations to allow maintaining the compactness of the structure, while maximizing lookups per second for single-core CPU, which is very important for LSM engines where metadata checks are CPU-bound, even if storage is fast enough.
+
+\vspace{1em}
+\noindent The project repository is available at:\\
+\url{https://github.com/OgurtsovAndrei/Thesis}

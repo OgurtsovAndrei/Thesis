@@ -24,6 +24,7 @@ __pycache__/
 
 # Proj temp output dirs
 /text/out/
+/text/**.pdf
 /locators/benchmarks_parsed.csv
 bench_results/raw/
 /mmph/lemonhash/build
