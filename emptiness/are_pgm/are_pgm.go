@@ -19,7 +19,7 @@ type CDFPoint struct {
 // PGMApproximateRangeEmptiness uses a PGM-inspired piecewise-linear CDF
 // to map keys to a near-uniform distribution, then stores them in ERE.
 //
-// The CDF is a monotonic function, which guarantees zero false negatives:
+// The CDF is a monotonic function, preserving range queries:
 //   x ∈ [a,b] ⟹ CDF(x) ∈ [CDF(a), CDF(b)]
 //
 // FPR comes only from uint64 quantization at boundaries: a query endpoint

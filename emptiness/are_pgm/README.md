@@ -63,7 +63,7 @@ candidates for collision with stored keys. Conversely, non-keys from gaps pile u
 in the compressed regions — but queries rarely land there.
 
 The CDF is monotonic by construction: $x_1 < x_2 \Rightarrow h(x_1) \leq h(x_2)$,
-so range queries are preserved — **zero false negatives** guaranteed.
+so range queries are preserved — intervals map to intervals.
 
 ## Implementation
 

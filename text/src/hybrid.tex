@@ -1,0 +1,174 @@
+\section{Gap-Percentile Segmentation}
+\label{sec:hybrid-gap}
+
+The first hybrid approach splits keys into dense clusters and sparse remainder using
+gap-percentile detection: large gaps between sorted keys mark cluster boundaries.
+
+Given $n$ sorted keys, compute gaps $g_i = \text{key}_{i+1} - \text{key}_i$. The
+95th-percentile gap (computed via quickselect) becomes the threshold~$\tau$. Then:
+
+\begin{enumerate}
+  \item \textbf{Split} at every position where $g_i > \tau$.
+  \item \textbf{Filter:} segments with $\geq 1\%$ of $n$ keys become clusters.
+  \item \textbf{Fallback:} remaining keys go to a truncation filter.
+\end{enumerate}
+
+Each cluster is built as an adaptive filter (Section~\ref{sec:adaptive}) --- if the
+cluster's spread fits in $K$ bits, exact mode triggers (FPR~$= 0$). Otherwise SODA
+mode.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{gap_equidistant}
+  \caption{Gap-percentile failure on equidistant data: all gaps are equal, so $P_{95}$
+    equals the common gap and no split points are found.}
+  \label{fig:gap-equidistant}
+\end{figure}
+
+\paragraph{Limitations.}
+\begin{itemize}
+  \item \textbf{Equidistant data:} when all gaps are equal (sequential keys), the gap
+    distribution has a single mode --- there is no ``large gap'' to split at. The P95
+    threshold equals the common gap, and strict inequality fails for all gaps,
+    producing one giant segment.
+  \item \textbf{No merging:} two adjacent small segments that together would form a
+    valid cluster are never joined.
+  \item \textbf{Fallback is always truncation:} if fallback keys have small gaps
+    relative to the phantom size, truncation produces high FPR
+    (Section~\ref{sec:trunc-failure}).
+\end{itemize}
+
+\section{1D DBSCAN Segmentation (Scan-ARE)}
+\label{sec:hybrid-scan}
+
+The improved hybrid addresses all three limitations above using density-based clustering.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{segmentation}
+  \caption{Scan-ARE segmentation overview: 1D DBSCAN separates dense clusters
+    (exact mode, FPR~$= 0$) from sparse fallback (truncation or SODA).}
+  \label{fig:segmentation}
+\end{figure}
+
+\subsection{Why Clusters Compress So Well}
+
+Real-world key distributions concentrate most keys into a few tight regions. In practice,
+``tight'' means many keys share a long common prefix --- they differ only in the last
+few bits. Examples include URLs with shared domain prefixes, file paths with shared
+directory prefixes, consecutive timestamps, and geospatial S2 cell IDs.
+
+When a cluster is isolated into its own sub-filter, the adaptive filter sees only the
+local spread. Since $M_\text{cluster} \ll 2^K$, exact mode triggers: no hash, FPR~$= 0$,
+and the universe size shrinks to fit just the cluster's range. The tighter the cluster,
+the fewer bits the ERE trie needs.
+
+This is the central advantage over a single global filter: instead of one universe
+spanning the entire key space (where $M > K$ forces hashing and nonzero FPR), we get
+many small exact universes --- each with zero false positives
+(Figure~\ref{fig:universe-comparison}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{universe_comparison}
+  \caption{Global filter vs per-cluster exact filters. A single global universe
+    forces hashing (nonzero FPR). Isolating each cluster into its own universe
+    enables exact mode (FPR~$= 0$) with fewer bits per key.}
+  \label{fig:universe-comparison}
+\end{figure}
+
+\subsection{1D DBSCAN in $O(n)$}
+
+DBSCAN~\citep{ester1996dbscan} is normally $O(n^2)$ due to neighbor search. On sorted
+1D data, the $\varepsilon$-neighborhood of any point is a contiguous range, so the
+entire algorithm reduces to two-pointer sweeps:
+
+\begin{enumerate}
+  \item \textbf{Forward sweep:} for each $\text{key}[i]$, advance the left pointer while
+    $\text{key}[i] - \text{key}[\text{left}] > \text{eps}$. If the window has
+    $\geq \texttt{minPts}$ points, $\text{key}[i]$ is a core point.
+  \item \textbf{Reverse sweep:} same logic right-to-left (the forward pass only marks
+    the rightmost points of each dense window).
+  \item \textbf{Core runs:} contiguous core points with gap $\leq \text{eps}$ form
+    cluster cores.
+  \item \textbf{Merge:} adjacent cores within eps of each other are joined.
+  \item \textbf{Border expansion:} non-core points within eps of a core point
+    (\emph{border points}) join the nearest cluster.
+  \item \textbf{Post-filter:} clusters with fewer than \texttt{minClusterSize} keys
+    dissolve back to fallback.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrl@{}}
+\toprule
+Parameter & Value & Role \\
+\midrule
+\texttt{minPts}         & 10  & DBSCAN core threshold \\
+\texttt{minClusterSize} & 256 & Post-filter: clusters below this dissolve \\
+\bottomrule
+\end{tabular}
+\caption{DBSCAN parameters. Two separate parameters --- unlike classic DBSCAN which
+  conflates core density and cluster size.}
+\label{tab:dbscan-params}
+\end{table}
+
+\subsection{Choosing eps From Problem Parameters}
+
+\begin{equation}
+  \text{eps} = c \cdot \frac{\mathcal{L}}{\varepsilon}, \quad c = 10
+  \label{eq:eps}
+\end{equation}
+
+From the exact mode analysis (Equation~\ref{eq:exact-threshold}): exact mode triggers
+when the average gap $< \mathcal{L}/\varepsilon$. So
+$\text{eps} = 10 \cdot \mathcal{L}/\varepsilon$ means: regions $10\times$ denser than
+the exact-mode threshold get clustered.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+Distribution & Typical gap & Gap vs eps & Result \\
+\midrule
+Cluster (internal gap ${\sim}100$)  & 100            & $\ll$ eps & Cluster found \\
+Uniform 64-bit (avg gap ${\sim}2^{44}$) & ${\sim}10^{13}$ & $\gg$ eps & All fallback \\
+Sequential (gap $= 1000$)          & 1000           & $\ll$ eps & One big cluster \\
+\bottomrule
+\end{tabular}
+\caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
+  eps~$= 1.28 \times 10^6$. No data statistics or percentiles needed --- eps is derived
+  purely from $\mathcal{L}$ and $\varepsilon$.}
+\label{tab:eps-sanity}
+\end{table}
+
+\subsection{Dual Fallback}
+
+Keys not assigned to any cluster go to a fallback filter. The choice between truncation
+and SODA is made automatically:
+
+\begin{enumerate}
+  \item Compute phantom size: $\text{phantom\_size} = \text{spread}_\text{fallback} / 2^K$.
+  \item Compute the 5th-percentile gap ($P_5$) of fallback keys via quickselect.
+  \item If $P_5 > \text{phantom\_size}$: \textbf{truncation} (safe, saves
+    $\log_2(\mathcal{L})$ BPK).
+  \item If $P_5 \leq \text{phantom\_size}$: \textbf{adaptive/SODA} (guaranteed FPR).
+\end{enumerate}
+
+\subsection{Query}
+
+Clusters are sorted by $[\min, \max]$. For a query $[a, b]$:
+\begin{enumerate}
+  \item Binary search over clusters intersecting $[a, b]$ --- $O(\log C)$ where $C$ is
+    the number of clusters.
+  \item Check each intersecting cluster (typically 0--1).
+  \item Check the fallback filter.
+  \item Return ``empty'' only if all sub-filters agree.
+\end{enumerate}
+
+\subsection{FPR Guarantee}
+
+Each sub-filter independently targets FPR~$\leq \varepsilon$. By a union bound, if a
+query touches at most $C$ sub-filters, the overall FPR~$\leq C\varepsilon$. In practice
+most queries touch only one sub-filter (either one cluster or just the fallback), so
+$C = 1$ and FPR~$\approx \varepsilon$.

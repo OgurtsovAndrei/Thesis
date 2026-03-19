@@ -43,8 +43,7 @@ least $n \log_2(\mathcal{L} / \varepsilon) - O(n)$ bits.
 
 1. **Locality-preserving hash** $h: U \to U'$ where $|U'| = r = n\mathcal{L}/\varepsilon$.
    A hash is locality-preserving if it maps any interval $[a,b]$ in $U$ to a bounded number
-   of contiguous intervals in $U'$ — ensuring that range queries are always fully checked,
-   preventing false negatives.
+   of contiguous intervals in $U'$.
    Projects $S \mapsto S' = h(S)$ and $[a,b] \mapsto h([a,b])$.
 
 2. **Exact Range Emptiness (ERE)** over $S' \subset [r]$: succinct structure with zero error and

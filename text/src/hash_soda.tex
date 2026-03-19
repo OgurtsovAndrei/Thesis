@@ -1,0 +1,88 @@
+\section{Pairwise-Independent Hash (SODA Baseline)}
+\label{sec:soda}
+
+\subsection{The Hash Function}
+
+The paper's original locality-preserving hash~\citep[§3.1]{goswami2015approximate}:
+\begin{equation}
+  h(x) = \bigl(u(\lfloor x/r \rfloor) + x\bigr) \bmod r, \quad r = 2^K
+  \label{eq:soda-hash}
+\end{equation}
+where $u: [U/r] \to [r]$ is drawn from a pairwise-independent family, stored as two
+64-bit coefficients $(a, b)$.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{soda_hash_mechanism}
+  \caption{SODA hash mechanism: per-block cyclic shift maps keys to $[0, 2^K)$.
+    A query range spanning two blocks produces at most two contiguous intervals in
+    the mapped space.}
+  \label{fig:soda-mechanism}
+\end{figure}
+
+Properties of the hash:
+\begin{itemize}
+  \item \textbf{Pairwise-independent:} $\Pr[h(x_1) = h(x_2)] \leq 1/r$ regardless of
+    key structure. This holds for sequential, clustered, or adversarial data.
+  \item \textbf{Locality-preserving:} the hash applies a per-block cyclic shift, so
+    consecutive keys within the same block map to consecutive positions in $[r]$. A query
+    range $[a, b]$ spans at most 2 blocks, producing at most 2 contiguous intervals in
+    the mapped space.
+  \item \textbf{Compact:} stores only two 64-bit coefficients $(a, b)$ ---
+    $O(1)$ bits, independent of $n$.
+\end{itemize}
+
+\subsection{ARE Construction With SODA Hash}
+
+This is a direct implementation of the construction from~\citet[§3]{goswami2015approximate}.
+The hash design, its proofs of locality-preservation and pairwise independence, and the
+resulting space/FPR bounds are all from the original paper --- our contribution is the
+practical implementation.
+
+Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE filter:
+\begin{enumerate}
+  \item Divide $U$ into blocks of size $r = 2^K$.
+  \item For each block, compute pairwise-independent shift: top $K$ bits of
+    $(a \cdot \text{blockIdx} + b)$.
+  \item Hash each key via Equation~\eqref{eq:soda-hash}.
+  \item Sort, deduplicate, build ERE over $[0, 2^K)$.
+  \item Query: hash both endpoints; cyclic shift may split the range into two
+    intervals --- check both in ERE.
+\end{enumerate}
+
+\paragraph{Filter properties.}
+\begin{itemize}
+  \item \textbf{FPR $\leq \varepsilon$ for any data distribution} --- follows from the
+    pairwise independence of the hash.
+  \item \textbf{No false negatives} --- follows from the locality-preserving property:
+    all images of the query range are checked in ERE.
+  \item \textbf{Space:} $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$, giving
+    BPK~$= \log_2(\mathcal{L}/\varepsilon) + O(1)$ --- matching the information-theoretic
+    lower bound. Including ERE metadata ($D_1$, $D_2$), the total cost is
+    $\log_2(\mathcal{L}/\varepsilon) + {\sim}3$ bits per key.
+\end{itemize}
+
+\subsection{Empirical Validation}
+
+On uniform data ($n = 2^{18}$, $\mathcal{L} = 128$), the measured FPR-vs-BPK curve
+tracks the theoretical bound with a gap of ${\sim}3$~BPK (ERE overhead from $D_1$,
+$D_2$, Figure~\ref{fig:soda-uniform}). On non-uniform data with closely spaced keys
+the gap narrows to ${\sim}1$~BPK: hash collisions among nearby keys reduce the number
+of unique fingerprints, making ERE more compact per key (Figure~\ref{fig:soda-clustered}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{soda_tradeoff_uniform}
+  \caption{FPR vs BPK on uniform keys ($n = 2^{18}$, $\mathcal{L} = 128$). SODA tracks
+    the theoretical bound with ${\sim}3$~BPK overhead from ERE metadata.}
+  \label{fig:soda-uniform}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{soda_tradeoff_clustered}
+  \caption{FPR vs BPK on clustered keys ($n = 2^{18}$, $\mathcal{L} = 128$). The gap
+    narrows to ${\sim}1$~BPK as hash collisions among nearby keys reduce the effective
+    number of unique fingerprints.}
+  \label{fig:soda-clustered}
+\end{figure}

@@ -1,0 +1,103 @@
+\section{CDF Mapping (Experimental)}
+\label{sec:cdf}
+
+An experimental approach: use the empirical CDF of the data as the locality-preserving
+hash $h$, redistributing the FPR budget from sparse regions to dense regions.
+
+\textbf{Status:} theoretical exploration. Benchmarks did not show practical improvement
+over the SODA hash or hybrid segmentation.
+
+\subsection{Motivation}
+
+The information-theoretic lower bound (Theorem~1) holds for all data and query
+distributions. But if queries follow approximately the same distribution as stored
+keys --- users query ranges where data exists, not empty regions --- then FPR in
+sparse inter-cluster gaps does not matter. If we could \emph{move} FPR budget away from
+dense regions and into sparse regions, the effective FPR experienced by real queries
+would be lower for the same number of bits.
+
+\subsection{The Hash Function}
+
+The CDF is a monotonic function that maps keys to a near-uniform distribution
+(Figure~\ref{fig:cdf-redistribution}):
+\begin{itemize}
+  \item \textbf{Where keys are dense} (clusters): the mapped space is stretched, so
+    the same number of non-keys is spread over a wider interval $\Rightarrow$ fewer
+    non-keys per unit length $\Rightarrow$ lower local FPR.
+  \item \textbf{Where keys are sparse} (gaps): the mapped space is compressed, non-keys
+    pile up $\Rightarrow$ higher local FPR. But under our assumption, queries rarely
+    land here.
+\end{itemize}
+
+Monotonicity ($x_1 < x_2 \Rightarrow h(x_1) \leq h(x_2)$) preserves range queries ---
+intervals map to intervals.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{cdf_redistribution}
+  \caption{CDF redistribution. Top: original universe with non-uniform key density
+    (uniform background + two clusters). After CDF mapping: keys become near-uniform,
+    non-key density inverts --- valleys where clusters were (low FPR), peaks where
+    gaps were (high FPR, but queries rarely land there).}
+  \label{fig:cdf-redistribution}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{cdf_mapping}
+  \caption{Before and after CDF mapping. Dense clusters (top) are stretched into
+    uniform blocks (bottom); sparse gaps are compressed.}
+  \label{fig:cdf-mapping}
+\end{figure}
+
+\textbf{Important caveat:} because the CDF maps everything monotonically, keys and
+non-keys are still interleaved in $U'$ --- there is no strict separation. The FPR
+reduction is not formally bounded and depends entirely on the query distribution matching
+the data distribution.
+
+\subsection{ARE Construction With CDF Hash}
+
+\begin{enumerate}
+  \item Sort input keys.
+  \item Build a PGM index~\citep{ferragina2020pgm} on float64-converted keys to obtain
+    an approximate CDF.
+  \item Fix monotonicity (PGM positions may be non-monotone due to float64 rounding)
+    via running max.
+  \item Sample CDF control points every $\texttt{pgmEpsilon}$ keys $\Rightarrow$
+    piecewise-linear model.
+  \item Compute $L_\text{eff}$: the effective range length after CDF distortion.
+    A query of length $\mathcal{L}$ maps to a range of variable width depending on
+    the local CDF slope, bounded by
+    $L_\text{eff} = \mathcal{L} \times \max_\text{segment} \text{density}$.
+  \item Set $K = \lceil \log_2(n \cdot L_\text{eff} / \varepsilon) \rceil$.
+  \item Map keys through the piecewise-linear CDF, deduplicate, build ERE.
+  \item Query: map both endpoints through the same CDF, forward to ERE.
+\end{enumerate}
+
+CDF model cost: each control point stores a (key, rank) pair $= 128$ bits. With
+$\texttt{pgmEpsilon} = 128$: ${\approx} n/128$ points $\approx 1$ bit per key.
+
+\subsection{Limitations}
+
+\begin{itemize}
+  \item $O(n^2)$ build time due to PGM convex hull construction; constructor returns
+    error for $n > 2^{20}$.
+  \item Float64 precision loss for keys $> 2^{53}$.
+  \item FPR is not formally bounded --- depends on query/data distribution match.
+  \item CDF model overhead adds 1--2 BPK on top of ERE storage.
+\end{itemize}
+
+\subsection{Experimental Results}
+
+Benchmarks against the SODA hash showed that CDF-ARE does not provide a consistent
+practical advantage:
+\begin{itemize}
+  \item When query distribution matches data: CDF-ARE uses fewer bits per key, but FPR
+    is comparable or worse due to $L_\text{eff}$ amplification in dense regions.
+  \item When query distribution diverges from data: FPR degrades catastrophically
+    (40--58\% at $\sigma_\text{query} = 4 \times \sigma_\text{data}$).
+  \item The $O(n^2)$ build cost makes it impractical for large datasets.
+\end{itemize}
+
+Hybrid segmentation (Chapter~\ref{chap:hybrid}) achieves a similar goal --- exploiting
+clustering --- more effectively via segmentation and exact mode, without the CDF overhead.

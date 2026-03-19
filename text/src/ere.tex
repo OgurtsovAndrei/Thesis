@@ -1,0 +1,77 @@
+\section{Succinct Representation (SODA 2015, §3.2)}
+\label{sec:ere}
+
+The inner layer of every approximate filter is an \emph{Exact Range Emptiness} (ERE)
+structure: given a sorted set $S' \subset [0, r)$ of $n$ fingerprints, it answers
+``$[a, b] \cap S' = \emptyset$?'' with zero error.
+
+\subsection{Two-Level Hierarchy}
+
+To achieve the information-theoretic minimum of $n \log_2(r/n) + O(n)$ bits, the
+structure divides the universe $[0, r)$ into $n$ equal-sized blocks:
+
+\paragraph{Global level (succinct indexing).}
+Two bit-vectors provide $O(1)$ navigation:
+\begin{itemize}
+  \item $D_1$ (size $n$ bits): $D_1[i] = 1$ if block $i$ contains at least one key.
+  \item $D_2$ (size ${\sim}2n$ bits): an Elias--Fano~\citep{elias1974efficient,fano1971number}
+    representation of block counts. Each non-empty block $i$ contributes a $1$ followed
+    by $n_i$ zeros. A \textsc{Select}$_1$ / \textsc{Rank}$_0$ pair maps any block index
+    to its starting position in the data array in $O(1)$ time.
+\end{itemize}
+
+\paragraph{Local level (bit-packed suffixes).}
+Instead of storing full keys, only the suffix $x \bmod (r/n)$ is stored for each
+key~$x$. The suffix length is $W = \lceil \log_2 r \rceil - \lceil \log_2 n \rceil$
+bits. All suffixes are packed into a dense \texttt{uint64} array using bit-shifts,
+eliminating per-element overhead.
+
+\subsection{Binary Search in Buckets}
+
+The original SODA~2015 paper suggests a Weak Prefix Search structure (Hollow Z-Fast
+Trie) for $O(1)$ worst-case local queries. Our implementation uses binary search on
+bit-packed suffixes instead.
+
+With $n$ blocks for $n$ keys, the number of keys per non-empty block follows a Poisson
+distribution with $\lambda \approx 1$. In practice: ${\sim}2.24$ keys per non-empty
+block on average, and at most ${\sim}12$ keys for $n = 10^6$ in our tests. Binary
+searching through ${\sim}12$ packed values is faster and more cache-friendly than
+multiple rank/select lookups in a trie.
+
+When ERE is used inside an ARE filter, the SODA hash produces near-uniform fingerprints,
+so the Poisson assumption holds even for clustered input data.
+
+\subsection{Space Analysis}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+$L$ (key bits) & Suffix bits ($L - \log_2 n$) & Metadata & Total BPK \\
+\midrule
+64   & 44.07  & 3.2 & 47.27  \\
+128  & 108.07 & 3.2 & 111.27 \\
+256  & 236.07 & 3.2 & 239.27 \\
+512  & 492.07 & 3.2 & 495.27 \\
+\bottomrule
+\end{tabular}
+\caption{Measured ERE space with $n = 10^6$ keys. Metadata ($D_1 + D_2$ + rank/select
+  indices) is constant at ${\sim}3.2$ BPK.}
+\label{tab:ere-space}
+\end{table}
+
+Space grows linearly with $L$ --- unavoidable for an exact structure, since it must
+store the information distinguishing the keys. This linear dependence motivates the
+move to approximate range emptiness: by storing hashed fingerprints of length
+$K \approx \log_2(\mathcal{L}/\varepsilon)$ instead of full keys, the space becomes
+independent of the original key length~$L$.
+
+\subsection{Complexity Summary}
+
+\begin{itemize}
+  \item \textbf{Build:} $O(n \cdot L)$ --- a single pass over sorted keys.
+  \item \textbf{Query:} $O(1)$ expected (binary search over ${\sim}2$ keys per block);
+    $O(\log n)$ worst case if all keys collide in a single block.
+  \item \textbf{Space:} $n \log_2(r/n) + O(n)$ bits, matching the information-theoretic
+    lower bound.
+\end{itemize}

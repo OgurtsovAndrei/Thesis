@@ -1,0 +1,66 @@
+\section{Problem Statement}
+\label{sec:problem}
+
+Let $U = [0, 2^L)$ be a universe of $L$-bit keys.
+Given a sorted set $S \subset U$ of $n$ keys, a maximum query range length $\mathcal{L}$,
+and a target false positive rate $\varepsilon$, the \emph{range emptiness problem} asks
+to build a data structure that answers ``$[a, b] \cap S = \emptyset$?'' for intervals of
+length $\leq \mathcal{L}$, with:
+
+\begin{itemize}
+  \item \textbf{No false negatives:} if $[a, b] \cap S \neq \emptyset$, the answer is always
+    ``not empty''.
+  \item \textbf{Bounded false positives:} if $[a, b] \cap S = \emptyset$, the answer is
+    ``not empty'' with probability at most $\varepsilon$.
+\end{itemize}
+
+Let $Y = U \setminus S$ denote all keys not stored in the structure.
+
+\subsection{Information-Theoretic Bounds}
+\label{sec:bounds}
+
+\citet{goswami2015approximate} establish the following bounds.
+
+\begin{theorem}[Lower bound, {\citet[§2]{goswami2015approximate}}]
+Any data structure solving the range emptiness problem requires at least
+$n \log_2(\mathcal{L} / \varepsilon) - O(n)$ bits.
+\end{theorem}
+
+\begin{theorem}[Upper bound, {\citet[§3]{goswami2015approximate}}]
+The bound is achieved via two layers:
+\begin{enumerate}
+  \item A \textbf{locality-preserving hash} $h: U \to U'$ where $|U'| = r = n\mathcal{L}/\varepsilon$.
+    A hash is locality-preserving if it maps any interval $[a,b]$ in $U$ to a bounded
+    number of contiguous intervals in $U'$.
+
+  \item An \textbf{Exact Range Emptiness (ERE)} structure over $S' = h(S) \subset [r]$:
+    a succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits.
+\end{enumerate}
+\end{theorem}
+
+The resulting space is $n \log_2(\mathcal{L}/\varepsilon) + O(n)$ bits, or equivalently
+$\log_2(\mathcal{L}/\varepsilon) + O(1)$ bits per key --- matching the lower bound.
+
+The fingerprint length $K = \log_2(r) = \log_2(n\mathcal{L}/\varepsilon)$ controls
+accuracy: increasing $K$ by one bit halves the false positive rate. After ERE compression
+(which subtracts $\log_2 n$ for block indexing), the effective cost per key is
+$K - \log_2 n = \log_2(\mathcal{L}/\varepsilon)$.
+
+\subsection{The Role of the Hash Function}
+\label{sec:hash-role}
+
+The hash $h$ projects $U$ down to $U' = [r]$. Under this projection, the stored keys
+$S$ map to fingerprints $S' = h(S)$, and the non-keys $Y = U \setminus S$ map to
+$Y' = h(Y)$.
+
+A false positive occurs when $Y'$ overlaps with $S'$: a query point $y \in Y$ has
+$h(y) \in S'$, so the structure cannot distinguish it from a real key. We call the
+pre-images of a stored fingerprint $x' \in S'$ its \textbf{phantom points} --- all keys
+$y$ such that $h(y) = x'$. The fewer phantoms overlap with $Y'$, the lower the FPR.
+
+The ideal hash would map $S'$ and $Y'$ to completely disjoint regions of $U'$ --- zero
+overlap, zero false positives. In practice this is impossible within the space budget,
+but the choice of $h$ determines how well $S'$ and $Y'$ separate for a given data
+distribution. This motivates two directions explored in this work: alternative hash
+function designs (Chapter~\ref{chap:hash}) and data-adaptive segmentation strategies
+that bypass hashing entirely on dense regions (Chapter~\ref{chap:hybrid}).

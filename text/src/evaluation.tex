@@ -1,0 +1,87 @@
+\section{Benchmark Setup}
+\label{sec:eval-setup}
+
+All experiments use 60-bit keys from the SOSD benchmark
+suite~\citep{marcus2020sosd}: Facebook user IDs, Wikipedia edit timestamps,
+OpenStreetMap cell IDs, and Books ISBNs. Synthetic distributions (uniform, clustered)
+supplement the real-world datasets.
+
+Competing implementations:
+\begin{itemize}
+  \item \textbf{Grafite}~\citep{grafite2024}: information-theoretically optimal
+    range filter (SIGMOD~2024).
+  \item \textbf{SNARF}~\citep{vaidya2022snarf}: learned CDF-based range filter.
+  \item \textbf{SuRF}~\citep{zhang2018surf}: succinct range filter with three variants
+    (base, hash suffix, real suffix).
+  \item \textbf{Bloom ARE}: trivial baseline --- standard Bloom filter with $\mathcal{L}$
+    point lookups per range query.
+\end{itemize}
+
+All filters are evaluated on FPR-vs-BPK tradeoff curves, measured over $10^6$ random
+empty-range queries per configuration.
+
+% TODO: add build throughput and query latency benchmarks
+
+\section{Large-Range Performance: $\mathcal{L} = 65536$}
+\label{sec:eval-large-range}
+
+The combination of truncation-based hashing and exact-mode clusters enables handling very
+large range queries that would be impractical for other approaches.
+
+At $\mathcal{L} = 65536$, non-hybrid filters face a fundamental problem: the fingerprint
+length $K = \lceil \log_2(n \cdot \mathcal{L} / \varepsilon) \rceil$ must grow by
+$\log_2(\mathcal{L}) = 16$ bits to maintain the same FPR. For SODA, this means 16 extra
+BPK. For Bloom, $\mathcal{L} = 65536$ point lookups per query is impractical.
+
+Scan-ARE sidesteps this: dense clusters get exact mode (FPR~$= 0$) regardless of
+$\mathcal{L}$ --- exact filters do not hash, so $\mathcal{L}$ does not appear in their
+space cost. Only the sparse fallback pays the $\log_2(\mathcal{L})$ penalty, and it
+contains few keys.
+
+\subsection{SOSD Results ($n = 2^{24}$, $\mathcal{L} = 65536$)}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fpr_bpk_books_L65536}
+  \caption{FPR vs BPK --- SOSD Books (ISBN sequences, highly clustered),
+    $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE achieves FPR~$< 10^{-8}$ at
+    ${\sim}5$~BPK; all non-hybrid filters degrade to FPR~$\approx 1$.}
+  \label{fig:books-l65536}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fpr_bpk_wiki_L65536}
+  \caption{FPR vs BPK --- SOSD Wiki (Wikipedia timestamps, moderately clustered),
+    $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE dominates; only Grafite remains
+    competitive at ${\sim}10$~BPK but with 2--3$\times$ more space.}
+  \label{fig:wiki-l65536}
+\end{figure}
+
+On both datasets, Scan-ARE achieves FPR~$< 10^{-8}$ at ${\sim}5$~BPK, while Truncation,
+SODA, and Bloom all degrade to FPR~$\approx 1$ at comparable budgets. SNARF plateaus at
+FPR~$\sim 10^{-3}$. Only Grafite remains competitive on Wiki (${\sim}10$~BPK for
+FPR~$10^{-2}$), but at 2--3$\times$ the space of Scan-ARE.
+
+% TODO: add Facebook and OSM results when plots are regenerated
+
+\section{Summary of Results}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+Filter & BPK ($\mathcal{L}{=}65536$) & FPR & Distribution dependence \\
+\midrule
+Scan-ARE       & ${\sim}5$   & $< 10^{-8}$ & Best on clustered data \\
+Grafite        & ${\sim}10$  & ${\sim}10^{-2}$ & Distribution-independent \\
+SNARF          & ${\sim}28$  & ${\sim}10^{-3}$ & Learned, data-dependent \\
+SODA           & ${\sim}5$   & $\approx 1$ (degenerate) & Distribution-independent \\
+Truncation     & ${\sim}3$   & $\approx 1$ (degenerate) & Fails on clustered data \\
+Bloom          & ${\sim}30$  & ${\sim}10^{-4}$ & Distribution-independent \\
+\bottomrule
+\end{tabular}
+\caption{Comparison at $n = 2^{24}$, $\mathcal{L} = 65536$ on SOSD Books. Scan-ARE
+  dominates the Pareto frontier by exploiting cluster density for exact-mode sub-filters.}
+\label{tab:comparison}
+\end{table}

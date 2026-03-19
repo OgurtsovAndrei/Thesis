@@ -1,0 +1,114 @@
+\section{Key Distributions in Practice}
+\label{sec:distributions}
+
+The theoretical bounds of Chapter~\ref{chap:ere} hold for any key set. In practice,
+however, keys in storage systems are not arbitrary --- they follow distributions shaped
+by the application domain. Understanding these distributions is essential for evaluating
+hash function designs and segmentation strategies in the following chapters.
+
+\subsection{The Core Assumption}
+\label{sec:assumption}
+
+We assume that the \emph{query distribution approximately matches the key distribution}:
+users query ranges where data exists, not empty regions of the key space. This is
+natural for most workloads --- a time-series database receives queries for recent
+timestamps (where data was written), not for arbitrary future dates.
+
+This assumption has two consequences:
+\begin{enumerate}
+  \item FPR in sparse regions of the key space matters less --- queries rarely land there.
+  \item Dense regions (where most keys and queries concentrate) dominate the effective FPR
+    experienced by the application.
+\end{enumerate}
+
+The SODA hash (Section~\ref{sec:soda}) ignores this assumption entirely --- it provides
+worst-case guarantees for any distribution. The truncation hash
+(Section~\ref{sec:truncation}) implicitly assumes uniformity. The hybrid approaches
+(Chapter~\ref{chap:hybrid}) explicitly exploit it by isolating dense regions.
+
+\subsection{Common Industrial Distributions}
+
+Keys in LSM-tree storage systems typically exhibit one or more of the following patterns:
+
+\paragraph{Sequential / near-sequential.}
+Auto-incrementing primary keys, monotonic timestamps, log sequence numbers. Keys are
+approximately evenly spaced with small gaps. The key space is dense and compact ---
+spread is much smaller than the universe.
+
+\paragraph{Clustered.}
+Keys concentrate in a few dense regions separated by large gaps. Examples:
+\begin{itemize}
+  \item \textbf{User activity:} a social network stores events keyed by user ID prefix
+    + timestamp. Active users produce dense clusters; inactive users leave gaps.
+  \item \textbf{Geospatial data:} S2 cell IDs or geohashes cluster around populated
+    areas. Rural regions are sparse.
+  \item \textbf{Time-partitioned data:} recent partitions are dense (active writes),
+    older partitions are sparse (archived).
+\end{itemize}
+
+\paragraph{High-entropy / uniform-like.}
+UUIDs, cryptographic hashes, randomly generated tokens. Keys are spread across the full
+key space with no exploitable structure. This is the hardest case for distribution-aware
+optimizations and the only case where truncation achieves its theoretical BPK.
+
+\subsection{SOSD Benchmark Datasets}
+\label{sec:sosd}
+
+For empirical evaluation, we use real-world datasets from the SOSD (Search on Sorted
+Data) benchmark~\citep{marcus2020sosd}, masked to 60-bit keys:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+Dataset & $n$ (full) & Key type & Character \\
+\midrule
+\textbf{Facebook} & 200M & uint64 & User IDs. Highly clustered --- dense regions of
+  sequential IDs with large gaps between ID ranges. \\
+\textbf{Books}    & 200M & uint32 & ISBN sequences. Clustered by publisher prefix,
+  near-sequential within each publisher. \\
+\textbf{Wiki}     & 200M & uint64 & Wikipedia edit timestamps. Moderately clustered ---
+  bursts of activity during events, quieter periods between. \\
+\textbf{OSM}      & 800M & uint64 & OpenStreetMap cell IDs. Geospatially clustered ---
+  dense in populated areas, sparse in oceans and deserts. \\
+\bottomrule
+\end{tabular}
+\caption{SOSD datasets used in our evaluation. All exhibit clustering to varying
+  degrees --- none are uniform. Benchmarks in Chapter~\ref{chap:evaluation} use
+  subsets of these datasets (e.g.\ $n = 2^{24}$), masked to 60-bit keys.}
+\label{tab:sosd}
+\end{table}
+
+% TODO: regenerate histograms with better binning (rank-based or adaptive)
+\begin{figure}[h]
+  \centering
+  \begin{tabular}{@{}cc@{}}
+    \includegraphics[width=0.48\textwidth]{hist_sosd_fb} &
+    \includegraphics[width=0.48\textwidth]{hist_sosd_books} \\
+    \includegraphics[width=0.48\textwidth]{hist_sosd_wiki} &
+    \includegraphics[width=0.48\textwidth]{hist_sosd_osm} \\
+  \end{tabular}
+  \caption{Key density histograms for SOSD datasets (1000 bins, log-scale Y-axis).
+    Facebook and Books concentrate keys in a narrow region of the key space.
+    Wiki shows a smooth density gradient. OSM is geospatially clustered with many
+    empty regions.}
+  \label{fig:sosd-histograms}
+\end{figure}
+
+\subsection{Synthetic Distributions}
+
+To isolate the effect of specific distribution properties, we also generate synthetic
+key sets:
+
+\begin{itemize}
+  \item \textbf{Uniform:} keys drawn uniformly from $[0, 2^{60})$. Average gap
+    $\approx 2^{60}/n$. No clustering. Baseline for truncation-friendly data.
+  \item \textbf{Clustered:} a mixture of Gaussian clusters with controlled parameters
+    (number of clusters, intra-cluster spread, inter-cluster gap). Models the typical
+    industrial pattern.
+\end{itemize}
+
+Together, the SOSD and synthetic datasets span the spectrum from highly clustered
+(Facebook, Books) through moderately structured (Wiki, OSM) to structureless (uniform
+random) --- allowing us to evaluate each filter design across the range of distributions
+it may encounter in practice.

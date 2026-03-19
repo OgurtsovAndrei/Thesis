@@ -1,10 +1,9 @@
 # Makefile for Thesis and Proposal Compilation
 
-MAIN = main
+MAIN = practical-range-emptiness
 PROPOSAL = proposal
 OUT_DIR = out
-
-.PHONY: all clean watch force proposal
+.PHONY: all clean watch force proposal thesis
 
 all: thesis proposal
 
@@ -30,3 +29,4 @@ watch:
 force:
 	mkdir -p $(OUT_DIR)
 	latexmk -pdf -f -outdir=$(OUT_DIR) $(MAIN).tex
+	cp $(OUT_DIR)/$(MAIN).pdf .

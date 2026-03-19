@@ -1,0 +1,80 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[authoryear]{natbib}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\graphicspath{{figures/}}
+\geometry{margin=2.5cm}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\title{Applicability of Non-Asymptotic Optimizations in Range Filters}
+\author{Andrei Ogurtsov}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We implement and evaluate Approximate Range Emptiness (ARE) filters for LSM-tree
+storage systems. Starting from the information-theoretically optimal construction of
+Goswami et al.\ (SODA 2015), we develop a family of practical filters that explore
+different hash function designs: pairwise-independent hashing (the paper's baseline),
+prefix truncation, CDF-based mapping, and density-based hybrid segmentation. Our best
+implementation, Scan-ARE, uses 1D DBSCAN to isolate dense key clusters into exact-mode
+sub-filters (FPR~$= 0$), achieving FPR~$< 10^{-8}$ at ${\sim}5$ bits per key even for
+range lengths up to $\mathcal{L} = 65536$ on real-world SOSD datasets --- a regime
+where all competing approaches degrade to FPR~$\approx 1$.
+\end{abstract}
+
+\tableofcontents
+
+\chapter{Introduction}
+\label{chap:introduction}
+% TODO: expand introduction
+
+\input{src/problem_statement}
+
+\chapter{Exact Range Emptiness}
+\label{chap:ere}
+\input{src/ere}
+
+\chapter{Key Distributions}
+\label{chap:distributions}
+\input{src/distributions}
+
+\chapter{Hash Function Approaches}
+\label{chap:hash}
+\input{src/hash_soda}
+\input{src/hash_truncation}
+\input{src/hash_cdf}
+
+\chapter{Hybrid Segmentation}
+\label{chap:hybrid}
+\input{src/hybrid}
+
+\chapter{Experimental Evaluation}
+\label{chap:evaluation}
+\input{src/evaluation}
+
+\chapter{Conclusion}
+\label{chap:conclusion}
+% TODO: conclusion and future work
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}
