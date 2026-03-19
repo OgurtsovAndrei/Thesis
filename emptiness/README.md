@@ -93,6 +93,18 @@ Recommended reading order (top to bottom):
 | [`are_hybrid_scan`](are_hybrid_scan/README.md) | **Best implementation.** 1D DBSCAN segmentation + dual fallback.     |
 | [`are_bloom`](are_bloom/README.md)             | Bloom filter baseline.                                               |
 
+### Highlight: Exact Clusters at $\mathcal{L} = 65536$
+
+The hybrid implementations ([`are_hybrid_scan`](are_hybrid_scan/README.md)) combine
+density-based segmentation with [adaptive ARE](are_adaptive/README.md) exact mode:
+dense clusters are stored with **FPR = 0** regardless of $\mathcal{L}$, because exact
+filters don't hash — the range length never enters their space cost.
+
+At $\mathcal{L} = 65536$ on [SOSD](https://github.com/learnedsystems/SOSD) real-world
+datasets ($n = 2^{24}$), Scan-ARE achieves FPR $< 10^{-8}$ at ~5 BPK — while SODA,
+Truncation, and Bloom all degrade to FPR $\approx 1$ at comparable budgets.
+See [benchmarks and plots](are_hybrid_scan/README.md#large-range-performance-exact-clusters-at-mathcall--65536).
+
 ### Advanced topics
 
 The following packages require familiarity with the [SODA 2015 paper](https://arxiv.org/abs/1407.2907)

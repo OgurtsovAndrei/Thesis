@@ -139,3 +139,35 @@ By a [union bound](https://en.wikipedia.org/wiki/Boole%27s_inequality), if each 
 independently has FPR $\leq \varepsilon$ and a query touches at most $C$ sub-filters,
 the overall FPR $\leq C\varepsilon$. In practice most queries touch only one sub-filter
 (either one cluster or just the fallback), so $C = 1$ and FPR $\approx \varepsilon$.
+
+## Large-Range Performance: Exact Clusters at $\mathcal{L} = 65536$
+
+The combination of truncation-based hashing and exact-mode clusters enables handling
+very large range queries that would be impractical for other approaches.
+
+At $\mathcal{L} = 65536$, non-hybrid filters face a fundamental problem: the fingerprint
+length $K = \lceil \log_2(n \cdot \mathcal{L} / \varepsilon) \rceil$ must grow by
+$\log_2(\mathcal{L}) = 16$ bits to maintain the same FPR. For SODA, this means 16 extra
+BPK. For Bloom, $\mathcal{L} = 65536$ point lookups per query makes it impractical.
+
+Hybrid Scan sidesteps this: dense clusters get exact mode (FPR = 0) regardless of
+$\mathcal{L}$ — exact filters don't hash, so $\mathcal{L}$ doesn't appear in their
+space cost. Only the sparse fallback pays the $\log_2(\mathcal{L})$ penalty, and it
+contains few keys.
+
+### SOSD Benchmarks ($n = 2^{24}$, $\mathcal{L} = 65536$)
+
+**Books** — highly clustered (ISBN sequences):
+
+![FPR vs BPK — SOSD Books, L=65536](fpr_bpk_books_L65536.svg)
+
+**Wiki** — moderately clustered (Wikipedia timestamps):
+
+![FPR vs BPK — SOSD Wiki, L=65536](fpr_bpk_wiki_L65536.svg)
+
+<!-- TODO: add SOSD Facebook and OSM plots when regenerated -->
+
+On both datasets, Scan-ARE achieves FPR $< 10^{-8}$ at $\sim$5 BPK, while
+Truncation, SODA, and Bloom all degrade to FPR $\approx 1$ at comparable budgets.
+SNARF plateaus at FPR $\sim 10^{-3}$. Only Grafite remains competitive on Wiki
+(~10 BPK for FPR $10^{-2}$), but with 2--3$\times$ the space of Scan-ARE.
