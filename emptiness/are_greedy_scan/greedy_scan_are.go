@@ -44,7 +44,7 @@ func NewGreedyScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*G
 		return &GreedyScanARE{}, nil
 	}
 
-	segments := segmentBySpread(keys, K)
+	segments := mergeSmallClusters(segmentBySpread(keys, K), K)
 
 	clusters := make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
