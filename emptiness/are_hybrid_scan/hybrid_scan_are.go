@@ -16,14 +16,58 @@ const (
 	epsMultiplier  = 10
 )
 
+// FallbackPolicy decides whether to use TruncARE or Adaptive/SODA for fallback keys.
+// The interface is sealed: only types defined in this package can implement it.
+type FallbackPolicy interface {
+	useTrunc(keys []bits.BitString, K uint32) bool
+	String() string
+}
+
+// FallbackAuto uses the truncSafe heuristic (P5 gap vs phantom size).
+type FallbackAuto struct{}
+
+func (FallbackAuto) useTrunc(keys []bits.BitString, K uint32) bool {
+	if len(keys) < 2 {
+		return true
+	}
+	keys64 := make([]uint64, len(keys))
+	for i, k := range keys {
+		keys64[i] = k.TrieUint64()
+	}
+	return truncSafe(keys64, K)
+}
+func (FallbackAuto) String() string { return "Auto" }
+
+// FallbackAlwaysTrunc always uses TruncARE regardless of data distribution.
+type FallbackAlwaysTrunc struct{}
+
+func (FallbackAlwaysTrunc) useTrunc(_ []bits.BitString, _ uint32) bool { return true }
+func (FallbackAlwaysTrunc) String() string                              { return "Trunc" }
+
+// FallbackAlwaysSODA always uses Adaptive/SODA regardless of data distribution.
+type FallbackAlwaysSODA struct{}
+
+func (FallbackAlwaysSODA) useTrunc(_ []bits.BitString, _ uint32) bool { return false }
+func (FallbackAlwaysSODA) String() string                              { return "SODA" }
+
+// FallbackEstimateFPR uses trunc when estimated FPR (n/2^K) ≤ Epsilon, else SODA.
+// Epsilon should match the target false positive rate.
+type FallbackEstimateFPR struct{ Epsilon float64 }
+
+func (f FallbackEstimateFPR) useTrunc(keys []bits.BitString, K uint32) bool {
+	return float64(len(keys))/math.Pow(2, float64(K)) <= f.Epsilon
+}
+func (f FallbackEstimateFPR) String() string { return "EstFPR" }
+
+// --- internal filter types ---
+
 type clusterFilter struct {
 	filter *are_adaptive.AdaptiveApproximateRangeEmptiness
 	minKey uint64
 	maxKey uint64
 }
 
-// fallback is either trunc (when gaps are large enough) or adaptive/SODA
-// (when trunc would suffer from phantom overlap).
+// fallbackFilter holds either trunc or adaptive/SODA for non-cluster keys.
 type fallbackFilter struct {
 	trunc    *are_trunc.TruncARE
 	adaptive *are_adaptive.AdaptiveApproximateRangeEmptiness
@@ -50,6 +94,8 @@ func (f *fallbackFilter) SizeInBits() uint64 {
 	return 0
 }
 
+// --- main struct ---
+
 type HybridScanARE struct {
 	clusters  []clusterFilter
 	fallback  *fallbackFilter
@@ -57,6 +103,8 @@ type HybridScanARE struct {
 	nFallback int
 	n         int
 }
+
+// --- public constructors ---
 
 func NewHybridScanARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*HybridScanARE, error) {
 	n := len(keys)
@@ -71,31 +119,52 @@ func NewHybridScanARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (
 		K = 64
 	}
 
-	eps := uint64(float64(rangeLen) / epsilon * epsMultiplier)
-
-	return newHybridScanARE(keys, rangeLen, K, eps)
+	dbscanEps := uint64(float64(rangeLen) / epsilon * epsMultiplier)
+	return newHybridScanARE(keys, rangeLen, K, dbscanEps, FallbackAuto{})
 }
 
 func NewHybridScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*HybridScanARE, error) {
-	n := len(keys)
-	if n == 0 {
+	if len(keys) == 0 {
 		return &HybridScanARE{n: 0}, nil
 	}
+	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, K)
+	return newHybridScanARE(keys, rangeLen, K, dbscanEps, FallbackAuto{})
+}
 
+// NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.
+func NewHybridScanAREWithPolicy(keys []bits.BitString, rangeLen uint64, K uint32, policy FallbackPolicy) (*HybridScanARE, error) {
+	if len(keys) == 0 {
+		return &HybridScanARE{n: 0}, nil
+	}
+	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, K)
+	return newHybridScanARE(keys, rangeLen, K, dbscanEps, policy)
+}
+
+func NewHybridScanAREFromBPK(keys []bits.BitString, rangeLen uint64, targetBPK float64) (*HybridScanARE, error) {
+	K := uint32(math.Ceil(targetBPK))
+	if K == 0 {
+		K = 1
+	}
+	if K > 64 {
+		K = 64
+	}
+	return NewHybridScanAREFromK(keys, rangeLen, K)
+}
+
+// dbscanEpsFromK back-computes DBSCAN neighborhood radius from K.
+func dbscanEpsFromK(n int, rangeLen uint64, K uint32) uint64 {
 	effectiveRangeLen := float64(rangeLen) + 1
 	epsilon := float64(n) * effectiveRangeLen / math.Pow(2, float64(K))
 	if epsilon <= 0 || epsilon > 1 {
 		epsilon = 0.01
 	}
-
-	eps := uint64(float64(rangeLen) / epsilon * epsMultiplier)
-
-	return newHybridScanARE(keys, rangeLen, K, eps)
+	return uint64(float64(rangeLen) / epsilon * epsMultiplier)
 }
 
+// --- truncSafe heuristic (used by FallbackAuto) ---
+
 // truncSafe checks whether trunc fallback will work for the given keys.
-// Trunc breaks when min gap < phantom_size = spread * epsilon / (2*n).
-// We use the 5th-percentile gap as a robust proxy for min gap.
+// Trunc breaks when the smallest gaps (P5) are smaller than phantom_size = spread / 2^K.
 func truncSafe(keys64 []uint64, K uint32) bool {
 	n := len(keys64)
 	if n < 2 {
@@ -107,17 +176,15 @@ func truncSafe(keys64 []uint64, K uint32) bool {
 		return true
 	}
 
-	// phantom_size = spread / 2^K
 	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
 	if spreadBits <= K {
-		return true // spread fits in K bits → exact mode would trigger in adaptive anyway
+		return true // spread fits in K bits → adaptive would use exact mode anyway
 	}
 	phantomSize := spread >> K
 	if phantomSize == 0 {
 		phantomSize = 1
 	}
 
-	// Find 5th-percentile gap as robust min gap estimate.
 	gaps := make([]uint64, n-1)
 	for i := 0; i < n-1; i++ {
 		gaps[i] = keys64[i+1] - keys64[i]
@@ -126,13 +193,14 @@ func truncSafe(keys64 []uint64, K uint32) bool {
 	if idx >= len(gaps) {
 		idx = len(gaps) - 1
 	}
-	// Partial sort to find the idx-th smallest gap.
 	p5Gap := quickselect(gaps, idx)
 
 	return p5Gap > phantomSize
 }
 
-func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, eps uint64) (*HybridScanARE, error) {
+// --- core build ---
+
+func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
 
@@ -148,7 +216,7 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, eps uint
 		return h, nil
 	}
 
-	segments, fallbackKeys := detectClustersDBSCAN(keys, eps, dbscanMinPts, minClusterSize)
+	segments, fallbackKeys := detectClustersDBSCAN(keys, dbscanEps, dbscanMinPts, minClusterSize)
 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
@@ -165,30 +233,34 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, eps uint
 	h.nClusters = len(h.clusters)
 
 	if len(fallbackKeys) > 0 {
-		// Decide: trunc or adaptive/SODA for fallback.
-		fbKeys64 := make([]uint64, len(fallbackKeys))
-		for i, k := range fallbackKeys {
-			fbKeys64[i] = k.TrieUint64()
+		fb, err := buildFallback(fallbackKeys, rangeLen, K, policy)
+		if err != nil {
+			return nil, err
 		}
-
-		if truncSafe(fbKeys64, K) {
-			fb, err := are_trunc.NewTruncAREFromK(fallbackKeys, K)
-			if err != nil {
-				return nil, fmt.Errorf("fallback trunc build: %w", err)
-			}
-			h.fallback = &fallbackFilter{trunc: fb, n: len(fallbackKeys)}
-		} else {
-			fb, err := are_adaptive.NewAdaptiveAREFromK(fallbackKeys, rangeLen, K, 0)
-			if err != nil {
-				return nil, fmt.Errorf("fallback adaptive build: %w", err)
-			}
-			h.fallback = &fallbackFilter{adaptive: fb, n: len(fallbackKeys)}
-		}
+		h.fallback = fb
 		h.nFallback = len(fallbackKeys)
 	}
 
 	return h, nil
 }
+
+func buildFallback(keys []bits.BitString, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {
+	if policy.useTrunc(keys, K) {
+		fb, err := are_trunc.NewTruncAREFromK(keys, K)
+		if err != nil {
+			return nil, fmt.Errorf("fallback trunc build: %w", err)
+		}
+		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
+	}
+
+	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, rangeLen, K, 0)
+	if err != nil {
+		return nil, fmt.Errorf("fallback adaptive build: %w", err)
+	}
+	return &fallbackFilter{adaptive: fb, n: len(keys)}, nil
+}
+
+// --- query & metrics ---
 
 func (h *HybridScanARE) IsEmpty(a, b bits.BitString) bool {
 	if h.n == 0 {
@@ -231,15 +303,4 @@ func (h *HybridScanARE) SizeInBits() uint64 {
 
 func (h *HybridScanARE) Stats() (numClusters, fallbackKeys, totalKeys int) {
 	return h.nClusters, h.nFallback, h.n
-}
-
-func NewHybridScanAREFromBPK(keys []bits.BitString, rangeLen uint64, targetBPK float64) (*HybridScanARE, error) {
-	K := uint32(math.Ceil(targetBPK))
-	if K == 0 {
-		K = 1
-	}
-	if K > 64 {
-		K = 64
-	}
-	return NewHybridScanAREFromK(keys, rangeLen, K)
 }
