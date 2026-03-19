@@ -5,8 +5,9 @@ large gaps between sorted keys mark cluster boundaries.
 Clusters get [adaptive ARE](../are_adaptive/) (exact mode when possible).
 Remainder gets [truncation ARE](../are_trunc/).
 
-The idea is the same as [`are_hybrid_scan`](../are_hybrid_scan/) — isolate dense regions
-to exploit exact mode — but with a simpler, purely gap-based detector.
+This is the simpler predecessor of [`are_hybrid_scan`](../are_hybrid_scan/).
+Both share the same goal — isolate dense regions to exploit exact mode — but this
+package uses a purely gap-based detector with known limitations (see below).
 
 ## Core Idea: Split at Large Gaps
 

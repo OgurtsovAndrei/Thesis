@@ -72,10 +72,10 @@ Measured with $n = 10^6$ keys ($\log_2 n \approx 19.93$):
 2.  **Query:**
     *   **Global Navigation:** $O(1)$ via Rank/Select on $D_1$ and $D_2$.
     *   **Local Search:** $O(\log(\text{keys per block}))$.
-    *   **Average Case:** Since we use $n$ blocks for $n$ keys, the number of keys per block follows a Poisson distribution with $\lambda \approx 1$ (if $n=m$). Expected search time is **$O(1)$**.
-    *   **Worst Case:** $O(\log n)$ if all keys collide in a single block (highly improbable for typical data).
+    *   **Average Case:** Since we use $n$ blocks for $n$ keys, the number of keys per block follows a Poisson distribution with $\lambda \approx 1$ (if $n=m$). Expected search time is **$O(1)$** for uniform or near-uniform distributions. Note: when ERE is used inside an ARE filter, the SODA hash produces near-uniform fingerprints, so this assumption holds even for clustered input data.
+    *   **Worst Case:** $O(\log n)$ if all keys collide in a single block.
 
-## 5. Transition to Approximate Range Emptiness (ARE)
+## 4. Transition to Approximate Range Emptiness (ARE)
 
 The linear dependence of space on key length ($L$) observed in this structure is the primary motivator for moving to **Approximate Range Emptiness**.
 

@@ -42,6 +42,9 @@ least $n \log_2(\mathcal{L} / \varepsilon) - O(n)$ bits.
 **Upper bound (§3):** achieved via two layers:
 
 1. **Locality-preserving hash** $h: U \to U'$ where $|U'| = r = n\mathcal{L}/\varepsilon$.
+   A hash is locality-preserving if it maps any interval $[a,b]$ in $U$ to a bounded number
+   of contiguous intervals in $U'$ — ensuring that range queries are always fully checked,
+   preventing false negatives.
    Projects $S \mapsto S' = h(S)$ and $[a,b] \mapsto h([a,b])$.
 
 2. **Exact Range Emptiness (ERE)** over $S' \subset [r]$: succinct structure with zero error and
@@ -73,6 +76,9 @@ This is why we experiment with different hash functions: each makes different tr
 well it separates $S'$ from $Y'$ across different key distributions. See each package's README for details.
 
 ## Packages
+
+ERE stores a compressed sorted set and answers "$[a,b] \cap S = \emptyset$?" with zero error.
+All approximate ARE packages use ERE as their inner layer, storing hashed fingerprints instead of raw keys.
 
 Recommended reading order (top to bottom):
 

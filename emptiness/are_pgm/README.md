@@ -49,20 +49,18 @@ were (few non-keys = low FPR), peaks where gaps were (many non-keys = high FPR).
 As we write in the [parent README](../README.md#the-role-of-the-hash-function):
 > The ideal hash would map $S'$ and $Y'$ to completely disjoint regions of $U'$ — zero overlap, zero false positives.
 
-A false positive occurs when a non-key (gray point on the top panel) gets mapped
-to the same position as a real key in the compressed universe $U'$. The CDF
-compresses sparse regions — so non-keys from the gaps get squeezed together into
-narrow "pillars" in the mapped space.
+**Important caveat:** because the CDF maps everything monotonically, keys and non-keys
+are still interleaved in $U'$ — there is no strict separation. The FPR reduction
+is not formally bounded and depends entirely on the query distribution matching the
+data distribution (see [Limitations](#limitations)).
 
-The intuition: in dense regions (where most queries land), there are fewer non-keys
-per unit of mapped space after stretching, so fewer candidates for collision with
-stored keys. Conversely, non-keys from gaps pile up in the compressed regions —
-but queries rarely land there.
-
-**Caveat:** this argument is informal. Because the CDF maps everything monotonically,
-keys and non-keys are still interleaved in $U'$ — there is no strict separation.
-The FPR reduction depends on the query distribution matching the data distribution
-and is not formally bounded (see [Limitations](#limitations)).
+The intuition for why it might help: a false positive occurs when a non-key (gray
+point on the top panel) gets mapped to the same position as a real key in $U'$.
+The CDF compresses sparse regions — so non-keys from the gaps get squeezed together
+into narrow "pillars" in the mapped space. In dense regions (where most queries land),
+there are fewer non-keys per unit of mapped space after stretching, so fewer
+candidates for collision with stored keys. Conversely, non-keys from gaps pile up
+in the compressed regions — but queries rarely land there.
 
 The CDF is monotonic by construction: $x_1 < x_2 \Rightarrow h(x_1) \leq h(x_2)$,
 so range queries are preserved — **zero false negatives** guaranteed.
