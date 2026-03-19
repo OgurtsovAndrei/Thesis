@@ -60,13 +60,14 @@ func (f FallbackEstimateFPR) useTrunc(keys []bits.BitString, K uint32) bool {
 }
 func (f FallbackEstimateFPR) String() string { return "EstFPR" }
 
-// FallbackGapFraction uses trunc when the fraction of gaps smaller than
-// phantomSize (= spread / 2^K) is at most Epsilon. This directly estimates
-// the true FPR of trunc: each gap smaller than phantomSize creates a phantom
-// that causes a false positive on queries landing in that gap. Unlike
-// FallbackEstimateFPR, this correctly rejects trunc on clustered data such as
-// OSM S2 cell IDs, where small intra-cluster gaps are below phantomSize even
-// though the overall key density looks safe.
+// FallbackGapFraction uses trunc when the span-weighted fraction of gaps
+// smaller than phantomSize (= spread / 2^K) is at most Epsilon.
+// A random empty query lands in gap_i with probability g_i/span, so weighting
+// by gap size gives the true expected FPR of trunc: Σ g_i/span for g_i < phantomSize.
+// Unlike FallbackEstimateFPR (which assumes uniform key density) or FallbackAuto
+// (which uses the P5 gap), this correctly rejects trunc on clustered data such as
+// OSM S2 cell IDs, while approving it on uniform data where small gaps are rare
+// and tiny relative to the total span.
 type FallbackGapFraction struct{ Epsilon float64 }
 
 func (f FallbackGapFraction) useTrunc(keys []bits.BitString, K uint32) bool {
@@ -95,13 +96,16 @@ func (f FallbackGapFraction) useTrunc(keys []bits.BitString, K uint32) bool {
 		phantomSize = 1
 	}
 
-	small := 0
+	// Weight by gap size: a random empty query lands in gap_i with probability g_i/span.
+	// FPR_trunc ≈ Σ (g_i / span) where g_i < phantomSize.
+	var smallSpan uint64
 	for i := 0; i < n-1; i++ {
-		if keys64[i+1]-keys64[i] <= phantomSize {
-			small++
+		g := keys64[i+1] - keys64[i]
+		if g <= phantomSize {
+			smallSpan += g
 		}
 	}
-	return float64(small)/float64(n-1) <= f.Epsilon
+	return float64(smallSpan)/float64(spread) <= f.Epsilon
 }
 func (f FallbackGapFraction) String() string { return "GapFrac" }
 
