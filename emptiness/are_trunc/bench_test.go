@@ -18,7 +18,7 @@ func BenchmarkARE_PerformanceDegradation_Large(b *testing.B) {
 		keysUniform[i] = bits.NewFromUint64(rngU.Uint64())
 	}
 	sort.Slice(keysUniform, func(i, j int) bool { return keysUniform[i].Compare(keysUniform[j]) < 0 })
-	filterUniform, _ := NewApproximateRangeEmptiness(keysUniform, epsilon)
+	filterUniform, _ := NewTruncARE(keysUniform, epsilon)
 
 	// Pre-generate keys for Heavy Bucket
 	rngH := rand.New(rand.NewSource(42))
@@ -30,7 +30,7 @@ func BenchmarkARE_PerformanceDegradation_Large(b *testing.B) {
 		keysHeavy[i] = bits.NewFromUint64(fixedPrefix | suffix)
 	}
 	sort.Slice(keysHeavy, func(i, j int) bool { return keysHeavy[i].Compare(keysHeavy[j]) < 0 })
-	filterHeavy, _ := NewApproximateRangeEmptiness(keysHeavy, epsilon)
+	filterHeavy, _ := NewTruncARE(keysHeavy, epsilon)
 
 	b.Run("Uniform_N20", func(b *testing.B) {
 		b.ResetTimer()

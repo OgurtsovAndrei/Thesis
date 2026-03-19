@@ -38,7 +38,7 @@ func TestSODA_FPR_Accuracy(t *testing.T) {
 					}
 					sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
-					f, err := NewApproximateRangeEmptinessSoda(keys, rangeLen, eps)
+					f, err := NewSodaARE(keys, rangeLen, eps)
 					require.NoError(t, err)
 
 					qrng := rand.New(rand.NewSource(123))
@@ -58,7 +58,7 @@ func TestSODA_FPR_Accuracy(t *testing.T) {
 					rng := rand.New(rand.NewSource(77))
 					keys, clusters := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
 
-					f, err := NewApproximateRangeEmptinessSoda(keys, rangeLen, eps)
+					f, err := NewSodaARE(keys, rangeLen, eps)
 					require.NoError(t, err)
 
 					qrng := rand.New(rand.NewSource(456))
@@ -78,7 +78,7 @@ func TestSODA_FPR_Accuracy(t *testing.T) {
 						keys[i] = base + uint64(i)*gap
 					}
 
-					f, err := NewApproximateRangeEmptinessSoda(keys, rangeLen, eps)
+					f, err := NewSodaARE(keys, rangeLen, eps)
 					require.NoError(t, err)
 
 					qrng := rand.New(rand.NewSource(789))

@@ -102,14 +102,15 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 
 ## TODO (defense preparation):
 
-- [ ] Сравнение query & build time с индустрией (Grafite, SNARF, SuRF) на всех распределениях и N
-- [ ] Добавить чисто Truncation ARE на графики industry comparison (сейчас только в internal bench)
-- [ ] Добавить ещё точек на распределения (больше значений epsilon / bpk для плотности кривых)
-- [ ] Сравнить на real-world данных (SOSD benchmark datasets — см. ниже)
+- [ ] Сравнение query & build time с индустрией (Grafite, SNARF, SuRF) на всех распределениях и N (в процессе)
+- [x] Добавить чисто Truncation ARE на графики industry comparison
+- [x] Добавить ещё точек на распределения (kGrid до K=48, L до 65536, 10 epsilon values)
+- [x] Сравнить на real-world данных (SOSD: fb, wiki, osm, books — N=256K и N=1M)
 - [ ] CPU & memory profiling (pprof) для Hybrid ARE build+query — найти узкие места
 - [ ] Сделать линейный поиск в ere
 - [ ] Сделать 1 << 30 ключей в DS
-- [ ] 
+- [x] Добавить Scan-ARE (DBSCAN hybrid) на все графики
+- [ ] Tune truncSafe в Scan-ARE (слишком консервативный, см. are_hybrid_scan/TODO.md)
 
 ### Real-world datasets
 

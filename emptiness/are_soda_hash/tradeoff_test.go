@@ -28,8 +28,8 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 	fmt.Printf("|----------|------------|-----------|-----------|----------|\n")
 
 	for _, L := range rangeLens {
-		filterTrunc, _ := are_trunc.NewApproximateRangeEmptiness(bsKeys, epsilon)
-		filterSoda, _ := NewApproximateRangeEmptinessSoda(keys, L, epsilon)
+		filterTrunc, _ := are_trunc.NewTruncARE(bsKeys, epsilon)
+		filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 		fpT, fpS := 0, 0
 		trials := n - 1

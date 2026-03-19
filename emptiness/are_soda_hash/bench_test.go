@@ -25,8 +25,8 @@ func BenchmarkARE_Comparison(b *testing.B) {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	sort.Slice(bsKeys, func(i, j int) bool { return bsKeys[i].Compare(bsKeys[j]) < 0 })
 
-	filterTrunc, _ := are_trunc.NewApproximateRangeEmptiness(bsKeys, epsilon)
-	filterSoda, _ := NewApproximateRangeEmptinessSoda(keys, L, epsilon)
+	filterTrunc, _ := are_trunc.NewTruncARE(bsKeys, epsilon)
+	filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 	fmt.Printf("\n--- Space Analysis (N=%d, eps=%f, L=%d) ---\n", n, epsilon, L)
 	fmt.Printf("ARE (Truncation): %.2f bits/key\n", float64(filterTrunc.SizeInBits())/float64(n))

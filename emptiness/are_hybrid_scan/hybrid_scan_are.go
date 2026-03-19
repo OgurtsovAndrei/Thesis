@@ -25,7 +25,7 @@ type clusterFilter struct {
 // fallback is either trunc (when gaps are large enough) or adaptive/SODA
 // (when trunc would suffer from phantom overlap).
 type fallbackFilter struct {
-	trunc    *are_trunc.ApproximateRangeEmptiness
+	trunc    *are_trunc.TruncARE
 	adaptive *are_adaptive.AdaptiveApproximateRangeEmptiness
 	n        int
 }
@@ -138,7 +138,7 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, eps uint
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are_trunc.NewApproximateRangeEmptinessFromK(keys, K)
+			fb, err := are_trunc.NewTruncAREFromK(keys, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -172,7 +172,7 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, eps uint
 		}
 
 		if truncSafe(fbKeys64, K) {
-			fb, err := are_trunc.NewApproximateRangeEmptinessFromK(fallbackKeys, K)
+			fb, err := are_trunc.NewTruncAREFromK(fallbackKeys, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback trunc build: %w", err)
 			}

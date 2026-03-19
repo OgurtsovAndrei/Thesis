@@ -20,7 +20,7 @@ func TestApproximateRangeEmptiness_Accuracy(t *testing.T) {
 	
 	for _, targetEps := range epsilons {
 		t.Run(fmt.Sprintf("Eps=%v", targetEps), func(t *testing.T) {
-			are, err := NewApproximateRangeEmptiness(keys, targetEps)
+			are, err := NewTruncARE(keys, targetEps)
 			if err != nil {
 				t.Fatalf("Failed to build ARE: %v", err)
 			}

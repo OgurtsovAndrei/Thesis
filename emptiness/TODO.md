@@ -42,15 +42,15 @@
 
 ### Code duplication
 
-- [ ] `pairwiseHash` copy-pasted in `are_soda_hash:23` and `are_adaptive:26` — extract to shared `internal/hash`
-- [ ] `no_fn_prop_test.go` triple-clone across `are_trunc`, `are_hybrid`, `are_soda_hash` — extract shared test harness
-- [ ] Key hashing + dedup loop duplicated in `are_soda_hash` and `are_adaptive` constructors
+- [x] `pairwiseHash` copy-pasted in `are_soda_hash:23` and `are_adaptive:26` — extract to shared `internal/hash`
+- [x] `no_fn_prop_test.go` triple-clone across `are_trunc`, `are_hybrid`, `are_soda_hash` — extract shared test harness
+- [x] Key hashing + dedup loop duplicated in `are_soda_hash` and `are_adaptive` constructors
 
 ### Naming inconsistencies
 
 - [x] Rename `are` → `are_trunc`
-- [ ] Struct names: 5 different conventions across 6 packages. Consider standardizing to short form (`TruncARE`, `SodaARE`, `AdaptiveARE`, `PGMARE`)
-- [ ] Constructor names: mix of verbose (`NewApproximateRangeEmptinessSoda`) and short (`NewBloomARE`)
+- [x] Struct names: 5 different conventions across 6 packages. Consider standardizing to short form (`TruncARE`, `SodaARE`, `AdaptiveARE`, `PGMARE`)
+- [x] Constructor names: mix of verbose (`NewApproximateRangeEmptinessSoda`) and short (`NewBloomARE`)
 - [ ] `IsEmpty` parameter types: split between `bits.BitString` and `uint64` — consider shared interface or standardize
 
 ### Style
@@ -60,8 +60,8 @@
 
 ### Outdated documentation
 
-- [ ] `are_hybrid/hybrid_are.go:32`: "use the larger of the two" — no second formula exists
-- [ ] `are_pgm/are_pgm.go:41-51`: doc comment attached to `Smooth` variant instead of plain
+- [x] `are_hybrid/hybrid_are.go:32`: "use the larger of the two" — no second formula exists
+- [x] `are_pgm/are_pgm.go:41-51`: doc comment attached to `Smooth` variant instead of plain
 - [x] `emptiness/README.md`: updated — now lists all packages including are_hybrid_scan
 
 ## Low Priority / Structural

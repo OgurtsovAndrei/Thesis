@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="500" viewBox="0 0 760 500"
+     font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <defs>
+    <marker id="ax" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#94a3b8"/>
+    </marker>
+    <!-- Gray diagonal hatching for original gaps (non-keys) -->
+    <pattern id="hatch-gray" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#cbd5e1" stroke-width="1.5"/>
+    </pattern>
+    <!-- Red diagonal hatching for compressed non-keys in mapped space -->
+    <pattern id="hatch-red" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#fca5a5" stroke-width="1.5"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="760" height="500" fill="white"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  TOP PANEL — Original universe U               -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <text x="380" y="30" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">
+    Original universe  U
+  </text>
+
+  <!-- X-axis -->
+  <line x1="55" y1="222" x2="728" y2="222" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ax)"/>
+  <text x="736" y="222" font-size="12" fill="#64748b" dominant-baseline="middle">U</text>
+
+  <!-- Gap left of cluster 1: x=55-70, tiny, skip hatching -->
+
+  <!-- Cluster 1 — gaussian bell, center x=170, peak y=88 -->
+  <path d="M 70,222 C 70,222 115,88 170,88 C 225,88 270,222 270,222 Z"
+        fill="#6366f1" fill-opacity="0.18" stroke="#6366f1" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Gap between clusters: x=270-355 (85px) — hatched gray -->
+  <rect x="270" y="48" width="85" height="174" fill="url(#hatch-gray)"/>
+  <line x1="270" y1="222" x2="355" y2="222" stroke="#94a3b8" stroke-width="0.5"/>
+
+  <!-- Cluster 2 — taller gaussian, center x=490, peak y=62 -->
+  <path d="M 355,222 C 355,222 420,62 490,62 C 560,62 625,222 625,222 Z"
+        fill="#6366f1" fill-opacity="0.18" stroke="#6366f1" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Right gap: x=625-720 (95px) — hatched gray -->
+  <rect x="625" y="48" width="95" height="174" fill="url(#hatch-gray)"/>
+  <line x1="625" y1="222" x2="720" y2="222" stroke="#94a3b8" stroke-width="0.5"/>
+
+  <!-- Cluster labels -->
+  <text x="170" y="76" text-anchor="middle" font-size="12" font-weight="600" fill="#4f46e5">cluster 1</text>
+  <text x="490" y="50" text-anchor="middle" font-size="12" font-weight="600" fill="#4f46e5">cluster 2</text>
+
+  <!-- Gap labels (non-keys) -->
+  <text x="312" y="142" text-anchor="middle" font-size="11" fill="#94a3b8" font-style="italic">non-keys</text>
+  <text x="672" y="142" text-anchor="middle" font-size="11" fill="#94a3b8" font-style="italic">non-keys</text>
+
+  <!-- Density annotations inside clusters -->
+  <text x="170" y="158" text-anchor="middle" font-size="10" fill="#6366f1">dense</text>
+  <text x="490" y="148" text-anchor="middle" font-size="10" fill="#6366f1">dense</text>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  ARROW — apply CDF                             -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <line x1="380" y1="244" x2="380" y2="280" stroke="#475569" stroke-width="2"/>
+  <polygon points="374,277 380,291 386,277" fill="#475569"/>
+  <text x="396" y="270" font-size="12" font-weight="500" fill="#475569">apply CDF  h(x)</text>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  BOTTOM PANEL — Mapped universe U′             -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <text x="380" y="311" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">
+    Mapped universe  U′ = [0, 2<tspan font-size="9" dy="-4">K</tspan><tspan dy="4">)</tspan>
+  </text>
+
+  <!-- X-axis -->
+  <line x1="55" y1="452" x2="728" y2="452" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ax)"/>
+  <text x="736" y="452" font-size="12" fill="#64748b" dominant-baseline="middle">U′</text>
+
+  <!-- Cluster 1 mapped — flat wide block, x=65-293 (228px, stretched from 200px) -->
+  <rect x="65" y="396" width="228" height="56" rx="5" ry="5"
+        fill="#10b981" fill-opacity="0.18" stroke="#10b981" stroke-width="1.5"/>
+  <text x="179" y="425" text-anchor="middle" font-size="11" fill="#059669" font-style="italic">≈ uniform</text>
+
+  <!-- Compressed gap 1: x=293-321 (28px) — hatched red -->
+  <rect x="293" y="396" width="28" height="56" fill="url(#hatch-red)" stroke="#fca5a5" stroke-width="0.75"/>
+  <text x="307" y="389" text-anchor="middle" font-size="9" fill="#ef4444">non-keys</text>
+
+  <!-- Cluster 2 mapped — wider flat block, x=321-688 (367px, stretched from 270px) -->
+  <rect x="321" y="396" width="367" height="56" rx="5" ry="5"
+        fill="#10b981" fill-opacity="0.18" stroke="#10b981" stroke-width="1.5"/>
+  <text x="504" y="425" text-anchor="middle" font-size="11" fill="#059669" font-style="italic">≈ uniform</text>
+
+  <!-- Compressed gap 2: x=688-720 (32px) — hatched red -->
+  <rect x="688" y="396" width="32" height="56" fill="url(#hatch-red)" stroke="#fca5a5" stroke-width="0.75"/>
+  <text x="704" y="389" text-anchor="middle" font-size="9" fill="#ef4444">non-keys</text>
+
+  <!-- Stretching annotation — cluster 1: x=65-293 -->
+  <g stroke="#059669" stroke-width="1.5" fill="none">
+    <line x1="65"  y1="465" x2="293" y2="465"/>
+    <line x1="65"  y1="460" x2="65"  y2="470"/>
+    <line x1="293" y1="460" x2="293" y2="470"/>
+  </g>
+  <text x="179" y="480" text-anchor="middle" font-size="10.5" fill="#059669" font-weight="500">stretched</text>
+
+  <!-- Stretching annotation — cluster 2: x=321-688 -->
+  <g stroke="#059669" stroke-width="1.5" fill="none">
+    <line x1="321" y1="465" x2="688" y2="465"/>
+    <line x1="321" y1="460" x2="321" y2="470"/>
+    <line x1="688" y1="460" x2="688" y2="470"/>
+  </g>
+  <text x="504" y="480" text-anchor="middle" font-size="10.5" fill="#059669" font-weight="500">stretched</text>
+
+  <!-- Caption -->
+  <text x="380" y="498" text-anchor="middle" font-size="11" fill="#94a3b8">
+    Queries follow data → mostly land in stretched regions → fewer non-keys per query length → lower FPR
+  </text>
+</svg>

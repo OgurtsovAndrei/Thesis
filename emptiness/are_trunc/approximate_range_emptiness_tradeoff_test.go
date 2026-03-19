@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestApproximateRangeEmptiness_FinalSmooth(t *testing.T) {
+func TestTruncARE_FinalSmooth(t *testing.T) {
 	queryRng := rand.New(rand.NewSource(1337))
 	numQueries := 1000000
 	type qry struct {
@@ -89,10 +89,10 @@ func isTrulyEmptyFinal(keys []bits.BitString, a, b bits.BitString) bool {
 	return true
 }
 
-func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmptiness, error) {
+func buildAREWithKFinal(keys []bits.BitString, K uint32) (*TruncARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ApproximateRangeEmptiness{K: K}, nil
+		return &TruncARE{K: K}, nil
 	}
 	minKey := keys[0]
 	maxKey := keys[n-1]
@@ -109,5 +109,5 @@ func buildAREWithKFinal(keys []bits.BitString, K uint32) (*ApproximateRangeEmpti
 	}
 	universe := bits.NewBitString(K)
 	exact, _ := ere.NewExactRangeEmptiness(truncatedKeys, universe)
-	return &ApproximateRangeEmptiness{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadStart: spreadStart}, nil
+	return &TruncARE{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadStart: spreadStart}, nil
 }

@@ -3,14 +3,13 @@ package are_soda_hash
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/ere"
+	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
-	mbits "math/bits"
 	"math/rand"
-	"sort"
 )
 
-type ApproximateRangeEmptinessSoda struct {
+type SodaARE struct {
 	ere      *ere.ExactRangeEmptiness
 	K        uint32
 	RangeLen uint64
@@ -19,19 +18,10 @@ type ApproximateRangeEmptinessSoda struct {
 	hashB    uint64
 }
 
-// pairwiseHash computes a 2-universal hash: top K bits of (a*x + b) in 128-bit arithmetic.
-func pairwiseHash(x, a, b uint64, K uint32) uint64 {
-	hi, lo := mbits.Mul64(a, x)
-	sumLo, carry := mbits.Add64(lo, b, 0)
-	_ = sumLo
-	sumHi := hi + carry
-	return sumHi >> (64 - K)
-}
-
-func NewApproximateRangeEmptinessSoda(keys []uint64, rangeLen uint64, epsilon float64) (*ApproximateRangeEmptinessSoda, error) {
+func NewSodaARE(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ApproximateRangeEmptinessSoda{n: 0, RangeLen: rangeLen}, nil
+		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
 	}
 
 	rTarget := float64(n) * float64(rangeLen) / epsilon
@@ -40,13 +30,13 @@ func NewApproximateRangeEmptinessSoda(keys []uint64, rangeLen uint64, epsilon fl
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
 	}
 
-	return NewApproximateRangeEmptinessSodaFromK(keys, rangeLen, K)
+	return NewSodaAREFromK(keys, rangeLen, K)
 }
 
-func NewApproximateRangeEmptinessSodaFromK(keys []uint64, rangeLen uint64, K uint32) (*ApproximateRangeEmptinessSoda, error) {
+func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ApproximateRangeEmptinessSoda{n: 0, RangeLen: rangeLen}, nil
+		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
 	}
 	if K > 64 {
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
@@ -67,24 +57,12 @@ func NewApproximateRangeEmptinessSodaFromK(keys []uint64, rangeLen uint64, K uin
 		if K < 64 {
 			blockIdx = x >> K
 		}
-		ux := pairwiseHash(blockIdx, hashA, hashB, K)
+		ux := internalhash.PairwiseHash(blockIdx, hashA, hashB, K)
 		hx := (ux + x) & rMask
 		hashedKeys[i] = bits.NewFromTrieUint64(hx, K)
 	}
 
-	sort.Slice(hashedKeys, func(i, j int) bool {
-		return hashedKeys[i].Compare(hashedKeys[j]) < 0
-	})
-
-	uniqueHashed := make([]bits.BitString, 0, n)
-	if len(hashedKeys) > 0 {
-		uniqueHashed = append(uniqueHashed, hashedKeys[0])
-		for i := 1; i < len(hashedKeys); i++ {
-			if !hashedKeys[i].Equal(hashedKeys[i-1]) {
-				uniqueHashed = append(uniqueHashed, hashedKeys[i])
-			}
-		}
-	}
+	uniqueHashed := internalhash.SortAndDedup(hashedKeys)
 
 	universe := bits.NewBitString(K)
 	ereFilter, err := ere.NewExactRangeEmptiness(uniqueHashed, universe)
@@ -92,7 +70,7 @@ func NewApproximateRangeEmptinessSodaFromK(keys []uint64, rangeLen uint64, K uin
 		return nil, err
 	}
 
-	return &ApproximateRangeEmptinessSoda{
+	return &SodaARE{
 		ere:      ereFilter,
 		K:        K,
 		RangeLen: rangeLen,
@@ -102,7 +80,7 @@ func NewApproximateRangeEmptinessSodaFromK(keys []uint64, rangeLen uint64, K uin
 	}, nil
 }
 
-func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
+func (are *SodaARE) IsEmpty(a, b uint64) bool {
 	if are.n == 0 || a > b {
 		return true
 	}
@@ -127,7 +105,7 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 	}
 
 	if blockA == blockB {
-		u := pairwiseHash(blockA, are.hashA, are.hashB, are.K)
+		u := internalhash.PairwiseHash(blockA, are.hashA, are.hashB, are.K)
 		hA := (u + a) & rMask
 		hB := (u + b) & rMask
 
@@ -142,7 +120,7 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 	}
 
 	// Multi-block: check suffix of first block
-	uA := pairwiseHash(blockA, are.hashA, are.hashB, are.K)
+	uA := internalhash.PairwiseHash(blockA, are.hashA, are.hashB, are.K)
 	var maxA uint64
 	if are.K == 64 {
 		maxA = ^uint64(0)
@@ -170,7 +148,7 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 	}
 
 	// Prefix of last block
-	uB := pairwiseHash(blockB, are.hashA, are.hashB, are.K)
+	uB := internalhash.PairwiseHash(blockB, are.hashA, are.hashB, are.K)
 	var minB uint64
 	if are.K < 64 {
 		minB = blockB << are.K
@@ -191,7 +169,7 @@ func (are *ApproximateRangeEmptinessSoda) IsEmpty(a, b uint64) bool {
 	return true
 }
 
-func (are *ApproximateRangeEmptinessSoda) SizeInBits() uint64 {
+func (are *SodaARE) SizeInBits() uint64 {
 	if are.ere == nil {
 		return 0
 	}

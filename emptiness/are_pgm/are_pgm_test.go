@@ -340,11 +340,11 @@ func TestPGMARE_vs_SODA(t *testing.T) {
 		t.Logf("========== rangeLen=%d ==========", rangeLen)
 
 		// --- SODA ---
-		sodaU, err := are_soda_hash.NewApproximateRangeEmptinessSoda(uniformKeys, rangeLen, epsilon)
+		sodaU, err := are_soda_hash.NewSodaARE(uniformKeys, rangeLen, epsilon)
 		if err != nil {
 			t.Fatalf("SODA uniform: %v", err)
 		}
-		sodaC, err := are_soda_hash.NewApproximateRangeEmptinessSoda(clusterKeys, rangeLen, epsilon)
+		sodaC, err := are_soda_hash.NewSodaARE(clusterKeys, rangeLen, epsilon)
 		if err != nil {
 			t.Fatalf("SODA cluster: %v", err)
 		}

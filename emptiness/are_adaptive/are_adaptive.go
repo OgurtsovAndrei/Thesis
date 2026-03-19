@@ -3,11 +3,11 @@ package are_adaptive
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/ere"
+	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
 	mbits "math/bits"
 	"math/rand"
-	"sort"
 )
 
 type AdaptiveApproximateRangeEmptiness struct {
@@ -22,15 +22,6 @@ type AdaptiveApproximateRangeEmptiness struct {
 	hashB        uint64
 }
 
-// pairwiseHash computes a 2-universal hash: top K bits of (a*x + b) in 128-bit arithmetic.
-func pairwiseHash(x, a, b uint64, K uint32) uint64 {
-	hi, lo := mbits.Mul64(a, x)
-	sumLo, carry := mbits.Add64(lo, b, 0)
-	_ = sumLo
-	sumHi := hi + carry
-	return sumHi >> (64 - K)
-}
-
 // hashBlockIndex hashes a block index BitString to a K-bit uint64.
 func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
 	var blockVal uint64
@@ -39,7 +30,7 @@ func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
 	} else {
 		blockVal = block.HashWithSeed(0)
 	}
-	return pairwiseHash(blockVal, a, b, K)
+	return internalhash.PairwiseHash(blockVal, a, b, K)
 }
 
 // ExactModeViable reports whether exact mode would trigger for a segment
@@ -147,19 +138,7 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 		}
 	}
 
-	sort.Slice(hashedKeys, func(i, j int) bool {
-		return hashedKeys[i].Compare(hashedKeys[j]) < 0
-	})
-
-	uniqueHashed := make([]bits.BitString, 0, n)
-	if len(hashedKeys) > 0 {
-		uniqueHashed = append(uniqueHashed, hashedKeys[0])
-		for i := 1; i < len(hashedKeys); i++ {
-			if !hashedKeys[i].Equal(hashedKeys[i-1]) {
-				uniqueHashed = append(uniqueHashed, hashedKeys[i])
-			}
-		}
-	}
+	uniqueHashed := internalhash.SortAndDedup(hashedKeys)
 
 	ereFilter, err := ere.NewExactRangeEmptiness(uniqueHashed, bits.NewBitString(finalUniverseBits))
 	if err != nil {

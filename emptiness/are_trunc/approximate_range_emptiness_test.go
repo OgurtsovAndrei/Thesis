@@ -22,7 +22,7 @@ func BenchmarkApproximateRangeEmptiness_Grid(b *testing.B) {
 					b.ReportAllocs()
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						are, _ := NewApproximateRangeEmptiness(keys, epsilon)
+						are, _ := NewTruncARE(keys, epsilon)
 						if i == 0 {
 							size := are.ByteSize()
 							b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
@@ -30,7 +30,7 @@ func BenchmarkApproximateRangeEmptiness_Grid(b *testing.B) {
 					}
 				})
 
-				are, _ := NewApproximateRangeEmptiness(keys, epsilon)
+				are, _ := NewTruncARE(keys, epsilon)
 				queryA := make([]bits.BitString, 100)
 				queryB := make([]bits.BitString, 100)
 				for i := 0; i < 100; i++ {

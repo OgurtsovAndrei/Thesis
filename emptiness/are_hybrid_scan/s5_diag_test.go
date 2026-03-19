@@ -95,7 +95,7 @@ func TestS5Diagnostic(t *testing.T) {
 	t.Logf("truncSafe(keys, K=%d) = %v  (expected true because gap=%d >> phantom_size=%d)", K, isSafe, gap, phantomSize)
 
 	// Build the trunc filter using the same fallback keys.
-	truncFilter, err := are_trunc.NewApproximateRangeEmptinessFromK(fallback, K)
+	truncFilter, err := are_trunc.NewTruncAREFromK(fallback, K)
 	if err != nil {
 		t.Fatalf("trunc build: %v", err)
 	}

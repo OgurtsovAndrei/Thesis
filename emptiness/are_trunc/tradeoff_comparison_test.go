@@ -78,13 +78,13 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 	var tasks []task
 
 	for _, K := range kGrid {
-		if f, err := are_trunc.NewApproximateRangeEmptinessFromK(keysBS, K); err == nil {
+		if f, err := are_trunc.NewTruncAREFromK(keysBS, K); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
 			f := f
 			tasks = append(tasks, task{"Truncation", K, bpk,
 				func(a, b uint64) bool { return f.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
 		}
-		if f, err := are_soda_hash.NewApproximateRangeEmptinessSodaFromK(keys, rangeLen, K); err == nil {
+		if f, err := are_soda_hash.NewSodaAREFromK(keys, rangeLen, K); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
 			f := f
 			tasks = append(tasks, task{"SODA", K, bpk,

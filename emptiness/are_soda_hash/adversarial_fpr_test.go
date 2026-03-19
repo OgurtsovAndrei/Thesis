@@ -21,7 +21,7 @@ func TestSODA_AdversarialFPR_Collision(t *testing.T) {
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
-	filter, err := NewApproximateRangeEmptinessSoda(keys, maxQueryLen, epsilon)
+	filter, err := NewSodaARE(keys, maxQueryLen, epsilon)
 	if err != nil {
 		t.Fatalf("Failed to build SODA filter: %v", err)
 	}

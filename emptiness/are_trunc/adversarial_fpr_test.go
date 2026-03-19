@@ -30,7 +30,7 @@ func TestARE_FPR_RandomEmptyRanges(t *testing.T) {
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i].Compare(keys[j]) < 0 })
 
-	filter, err := NewApproximateRangeEmptiness(keys, epsilon)
+	filter, err := NewTruncARE(keys, epsilon)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -9,11 +9,11 @@ import (
 	mbits "math/bits"
 )
 
-// ApproximateRangeEmptiness is a probabilistic data structure that answers 1D range emptiness
+// TruncARE is a probabilistic data structure that answers 1D range emptiness
 // queries with a guaranteed upper bound on the false positive probability (\epsilon).
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
-type ApproximateRangeEmptiness struct {
+type TruncARE struct {
 	exact       *ere.ExactRangeEmptiness
 	K           uint32
 	minKey      bits.BitString
@@ -21,10 +21,10 @@ type ApproximateRangeEmptiness struct {
 	spreadStart uint32 // trie position of first significant bit in (maxKey - minKey)
 }
 
-func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*ApproximateRangeEmptiness, error) {
+func NewTruncARE(keys []bits.BitString, epsilon float64) (*TruncARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ApproximateRangeEmptiness{exact: nil, K: 0}, nil
+		return &TruncARE{exact: nil, K: 0}, nil
 	}
 
 	val := (2.0 * float64(n)) / epsilon
@@ -33,13 +33,13 @@ func NewApproximateRangeEmptiness(keys []bits.BitString, epsilon float64) (*Appr
 		K = 1
 	}
 
-	return NewApproximateRangeEmptinessFromK(keys, K)
+	return NewTruncAREFromK(keys, K)
 }
 
-func NewApproximateRangeEmptinessFromK(keys []bits.BitString, K uint32) (*ApproximateRangeEmptiness, error) {
+func NewTruncAREFromK(keys []bits.BitString, K uint32) (*TruncARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &ApproximateRangeEmptiness{exact: nil, K: 0}, nil
+		return &TruncARE{exact: nil, K: 0}, nil
 	}
 	if K == 0 {
 		K = 1
@@ -72,7 +72,7 @@ func NewApproximateRangeEmptinessFromK(keys []bits.BitString, K uint32) (*Approx
 		return nil, err
 	}
 
-	return &ApproximateRangeEmptiness{
+	return &TruncARE{
 		exact:       exact,
 		K:           K,
 		minKey:      minKey,
@@ -103,7 +103,7 @@ func normalizeToK(key, minKey bits.BitString, spreadStart, K uint32) bits.BitStr
 	return offset.BitRange(spreadStart, K)
 }
 
-func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
+func (are *TruncARE) IsEmpty(a, b bits.BitString) bool {
 	if are.exact == nil {
 		return true
 	}
@@ -132,23 +132,23 @@ func (are *ApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	return are.exact.IsEmpty(truncA, truncB)
 }
 
-func (are *ApproximateRangeEmptiness) SizeInBits() uint64 {
+func (are *TruncARE) SizeInBits() uint64 {
 	if are.exact == nil {
 		return 0
 	}
 	return are.exact.SizeInBits()
 }
 
-func (are *ApproximateRangeEmptiness) ByteSize() int {
+func (are *TruncARE) ByteSize() int {
 	if are == nil || are.exact == nil {
 		return 0
 	}
 	return are.exact.ByteSize() + 8
 }
 
-func (are *ApproximateRangeEmptiness) MemDetailed() utils.MemReport {
+func (are *TruncARE) MemDetailed() utils.MemReport {
 	if are == nil || are.exact == nil {
-		return utils.MemReport{Name: "ApproximateRangeEmptiness", TotalBytes: 0}
+		return utils.MemReport{Name: "TruncARE", TotalBytes: 0}
 	}
 	return are.exact.MemDetailed()
 }

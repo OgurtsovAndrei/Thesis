@@ -38,6 +38,12 @@ type PGMApproximateRangeEmptiness struct {
 	smoothing float64 // 0 = pure CDF, 1 = pure uniform
 }
 
+// NewPGMApproximateRangeEmptinessSmooth builds a CDF-mapped range emptiness filter
+// with adjustable smoothing (0 = pure CDF, 1 = pure uniform).
+func NewPGMApproximateRangeEmptinessSmooth(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
+	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, smoothing)
+}
+
 // NewPGMApproximateRangeEmptiness builds a CDF-mapped range emptiness filter.
 //
 // Parameters:
@@ -46,10 +52,6 @@ type PGMApproximateRangeEmptiness struct {
 //   - epsilon: target false positive rate
 //   - pgmEpsilon: PGM approximation error bound (controls CDF granularity;
 //     smaller = more CDF points = better approximation but more storage)
-func NewPGMApproximateRangeEmptinessSmooth(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
-	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, smoothing)
-}
-
 func NewPGMApproximateRangeEmptiness(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int) (*PGMApproximateRangeEmptiness, error) {
 	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, 0)
 }

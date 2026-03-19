@@ -132,7 +132,7 @@ func TestTradeoff_SodaPlots(t *testing.T) {
 			var tasks []task
 
 			for _, K := range kGrid {
-				if f, err := are_soda_hash.NewApproximateRangeEmptinessSodaFromK(dist.keys, rangeLen, K); err == nil {
+				if f, err := are_soda_hash.NewSodaAREFromK(dist.keys, rangeLen, K); err == nil {
 					bpk := float64(f.SizeInBits()) / float64(len(dist.keys))
 					f := f
 					tasks = append(tasks, task{K, bpk,

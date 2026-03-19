@@ -17,7 +17,7 @@ type clusterFilter struct {
 
 type HybridARE struct {
 	clusters  []clusterFilter
-	fallback  *are_trunc.ApproximateRangeEmptiness
+	fallback  *are_trunc.TruncARE
 	nClusters int
 	nFallback int
 	n         int
@@ -29,7 +29,7 @@ func NewHybridARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*Hyb
 		return &HybridARE{n: 0}, nil
 	}
 
-	// Compute K for clusters (SODA formula) — use the larger of the two
+	// Compute K for clusters (SODA formula)
 	effectiveRangeLen := rangeLen + 1
 	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
 	K := uint32(math.Ceil(math.Log2(rTarget)))
@@ -46,7 +46,7 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are_trunc.NewApproximateRangeEmptinessFromK(keys, K)
+			fb, err := are_trunc.NewTruncAREFromK(keys, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -75,7 +75,7 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	// Build fallback filter
 	if len(fallbackKeys) > 0 {
-		fb, err := are_trunc.NewApproximateRangeEmptinessFromK(fallbackKeys, K)
+		fb, err := are_trunc.NewTruncAREFromK(fallbackKeys, K)
 		if err != nil {
 			return nil, fmt.Errorf("fallback build: %w", err)
 		}
