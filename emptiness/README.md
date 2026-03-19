@@ -34,17 +34,23 @@ with:
 
 ## Asymptotics ([see paper](https://arxiv.org/pdf/1407.2907))
 
-**Lower bound (§2):** any data structure solving this problem requires at least $n \log_2(\mathcal{L} / \varepsilon) - O(n)$ bits.
+**Lower bound (§2):** any data structure solving this problem requires at
+least $n \log_2(\mathcal{L} / \varepsilon) - O(n)$ bits.
 
 **Upper bound (§3):** achieved via two layers:
 
-1. **Locality-preserving hash** $h: U \to U'$ where $|U'| = r = n\mathcal{L}/\varepsilon$. Projects $S \mapsto S' = h(S)$ and $[a,b] \mapsto h([a,b])$.
+1. **Locality-preserving hash** $h: U \to U'$ where $|U'| = r = n\mathcal{L}/\varepsilon$.
+   Projects $S \mapsto S' = h(S)$ and $[a,b] \mapsto h([a,b])$.
 
-2. **Exact Range Emptiness (ERE)** over $S' \subset [r]$: succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits.
+2. **Exact Range Emptiness (ERE)** over $S' \subset [r]$: succinct structure with zero error and
+   space $n \log_2(r/n) + O(n)$ bits.
 
-**Resulting space:** $n \log_2(\mathcal{L}/\varepsilon) + O(n)$ bits = **$\log_2(\mathcal{L}/\varepsilon) + O(1)$ bits per key** — matching the lower bound.
+**Resulting space:** $n \log_2(\mathcal{L}/\varepsilon) + O(n)$ bits = **$\log_2(\mathcal{L}/\varepsilon) + O(1)$ bits
+per key** — matching the lower bound.
 
-The fingerprint length $K = \log_2(r) = \log_2(n\mathcal{L}/\varepsilon)$ controls accuracy: increasing $K$ by 1 bit halves the FPR. After ERE compression (subtracting $\log_2 n$ for block indexing), the effective cost per key is $K - \log_2 n = \log_2(\mathcal{L}/\varepsilon)$.
+The fingerprint length $K = \log_2(r) = \log_2(n\mathcal{L}/\varepsilon)$ controls accuracy: increasing $K$ by 1 bit
+halves the FPR. After ERE compression (subtracting $\log_2 n$ for block indexing), the effective cost per key
+is $K - \log_2 n = \log_2(\mathcal{L}/\varepsilon)$.
 
 ## The Role of the Hash Function
 
@@ -53,21 +59,25 @@ The hash $h$ projects the universe $U$ down to $U' = [r]$. Under this projection
 - $S$ maps to $S' = h(S)$ — the stored fingerprints.
 - $Y = U \setminus S$ maps to $Y' = h(Y)$ — fingerprints of non-keys.
 
-**A false positive occurs when $Y'$ overlaps with $S'$:** a query point $y \in Y$ has $h(y) \in S'$, so the structure cannot distinguish it from a real key. The fewer collisions between $Y'$ and $S'$, the lower the FPR.
+**A false positive occurs when $Y'$ overlaps with $S'$:** a query point $y \in Y$ has $h(y) \in S'$, so the structure
+cannot distinguish it from a real key. The fewer collisions between $Y'$ and $S'$, the lower the FPR.
 
-The ideal hash would map $S'$ and $Y'$ to completely disjoint regions of $U'$ — zero overlap, zero false positives. In practice this is impossible within the space budget, but **the choice of $h$ determines how well $S'$ and $Y'$ separate for a given data distribution.**
+The ideal hash would map $S'$ and $Y'$ to completely disjoint regions of $U'$ — zero overlap, zero false positives. In
+practice this is impossible within the space budget, but **the choice of $h$ determines how well $S'$ and $Y'$ separate
+for a given data distribution.**
 
-This is why we experiment with different hash functions: each makes different trade-offs between space, speed, and how well it separates $S'$ from $Y'$ across different key distributions. See each package's README for details.
+This is why we experiment with different hash functions: each makes different trade-offs between space, speed, and how
+well it separates $S'$ from $Y'$ across different key distributions. See each package's README for details.
 
 ## Packages
 
-| Package                           | Description                                                          |
-|-----------------------------------|----------------------------------------------------------------------|
-| [`ere`](ere/)                     | Exact Range Emptiness (Layer 2). Zero error, space $O(n \log(U/n))$. |
-| [`are_trunc`](are_trunc/)         | ARE via prefix truncation.                                           |
-| [`are_adaptive`](are_adaptive/) | ARE via adaptive prefix truncation with threshold $t$.               |
-| [`are_soda_hash`](are_soda_hash/) | ARE via the SODA 2015 pairwise-independent hash.                     |
-| [`are_pgm`](are_pgm/)             | ARE via CDF mapping (PGM index).                                     |
-| [`are_hybrid`](are_hybrid/)       | ARE with per-cluster segmentation (gap-percentile).                  |
-| [`are_hybrid_scan`](are_hybrid_scan/) | **Best implementation.** 1D DBSCAN segmentation + dual fallback. |
-| [`are_bloom`](are_bloom/)         | Bloom filter baseline.                                               |
+| Package                                        | Description                                                          |
+|------------------------------------------------|----------------------------------------------------------------------|
+| [`ere`](ere/README.md)                         | Exact Range Emptiness (Layer 2). Zero error, space $O(n \log(U/n))$. |
+| [`are_trunc`](are_trunc/README.md)             | ARE via prefix truncation.                                           |
+| [`are_adaptive`](are_adaptive/README.md)       | ARE via adaptive prefix truncation with threshold $t$.               |
+| [`are_soda_hash`](are_soda_hash/README.md)     | ARE via the SODA 2015 pairwise-independent hash.                     |
+| [`are_pgm`](are_pgm/README.md)                 | ARE via CDF mapping (PGM index).                                     |
+| [`are_hybrid`](are_hybrid/README.md)           | ARE with per-cluster segmentation (gap-percentile).                  |
+| [`are_hybrid_scan`](are_hybrid_scan/README.md) | **Best implementation.** 1D DBSCAN segmentation + dual fallback.     |
+| [`are_bloom`](are_bloom/README.md)             | Bloom filter baseline.                                               |
