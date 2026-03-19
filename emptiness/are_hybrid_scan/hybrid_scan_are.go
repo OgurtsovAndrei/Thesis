@@ -51,13 +51,59 @@ func (FallbackAlwaysSODA) useTrunc(_ []bits.BitString, _ uint32) bool { return f
 func (FallbackAlwaysSODA) String() string                              { return "SODA" }
 
 // FallbackEstimateFPR uses trunc when estimated FPR (n/2^K) ≤ Epsilon, else SODA.
-// Epsilon should match the target false positive rate.
+// Assumes keys are uniformly distributed in truncated space — works well on uniform data
+// but underestimates FPR on clustered distributions like OSM.
 type FallbackEstimateFPR struct{ Epsilon float64 }
 
 func (f FallbackEstimateFPR) useTrunc(keys []bits.BitString, K uint32) bool {
 	return float64(len(keys))/math.Pow(2, float64(K)) <= f.Epsilon
 }
 func (f FallbackEstimateFPR) String() string { return "EstFPR" }
+
+// FallbackGapFraction uses trunc when the fraction of gaps smaller than
+// phantomSize (= spread / 2^K) is at most Epsilon. This directly estimates
+// the true FPR of trunc: each gap smaller than phantomSize creates a phantom
+// that causes a false positive on queries landing in that gap. Unlike
+// FallbackEstimateFPR, this correctly rejects trunc on clustered data such as
+// OSM S2 cell IDs, where small intra-cluster gaps are below phantomSize even
+// though the overall key density looks safe.
+type FallbackGapFraction struct{ Epsilon float64 }
+
+func (f FallbackGapFraction) useTrunc(keys []bits.BitString, K uint32) bool {
+	n := len(keys)
+	if n < 2 {
+		return true
+	}
+
+	keys64 := make([]uint64, n)
+	for i, k := range keys {
+		keys64[i] = k.TrieUint64()
+	}
+
+	spread := keys64[n-1] - keys64[0]
+	if spread == 0 {
+		return true
+	}
+
+	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
+	if spreadBits <= K {
+		return true // spread fits in K bits → adaptive uses exact mode
+	}
+
+	phantomSize := spread >> K
+	if phantomSize == 0 {
+		phantomSize = 1
+	}
+
+	small := 0
+	for i := 0; i < n-1; i++ {
+		if keys64[i+1]-keys64[i] <= phantomSize {
+			small++
+		}
+	}
+	return float64(small)/float64(n-1) <= f.Epsilon
+}
+func (f FallbackGapFraction) String() string { return "GapFrac" }
 
 // --- internal filter types ---
 
