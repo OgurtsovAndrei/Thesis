@@ -53,10 +53,11 @@ func buildGreedy(keys []bits.BitString, rangeLen uint64, K uint32, merge bool) (
 		return &GreedyScanARE{}, nil
 	}
 
-	segments := segmentBySpread(keys, K)
+	refs := segmentBySpreadRefs(keys, K)
 	if merge {
-		segments = mergeSmallClusters(segments, K)
+		refs = mergeSmallClustersRefs(refs, K)
 	}
+	segments := finalizeRefs(keys, refs)
 
 	clusters := make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
