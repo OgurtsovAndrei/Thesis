@@ -2,8 +2,9 @@
 \label{sec:ere}
 
 The inner layer of every approximate filter is an \emph{Exact Range Emptiness} (ERE)
-structure: given a sorted set $S' \subset [0, r)$ of $n$ fingerprints, it answers
-``$[a, b] \cap S' = \emptyset$?'' with zero error.
+structure: given a universe $[0, r)$ where $|r| = \lceil \log_2 r \rceil$ denotes the
+key length in bits, and a sorted set $S \subset [0, r)$ of $n$ keys, it answers
+``$[a, b] \cap S = \emptyset$?'' with zero error.
 
 \subsection{Two-Level Hierarchy}
 
@@ -22,8 +23,7 @@ Two bit-vectors provide $O(1)$ navigation:
 
 \paragraph{Local level (bit-packed suffixes).}
 Instead of storing full keys, only the suffix $x \bmod (r/n)$ is stored for each
-key~$x$. The suffix length is $W = \lceil \log_2 r \rceil - \lceil \log_2 n \rceil$
-bits. All suffixes are packed into a dense \texttt{uint64} array using bit-shifts,
+key~$x$. The suffix length is $W = |r| - \lceil \log_2 n \rceil$ bits. All suffixes are packed into a dense \texttt{uint64} array using bit-shifts,
 eliminating per-element overhead.
 
 \subsection{Binary Search in Buckets}
@@ -38,8 +38,10 @@ block on average, and at most ${\sim}12$ keys for $n = 10^6$ in our tests. Binar
 searching through ${\sim}12$ packed values is faster and more cache-friendly than
 multiple rank/select lookups in a trie.
 
-When ERE is used inside an ARE filter, the SODA hash produces near-uniform fingerprints,
-so the Poisson assumption holds even for clustered input data.
+When ERE is used inside an ARE filter, the fingerprint length $K$ is typically 7--11
+bits (Section~\ref{sec:soda}). With suffixes of at most $K$ bits, an entire bucket
+occupies a few hundred bytes --- well within L1 cache. This makes the binary search
+effectively free compared to any pointer-chasing structure.
 
 \subsection{Space Analysis}
 
@@ -47,7 +49,7 @@ so the Poisson assumption holds even for clustered input data.
 \centering
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-$L$ (key bits) & Suffix bits ($L - \log_2 n$) & Metadata & Total BPK \\
+$|r|$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
 \midrule
 64   & 44.07  & 3.2 & 47.27  \\
 128  & 108.07 & 3.2 & 111.27 \\
@@ -60,18 +62,20 @@ $L$ (key bits) & Suffix bits ($L - \log_2 n$) & Metadata & Total BPK \\
 \label{tab:ere-space}
 \end{table}
 
-Space grows linearly with $L$ --- unavoidable for an exact structure, since it must
+Space grows linearly with $|r|$ --- unavoidable for an exact structure, since it must
 store the information distinguishing the keys. This linear dependence motivates the
 move to approximate range emptiness: by storing hashed fingerprints of length
 $K \approx \log_2(\mathcal{L}/\varepsilon)$ instead of full keys, the space becomes
-independent of the original key length~$L$.
+independent of the original key length~$|r|$.
 
 \subsection{Complexity Summary}
 
 \begin{itemize}
-  \item \textbf{Build:} $O(n \cdot L)$ --- a single pass over sorted keys.
-  \item \textbf{Query:} $O(1)$ expected (binary search over ${\sim}2$ keys per block);
-    $O(\log n)$ worst case if all keys collide in a single block.
+  \item \textbf{Build:} $O(n \cdot |r|)$ --- a single pass over sorted keys.
+  \item \textbf{Query:} $O(|r|/w)$ expected (block index + binary search over ${\sim}2$
+    keys of $|r|$ bits each); $O((|r|/w) \log n)$ worst case if all keys collide in a
+    single block. When used inside ARE with $K$-bit fingerprints fitting in one machine
+    word, this reduces to $O(1)$ expected.
   \item \textbf{Space:} $n \log_2(r/n) + O(n)$ bits, matching the information-theoretic
     lower bound.
 \end{itemize}

@@ -1,3 +1,4 @@
+\FloatBarrier
 \section{Prefix Truncation}
 \label{sec:truncation}
 
@@ -14,7 +15,8 @@ Properties of the hash:
     form a contiguous interval of length~$2^t$ in the original universe --- all points
     sharing the same $K$-bit prefix. This contrasts with the SODA hash, where phantoms
     are scattered uniformly.
-  \item \textbf{Zero storage:} the hash is a bit-shift --- no coefficients to store.
+  \item \textbf{$O(1)$ storage:} the hash is a bit-shift --- stores only the shift
+    amount~$t$.
 \end{itemize}
 
 \begin{figure}[h]
@@ -88,6 +90,7 @@ resulting filter.
   \label{fig:trunc-uniform}
 \end{figure}
 
+\FloatBarrier
 \section{Adaptive Filter}
 \label{sec:adaptive}
 
@@ -116,7 +119,8 @@ Rewriting in terms of density $\rho = n / (\max - \min)$:
   \rho > \frac{\varepsilon}{\mathcal{L}}
   \label{eq:exact-threshold}
 \end{equation}
-or equivalently, the average gap must satisfy
+or equivalently, the average gap
+$\bar{g} = (\max(S) - \min(S)) / (n - 1)$ must satisfy
 $\bar{g} < \mathcal{L}/\varepsilon$.
 
 \begin{table}[h]

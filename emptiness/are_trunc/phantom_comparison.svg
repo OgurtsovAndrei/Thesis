@@ -62,7 +62,7 @@
 
   <!-- annotation -->
   <text x="370" y="248" text-anchor="middle" font-size="12" fill="#d32f2f">
-    Total FP zone ≈ L × 2&#x1D57; (strips don't overlap)
+    Collision zone ≈ L × 2&#x1D57; (strips don't overlap)
   </text>
 
   <!-- divider -->
@@ -97,7 +97,7 @@
   <line x1="410" y1="369" x2="410" y2="377" stroke="#1565c0" stroke-width="1.5"/>
   <text x="360" y="388" text-anchor="middle" font-size="10" fill="#1565c0">2&#x1D57;</text>
 
-  <!-- single FP zone: L to the left of block + block itself -->
+  <!-- single collision zone: L to the left of block + block itself -->
   <rect x="240" y="335" width="170" height="40" fill="#4caf50" opacity="0.18" rx="2" stroke="#4caf50" stroke-width="1" stroke-dasharray="4,3"/>
 
   <!-- L bracket -->
@@ -110,7 +110,7 @@
   <line x1="240" y1="430" x2="410" y2="430" stroke="#333" stroke-width="1"/>
   <line x1="240" y1="426" x2="240" y2="434" stroke="#333" stroke-width="1"/>
   <line x1="410" y1="426" x2="410" y2="434" stroke="#333" stroke-width="1"/>
-  <text x="325" y="450" text-anchor="middle" font-size="12" fill="#333">Total FP zone ≈ L + 2&#x1D57;</text>
+  <text x="325" y="450" text-anchor="middle" font-size="12" fill="#333">Collision zone ≈ L + 2&#x1D57;</text>
 
   <!-- h(y) = x' label on U' axis -->
   <text x="440" y="80" font-size="11" fill="#888">h(y) = x' for all phantoms y</text>

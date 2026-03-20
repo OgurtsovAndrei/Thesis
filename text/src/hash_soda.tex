@@ -41,9 +41,10 @@ practical implementation.
 
 Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE filter:
 \begin{enumerate}
-  \item Divide $U$ into blocks of size $r = 2^K$.
+  \item Divide $U$ into blocks of size $r = 2^K$. Let $\text{blockIdx}(x) = \lfloor x / r \rfloor$
+    be the block index of key~$x$.
   \item For each block, compute pairwise-independent shift: top $K$ bits of
-    $(a \cdot \text{blockIdx} + b)$.
+    $(a \cdot \text{blockIdx}(x) + b)$.
   \item Hash each key via Equation~\eqref{eq:soda-hash}.
   \item Sort, deduplicate, build ERE over $[0, 2^K)$.
   \item Query: hash both endpoints; cyclic shift may split the range into two

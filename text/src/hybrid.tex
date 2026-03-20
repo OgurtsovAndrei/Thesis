@@ -38,44 +38,11 @@ mode.
     (Section~\ref{sec:trunc-failure}).
 \end{itemize}
 
+\FloatBarrier
 \section{1D DBSCAN Segmentation (Scan-ARE)}
 \label{sec:hybrid-scan}
 
 The improved hybrid addresses all three limitations above using density-based clustering.
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.85\textwidth]{segmentation}
-  \caption{Scan-ARE segmentation overview: 1D DBSCAN separates dense clusters
-    (exact mode, FPR~$= 0$) from sparse fallback (truncation or SODA).}
-  \label{fig:segmentation}
-\end{figure}
-
-\subsection{Why Clusters Compress So Well}
-
-Real-world key distributions concentrate most keys into a few tight regions. In practice,
-``tight'' means many keys share a long common prefix --- they differ only in the last
-few bits. Examples include URLs with shared domain prefixes, file paths with shared
-directory prefixes, consecutive timestamps, and geospatial S2 cell IDs.
-
-When a cluster is isolated into its own sub-filter, the adaptive filter sees only the
-local spread. Since $M_\text{cluster} \ll 2^K$, exact mode triggers: no hash, FPR~$= 0$,
-and the universe size shrinks to fit just the cluster's range. The tighter the cluster,
-the fewer bits the ERE trie needs.
-
-This is the central advantage over a single global filter: instead of one universe
-spanning the entire key space (where $M > K$ forces hashing and nonzero FPR), we get
-many small exact universes --- each with zero false positives
-(Figure~\ref{fig:universe-comparison}).
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.85\textwidth]{universe_comparison}
-  \caption{Global filter vs per-cluster exact filters. A single global universe
-    forces hashing (nonzero FPR). Isolating each cluster into its own universe
-    enables exact mode (FPR~$= 0$) with fewer bits per key.}
-  \label{fig:universe-comparison}
-\end{figure}
 
 \subsection{1D DBSCAN in $O(n)$}
 
@@ -148,7 +115,8 @@ Keys not assigned to any cluster go to a fallback filter. The choice between tru
 and SODA is made automatically:
 
 \begin{enumerate}
-  \item Compute phantom size: $\text{phantom\_size} = \text{spread}_\text{fallback} / 2^K$.
+  \item Let $\text{spread} = \max(\text{fallback keys}) - \min(\text{fallback keys})$.
+    Compute phantom size: $\text{phantom\_size} = \text{spread} / 2^K$.
   \item Compute the 5th-percentile gap ($P_5$) of fallback keys via quickselect.
   \item If $P_5 > \text{phantom\_size}$: \textbf{truncation} (safe, saves
     $\log_2(\mathcal{L})$ BPK).

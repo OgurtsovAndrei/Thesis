@@ -33,10 +33,23 @@ length $K = \lceil \log_2(n \cdot \mathcal{L} / \varepsilon) \rceil$ must grow b
 $\log_2(\mathcal{L}) = 16$ bits to maintain the same FPR. For SODA, this means 16 extra
 BPK. For Bloom, $\mathcal{L} = 65536$ point lookups per query is impractical.
 
-Scan-ARE sidesteps this: dense clusters get exact mode (FPR~$= 0$) regardless of
-$\mathcal{L}$ --- exact filters do not hash, so $\mathcal{L}$ does not appear in their
-space cost. Only the sparse fallback pays the $\log_2(\mathcal{L})$ penalty, and it
-contains few keys.
+Scan-ARE sidesteps this on two levels:
+
+\paragraph{Exact clusters.} Each cluster stores its $[\min, \max]$ bounds. If a query
+range $[a, b]$ overlaps a cluster's bounds, at least one stored key is inside $[a, b]$
+--- that is a true positive, not a false positive. If $[a, b]$ does not overlap any
+cluster, the cluster contributes nothing. If $[a, b]$ falls entirely within a cluster,
+the sub-filter is exact (Section~\ref{sec:adaptive}), so false positives are impossible.
+Either way, exact clusters produce zero false positives regardless of $\mathcal{L}$.
+
+\paragraph{Truncation fallback.} The sparse fallback uses truncation hashing
+(Section~\ref{sec:truncation}), where phantom points form a contiguous block adjacent
+to each stored key (Figure~\ref{fig:phantom-comparison}). A false positive can only
+occur when a query \emph{endpoint} $a$ or $b$ lands inside a phantom block --- if a
+stored key lies inside $[a, b]$, that is a true positive, not a false positive. Because
+phantoms do not scatter across the universe the way SODA phantoms do, the FPR of
+truncation is independent of the query range length $\mathcal{L}$. The fallback thus
+avoids the $\log_2(\mathcal{L})$ BPK penalty that SODA-based filters must pay.
 
 \subsection{SOSD Results ($n = 2^{24}$, $\mathcal{L} = 65536$)}
 
@@ -64,6 +77,41 @@ FPR~$\sim 10^{-3}$. Only Grafite remains competitive on Wiki (${\sim}10$~BPK for
 FPR~$10^{-2}$), but at 2--3$\times$ the space of Scan-ARE.
 
 % TODO: add Facebook and OSM results when plots are regenerated
+
+\FloatBarrier
+\section{BPK at Industry-Standard FPR Targets}
+\label{sec:eval-bpk-targets}
+
+In practice, storage systems target a specific FPR --- typically $10^{-2}$ or $10^{-3}$
+--- and want to minimize the filter's memory footprint. The relevant question is: how
+many bits per key does each filter need to reach the target FPR?
+
+% TODO: fill in with final benchmark results across distributions and L values
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK required to achieve target FPR on SOSD Books ($n = 2^{24}$). ``---''
+  indicates results pending. Lower is better.}
+\label{tab:bpk-targets}
+\end{table}
+
+% TODO: add same table for Wiki, Facebook, OSM
+% TODO: add same table for synthetic uniform and clustered distributions
 
 \section{Summary of Results}
 

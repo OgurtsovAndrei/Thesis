@@ -107,6 +107,7 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - [x] Добавить ещё точек на распределения (kGrid до K=48, L до 65536, 10 epsilon values)
 - [x] Сравнить на real-world данных (SOSD: fb, wiki, osm, books — N=256K и N=1M)
 - [ ] CPU & memory profiling (pprof) для Hybrid ARE build+query — найти узкие места
+- [ ] Измерить max/avg ключей в бакете ERE для всех распределений (uniform, clustered, sequential, SOSD fb/books/wiki/osm) при типичных ARE K=7–11 бит — валидировать Пуассон и L1-fit
 - [ ] Сделать линейный поиск в ere
 - [ ] Сделать 1 << 30 ключей в DS
 - [x] Добавить Scan-ARE (DBSCAN hybrid) на все графики

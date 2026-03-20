@@ -10,6 +10,7 @@
 \usepackage[authoryear]{natbib}
 \usepackage{geometry}
 \usepackage{booktabs}
+\usepackage{placeins}  % \FloatBarrier to prevent figures from drifting across sections
 \usepackage{enumitem}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -64,6 +65,71 @@ where all competing approaches degrade to FPR~$\approx 1$.
 
 \chapter{Hybrid Segmentation}
 \label{chap:hybrid}
+
+A single global filter must handle the entire key space --- if the spread exceeds $2^K$,
+hashing is unavoidable and FPR is nonzero everywhere. But real-world keys are not spread
+uniformly: they concentrate in dense clusters separated by large gaps
+(Section~\ref{sec:distributions}).
+
+The hybrid idea is to \emph{segment} the key set: isolate each dense cluster into its
+own sub-filter, where the local spread is small enough for exact mode (FPR~$= 0$,
+Section~\ref{sec:adaptive}), and route the remaining sparse keys to a fallback filter
+that uses hashing. Dense regions --- where most queries land --- pay zero false
+positives; only the sparse tail incurs FPR~$\leq \varepsilon$.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{segmentation}
+  \caption{Hybrid segmentation overview: dense clusters are isolated into exact-mode
+    sub-filters (FPR~$= 0$), while sparse keys go to a fallback filter
+    (truncation or SODA). The segmentation method differs between approaches ---
+    gap-percentile (Section~\ref{sec:hybrid-gap}) vs 1D DBSCAN
+    (Section~\ref{sec:hybrid-scan}) --- but the architecture is the same.}
+  \label{fig:segmentation}
+\end{figure}
+
+\subsection*{Why Clusters Compress So Well}
+
+Real-world key distributions concentrate most keys into a few tight regions. In practice,
+``tight'' means many keys share a long common prefix --- they differ only in the last
+few bits. Examples include URLs with shared domain prefixes, file paths with shared
+directory prefixes, consecutive timestamps, and geospatial S2 cell IDs.
+
+When a cluster is isolated into its own sub-filter, the adaptive filter sees only the
+local spread $M = \lceil \log_2(\max - \min) \rceil$ of that cluster
+(Section~\ref{sec:adaptive}). Since $M_\text{cluster} \ll K$, exact mode triggers: no
+hash, FPR~$= 0$, and the universe size shrinks to fit just the cluster's range. The
+tighter the cluster, the fewer bits the ERE needs.
+
+This is the central advantage over a single global filter: instead of one universe
+spanning the entire key space (where $M > K$ forces hashing and nonzero FPR), we get
+many small exact universes --- each with zero false positives
+(Figure~\ref{fig:universe-comparison}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{universe_comparison}
+  \caption{Global filter vs per-cluster exact filters. A single global universe
+    forces hashing (nonzero FPR). Isolating each cluster into its own universe
+    enables exact mode (FPR~$= 0$) with fewer bits per key.}
+  \label{fig:universe-comparison}
+\end{figure}
+
+\subsection*{The Role of Segmentation}
+
+The quality of the hybrid filter depends directly on the quality of segmentation ---
+specifically, on how well it separates keys that benefit from exact mode from those
+that should go to the fallback. Assigning all keys to a single cluster is trivial but
+useless: the spread is too large for exact mode. Conversely, creating too many small
+clusters wastes metadata overhead. The segmentation must find the right boundary:
+tight clusters where exact mode triggers (spread~$< 2^K$), while routing sparse
+outliers to a fallback filter where hashing handles them efficiently.
+
+The rest of this chapter explores two segmentation strategies of increasing
+sophistication: a simple gap-percentile heuristic (Section~\ref{sec:hybrid-gap}) and
+a density-based 1D DBSCAN approach (Section~\ref{sec:hybrid-scan}) that addresses its
+limitations.
+
 \input{src/hybrid}
 
 \chapter{Experimental Evaluation}
