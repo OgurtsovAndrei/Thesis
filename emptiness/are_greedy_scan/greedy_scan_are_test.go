@@ -85,11 +85,11 @@ func TestGreedyScan_Stats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	numClusters, totalKeys := g.Stats()
-	t.Logf("clusters=%d, totalKeys=%d, BPK=%.2f", numClusters, totalKeys, float64(g.SizeInBits())/float64(totalKeys))
+	numClusters, fallbackKeys, totalKeys := g.Stats()
+	t.Logf("clusters=%d, fallback=%d, totalKeys=%d, BPK=%.2f", numClusters, fallbackKeys, totalKeys, float64(g.SizeInBits())/float64(totalKeys))
 
-	if numClusters == 0 {
-		t.Error("expected at least one cluster")
+	if numClusters == 0 && fallbackKeys == 0 {
+		t.Error("expected at least one cluster or fallback keys")
 	}
 	if totalKeys != len(keys) {
 		t.Errorf("totalKeys=%d, want %d", totalKeys, len(keys))
