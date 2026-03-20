@@ -41,8 +41,13 @@ type PlotConfig struct {
 
 // GeneratePerformanceSVG creates an SVG plot with configurable axis scales.
 func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string) error {
-	w, h := 1020.0, 600.0
-	mL, mR, mT, mB := 90.0, 150.0, 40.0, 50.0
+	hasThresholds := cfg.YScale == Log10 && cfg.YFloor > 0
+	thresholdH := 0.0
+	if hasThresholds {
+		thresholdH = 100.0
+	}
+	w, h := 1020.0, 600.0+thresholdH
+	mL, mR, mT, mB := 90.0, 150.0, 40.0, 50.0+thresholdH
 	plotW := w - mL - mR
 	plotH := h - mT - mB
 
@@ -116,9 +121,16 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 			floor = cfg.YFloor
 		}
 		for i := range series {
+			hitFloor := false
 			for j := range series[i].Points {
-				if series[i].Points[j].Y <= 0 {
+				if series[i].Points[j].Y <= floor {
 					series[i].Points[j].Y = floor
+					if hitFloor {
+						// Trim: keep only first floor point
+						series[i].Points = series[i].Points[:j]
+						break
+					}
+					hitFloor = true
 				}
 			}
 		}
@@ -183,11 +195,65 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 
 	drawLegend(&sb, series, mL, mT, plotW)
 
-	sb.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" text-anchor="middle">%s</text>`+"\n", mL+plotW/2, h-10, cfg.XLabel))
+	sb.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" text-anchor="middle">%s</text>`+"\n", mL+plotW/2, mT+plotH+16+12, cfg.XLabel))
 	sb.WriteString(fmt.Sprintf(`<text transform="translate(16,%.0f) rotate(-90)" text-anchor="middle">%s</text>`+"\n", mT+plotH/2, cfg.YLabel))
+
+	// Threshold sub-chart: 3 number lines showing BPK where each filter hits 10^-2, 10^-3, 0 FP
+	if hasThresholds {
+		thresholds := []struct {
+			label string
+			value float64
+		}{
+			{"FPR ≤ 10⁻²", 0.01},
+			{"FPR ≤ 10⁻³", 0.001},
+			{"0 FP", cfg.YFloor},
+		}
+		subTop := mT + plotH + 60.0
+		lineSpacing := 28.0
+
+		for ti, thr := range thresholds {
+			ly := subTop + float64(ti)*lineSpacing
+			// Draw axis line
+			sb.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#ccc" stroke-width="1"/>`+"\n",
+				mL, ly, mL+plotW, ly))
+			// Label
+			sb.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" text-anchor="end" style="font-size:9px;fill:#666">%s</text>`+"\n",
+				mL-8, ly+3, thr.label))
+			// Find first X where each series reaches this threshold
+			for _, s := range series {
+				if len(s.Points) == 0 {
+					continue
+				}
+				bpk := findThresholdBPK(s.Points, thr.value)
+				if bpk < 0 {
+					continue
+				}
+				px := xToPlot(bpk)
+				marker := s.Marker
+				if marker == "" {
+					marker = "circle"
+				}
+				sb.WriteString(fmt.Sprintf(`<g transform="translate(%.1f,%.1f) scale(1.5) translate(%.1f,%.1f)">`, px, ly, -px, -ly))
+				drawMarker(&sb, marker, s.Color, px, ly)
+				sb.WriteString("</g>\n")
+			}
+		}
+	}
+
 	sb.WriteString("</svg>\n")
 
 	return os.WriteFile(outPath, []byte(sb.String()), 0644)
+}
+
+// findThresholdBPK returns the smallest X (BPK) where Y ≤ threshold.
+// Points are assumed sorted by X (ascending BPK). Returns -1 if never reached.
+func findThresholdBPK(points []Point, threshold float64) float64 {
+	for _, p := range points {
+		if p.Y <= threshold {
+			return p.X
+		}
+	}
+	return -1
 }
 
 func fmtPow10(e int) string {
