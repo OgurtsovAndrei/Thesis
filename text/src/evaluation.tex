@@ -86,7 +86,13 @@ In practice, storage systems target a specific FPR --- typically $10^{-2}$ or $1
 --- and want to minimize the filter's memory footprint. The relevant question is: how
 many bits per key does each filter need to reach the target FPR?
 
-% TODO: fill in with final benchmark results across distributions and L values
+We report this metric separately for each of the 9 benchmark distributions: 4 real-world
+(SOSD) and 5 synthetic. Each distribution exercises different filter strengths --- a
+filter that excels on clustered data may be mediocre on uniform, and vice versa.
+
+% TODO: fill in all tables with final benchmark results
+
+\subsubsection*{SOSD Distributions}
 
 \begin{table}[h]
 \centering
@@ -105,13 +111,179 @@ SuRF-Real   & ---  & ---  & ---  & ---  \\
 Bloom       & ---  & ---  & ---  & ---  \\
 \bottomrule
 \end{tabular}
-\caption{BPK required to achieve target FPR on SOSD Books ($n = 2^{24}$). ``---''
-  indicates results pending. Lower is better.}
-\label{tab:bpk-targets}
+\caption{BPK to reach target FPR --- SOSD Facebook ($n = 2^{24}$, highly clustered).}
+\label{tab:bpk-fb}
 \end{table}
 
-% TODO: add same table for Wiki, Facebook, OSM
-% TODO: add same table for synthetic uniform and clustered distributions
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- SOSD Books ($n = 2^{24}$, clustered by publisher).}
+\label{tab:bpk-books}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- SOSD Wiki ($n = 2^{24}$, moderately clustered).}
+\label{tab:bpk-wiki}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- SOSD OSM ($n = 2^{24}$, geospatially clustered).}
+\label{tab:bpk-osm}
+\end{table}
+
+\subsubsection*{Synthetic Distributions}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- Clustered synthetic ($n = 2^{24}$).}
+\label{tab:bpk-clustered}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- Uniform synthetic ($n = 2^{24}$).}
+\label{tab:bpk-uniform}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- Spread synthetic ($n = 2^{24}$).}
+\label{tab:bpk-spread}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- Zipfian synthetic ($n = 2^{24}$).}
+\label{tab:bpk-zipfian}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Filter & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
+\midrule
+Scan-ARE    & ---  & ---  & ---  & ---  \\
+Grafite     & ---  & ---  & ---  & ---  \\
+SNARF       & ---  & ---  & ---  & ---  \\
+SODA        & ---  & ---  & ---  & ---  \\
+Truncation  & ---  & ---  & ---  & ---  \\
+SuRF-Real   & ---  & ---  & ---  & ---  \\
+Bloom       & ---  & ---  & ---  & ---  \\
+\bottomrule
+\end{tabular}
+\caption{BPK to reach target FPR --- Temporal synthetic ($n = 2^{24}$).}
+\label{tab:bpk-temporal}
+\end{table}
 
 \section{Summary of Results}
 
