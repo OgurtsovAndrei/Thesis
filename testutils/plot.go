@@ -31,11 +31,12 @@ const (
 
 // PlotConfig controls axes and layout of a generated SVG.
 type PlotConfig struct {
-	Title  string
-	XLabel string
-	YLabel string
-	XScale AxisScale
-	YScale AxisScale
+	Title    string
+	XLabel   string
+	YLabel   string
+	XScale   AxisScale
+	YScale   AxisScale
+	YFloor   float64 // if >0 and YScale==Log10, draws a measurement floor line at this value
 }
 
 // GeneratePerformanceSVG creates an SVG plot with configurable axis scales.
@@ -110,7 +111,10 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 
 	switch cfg.YScale {
 	case Log10:
-		const floor = 1e-8
+		floor := 1e-8
+		if cfg.YFloor > 0 {
+			floor = cfg.YFloor
+		}
 		for i := range series {
 			for j := range series[i].Points {
 				if series[i].Points[j].Y <= 0 {
@@ -164,6 +168,15 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 		px := xToPlot(tv)
 		sb.WriteString(fmt.Sprintf(`<line class="grid" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>`+"\n", px, mT, px, mT+plotH))
 		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.1f" y="%.1f" text-anchor="middle">%s</text>`+"\n", px, mT+plotH+16, xTickLabels[i]))
+	}
+
+	// Measurement floor line (log-scale Y only)
+	if cfg.YScale == Log10 && cfg.YFloor > 0 {
+		py := yToPlot(cfg.YFloor)
+		sb.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#999" stroke-width="1" stroke-dasharray="6,4"/>`+"\n",
+			mL, py, mL+plotW, py))
+		sb.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" text-anchor="end" style="font-size:9px;fill:#999">0 FP observed (floor = %.0e)</text>`+"\n",
+			mL+plotW, py-4, cfg.YFloor))
 	}
 
 	drawSeriesLines(&sb, series, xToPlot, yToPlot)
@@ -318,12 +331,18 @@ func drawMarker(sb *strings.Builder, marker, color string, cx, cy float64) {
 }
 
 // GenerateTradeoffSVG creates an SVG plot with log-scale Y axis (FPR) and linear X axis (BPK).
-func GenerateTradeoffSVG(title, xLabel, yLabel string, series []SeriesData, outPath string) error {
+// Optional yFloor parameter: if provided, draws a measurement floor line at that Y value.
+func GenerateTradeoffSVG(title, xLabel, yLabel string, series []SeriesData, outPath string, yFloor ...float64) error {
+	var fl float64
+	if len(yFloor) > 0 {
+		fl = yFloor[0]
+	}
 	return GeneratePerformanceSVG(PlotConfig{
 		Title:  title,
 		XLabel: xLabel,
 		YLabel: yLabel,
 		XScale: Linear,
 		YScale: Log10,
+		YFloor: fl,
 	}, series, outPath)
 }
