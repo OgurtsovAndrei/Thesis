@@ -245,12 +245,22 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 	return os.WriteFile(outPath, []byte(sb.String()), 0644)
 }
 
-// findThresholdBPK returns the smallest X (BPK) where Y ≤ threshold.
-// Points are assumed sorted by X (ascending BPK). Returns -1 if never reached.
+// findThresholdBPK returns the X (BPK) where the series crosses Y = threshold,
+// using log-linear interpolation between the last point above and first point
+// at/below the threshold. Points are assumed sorted by X (ascending BPK).
+// Returns -1 if the threshold is never reached.
 func findThresholdBPK(points []Point, threshold float64) float64 {
-	for _, p := range points {
+	for i, p := range points {
 		if p.Y <= threshold {
-			return p.X
+			if i == 0 || points[i-1].Y <= threshold {
+				return p.X
+			}
+			prev := points[i-1]
+			logPrev := math.Log(prev.Y)
+			logCur := math.Log(p.Y)
+			logThr := math.Log(threshold)
+			t := (logThr - logPrev) / (logCur - logPrev)
+			return prev.X + t*(p.X-prev.X)
 		}
 	}
 	return -1
