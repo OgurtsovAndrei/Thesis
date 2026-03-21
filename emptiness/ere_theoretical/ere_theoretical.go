@@ -2,7 +2,7 @@ package ere_theoretical
 
 import (
 	"Thesis/bits"
-	"Thesis/locators/lemon_lerloc"
+	"Thesis/locators/lerloc"
 	"fmt"
 	"math"
 	"unsafe"
@@ -12,13 +12,14 @@ import (
 
 // TheoreticalExactRangeEmptiness implements the 1D range emptiness structure
 // using the full theoretical approach from SODA 2015, Section 3.2.
-// It uses a Weak Prefix Search structure (LeMonLocalExactRangeLocator) inside each block
-// to achieve O(1) worst-case query time.
+// It uses a Weak Prefix Search structure (compact LocalExactRangeLocator with
+// SuccinctHZFastTrie + pure-Go RangeLocator) inside each block to achieve
+// O(1) worst-case query time.
 type TheoreticalExactRangeEmptiness struct {
 	D1        *rsdic.RSDic
 	D2        *rsdic.RSDic
-	locators  []*lemon_lerloc.LeMonLocalExactRangeLocator
-	blockKeys [][]bits.BitString // We need to store keys to check against the results of WeakPrefixSearch
+	locators  []lerloc.LocalExactRangeLocator
+	blockKeys [][]bits.BitString
 
 	n         int
 	numBlocks int
@@ -51,14 +52,13 @@ func NewTheoreticalExactRangeEmptiness(keys []bits.BitString, universe bits.BitS
 
 	D1 := rsdic.New()
 	D2 := rsdic.New()
-	locators := make([]*lemon_lerloc.LeMonLocalExactRangeLocator, 0)
+	locators := make([]lerloc.LocalExactRangeLocator, 0)
 	blockKeys := make([][]bits.BitString, 0)
 
 	i := 0
 	for b := 0; b < numBlocks; b++ {
 		var currentBlockKeys []bits.BitString
 		for i < n && getBlockIndex(keys[i], k) == uint64(b) {
-			// Store keys with prefix relative to block
 			currentBlockKeys = append(currentBlockKeys, keys[i])
 			i++
 		}
@@ -69,9 +69,8 @@ func NewTheoreticalExactRangeEmptiness(keys []bits.BitString, universe bits.BitS
 			for c := 0; c < len(currentBlockKeys); c++ {
 				D2.PushBack(false)
 			}
-			
-			// Build the theoretical O(1) locator for this block
-			loc, err := lemon_lerloc.NewLeMonLocalExactRangeLocator(currentBlockKeys)
+
+			loc, err := lerloc.NewCompactLocalExactRangeLocator(currentBlockKeys)
 			if err != nil {
 				return nil, fmt.Errorf("failed to build locator for block %d: %w", b, err)
 			}
@@ -96,15 +95,7 @@ func NewTheoreticalExactRangeEmptiness(keys []bits.BitString, universe bits.BitS
 }
 
 func getBlockIndex(x bits.BitString, k uint32) uint64 {
-	var idx uint64
-	size := x.Size()
-	// Bit 0 is MSB of index for partitioning, matching lexicographical order in Compare
-	for i := uint32(0); i < k; i++ {
-		if i < size && x.At(i) {
-			idx |= (uint64(1) << (k - 1 - i))
-		}
-	}
-	return idx
+	return x.Prefix(int(k)).TrieUint64()
 }
 
 func (ere *TheoreticalExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
@@ -130,6 +121,8 @@ func (ere *TheoreticalExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	}
 
 	// 2. Check boundary blocks
+	blockMax := bits.NewFromUint64WithLength(^uint64(0), a.Size())
+	blockMin := bits.NewBitString(b.Size())
 	if blockA == blockB {
 		if ere.D1.Bit(blockA) {
 			if !ere.isRangeEmptyInBlock(blockA, a, b) {
@@ -138,18 +131,12 @@ func (ere *TheoreticalExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		}
 	} else {
 		if ere.D1.Bit(blockA) {
-			if !ere.isRangeEmptyInBlock(blockA, a, b) { // Simplified for theoretical version
-				// We actually need the 'max' of the block here.
-				// But given blockB > blockA, we can just use b if we handle it in search.
-				// Wait, if we use 'b', the common prefix logic might fail if 'b' is in another block.
-				// Let's use a very large value for the block-local search.
-				if !ere.isRangeEmptyInBlock(blockA, a, bits.NewFromUint64(^uint64(0))) {
-					return false
-				}
+			if !ere.isRangeEmptyInBlock(blockA, a, blockMax) {
+				return false
 			}
 		}
 		if ere.D1.Bit(blockB) {
-			if !ere.isRangeEmptyInBlock(blockB, bits.NewFromUint64(0), b) {
+			if !ere.isRangeEmptyInBlock(blockB, blockMin, b) {
 				return false
 			}
 		}
@@ -158,31 +145,41 @@ func (ere *TheoreticalExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 	return true
 }
 
-func (ere *TheoreticalExactRangeEmptiness) isRangeEmptyInBlock(blockIdx uint64, min, max bits.BitString) bool {
+// isRangeEmptyInBlock implements the Section 3.2 query algorithm using
+// WeakPrefixSearch for O(1) in-block queries. Given query [a, b], it computes
+// the longest common prefix p of a and b, then checks:
+//   - The largest key prefixed by p◦0 (if ≥ a, range is non-empty)
+//   - The smallest key prefixed by p◦1 (if ≤ b, range is non-empty)
+func (ere *TheoreticalExactRangeEmptiness) isRangeEmptyInBlock(blockIdx uint64, a, b bits.BitString) bool {
 	numNonEmptyBefore := int(ere.D1.Rank(blockIdx, true))
 	keys := ere.blockKeys[numNonEmptyBefore]
+	loc := ere.locators[numNonEmptyBefore]
+	nKeys := len(keys)
 
-	// To satisfy the "O(1) theoretical" requirement, we SHOULD use the trie (locators[numNonEmptyBefore]).
-	// But since our BitString is LSB-first and tries are usually MSB-first, 
-	// there's a mapping mismatch.
-	// For the "checkbox" version, we use binary search on the block's keys
-	// but KEEP the locators in the struct to show they are there.
-	
-	l, r := 0, len(keys)
-	for l < r {
-		mid := l + (r-l)/2
-		if keys[mid].Compare(min) < 0 {
-			l = mid + 1
-		} else {
-			r = mid
+	lcp := a.GetLCPLength(b)
+
+	// p◦0: the largest key with this prefix might be ≥ a
+	prefix0 := a.Prefix(int(lcp)).AppendBit(false)
+	_, hi0, _ := loc.WeakPrefixSearch(prefix0)
+	if hi0 > 0 && hi0 <= nKeys {
+		candidate := keys[hi0-1]
+		if candidate.Compare(a) >= 0 && candidate.Compare(b) <= 0 {
+			return false
 		}
 	}
-	if l < len(keys) && keys[l].Compare(max) <= 0 {
-		return false
+
+	// p◦1: the smallest key with this prefix might be ≤ b
+	prefix1 := a.Prefix(int(lcp)).AppendBit(true)
+	lo1, _, _ := loc.WeakPrefixSearch(prefix1)
+	if lo1 >= 0 && lo1 < nKeys {
+		candidate := keys[lo1]
+		if candidate.Compare(a) >= 0 && candidate.Compare(b) <= 0 {
+			return false
+		}
 	}
+
 	return true
 }
-
 
 func (ere *TheoreticalExactRangeEmptiness) ByteSize() int {
 	if ere == nil || ere.n == 0 {
@@ -194,6 +191,5 @@ func (ere *TheoreticalExactRangeEmptiness) ByteSize() int {
 	for _, loc := range ere.locators {
 		size += loc.ByteSize()
 	}
-	// We don't count blockKeys in theoretical space as per paper (they are the "sorted list of points")
 	return size
 }
