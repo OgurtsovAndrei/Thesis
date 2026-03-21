@@ -120,18 +120,17 @@ Apple M4 Max, Go 1.25, ARM64, GOMAXPROCS=1, 5 runs each.
 
 | Op         | Density | Upstream (ns) | Optimized (ns) | Speedup  |
 |------------|---------|---------------|----------------|----------|
-| Bit        | 50%     | 33.5          | 33.2           | 1.0x     |
-| Rank       | 50%     | 37.4          | 35.3           | 1.06x    |
-| **Select** | **50%** | **161**       | **64**         | **2.5x** |
-| Bit        | 33%     | 34.1          | 34.9           | 1.0x     |
-| Rank       | 33%     | 37.2          | 36.3           | 1.02x    |
-| **Select** | **33%** | **145**       | **63**         | **2.3x** |
-| Bit        | 1%      | 76.9          | 78.7           | 1.0x     |
-| Rank       | 1%      | 76.3          | 79.4           | 1.0x     |
-| Select     | 1%      | 173           | 164            | 1.05x    |
+| Bit        | 50%     | 23.9          | 24.0           | 1.0x     |
+| Rank       | 50%     | 26.7          | 25.2           | **1.06x**|
+| **Select** | **50%** | **122**       | **47**         | **2.6x** |
+| Bit        | 33%     | 24.8          | 25.1           | 1.0x     |
+| Rank       | 33%     | 26.9          | 26.5           | 1.02x    |
+| **Select** | **33%** | **110**       | **47**         | **2.3x** |
+| Bit        | 1%      | 56.3          | 57.2           | 1.0x     |
+| Rank       | 1%      | 56.8          | 56.2           | 1.0x     |
+| Select     | 1%      | 124           | 122            | 1.02x    |
 
-Note: absolute numbers vary between benchmark sessions due to system load;
-ratios (Orig/Fork within same session) are stable.
+Measured in same session (Orig vs Fork side-by-side) to eliminate system load variance.
 
 ### Why Bit and Rank barely changed
 
@@ -157,21 +156,45 @@ ERE `IsEmpty()` calls per query:
 - `D1.Rank()` × 1-3 (intermediate block count)
 - `D2.Select()` × 2 (in `getBlockRange` — locating block start/end)
 
-With D2.Select going from ~145 ns to ~63 ns, the two Select calls save ~164 ns per query.
+With D2.Select going from ~110 ns to ~47 ns, the two Select calls save ~126 ns per query.
 For a typical ERE query at ~200 ns, this is a significant fraction.
+
+### Optimization 3: `runZerosRaw` → `bits.TrailingZeros64` (`enumCode.go`)
+
+**Before:**
+```go
+func runZerosRaw(code uint64, pos uint8) uint8 {
+    i := uint8(pos)
+    for ; i < kSmallBlockSize && !getBit(code, i); i++ {
+    }
+    return i - pos
+}
+```
+
+Bit-by-bit scan from `pos` looking for the first set bit — up to 64 iterations with branch per bit.
+
+**After:**
+```go
+func runZerosRaw(code uint64, pos uint8) uint8 {
+    shifted := code >> pos
+    if shifted == 0 {
+        return kSmallBlockSize - pos
+    }
+    return uint8(bits.TrailingZeros64(shifted))
+}
+```
+
+Single shift + `TrailingZeros64` (`TZCNT` on x86 / `RBIT+CLZ` on ARM). O(1) vs O(64).
 
 ## Remaining optimization opportunities (not yet implemented)
 
 1. **Small-block pointer accumulation loop** in Rank/Bit: iterates up to 15 small blocks per
    large block. Could be eliminated by storing cumulative pointers per small block (+8 bytes/64 bits
-   = 12.5% space overhead).
+   = 12.5% space overhead). Decided against: +2.5 bpk for ~5% of ERE memory.
 
 2. **Enum decode path** (sparse/dense blocks, rankSB outside 15-49): `enumRank`, `enumBit`,
    `enumSelect1` all do O(pos) sequential decode through combinatorial number system.
    Would require changing data layout to fix (e.g., always store raw 64-bit blocks).
-
-3. **`runZerosRaw`**: same bit-by-bit scan pattern as old `selectRaw`. Could use
-   `bits.TrailingZeros64(code >> pos)` for O(1).
 
 ## Density in ERE context
 
