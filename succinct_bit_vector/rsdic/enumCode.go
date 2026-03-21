@@ -47,10 +47,11 @@ func enumBit(code uint64, rankSB uint8, pos uint8) bool {
 }
 
 func runZerosRaw(code uint64, pos uint8) uint8 {
-	i := uint8(pos)
-	for ; i < kSmallBlockSize && !getBit(code, i); i++ {
+	shifted := code >> pos
+	if shifted == 0 {
+		return kSmallBlockSize - pos
 	}
-	return i - pos
+	return uint8(bits.TrailingZeros64(shifted))
 }
 
 func enumRunZeros(code uint64, rankSB uint8, pos uint8) uint8 {
