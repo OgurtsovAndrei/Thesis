@@ -2,6 +2,7 @@ package rsdic
 
 import (
 	"fmt"
+	"math/bits"
 )
 
 func floor(num uint64, div uint64) uint64 {
@@ -66,8 +67,5 @@ func printBit(x uint64) {
 }
 
 func popCount(x uint64) uint8 {
-	x = x - ((x & 0xAAAAAAAAAAAAAAAA) >> 1)
-	x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
-	x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
-	return uint8(x * 0x0101010101010101 >> 56)
+	return uint8(bits.OnesCount64(x))
 }

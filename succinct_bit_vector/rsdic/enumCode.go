@@ -1,5 +1,7 @@
 package rsdic
 
+import "math/bits"
+
 func enumEncode(val uint64, rankSB uint8) uint64 {
 	if kEnumCodeLength[rankSB] == kSmallBlockSize {
 		return val
@@ -133,15 +135,10 @@ func enumSelect0(code uint64, rankSB uint8, rank uint8) uint8 {
 }
 
 func selectRaw(code uint64, rank uint8) uint8 {
-	for i := uint8(0); i < kSmallBlockSize; i++ {
-		if getBit(code, i) {
-			rank--
-			if rank == 0 {
-				return i
-			}
-		}
+	for i := uint8(1); i < rank; i++ {
+		code &= code - 1 // clear lowest set bit
 	}
-	return 0 // should not come
+	return uint8(bits.TrailingZeros64(code))
 }
 
 var kCombinationTable64 [][]uint64
