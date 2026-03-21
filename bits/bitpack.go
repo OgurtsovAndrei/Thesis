@@ -100,20 +100,28 @@ func UnpackBit(packed []uint64, index int, bitWidth int) uint64 {
 }
 
 func extractSuffixAsUint64Local(bs BitString, bitWidth uint32) uint64 {
-	var val uint64
+	if bitWidth == 0 {
+		return 0
+	}
 	size := bs.Size()
 	start := uint32(0)
 	if size > bitWidth {
 		start = size - bitWidth
 	}
-	
-	// We assume bitWidth <= 64 for this Elias-Fano style blocking
-	for i := uint32(0); i < bitWidth; i++ {
-		if bs.At(start + i) {
-			val |= (uint64(1) << i)
-		}
+
+	wordIdx := start / 64
+	bitOffset := start % 64
+
+	val := bs.data[wordIdx] >> bitOffset
+	if bitOffset+bitWidth > 64 && int(wordIdx)+1 < len(bs.data) {
+		val |= bs.data[wordIdx+1] << (64 - bitOffset)
 	}
-	return val
+
+	mask := uint64(1<<bitWidth) - 1
+	if bitWidth == 64 {
+		mask = ^uint64(0)
+	}
+	return val & mask
 }
 
 // Helper to write a value directly to packed data
