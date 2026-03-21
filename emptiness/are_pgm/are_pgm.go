@@ -57,7 +57,7 @@ func NewPGMApproximateRangeEmptiness(keys []uint64, rangeLen uint64, epsilon flo
 }
 
 func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
-	const maxPGMKeys = 1 << 20
+	const maxPGMKeys = 1 << 16
 	if len(keys) > maxPGMKeys {
 		return nil, fmt.Errorf("CDF-ARE: n=%d exceeds maximum %d (PGM build is O(n²))", len(keys), maxPGMKeys)
 	}
