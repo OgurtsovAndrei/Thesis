@@ -196,6 +196,90 @@ func (ere *ExactRangeEmptiness) getPackedSuffix(idx int) uint64 {
 	return bits.UnpackBit(ere.packedData, idx, int(ere.w))
 }
 
+func (ere *ExactRangeEmptiness) isRangeEmptyInBlockLinear(start, end int, minSuff, maxSuff uint64) bool {
+	w := int(ere.w)
+	mask := uint64(1<<w) - 1
+	if w == 64 {
+		mask = ^uint64(0)
+	}
+	bitPos := uint64(start) * uint64(w)
+	for i := start; i < end; i++ {
+		wordIdx := bitPos / 64
+		bitOffset := uint(bitPos % 64)
+		val := ere.packedData[wordIdx] >> bitOffset
+		if 64-int(bitOffset) < w {
+			val |= ere.packedData[wordIdx+1] << uint(64-int(bitOffset))
+		}
+		val &= mask
+		if val >= minSuff && val <= maxSuff {
+			return false
+		}
+		bitPos += uint64(w)
+	}
+	return true
+}
+
+func (ere *ExactRangeEmptiness) LinearIsEmpty(a, b bits.BitString) bool {
+	if ere.n == 0 {
+		return true
+	}
+	if a.Compare(b) > 0 {
+		return true
+	}
+
+	blockA := GetBlockIndex(a, ere.k)
+	blockB := GetBlockIndex(b, ere.k)
+
+	if blockA >= uint64(ere.numBlocks) {
+		return true
+	}
+	if blockB >= uint64(ere.numBlocks) {
+		blockB = uint64(ere.numBlocks - 1)
+	}
+
+	// 1. Check intermediate full blocks
+	if blockB > blockA+1 {
+		onesBeforeB := ere.D1.Rank(blockB, true)
+		onesBeforeA1 := ere.D1.Rank(blockA+1, true)
+		if onesBeforeB > onesBeforeA1 {
+			return false
+		}
+	}
+
+	// 2. Check boundary blocks
+	if blockA == blockB {
+		if ere.D1.Bit(blockA) {
+			start, end := ere.getBlockRange(blockA)
+			suffA := extractSuffixAsUint64(a, ere.w)
+			suffB := extractSuffixAsUint64(b, ere.w)
+			if !ere.isRangeEmptyInBlockLinear(start, end, suffA, suffB) {
+				return false
+			}
+		}
+	} else {
+		if ere.D1.Bit(blockA) {
+			start, end := ere.getBlockRange(blockA)
+			suffA := extractSuffixAsUint64(a, ere.w)
+			maxSuff := (uint64(1) << ere.w) - 1
+			if ere.w == 64 {
+				maxSuff = ^uint64(0)
+			}
+			if !ere.isRangeEmptyInBlockLinear(start, end, suffA, maxSuff) {
+				return false
+			}
+		}
+		if ere.D1.Bit(blockB) {
+			start, end := ere.getBlockRange(blockB)
+			suffB := extractSuffixAsUint64(b, ere.w)
+			if !ere.isRangeEmptyInBlockLinear(start, end, 0, suffB) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func packUint64Local(values []uint64, bitWidth int) []uint64 {
 	if len(values) == 0 || bitWidth == 0 {
 		return nil

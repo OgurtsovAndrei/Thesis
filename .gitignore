@@ -28,3 +28,4 @@ __pycache__/
 /locators/benchmarks_parsed.csv
 bench_results/raw/
 /mmph/lemonhash/build
+bench_results/plots/ere_comparison/

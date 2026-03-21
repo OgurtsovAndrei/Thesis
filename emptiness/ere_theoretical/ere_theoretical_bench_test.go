@@ -26,7 +26,8 @@ var (
 	benchLs = []uint64{1, 16, 128, 1024}
 )
 
-var allNames = []string{"ERE", "TheoreticalERE", "GlobalERE"}
+var buildNames = []string{"ERE", "TheoreticalERE", "GlobalERE"}
+var queryNames = []string{"ERE", "ERE (linear)", "TheoreticalERE", "GlobalERE"}
 
 func generateBenchKeys(n int, rng *rand.Rand) ([]uint64, []bits.BitString) {
 	seen := make(map[uint64]bool, n)
@@ -156,6 +157,7 @@ func TestEREComparison(t *testing.T) {
 			fn   isEmptyFunc
 		}{
 			{"ERE", ereStruct.IsEmpty},
+			{"ERE (linear)", ereStruct.LinearIsEmpty},
 			{"TheoreticalERE", tereStruct.IsEmpty},
 			{"GlobalERE", gereStruct.IsEmpty},
 		}
@@ -193,7 +195,7 @@ func TestEREComparison(t *testing.T) {
 	}
 
 	printHeader("Build Time (ns/key)")
-	for _, name := range allNames {
+	for _, name := range buildNames {
 		fmt.Printf("%-*s", nameW, name)
 		for _, n := range benchNs {
 			for _, br := range buildResults {
@@ -206,7 +208,7 @@ func TestEREComparison(t *testing.T) {
 	}
 
 	printHeader("Memory (bits/key)")
-	for _, name := range allNames {
+	for _, name := range buildNames {
 		fmt.Printf("%-*s", nameW, name)
 		for _, n := range benchNs {
 			for _, br := range buildResults {
@@ -220,7 +222,7 @@ func TestEREComparison(t *testing.T) {
 
 	for _, L := range benchLs {
 		printHeader(fmt.Sprintf("Query Time (ns/query), L=%d", L))
-		for _, name := range allNames {
+		for _, name := range queryNames {
 			fmt.Printf("%-*s", nameW, name)
 			for _, n := range benchNs {
 				for _, qr := range queryResults {
@@ -237,51 +239,53 @@ func TestEREComparison(t *testing.T) {
 	plotDir := "../../bench_results/plots/ere_comparison"
 	os.MkdirAll(plotDir, 0755)
 
-	colors := map[string]string{"ERE": "#2a7fff", "TheoreticalERE": "#ef4444", "GlobalERE": "#22c55e"}
-	markers := map[string]string{"ERE": "square", "TheoreticalERE": "circle", "GlobalERE": "diamond"}
+	colors := map[string]string{"ERE": "#2a7fff", "ERE (linear)": "#f59e0b", "TheoreticalERE": "#ef4444", "GlobalERE": "#22c55e"}
+	markers := map[string]string{"ERE": "square", "ERE (linear)": "triangle", "TheoreticalERE": "circle", "GlobalERE": "diamond"}
 
-	makeSeries := func() map[string]*testutils.SeriesData {
+	makeSeriesFor := func(names []string) map[string]*testutils.SeriesData {
 		m := make(map[string]*testutils.SeriesData)
-		for _, name := range allNames {
+		for _, name := range names {
 			m[name] = &testutils.SeriesData{Name: name, Color: colors[name], Marker: markers[name]}
 		}
 		return m
 	}
-	seriesSlice := func(m map[string]*testutils.SeriesData) []testutils.SeriesData {
-		out := make([]testutils.SeriesData, len(allNames))
-		for i, name := range allNames {
-			out[i] = *m[name]
+	toSlice := func(m map[string]*testutils.SeriesData, names []string) []testutils.SeriesData {
+		out := make([]testutils.SeriesData, 0, len(names))
+		for _, name := range names {
+			if s := m[name]; len(s.Points) > 0 {
+				out = append(out, *s)
+			}
 		}
 		return out
 	}
 
 	// Build time plot
 	{
-		m := makeSeries()
+		m := makeSeriesFor(buildNames)
 		for _, br := range buildResults {
 			m[br.name].Points = append(m[br.name].Points, testutils.Point{X: float64(br.nKeys), Y: br.buildNs})
 		}
 		testutils.GeneratePerformanceSVG(testutils.PlotConfig{
 			Title: "ERE Variants — Build Time", XLabel: "N (keys)", YLabel: "ns / key",
 			XScale: testutils.Log10, YScale: testutils.Log10,
-		}, seriesSlice(m), plotDir+"/build_time.svg")
+		}, toSlice(m, buildNames), plotDir+"/build_time.svg")
 	}
 
 	// Memory plot
 	{
-		m := makeSeries()
+		m := makeSeriesFor(buildNames)
 		for _, br := range buildResults {
 			m[br.name].Points = append(m[br.name].Points, testutils.Point{X: float64(br.nKeys), Y: br.bpk})
 		}
 		testutils.GeneratePerformanceSVG(testutils.PlotConfig{
 			Title: "ERE Variants — Memory", XLabel: "N (keys)", YLabel: "bits / key",
 			XScale: testutils.Log10, YScale: testutils.Linear,
-		}, seriesSlice(m), plotDir+"/memory.svg")
+		}, toSlice(m, buildNames), plotDir+"/memory.svg")
 	}
 
 	// Query time plots (one per L)
 	for _, L := range benchLs {
-		m := makeSeries()
+		m := makeSeriesFor(queryNames)
 		for _, qr := range queryResults {
 			if qr.L != L {
 				continue
@@ -292,7 +296,7 @@ func TestEREComparison(t *testing.T) {
 			Title:  fmt.Sprintf("ERE Variants — Query Time (L=%d)", L),
 			XLabel: "N (keys)", YLabel: "ns / query",
 			XScale: testutils.Log10, YScale: testutils.Log10,
-		}, seriesSlice(m), fmt.Sprintf("%s/query_L%d.svg", plotDir, L))
+		}, toSlice(m, queryNames), fmt.Sprintf("%s/query_L%d.svg", plotDir, L))
 	}
 
 	fmt.Printf("\nSVG plots written to %s/\n", plotDir)

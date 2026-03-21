@@ -156,6 +156,23 @@ func TestERE_Property_HeavyBucket(t *testing.T) {
 }
 
 // runParallelERE is a helper to run ERE tests in parallel iterations.
+func TestERE_Property_LinearMatchesBinary(t *testing.T) {
+	t.Parallel()
+	runParallelERE(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, ere *ExactRangeEmptiness) {
+		for j := 0; j < 100; j++ {
+			lo := rng.Uint64()
+			hi := lo + uint64(rng.Intn(10000))
+			a := bits.NewFromUint64(lo)
+			b := bits.NewFromUint64(hi)
+			got := ere.LinearIsEmpty(a, b)
+			want := ere.IsEmpty(a, b)
+			if got != want {
+				t.Fatalf("LinearIsEmpty(%d,%d)=%v != IsEmpty=%v", lo, hi, got, want)
+			}
+		}
+	})
+}
+
 func runParallelERE(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, ere *ExactRangeEmptiness)) {
 	for i := 0; i < testRuns; i++ {
 		i := i
