@@ -15,9 +15,9 @@ Forked from [github.com/hillbig/rsdic](https://github.com/hillbig/rsdic) (MIT Li
 
 ```go
 func popCount(x uint64) uint8 {
-x = x - ((x & 0xAAAAAAAAAAAAAAAA) >> 1)
-x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
-x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
+     x = x - ((x & 0xAAAAAAAAAAAAAAAA) >> 1)
+     x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
+     x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
 return uint8(x * 0x0101010101010101 >> 56)
 }
 ```
@@ -29,7 +29,7 @@ The Go compiler does NOT auto-vectorize this into a POPCNT instruction.
 
 ```go
 func popCount(x uint64) uint8 {
-return uint8(bits.OnesCount64(x))
+	return uint8(bits.OnesCount64(x))
 }
 ```
 
@@ -118,17 +118,17 @@ Apple M4 Max, Go 1.25, ARM64, GOMAXPROCS=1, 5 runs each.
 
 ### After optimization
 
-| Op         | Density | Upstream (ns) | Optimized (ns) | Speedup  |
-|------------|---------|---------------|----------------|----------|
-| Bit        | 50%     | 23.9          | 24.0           | 1.0x     |
-| Rank       | 50%     | 26.7          | 25.2           | **1.06x**|
-| **Select** | **50%** | **122**       | **47**         | **2.6x** |
-| Bit        | 33%     | 24.8          | 25.1           | 1.0x     |
-| Rank       | 33%     | 26.9          | 26.5           | 1.02x    |
-| **Select** | **33%** | **110**       | **47**         | **2.3x** |
-| Bit        | 1%      | 56.3          | 57.2           | 1.0x     |
-| Rank       | 1%      | 56.8          | 56.2           | 1.0x     |
-| Select     | 1%      | 124           | 122            | 1.02x    |
+| Op         | Density | Upstream (ns) | Optimized (ns) | Speedup   |
+|------------|---------|---------------|----------------|-----------|
+| Bit        | 50%     | 23.9          | 24.0           | 1.0x      |
+| Rank       | 50%     | 26.7          | 25.2           | **1.06x** |
+| **Select** | **50%** | **122**       | **47**         | **2.6x**  |
+| Bit        | 33%     | 24.8          | 25.1           | 1.0x      |
+| Rank       | 33%     | 26.9          | 26.5           | 1.02x     |
+| **Select** | **33%** | **110**       | **47**         | **2.3x**  |
+| Bit        | 1%      | 56.3          | 57.2           | 1.0x      |
+| Rank       | 1%      | 56.8          | 56.2           | 1.0x      |
+| Select     | 1%      | 124           | 122            | 1.02x     |
 
 Measured in same session (Orig vs Fork side-by-side) to eliminate system load variance.
 
@@ -162,25 +162,27 @@ For a typical ERE query at ~200 ns, this is a significant fraction.
 ### Optimization 3: `runZerosRaw` → `bits.TrailingZeros64` (`enumCode.go`)
 
 **Before:**
+
 ```go
 func runZerosRaw(code uint64, pos uint8) uint8 {
-    i := uint8(pos)
-    for ; i < kSmallBlockSize && !getBit(code, i); i++ {
-    }
-    return i - pos
+i := uint8(pos)
+for; i < kSmallBlockSize && !getBit(code, i); i++ {
+}
+return i - pos
 }
 ```
 
 Bit-by-bit scan from `pos` looking for the first set bit — up to 64 iterations with branch per bit.
 
 **After:**
+
 ```go
 func runZerosRaw(code uint64, pos uint8) uint8 {
-    shifted := code >> pos
-    if shifted == 0 {
-        return kSmallBlockSize - pos
-    }
-    return uint8(bits.TrailingZeros64(shifted))
+shifted := code >> pos
+if shifted == 0 {
+return kSmallBlockSize - pos
+}
+return uint8(bits.TrailingZeros64(shifted))
 }
 ```
 
