@@ -2,14 +2,16 @@
 \label{sec:ere}
 
 The inner layer of every approximate filter is an \emph{Exact Range Emptiness} (ERE)
-structure: given a universe $[0, r)$ where $|r| = \lceil \log_2 r \rceil$ denotes the
-key length in bits, and a sorted set $S \subset [0, r)$ of $n$ keys, it answers
-``$[a, b] \cap S = \emptyset$?'' with zero error.
+structure: given a universe $[r]$ of $\ell = \lceil \log_2 r \rceil$-bit keys
+and a set $S' \subseteq [r]$ of $n$ keys, it answers
+``$[a, b] \cap S' = \emptyset$?'' exactly (no false positives or false negatives).
+Throughout this chapter, $S'$ denotes the input to ERE; in the ARE pipeline
+(Chapter~\ref{chap:hash}), $S' = h(S)$.
 
 \subsection{Two-Level Hierarchy}
 
 To achieve the information-theoretic minimum of $n \log_2(r/n) + O(n)$ bits, the
-structure divides the universe $[0, r)$ into $n$ equal-sized blocks:
+structure divides the universe $[r]$ into $n$ equal-sized blocks:
 
 \paragraph{Global level (succinct indexing).}
 Two bit-vectors provide $O(1)$ navigation:
@@ -41,7 +43,7 @@ multiple rank/select lookups in a trie.
 When ERE is used inside an ARE filter, the fingerprint length $K$ is typically 7--11
 bits (Section~\ref{sec:soda}). With suffixes of at most $K$ bits, an entire bucket
 occupies a few hundred bytes --- well within L1 cache. This makes the binary search
-effectively free compared to any pointer-chasing structure.
+negligible in latency compared to any pointer-chasing structure.
 
 \subsection{Space Analysis}
 
@@ -49,7 +51,7 @@ effectively free compared to any pointer-chasing structure.
 \centering
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-$|r|$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
+$\ell$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
 \midrule
 64   & 44.07  & 3.2 & 47.27  \\
 128  & 108.07 & 3.2 & 111.27 \\
@@ -62,18 +64,18 @@ $|r|$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
 \label{tab:ere-space}
 \end{table}
 
-Space grows linearly with $|r|$ --- unavoidable for an exact structure, since it must
+Space grows linearly with $\ell$ --- unavoidable for an exact structure, since it must
 store the information distinguishing the keys. This linear dependence motivates the
 move to approximate range emptiness: by storing hashed fingerprints of length
 $K \approx \log_2(\mathcal{L}/\varepsilon)$ instead of full keys, the space becomes
-independent of the original key length~$|r|$.
+independent of the original key length~$\ell$.
 
 \subsection{Complexity Summary}
 
 \begin{itemize}
   \item \textbf{Build:} $O(n \cdot |r|)$ --- a single pass over sorted keys.
   \item \textbf{Query:} $O(|r|/w)$ expected (block index + binary search over ${\sim}2$
-    keys of $|r|$ bits each); $O((|r|/w) \log n)$ worst case if all keys collide in a
+    keys of $\ell$ bits each); $O((|r|/w) \log n)$ worst case if all keys collide in a
     single block. When used inside ARE with $K$-bit fingerprints fitting in one machine
     word, this reduces to $O(1)$ expected.
   \item \textbf{Space:} $n \log_2(r/n) + O(n)$ bits, matching the information-theoretic

@@ -1,0 +1,38 @@
+\section{Notation}
+\label{sec:notation}
+
+\paragraph{General.}
+For a positive integer $m$, we write $[m]$ for the set $\{0, 1, \dots, m{-}1\}$.
+
+\paragraph{Sets and parameters.}
+\begin{description}[style=nextline, leftmargin=2.5cm, labelwidth=2cm]
+  \item[{$U = [2^L]$}] Universe of $L$-bit keys.
+  \item[$S \subseteq U$] Stored key set, $|S| = n$.
+  \item[$Y = U \setminus S$] Non-keys (all points not in $S$).
+  \item[$n$] Number of stored keys.
+  \item[$L$] Key length in bits.
+  \item[$\mathcal{L}$] Maximum query range length.
+  \item[$\varepsilon$] Target false positive rate.
+\end{description}
+
+\paragraph{Hash function and fingerprints.}
+\begin{description}[style=nextline, leftmargin=2.5cm, labelwidth=2cm]
+  \item[$h$] Hash function $h\colon U \to U'$.
+  \item[$K$] Fingerprint length in bits, $K = \lceil\log_2(n\mathcal{L}/\varepsilon)\rceil$.
+  \item[{$r = 2^K$}] Mapped universe size.
+  \item[{$U' = [r]$}] Mapped universe.
+  \item[$S' = h(S)$] Fingerprints of stored keys.
+  \item[$Y' = h(Y)$] Images of non-keys under $h$.
+\end{description}
+
+\paragraph{Metrics.}
+\begin{description}[style=nextline, leftmargin=2.5cm, labelwidth=2cm]
+  \item[FPR] False Positive Rate.
+  \item[BPK] Bits Per Key: total filter size divided by $n$.
+\end{description}
+
+\paragraph{Structures.}
+\begin{description}[style=nextline, leftmargin=2.5cm, labelwidth=2cm]
+  \item[ERE] Exact Range Emptiness --- zero-error range filter.
+  \item[ARE] Approximate Range Emptiness --- range filter with one-sided error $\leq \varepsilon$.
+\end{description}

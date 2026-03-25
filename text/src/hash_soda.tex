@@ -15,7 +15,7 @@ where $u: [U/r] \to [r]$ is drawn from a pairwise-independent family, stored as 
   \centering
   \includegraphics[width=0.85\textwidth]{soda_hash_mechanism}
   \caption{SODA hash mechanism: per-block cyclic shift maps keys to $[0, 2^K)$.
-    A query range spanning two blocks produces at most two contiguous intervals in
+    A query range spanning two blocks produces at most two intervals in
     the mapped space.}
   \label{fig:soda-mechanism}
 \end{figure}
@@ -26,7 +26,7 @@ Properties of the hash:
     key structure. This holds for sequential, clustered, or adversarial data.
   \item \textbf{Locality-preserving:} the hash applies a per-block cyclic shift, so
     consecutive keys within the same block map to consecutive positions in $[r]$. A query
-    range $[a, b]$ spans at most 2 blocks, producing at most 2 contiguous intervals in
+    range $[a, b]$ spans at most 2 blocks, producing at most 2 intervals in
     the mapped space.
   \item \textbf{Compact:} stores only two 64-bit coefficients $(a, b)$ ---
     $O(1)$ bits, independent of $n$.

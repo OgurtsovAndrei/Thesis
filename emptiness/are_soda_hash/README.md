@@ -6,6 +6,13 @@ $$h(x) = (u(\lfloor x/r \rfloor) + x) \bmod r, \quad r = 2^K$$
 
 where $u: [U/r] \to [r]$ is drawn from a pairwise independent family.
 
+![SODA hash mechanism](soda_hash_mechanism.svg)
+
+**Why this works:**
+- Within a block: keys keep their relative order (cyclic shift). No information is lost.
+- Across blocks: random offsets scramble relative positions. Two keys from different blocks collide with probability exactly $1/r$ — independent of how close they were in $U$.
+- FPR guarantee holds for any data distribution (sequential, clustered, adversarial).
+
 ## Guarantees
 
 This is the baseline construction from the paper. It provides:

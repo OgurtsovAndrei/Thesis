@@ -1,7 +1,7 @@
 \section{Key Distributions in Practice}
 \label{sec:distributions}
 
-The theoretical bounds of Chapter~\ref{chap:ere} hold for any key set. In practice,
+The theoretical bounds of Section~\ref{sec:bounds} hold for any key set. In practice,
 however, keys in storage systems are not arbitrary --- they follow distributions shaped
 by the application domain. Understanding these distributions is essential for evaluating
 hash function designs and segmentation strategies in the following chapters.
@@ -9,21 +9,23 @@ hash function designs and segmentation strategies in the following chapters.
 \subsection{The Core Assumption}
 \label{sec:assumption}
 
-We assume that the \emph{query distribution approximately matches the key distribution}:
-users query ranges where data exists, not empty regions of the key space. This is
-natural for most workloads --- a time-series database receives queries for recent
-timestamps (where data was written), not for arbitrary future dates.
+We assume that queries target regions of the key space where stored keys are dense,
+rather than arbitrary empty regions.
+
+\begin{remark}
+This holds for most workloads, where queries reflect the application state and
+therefore concentrate on regions that contain data.
+\end{remark}
 
 This assumption has two consequences:
 \begin{enumerate}
   \item FPR in sparse regions of the key space matters less --- queries rarely land there.
-  \item Dense regions (where most keys and queries concentrate) dominate the effective FPR
-    experienced by the application.
+  \item Dense regions dominate the effective FPR experienced by the application.
 \end{enumerate}
 
 The SODA hash (Section~\ref{sec:soda}) ignores this assumption entirely --- it provides
 worst-case guarantees for any distribution. The truncation hash
-(Section~\ref{sec:truncation}) implicitly assumes uniformity. The hybrid approaches
+(Section~\ref{sec:truncation}) performs well only under uniformity. The hybrid approaches
 (Chapter~\ref{chap:hybrid}) explicitly exploit it by isolating dense regions.
 
 \subsection{Common Industrial Distributions}
@@ -32,7 +34,7 @@ Keys in LSM-tree storage systems typically exhibit one or more of the following 
 
 \paragraph{Sequential / near-sequential.}
 Auto-incrementing primary keys, monotonic timestamps, log sequence numbers. Keys are
-approximately evenly spaced with small gaps. The key space is dense and compact ---
+approximately evenly spaced with small gaps. The key space is dense ---
 spread is much smaller than the universe.
 
 \paragraph{Clustered.}
@@ -40,8 +42,9 @@ Keys concentrate in a few dense regions separated by large gaps. Examples:
 \begin{itemize}
   \item \textbf{User activity:} a social network stores events keyed by user ID prefix
     + timestamp. Active users produce dense clusters; inactive users leave gaps.
-  \item \textbf{Geospatial data:} S2 cell IDs or geohashes cluster around populated
-    areas. Rural regions are sparse.
+  \item \textbf{Geospatial data:} S2 cell IDs~\citep{s2geometry} --- a hierarchical
+    spatial index that maps geographic coordinates to 64-bit integer keys --- cluster
+    around populated areas. Rural regions are sparse.
   \item \textbf{Time-partitioned data:} recent partitions are dense (active writes),
     older partitions are sparse (archived).
 \end{itemize}
@@ -59,17 +62,21 @@ Data) benchmark~\citep{marcus2020sosd}, masked to 60-bit keys:
 
 \begin{table}[h]
 \centering
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}llp{0.68\textwidth}@{}}
 \toprule
-Dataset & $n$ (full) & Key type & Character \\
+Dataset & $n$ (full) & Character \\
 \midrule
-\textbf{Facebook} & 200M & uint64 & User IDs. Highly clustered --- dense regions of
+\textbf{Facebook} & 200M &
+  User IDs (uint64). Highly clustered --- dense regions of
   sequential IDs with large gaps between ID ranges. \\
-\textbf{Books}    & 200M & uint32 & ISBN sequences. Clustered by publisher prefix,
+\textbf{Books}    & 200M &
+  ISBN sequences (uint32). Clustered by publisher prefix,
   near-sequential within each publisher. \\
-\textbf{Wiki}     & 200M & uint64 & Wikipedia edit timestamps. Moderately clustered ---
+\textbf{Wiki}     & 200M &
+  Wikipedia edit timestamps (uint64). Moderately clustered ---
   bursts of activity during events, quieter periods between. \\
-\textbf{OSM}      & 800M & uint64 & OpenStreetMap cell IDs. Geospatially clustered ---
+\textbf{OSM}      & 800M &
+  OpenStreetMap cell IDs (uint64). Geospatially clustered ---
   dense in populated areas, sparse in oceans and deserts. \\
 \bottomrule
 \end{tabular}

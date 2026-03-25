@@ -47,19 +47,19 @@ The improved hybrid addresses all three limitations above using density-based cl
 \subsection{1D DBSCAN in $O(n)$}
 
 DBSCAN~\citep{ester1996dbscan} is normally $O(n^2)$ due to neighbor search. On sorted
-1D data, the $\varepsilon$-neighborhood of any point is a contiguous range, so the
-entire algorithm reduces to two-pointer sweeps:
+1D data, the $\delta$-neighborhood of any point is an interval, so the
+algorithm reduces to two-pointer sweeps:
 
 \begin{enumerate}
   \item \textbf{Forward sweep:} for each $\text{key}[i]$, advance the left pointer while
-    $\text{key}[i] - \text{key}[\text{left}] > \text{eps}$. If the window has
+    $\text{key}[i] - \text{key}[\text{left}] > \delta$. If the window has
     $\geq \texttt{minPts}$ points, $\text{key}[i]$ is a core point.
   \item \textbf{Reverse sweep:} same logic right-to-left (the forward pass only marks
     the rightmost points of each dense window).
-  \item \textbf{Core runs:} contiguous core points with gap $\leq \text{eps}$ form
+  \item \textbf{Core runs:} contiguous core points with gap $\leq \delta$ form
     cluster cores.
-  \item \textbf{Merge:} adjacent cores within eps of each other are joined.
-  \item \textbf{Border expansion:} non-core points within eps of a core point
+  \item \textbf{Merge:} adjacent cores within $\delta$ of each other are joined.
+  \item \textbf{Border expansion:} non-core points within $\delta$ of a core point
     (\emph{border points}) join the nearest cluster.
   \item \textbf{Post-filter:} clusters with fewer than \texttt{minClusterSize} keys
     dissolve back to fallback.
@@ -80,31 +80,31 @@ Parameter & Value & Role \\
 \label{tab:dbscan-params}
 \end{table}
 
-\subsection{Choosing eps From Problem Parameters}
+\subsection{Choosing $\delta$ From Problem Parameters}
 
 \begin{equation}
-  \text{eps} = c \cdot \frac{\mathcal{L}}{\varepsilon}, \quad c = 10
-  \label{eq:eps}
+  \delta = c \cdot \frac{\mathcal{L}}{\varepsilon}, \quad c = 10
+  \label{eq:delta}
 \end{equation}
 
 From the exact mode analysis (Equation~\ref{eq:exact-threshold}): exact mode triggers
 when the average gap $< \mathcal{L}/\varepsilon$. So
-$\text{eps} = 10 \cdot \mathcal{L}/\varepsilon$ means: regions $10\times$ denser than
+$\delta = 10 \cdot \mathcal{L}/\varepsilon$ means: regions $10\times$ denser than
 the exact-mode threshold get clustered.
 
 \begin{table}[h]
 \centering
 \begin{tabular}{@{}lrrl@{}}
 \toprule
-Distribution & Typical gap & Gap vs eps & Result \\
+Distribution & Typical gap & Gap vs $\delta$ & Result \\
 \midrule
-Cluster (internal gap ${\sim}100$)  & 100            & $\ll$ eps & Cluster found \\
-Uniform 64-bit (avg gap ${\sim}2^{44}$) & ${\sim}10^{13}$ & $\gg$ eps & All fallback \\
-Sequential (gap $= 1000$)          & 1000           & $\ll$ eps & One big cluster \\
+Cluster (internal gap ${\sim}100$)  & 100            & $\ll \delta$ & Cluster found \\
+Uniform 64-bit (avg gap ${\sim}2^{44}$) & ${\sim}10^{13}$ & $\gg \delta$ & All fallback \\
+Sequential (gap $= 1000$)          & 1000           & $\ll \delta$ & One big cluster \\
 \bottomrule
 \end{tabular}
 \caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
-  eps~$= 1.28 \times 10^6$. No data statistics or percentiles needed --- eps is derived
+  $\delta = 1.28 \times 10^6$. No data statistics or percentiles needed --- $\delta$ is derived
   purely from $\mathcal{L}$ and $\varepsilon$.}
 \label{tab:eps-sanity}
 \end{table}

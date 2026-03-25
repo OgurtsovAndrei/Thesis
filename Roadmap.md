@@ -113,6 +113,94 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
 - [x] Добавить Scan-ARE (DBSCAN hybrid) на все графики
 - [ ] Tune truncSafe в Scan-ARE (слишком консервативный, см. are_hybrid_scan/TODO.md)
 
+# TODO: Text:
+- [ ] Fix abstract
+  - [ ] ВСЕ абривиатеры определяем (double check)
+- [ ] 1.1 Problem Statement - Рассказать зачем это нужно (Будет в intro)
+- Intro
+  - [ ] Написать почему мы пишем на Go
+  - [ ] Показать что еще есть в related works & что есть в индустрии
+  - [ ] `+` слова про memory layout & BMI
+  - [ ] Нас не интересуют идеальные ассимптотически алго, мы хотим работать на датасетах реалистичных размерах
+  - Сделать в Thorem 1 & 2 правильные ссылки, обязательно сказать, что теоремы годятся для любых распределений
+    - [x] (скзаать, что если мы не знаем что за распределении), так сказать сделать remark
+    - [x] Что за `− O(n)` (Th1) (сейчас это додумываие что это могло быть)
+    - [x] Не очевидно что речь идет о той же оценке что и Th1 и что LB достигается [Theorem 2]
+    - [x] "contiguous" не добавляет смысла
+      - [x] `problem_statement.tex:77` — "completely disjoint" → "disjoint"
+      - [x] `hash_truncation.tex:15` — "contiguous interval" → "interval"
+      - [x] `hash_soda.tex:29,18` — "contiguous intervals" → "intervals"
+      - [x] `hybrid.tex:50` — "contiguous range" → "interval"
+      - [x] `evaluation.tex:46` — "contiguous block" → "block"
+      - [x] `hash_truncation.tex:75` — "large continuous zones" → "overlap, covering without gaps"
+      - [x] `distributions.tex:35` — "dense and compact" → "dense"
+      - [x] `hash_truncation.tex:70` — "overlap completely" → "overlap"
+      - [x] `ere.tex:7` — "zero error" → "exactly (no FP or FN)"
+      - [x] `ere.tex:43` — "effectively free" → "negligible in latency"
+      - [x] `hybrid.tex:51` — "entire algorithm" → "algorithm"
+    - [x] Поработать над определением `locality-preserving hash` h + картинка + формула
+    - [x] Что такое [r] в Th2 нигде не опеределено
+  - [x] Может ввести отдельный раздел с определениями (при этом в первом месте в тексте все равно определять)
+  - [x] `S′ and Y ′ to completely disjoint regions of U — zero` - rm completely
+  - [x] `S ⊂` → `S ⊆` нестрогое включение (problem_statement + ere)
+  - Pleonasms round 2:
+      - [ ] `hash_soda.tex:31` — "Compact:" → "Constant size:"
+      - [ ] `hash_soda.tex:72` — "more compact per key" → "smaller per key"
+      - [ ] `hash_cdf.tex:104` — "more effectively" — vague, needs metric
+      - [ ] `hash_truncation.tex:137` — "extremely low" → "low"
+      - [ ] `ere.tex:44` — "negligible in latency" — not rigorous
+      - [ ] `ere.tex:26` — "dense uint64 array" — "dense" redundant with "packed"
+  - Notation & formula issues:
+      - [x] **HIGH** `ere.tex` — `|r|` → `ℓ = ⌈log₂ r⌉`, also `[0,r)` → `[r]`
+      - [x] **HIGH** `hybrid.tex` — DBSCAN `ε`/`eps` → `δ` everywhere
+      - [x] `problem_statement.tex:52` — `\subset` → `\subseteq`
+      - [x] `ere.tex` vs `notation.tex` — `[0, r)` vs `[r]` inconsistent (fixed with |r| → ℓ)
+      - [ ] `problem_statement.tex` / `hybrid.tex` — variable `c` overloaded
+      - [ ] `hybrid.tex` / `problem_statement.tex` — `C` vs `\mathcal{C}` visually similar
+      - [ ] `ere.tex:75` — `w` (word size) undefined
+      - [ ] `hash_truncation.tex:7` — `t` (truncation bits) undefined
+      - [ ] Theorem 1 & 2 — missing quantifiers on n, L, ε
+      - [ ] Theorem 2 — hardcoded "Theorem~1" instead of `\ref{}`
+      - [ ] `hybrid.tex:139` — FPR union bound claim needs formal statement
+  - Math errors (agent round 3):
+      - [x] `hash_truncation.tex:67` — phantom interval [x−2^t, x+2^t] wrong size → prefix-aligned block
+      - [x] `problem_statement.tex:69` — K = log₂(r) missing ceiling → ⌈log₂(nL/ε)⌉
+      - [x] `hash_truncation.tex:116` — ρ = n/(max−min) off-by-one → (n−1)/(max−min)
+      - [x] `notation.tex` — r arbitrary vs r = 2^K inconsistency → K defined first, r = 2^K
+      - [x] `distributions.tex:1` — wrong chapter ref (chap:ere → sec:bounds)
+      - [x] `ere.tex` — S → S' for ERE input, with scope note
+      - [ ] `hash_truncation.tex:36-39` — collision zone L×2^t vs L+2^t undefined comparison
+      - [ ] `hash_soda.tex:25` — "Pairwise-independent" label describes consequence, not property
+      - [ ] `notation.tex:11` — "(all points not in S)" redundant with U\S
+      - [ ] `notation.tex:10,12` — n defined twice
+      - [ ] `problem_statement.tex:17` — Y re-defined after notation
+      - [ ] `problem_statement.tex:77-78` — S', Y' re-defined after notation
+      - [ ] `hybrid.tex:139` — "independently" ambiguous in union bound context
+      - [ ] `ere.tex:74` — build O(n·ℓ) vs "single pass" — clarify
+  - [x] 2.1 Succinct Representation -> WTF `|r| = ⌈log2 r⌉` (replaced with ℓ)
+    - [x] Что такое `sorted set` - убрано "sorted" (порядок на [r] естественный)
+    - [x] S ⊂ [0, r) - сделать нестрогое включение
+  - [ ] 2.1.2
+    - [ ] сслыка на что такое Poisson distribution - просто кол-во колючей в болоках
+    - [ ] И все же что такое with λ ≈ 1 - ну сказать что лямбда из диапазона
+    - [ ] Митценмахера см - Power of the choice
+    - [ ] Надо ссылки!
+    - [ ] n = 10^6 -> n = 10^9 тут
+    - [ ] + написать что вероятность иметь больше X = F(X) = 10^{-...} для N = ....
+    - [ ] Binary searching through ∼12 packed values is
+      faster and more cache-friendly than multiple rank/select lookups in a trie
+      Нам скорее интересно сколько это байт это занимает
+  - [x] 3.1.1 The Core Assumption
+    - [x] Не надо изобретать `We assume that the query distribution approximately matches the key distribution`
+      - Просто там есть объяснение 1, 2 и не надо ничего придумывать пишем что это предполагает
+    - [x] Написать что такое S2 cell IDs
+  - 3.1.2
+    - [ ] Что то внятное с `Time-partitioned data: recent partitions are dense (active writes), older parti-
+      tions are sparse (archived).`
+  - 3.1.3 SOSD Benchmark Datasets
+    - [x] Fix formatting
+    - [ ] reread 
+
 ### Real-world datasets
 
 Варианты:

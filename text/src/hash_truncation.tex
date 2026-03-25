@@ -12,7 +12,7 @@ Properties of the hash:
   \item \textbf{Locality-preserving:} truncation preserves order --- if $a < b$, then
     $h(a) \leq h(b)$. Intervals map to intervals.
   \item \textbf{Contiguous phantoms:} the $2^t$ phantom points of each stored key $x$
-    form a contiguous interval of length~$2^t$ in the original universe --- all points
+    form an interval of length~$2^t$ in the original universe --- all points
     sharing the same $K$-bit prefix. This contrasts with the SODA hash, where phantoms
     are scattered uniformly.
   \item \textbf{$O(1)$ storage:} the hash is a bit-shift --- stores only the shift
@@ -64,15 +64,15 @@ Truncation     & $\mathcal{L} + 2^t$      & $\log_2(2n/\varepsilon)$ &
 
 The same property that reduces the filter's space is also the fundamental weakness: all
 false positives are concentrated near stored keys. For a stored key~$x$, its phantom
-interval $[x - 2^t, x + 2^t]$ is the only region that can produce false positives.
+block --- the $2^t$ consecutive points sharing the same $K$-bit prefix as~$x$ --- is the
+only region that can produce false positives.
 
 When inter-key gaps are smaller than the phantom size~$2^t$, phantom intervals of
-neighboring keys overlap completely and FPR approaches 100\%. This occurs with:
+neighboring keys overlap and FPR approaches 100\%. This occurs with:
 \begin{itemize}
   \item \textbf{Sequential keys} ($x, x{+}1, x{+}2, \ldots$): every gap is covered by
     phantoms from both sides.
-  \item \textbf{Clustered keys}: phantom intervals merge into large continuous zones
-    within clusters.
+  \item \textbf{Clustered keys}: phantom intervals overlap, covering the cluster without gaps.
 \end{itemize}
 
 Only uniformly spread keys with gaps $\gg 2^t$ achieve the theoretical FPR --- a narrow
@@ -114,7 +114,7 @@ The adaptive filter checks at build time whether hashing is necessary at all.
 \subsection{When Does Exact Mode Trigger?}
 
 Exact mode requires $\max(S) - \min(S) < 2^K = n\mathcal{L}/\varepsilon$.
-Rewriting in terms of density $\rho = n / (\max - \min)$:
+Rewriting in terms of density $\rho = (n - 1) / (\max(S) - \min(S))$:
 \begin{equation}
   \rho > \frac{\varepsilon}{\mathcal{L}}
   \label{eq:exact-threshold}

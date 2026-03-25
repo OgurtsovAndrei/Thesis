@@ -43,7 +43,7 @@ the sub-filter is exact (Section~\ref{sec:adaptive}), so false positives are imp
 Either way, exact clusters produce zero false positives regardless of $\mathcal{L}$.
 
 \paragraph{Truncation fallback.} The sparse fallback uses truncation hashing
-(Section~\ref{sec:truncation}), where phantom points form a contiguous block adjacent
+(Section~\ref{sec:truncation}), where phantom points form a block adjacent
 to each stored key (Figure~\ref{fig:phantom-comparison}). A false positive can only
 occur when a query \emph{endpoint} $a$ or $b$ lands inside a phantom block --- if a
 stored key lies inside $[a, b]$, that is a true positive, not a false positive. Because
