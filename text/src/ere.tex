@@ -28,22 +28,222 @@ Instead of storing full keys, only the suffix $x \bmod (r/n)$ is stored for each
 key~$x$. The suffix length is $W = |r| - \lceil \log_2 n \rceil$ bits. All suffixes are packed into a dense \texttt{uint64} array using bit-shifts,
 eliminating per-element overhead.
 
-\subsection{Binary Search in Buckets}
+\subsection{Local Search in Buckets}
+\label{sec:ere-local-search}
 
-The original SODA~2015 paper suggests a Weak Prefix Search structure (Hollow Z-Fast
-Trie) for $O(1)$ worst-case local queries. Our implementation uses binary search on
-bit-packed suffixes instead.
+The original paper~\citep{goswami2015approximate} suggests a Weak Prefix Search structure
+(Hollow Z-Fast Trie) for $O(1)$ worst-case local queries.
+We use binary search on bit-packed suffixes instead, with an adaptive
+fallback to linear scan for small buckets.
+Section~\ref{sec:ere-no-wps} details why.
 
-With $n$ blocks for $n$ keys, the number of keys per non-empty block follows a Poisson
-distribution with $\lambda \approx 1$. In practice: ${\sim}2.24$ keys per non-empty
-block on average, and at most ${\sim}12$ keys for $n = 10^6$ in our tests. Binary
-searching through ${\sim}12$ packed values is faster and more cache-friendly than
-multiple rank/select lookups in a trie.
+\paragraph{Block occupancy under uniform distribution.}
+The structure divides the universe into $m = 2^{\lfloor \log_2 n \rfloor}$ blocks;
+each non-empty block stores its keys' suffixes in a packed array (a \emph{bucket}).
+The expected
+number of keys per block is $\lambda = n/m \in [1,\,2)$.
+When $n$ is a power of two, $m = n$ and $\lambda = 1$ exactly.
+Each key falls into a uniformly random block, so the occupancy of a fixed block
+follows $\mathrm{Bin}(n,\,1/m)$, which converges to $\mathrm{Poisson}(\lambda)$
+as $n \to \infty$~\citep[Ch.~5]{mitzenmacher2017probability}.
 
-When ERE is used inside an ARE filter, the fingerprint length $K$ is typically 7--11
-bits (Section~\ref{sec:soda}). With suffixes of at most $K$ bits, an entire bucket
-occupies a few hundred bytes --- well within L1 cache. This makes the binary search
-negligible in latency compared to any pointer-chasing structure.
+For $\lambda = 1$, the fraction of empty blocks converges to $e^{-1} \approx 36.8\%$,
+and the mean occupancy among non-empty blocks to $1/(1 - e^{-1}) \approx 1.58$.
+
+To estimate the maximum bucket size, we use a union bound.
+The probability that a fixed block contains at least $k$ keys is
+$\Pr[\mathrm{Poisson}(\lambda) \geq k] = 1 - \sum_{j=0}^{k-1} e^{-\lambda}\lambda^j/j!$
+(which simplifies to $1 - \sum_{j=0}^{k-1} e^{-1}/j!$ when $\lambda = 1$).
+The probability that \emph{any} of the $m$ blocks contains $\geq k$ keys
+is at most
+\[
+  \Pr\!\bigl[\max_i X_i \geq k\bigr]
+    \;\leq\; m \cdot \Pr[\mathrm{Poisson}(\lambda) \geq k].
+\]
+The expected number of blocks with occupancy $\geq k$ drops below~1 when
+$m \cdot \Pr[\mathrm{Poisson}(\lambda) \geq k] < 1$.
+In the tables below we use $\lambda = 1$ ($m = n$, powers of two).
+Table~\ref{tab:ere-bucket-stats} shows that this threshold closely matches
+the measured maximum.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+$n$ & Empty (\%) & Avg / non-empty & Max (meas.) &
+  $k^*$ & $n \cdot \Pr[X \geq k^*]$ \\
+\midrule
+$2^{20}$ & 36.75 & 1.58 & 9  & 10 & 0.12 \\
+$2^{24}$ & 36.79 & 1.58 & 9  & 11 & 0.17 \\
+$2^{27}$ & 36.79 & 1.58 & 10 & 12 & 0.11 \\
+$2^{30}$ & 36.79 & 1.58 & 13 & 12 & 0.89 \\
+\bottomrule
+\end{tabular}
+\caption{ERE bucket statistics for uniform keys with $\lambda = 1$ ($m = n$).
+  $k^*$ is the smallest $k$ such that $n \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.
+  The measured maximum can exceed $k^*$ (e.g.\ $n = 2^{30}$: max $= 13 > k^* = 12$)
+  because the bound is not tight;
+  $n \cdot \Pr[\mathrm{Poisson}(1) \geq 13] \approx 0.07$ at $n = 2^{30}$
+  (see Table~\ref{tab:ere-poisson-tail}).}
+\label{tab:ere-bucket-stats}
+\end{table}
+
+Table~\ref{tab:ere-poisson-tail} shows how rapidly the tail probability
+drops with $k$: even at $n = 2^{30}$, the probability of any block containing
+$\geq 20$ keys is below $10^{-10}$, making buckets larger than ${\sim}15$
+keys virtually impossible for uniform data.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}rrr@{}}
+\toprule
+$k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ &
+  $n \cdot \Pr[X \geq k]$,\; $n = 2^{30}$ \\
+\midrule
+10 & $1.1 \times 10^{-7}$  & $1.2 \times 10^{2\phantom{0}}$ \\
+13 & $6.4 \times 10^{-11}$ & $6.8 \times 10^{-2}$ \\
+15 & $3.0 \times 10^{-13}$ & $3.2 \times 10^{-4}$ \\
+20 & $1.6 \times 10^{-19}$ & $1.7 \times 10^{-10}$ \\
+25 & $2.5 \times 10^{-26}$ & $2.6 \times 10^{-17}$ \\
+\bottomrule
+\end{tabular}
+\caption{Poisson tail probabilities for bucket occupancy ($\lambda = 1$),
+  computed via $\Pr[X \geq k] = 1 - \sum_{j=0}^{k-1} e^{-1}/j!$.
+  At $k = 13$ the expected number of such blocks across all $n = 2^{30}$
+  blocks is ${\sim}0.07$ --- consistent with observing max $= 13$ occasionally.
+  At $k = 20$ it is below $10^{-10}$ even for $n = 2^{30}$.}
+\label{tab:ere-poisson-tail}
+\end{table}
+
+\paragraph{Non-uniform distributions and worst-case bounds.}
+For non-uniform input, the Poisson model does not apply: clustered keys
+concentrate in a few blocks. When ERE is used inside SODA~ARE
+(Section~\ref{sec:soda}), the locality-preserving hash $h(x) = (u + x) \bmod 2^K$ (where $u$ is a
+per-block constant) maps consecutive keys to consecutive hashed values,
+preserving local density.
+
+However, the bucket size is always bounded by the block capacity $2^w$,
+where $w = K - \lfloor \log_2 n \rfloor$ is the suffix length
+and $K$ is the fingerprint width in bits (defined in Section~\ref{sec:soda}).
+For industry-standard space budgets (BPK~$\leq 15$; since BPK~$\approx w + 3.2$
+from Table~\ref{tab:ere-space}, this gives $w \leq 12$),
+so the maximum bucket contains at most $2^{12} = 4096$ keys.
+At $w = 12$ bits, such a worst-case bucket occupies
+$4096 \times 12 / 8 = 6144$~bytes --- well within L1 cache (typically 32--64~KB).
+
+\paragraph{Search strategy.}
+We implement both binary search ($O(\log k)$) and linear scan ($O(k)$) over
+bit-packed suffixes in a bucket of $k$ keys.
+Benchmarks on Apple~M4~Max show that linear scan is ${\sim}3\times$ faster
+for $k \leq 12$ (1.3--2.7~ns vs.\ 5--9~ns) due to sequential prefetch,
+while binary search wins for $k > 128$ (21~ns vs.\ 35~ns at $k = 256$).
+The crossover is at $k \approx 128$ and is stable across suffix widths
+$w \in \{8, 11, 16, 20\}$.
+
+The default query uses adaptive dispatch: linear scan for buckets with
+$k \leq 128$, binary search above.
+The total ERE query takes ${\sim}36$~ns on Apple~M4~Max (stable across
+$n \in [2^{10},\, 2^{20}]$ and key widths 64--512 bits), of which
+${\sim}27$--$35$~ns is Rank/Select overhead on $D_1$ and $D_2$.
+Bucket search contributes at most ${\sim}9$~ns (binary, $k = 12$) or
+${\sim}2.7$~ns (linear, $k = 12$) --- roughly 7--25\% of the total.
+This makes the choice between search strategies a micro-optimization;
+the key property is that even in the worst case ($k = 2^w$, binary search),
+query time grows only logarithmically.
+
+\subsection{Why Not Weak Prefix Search}
+\label{sec:ere-no-wps}
+
+\citet{goswami2015approximate} propose $O(1)$ worst-case local queries via a Weak Prefix
+Search structure built from a Hollow Z-Fast Trie (HZFT) and Monotone Minimal
+Perfect Hashing (MMPH). The authors analyse these components in a word-RAM model
+where hash table lookups and trie navigation cost $O(1)$, and the space is
+expressed up to $O(n)$ additive terms. This is sufficient for a theoretical result,
+but the hidden constants become dominant in practice.
+
+We implemented three variants of Weak Prefix Search, collectively referred to as
+LERLOC (\textbf{L}ocal \textbf{E}xact \textbf{R}ange \textbf{LOC}ator),
+differing in the trie and MMPH components used:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Variant & Space (bits/key) & Query (ns), $L{=}64$ \\
+\midrule
+LERLOC Fast (HZFT + BoomPHF)     & 179 & 1095--1466 \\
+LERLOC Compact (SHZFT + BoomPHF) & 151 & 372--567   \\
+LeMon-LERLOC (SHZFT + LeMonHash) &  59 & 537--762   \\
+\bottomrule
+\end{tabular}
+\caption{LERLOC variants: space and query latency on Apple~M4~Max,
+  $n = 1024$--$32768$, 64-bit keys.
+  LeMon-LERLOC breakdown: SHZFT trie ${\sim}35$~BPK, LeMonHash MMPH ${\sim}19$~BPK,
+  RSDic leaf bitvector ${\sim}5$~BPK.
+  The MMPH indexes the boundary set $P$ of the trie: 3 strings per node
+  ($n$ leaves $+ (n{-}1)$ internal), so $|P| \leq 3(2n - 1) = 6n - 3$
+  before deduplication; empirically $|P|/n \approx 4.3$ for $n > 10^5$.}
+\label{tab:lerloc-cost}
+\end{table}
+
+The high space cost stems from three expansion factors hidden behind
+$O(n)$ in the paper:
+(1)~the SHZFT hash table stores not only $2n{-}1$ true descriptors but also
+${\sim}3.5n$ pseudo-descriptors required by Fat Binary Search, totalling
+${\sim}5.5n$ entries at ${\sim}35$~BPK;
+(2)~the range locator boundary set $P$ contains 3~strings per trie node
+($\leq 6n{-}3$ before deduplication, empirically ${\sim}4.3n$);
+(3)~the MMPH on $P$ stores a \texttt{uint8} rank per element ($8$~bits
+$\times\,4.3 \approx 34$~BPK).
+These factors stack: the total ``$O(n)$ additional space'' becomes
+${\sim}100$~bits/key in practice (see the detailed breakdown in
+\texttt{locators/rloc/MEMORY\_INVESTIGATION.md}).
+
+When ERE is used inside an ARE filter,
+the suffix width is $w = K - \lfloor \log_2 n \rfloor \approx \lceil \log_2(\mathcal{L}/\varepsilon) \rceil$
+(since $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$),
+which depends only on the range length $\mathcal{L}$ and FPR $\varepsilon$,
+not on $n$. For typical parameters ($\mathcal{L} \leq 64$,
+$\varepsilon \geq 0.01$), $w$ is $7$--$12$ bits.
+The data itself costs $w$ bits per key; even the most compact LERLOC variant (59~BPK)
+adds $5$--$8 \times$ more space than the data it indexes.
+
+Query latency is equally problematic. LERLOC replaces only the local search
+inside a bucket, while Rank/Select navigation on $D_1$ and $D_2$
+(${\sim}27$~ns) remains unchanged.
+Each LERLOC call descends the trie (pointer chasing through hash tables), then
+performs an MMPH rank lookup --- at least 370~ns for the Compact variant at $L = 64$.
+Binary search on a typical bucket of ${\sim}12$ keys takes 5--9~ns
+(Section~\ref{sec:ere-local-search}), making LERLOC $40$--$110 \times$
+slower for the operation it replaces.
+
+The root cause is that the $O(1)$ theoretical guarantee hides large constants:
+each ``constant-time'' trie step involves hashing a variable-length prefix,
+probing a hash table, and following a pointer --- operations that are
+individually cheap but accumulate across $O(\log \log r)$ trie levels.
+For the small buckets that arise in practice (${\leq}13$ keys for uniform
+data, ${\leq}2^w$ in general), binary search on packed suffixes is both
+faster and requires no additional space.
+
+Even in an adversarial worst case --- every key in a single bucket ---
+binary search remains fast:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}rrr@{}}
+\toprule
+$w$ (suffix bits) & Bucket size ($2^w$) & Binary search (ns) \\
+\midrule
+12 & 4\,096   & 37 \\
+15 & 32\,768  & 48 \\
+17 & 131\,072 & 58 \\
+\bottomrule
+\end{tabular}
+\caption{Worst-case binary search on a fully packed bucket (Apple~M4~Max).
+  At $w = 12$ (BPK~$\approx 15$), the entire bucket search costs 37~ns ---
+  still $10 \times$ faster than the best LERLOC variant.}
+\label{tab:ere-worst-case-binsearch}
+\end{table}
 
 \subsection{Space Analysis}
 
