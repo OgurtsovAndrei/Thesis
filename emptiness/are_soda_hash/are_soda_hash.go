@@ -175,3 +175,10 @@ func (are *SodaARE) SizeInBits() uint64 {
 	}
 	return are.ere.SizeInBits()
 }
+
+func (are *SodaARE) EREStats() ere.Stats {
+	if are.ere == nil {
+		return ere.Stats{}
+	}
+	return are.ere.GetStats()
+}

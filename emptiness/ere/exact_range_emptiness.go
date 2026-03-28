@@ -10,6 +10,12 @@ import (
 	"github.com/hillbig/rsdic"
 )
 
+// linearScanThreshold is the bucket size below which linear scan is used instead of
+// binary search. Determined experimentally: linear scan is faster for buckets up to ~128
+// elements due to sequential prefetch; binary search wins above that.
+// See BenchmarkBucketSearch_LinearVsBinary.
+const linearScanThreshold = 128
+
 // ExactRangeEmptiness implements the 1D range emptiness structure from SODA 2015, Section 3.2.
 type ExactRangeEmptiness struct {
 	D1         *rsdic.RSDic
@@ -86,6 +92,77 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	}, nil
 }
 
+// NewExactRangeEmptinessUint64 builds ERE directly from sorted []uint64 keys,
+// avoiding BitString allocation. keyBits is the effective key width (e.g. 64).
+func NewExactRangeEmptinessUint64(keys []uint64, keyBits uint32) (*ExactRangeEmptiness, error) {
+	n := len(keys)
+	if n == 0 {
+		return &ExactRangeEmptiness{n: 0, KeySize: keyBits}, nil
+	}
+
+	for i := 1; i < n; i++ {
+		if keys[i-1] > keys[i] {
+			return nil, fmt.Errorf("keys must be sorted")
+		}
+	}
+
+	k := uint32(math.Floor(math.Log2(float64(n))))
+	if k == 0 {
+		k = 1
+	}
+
+	numBlocks := 1 << k
+	if keyBits < k {
+		keyBits = k
+	}
+	w := keyBits - k
+
+	D1 := rsdic.New()
+	D2 := rsdic.New()
+	suffixes := make([]uint64, 0, n)
+
+	suffixMask := uint64(0)
+	if w < 64 {
+		suffixMask = (1 << w) - 1
+	} else {
+		suffixMask = ^uint64(0)
+	}
+
+	i := 0
+	for b := 0; b < numBlocks; b++ {
+		countInBlock := 0
+		for i < n && (keys[i]>>(keyBits-k)) == uint64(b) {
+			suffixes = append(suffixes, keys[i]&suffixMask)
+			countInBlock++
+			i++
+		}
+
+		if countInBlock > 0 {
+			D1.PushBack(true)
+			D2.PushBack(true)
+			for c := 0; c < countInBlock; c++ {
+				D2.PushBack(false)
+			}
+		} else {
+			D1.PushBack(false)
+		}
+	}
+	D2.PushBack(true) // sentinel
+
+	packed := packUint64Local(suffixes, int(w))
+
+	return &ExactRangeEmptiness{
+		D1:         D1,
+		D2:         D2,
+		packedData: packed,
+		n:          n,
+		numBlocks:  numBlocks,
+		KeySize:    keyBits,
+		k:          k,
+		w:          w,
+	}, nil
+}
+
 // GetBlockIndex extracts the first k bits of x and interprets them as an integer
 // where bit 0 is the MSB. This maps trie-sorted keys to non-decreasing block indices.
 func GetBlockIndex(x bits.BitString, k uint32) uint64 {
@@ -132,7 +209,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 			start, end := ere.getBlockRange(blockA)
 			suffA := extractSuffixAsUint64(a, ere.w)
 			suffB := extractSuffixAsUint64(b, ere.w)
-			if !ere.isRangeEmptyInBlock(start, end, suffA, suffB) {
+			if !ere.searchBucket(start, end, suffA, suffB) {
 				return false
 			}
 		}
@@ -145,7 +222,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 			if ere.w == 64 {
 				maxSuff = ^uint64(0)
 			}
-			if !ere.isRangeEmptyInBlock(start, end, suffA, maxSuff) {
+			if !ere.searchBucket(start, end, suffA, maxSuff) {
 				return false
 			}
 		}
@@ -153,7 +230,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		if ere.D1.Bit(blockB) {
 			start, end := ere.getBlockRange(blockB)
 			suffB := extractSuffixAsUint64(b, ere.w)
-			if !ere.isRangeEmptyInBlock(start, end, 0, suffB) {
+			if !ere.searchBucket(start, end, 0, suffB) {
 				return false
 			}
 		}
@@ -169,6 +246,13 @@ func (ere *ExactRangeEmptiness) getBlockRange(blockIdx uint64) (int, int) {
 	posEndInD2 := ere.D2.Select(uint64(numNonEmptyBefore+1), true)
 	endIndex := int(posEndInD2 - uint64(numNonEmptyBefore+1))
 	return startIndex, endIndex
+}
+
+func (ere *ExactRangeEmptiness) searchBucket(start, end int, minSuff, maxSuff uint64) bool {
+	if end-start <= linearScanThreshold {
+		return ere.isRangeEmptyInBlockLinear(start, end, minSuff, maxSuff)
+	}
+	return ere.isRangeEmptyInBlock(start, end, minSuff, maxSuff)
 }
 
 func (ere *ExactRangeEmptiness) isRangeEmptyInBlock(start, end int, minSuff, maxSuff uint64) bool {
