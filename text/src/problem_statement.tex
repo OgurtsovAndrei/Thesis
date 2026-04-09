@@ -60,11 +60,10 @@ for an absolute constant $c > 0$.
 The lower bound of Theorem~1 is achieved up to an additive $O(n)$ term
 via two layers:
 \begin{enumerate}
-    \item A locality-preserving hash $h\colon U \to U'$, where $U' = \{0,1\}^K$ and $r = |U'| = 2^K$.
+    \item A locality-preserving hash (Section~\ref{sec:soda}) $h\colon U \to U'$, where $U' = \{0,1\}^K$ and $r = |U'| = 2^K$.
     The hash partitions $U$ into blocks of size $r$, applies an independent cyclic
     shift within each block, and then maps the shifted block onto $U'$ by translation.
-    Its pairwise collision probability is at most $1/2^K$;
-    see Section~\ref{sec:soda} for details.
+    Its pairwise collision probability is at most $1/2^K$.
 
     \item An \textbf{Exact Range Emptiness (ERE)} (Section~\ref{sec:ere}) structure over $S' = h(S) \subseteq U'$:
     a succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits, which answers ``$[a', b'] \cap S' = \emptyset$?''.
