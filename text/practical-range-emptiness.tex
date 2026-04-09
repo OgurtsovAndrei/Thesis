@@ -15,7 +15,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \graphicspath{{figures/}}
-\geometry{margin=2.5cm}
+\geometry{margin=2cm}
 
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
@@ -34,18 +34,13 @@
 We implement and evaluate Approximate Range Emptiness (ARE) filters for LSM-tree
 storage systems. Starting from the information-theoretically optimal construction of
 Goswami et al.\ (SODA 2015), we develop a family of practical filters that explore
-different hash function designs: pairwise-independent hashing (the paper's baseline),
-prefix truncation, CDF-based mapping, and density-based hybrid segmentation. Our best
-implementation, Scan-ARE, uses 1D DBSCAN to isolate dense key clusters into exact-mode
-sub-filters (FPR~$= 0$), achieving FPR~$< 10^{-8}$ at ${\sim}5$ bits per key even for
-range lengths up to $\mathcal{L} = 65536$ on real-world SOSD datasets --- a regime
-where all competing approaches degrade to FPR~$\approx 1$.
+different hash function designs: TODO
 \end{abstract}
 
 \tableofcontents
 
 \chapter{Introduction}
-\label{chap:introduction}
+\label{ch:introduction}
 % TODO: expand introduction
 
 \input{src/notation}
