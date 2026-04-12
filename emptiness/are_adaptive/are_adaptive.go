@@ -2,7 +2,7 @@ package are_adaptive
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/ere"
+	exactbackend "Thesis/emptiness/exact"
 	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
@@ -11,7 +11,7 @@ import (
 )
 
 type AdaptiveApproximateRangeEmptiness struct {
-	ere          *ere.ExactRangeEmptiness
+	ere          exactbackend.Filter
 	K            uint32
 	RangeLen     uint64
 	MinKey       bits.BitString
@@ -140,7 +140,7 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 
 	uniqueHashed := internalhash.SortAndDedup(hashedKeys)
 
-	ereFilter, err := ere.NewExactRangeEmptiness(uniqueHashed, bits.NewBitString(finalUniverseBits))
+	ereFilter, err := exactbackend.New(uniqueHashed, bits.NewBitString(finalUniverseBits))
 	if err != nil {
 		return nil, err
 	}

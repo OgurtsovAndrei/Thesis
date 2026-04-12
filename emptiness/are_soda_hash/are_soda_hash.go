@@ -2,7 +2,7 @@ package are_soda_hash
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/ere"
+	exactbackend "Thesis/emptiness/exact"
 	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
@@ -10,7 +10,7 @@ import (
 )
 
 type SodaARE struct {
-	ere      *ere.ExactRangeEmptiness
+	ere      exactbackend.Filter
 	K        uint32
 	RangeLen uint64
 	n        int
@@ -65,7 +65,7 @@ func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error)
 	uniqueHashed := internalhash.SortAndDedup(hashedKeys)
 
 	universe := bits.NewBitString(K)
-	ereFilter, err := ere.NewExactRangeEmptiness(uniqueHashed, universe)
+	ereFilter, err := exactbackend.New(uniqueHashed, universe)
 	if err != nil {
 		return nil, err
 	}
@@ -176,9 +176,9 @@ func (are *SodaARE) SizeInBits() uint64 {
 	return are.ere.SizeInBits()
 }
 
-func (are *SodaARE) EREStats() ere.Stats {
+func (are *SodaARE) EREStats() exactbackend.Stats {
 	if are.ere == nil {
-		return ere.Stats{}
+		return exactbackend.Stats{}
 	}
-	return are.ere.GetStats()
+	return exactbackend.StatsOf(are.ere)
 }

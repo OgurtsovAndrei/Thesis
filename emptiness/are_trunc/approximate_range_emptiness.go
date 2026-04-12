@@ -2,7 +2,7 @@ package are_trunc
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/ere"
+	exactbackend "Thesis/emptiness/exact"
 	"Thesis/utils"
 	"fmt"
 	"math"
@@ -14,7 +14,7 @@ import (
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
 type TruncARE struct {
-	exact       *ere.ExactRangeEmptiness
+	exact       exactbackend.Filter
 	K           uint32
 	minKey      bits.BitString
 	maxKey      bits.BitString
@@ -67,7 +67,7 @@ func NewTruncAREFromK(keys []bits.BitString, K uint32) (*TruncARE, error) {
 	}
 
 	universe := bits.NewBitString(K)
-	exact, err := ere.NewExactRangeEmptiness(truncatedKeys, universe)
+	exact, err := exactbackend.New(truncatedKeys, universe)
 	if err != nil {
 		return nil, err
 	}

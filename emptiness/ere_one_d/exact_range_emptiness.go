@@ -187,8 +187,7 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 			}
 		}
 	} else {
-		startA, endA := ere.getBlockRange(blockA)
-		startB, endB := ere.getBlockRange(blockB)
+		startA, endA, startB, endB := ere.getQueryBlockRanges(blockA, blockB)
 
 		// Any points between the two boundary blocks imply non-emptiness immediately.
 		if startB > endA {
@@ -224,6 +223,23 @@ func (ere *ExactRangeEmptiness) getBlockRange(blockIdx uint64) (int, int) {
 	startIndex := int(posStart - blockIdx)
 	endIndex := int(posEnd - (blockIdx + 1))
 	return startIndex, endIndex
+}
+
+func (ere *ExactRangeEmptiness) getQueryBlockRanges(blockA, blockB uint64) (int, int, int, int) {
+	if blockB == blockA+1 {
+		pos0 := ere.D.Select(blockA, true)
+		pos1 := ere.D.Select(blockA+1, true)
+		pos2 := ere.D.Select(blockA+2, true)
+		startA := int(pos0 - blockA)
+		endA := int(pos1 - (blockA + 1))
+		startB := endA
+		endB := int(pos2 - (blockA + 2))
+		return startA, endA, startB, endB
+	}
+
+	startA, endA := ere.getBlockRange(blockA)
+	startB, endB := ere.getBlockRange(blockB)
+	return startA, endA, startB, endB
 }
 
 func (ere *ExactRangeEmptiness) searchBucket(start, end int, minSuff, maxSuff uint64) bool {
@@ -309,8 +325,7 @@ func (ere *ExactRangeEmptiness) LinearIsEmpty(a, b bits.BitString) bool {
 			}
 		}
 	} else {
-		startA, endA := ere.getBlockRange(blockA)
-		startB, endB := ere.getBlockRange(blockB)
+		startA, endA, startB, endB := ere.getQueryBlockRanges(blockA, blockB)
 
 		if startB > endA {
 			return false

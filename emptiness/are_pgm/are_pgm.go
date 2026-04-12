@@ -2,7 +2,7 @@ package are_pgm
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/ere"
+	exactbackend "Thesis/emptiness/exact"
 	"fmt"
 	"math"
 	"sort"
@@ -20,7 +20,8 @@ type CDFPoint struct {
 // to map keys to a near-uniform distribution, then stores them in ERE.
 //
 // The CDF is a monotonic function, preserving range queries:
-//   x ∈ [a,b] ⟹ CDF(x) ∈ [CDF(a), CDF(b)]
+//
+//	x ∈ [a,b] ⟹ CDF(x) ∈ [CDF(a), CDF(b)]
 //
 // FPR comes only from uint64 quantization at boundaries: a query endpoint
 // and a nearby stored key may round to the same mapped position.
@@ -30,7 +31,7 @@ type CDFPoint struct {
 // loses precision for keys > 2^53.
 type PGMApproximateRangeEmptiness struct {
 	cdf       []CDFPoint
-	ere       *ere.ExactRangeEmptiness
+	ere       exactbackend.Filter
 	K         uint32
 	n         int
 	minKey    uint64
@@ -179,7 +180,7 @@ func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, 
 	}
 
 	universe := bits.NewBitString(K)
-	ereFilter, err := ere.NewExactRangeEmptiness(mapped, universe)
+	ereFilter, err := exactbackend.New(mapped, universe)
 	if err != nil {
 		return nil, err
 	}
