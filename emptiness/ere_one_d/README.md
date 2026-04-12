@@ -92,9 +92,81 @@ That is why this package exists as a separate benchmark target instead of replac
 
 ## Implementation Notes
 
-- `ere_one_d` uses the local optimized succinct bitvector implementation:
+- both `ere` and `ere_one_d` use the local optimized succinct bitvector implementation:
   - `Thesis/succinct_bit_vector/rsdic`
-- the original `ere` currently still imports the external library version
+
+## ARE Benchmark Results
+
+Measured with `ere_one_d` used as the exact backend inside:
+
+1. `SODA`
+2. `Greedy+Merge`
+
+Workload:
+
+- `n = 2^20`
+- `rangeLen = 4096`
+- `epsilon = 0.01`
+- mixed queries: 32768 queries, 3 rounds
+- datasets:
+  - `uniform`
+  - `clustered`
+  - `sosd_fb`
+  - `sosd_wiki`
+  - `sosd_osm`
+  - `sosd_books`
+
+Hardware:
+
+- Apple M4 Max
+- `darwin/arm64`
+
+### SODA
+
+| Dataset | Classic build ms | One-D build ms | Classic query ns | One-D query ns | Speedup | Classic bpk | One-D bpk | Delta bpk |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| uniform | 256.79 | 258.61 | 164.00 | 133.57 | 1.23x | 22.000 | 21.000 | 1.000 |
+| clustered | 174.77 | 176.75 | 331.33 | 322.27 | 1.03x | 22.000 | 21.000 | 1.000 |
+| sosd_fb | 37.95 | 35.85 | 671.93 | 566.48 | 1.19x | 22.000 | 21.000 | 1.000 |
+| sosd_wiki | 32.12 | 31.99 | 630.27 | 586.65 | 1.07x | 22.060 | 21.530 | 0.530 |
+| sosd_osm | 212.76 | 221.79 | 365.04 | 196.08 | 1.86x | 22.000 | 21.500 | 0.500 |
+| sosd_books | 49.21 | 36.75 | 590.96 | 584.60 | 1.01x | 22.000 | 21.000 | 1.000 |
+| **Average** | **127.27** | **126.96** | **458.92** | **398.28** | **1.15x** | **22.010** | **21.172** | **0.838** |
+
+Briefly:
+
+- `one_d` improved average query time by about **13.2%**
+- average memory improved by about **0.84 bpk**
+- build time stayed effectively unchanged
+
+### Greedy+Merge
+
+| Dataset | Classic build ms | One-D build ms | Classic query ns | One-D query ns | Speedup | Classic bpk | One-D bpk | Delta bpk |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| uniform | 84.81 | 91.07 | 222.60 | 159.53 | 1.40x | 22.000 | 21.000 | 1.000 |
+| clustered | 63.92 | 55.72 | 474.78 | 344.38 | 1.38x | 17.696 | 16.961 | 0.734 |
+| sosd_fb | 56.46 | 56.49 | 250.56 | 331.06 | 0.76x | 12.000 | 11.000 | 1.000 |
+| sosd_wiki | 51.86 | 57.75 | 299.52 | 359.13 | 0.83x | 10.061 | 9.530 | 0.530 |
+| sosd_osm | 113.58 | 111.45 | 450.82 | 418.10 | 1.08x | 33.263 | 32.525 | 0.738 |
+| sosd_books | 60.34 | 65.84 | 283.79 | 189.92 | 1.49x | 5.000 | 4.000 | 1.000 |
+| **Average** | **71.83** | **73.05** | **330.34** | **300.35** | **1.10x** | **16.670** | **15.836** | **0.834** |
+
+Briefly:
+
+- `one_d` improved average query time by about **9.1%**
+- average memory improved by about **0.83 bpk**
+- there are still bad latency cases on `sosd_fb` and `sosd_wiki`
+
+### Short Takeaway
+
+- for `SODA`, `one_d` looks strictly better on the measured setup:
+  - same build cost
+  - lower average query latency
+  - lower bits/key
+- for `Greedy+Merge`, `one_d` is better on average, but not uniformly better:
+  - average query latency improves
+  - average bits/key improves
+  - `fb` and `wiki` remain counterexamples on latency
 
 ## What To Benchmark
 
