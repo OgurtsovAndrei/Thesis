@@ -1,4 +1,4 @@
-package ere
+package ere_one_d
 
 import (
 	"Thesis/bits"
@@ -18,8 +18,7 @@ const linearScanThreshold = 128
 
 // ExactRangeEmptiness implements the 1D range emptiness structure from SODA 2015, Section 3.2.
 type ExactRangeEmptiness struct {
-	D1         *rsdic.RSDic
-	D2         *rsdic.RSDic
+	D          *rsdic.RSDic
 	packedData []uint64
 
 	n         int
@@ -53,36 +52,28 @@ func NewExactRangeEmptiness(keys []bits.BitString, universe bits.BitString) (*Ex
 	}
 	w := KeySize - k
 
-	D1 := rsdic.New()
-	D2 := rsdic.New()
+	D := rsdic.New()
 	suffixes := make([]uint64, 0, n)
 
 	i := 0
 	for b := 0; b < numBlocks; b++ {
+		D.PushBack(true)
 		countInBlock := 0
 		for i < n && GetBlockIndex(keys[i], k) == uint64(b) {
 			suffixes = append(suffixes, extractSuffixAsUint64(keys[i], w))
 			countInBlock++
 			i++
 		}
-
-		if countInBlock > 0 {
-			D1.PushBack(true)
-			D2.PushBack(true)
-			for c := 0; c < countInBlock; c++ {
-				D2.PushBack(false)
-			}
-		} else {
-			D1.PushBack(false)
+		for c := 0; c < countInBlock; c++ {
+			D.PushBack(false)
 		}
 	}
-	D2.PushBack(true) // sentinel
+	D.PushBack(true) // sentinel
 
 	packed := packUint64Local(suffixes, int(w))
 
 	return &ExactRangeEmptiness{
-		D1:         D1,
-		D2:         D2,
+		D:          D,
 		packedData: packed,
 		n:          n,
 		numBlocks:  numBlocks,
@@ -117,8 +108,7 @@ func NewExactRangeEmptinessUint64(keys []uint64, keyBits uint32) (*ExactRangeEmp
 	}
 	w := keyBits - k
 
-	D1 := rsdic.New()
-	D2 := rsdic.New()
+	D := rsdic.New()
 	suffixes := make([]uint64, 0, n)
 
 	suffixMask := uint64(0)
@@ -130,30 +120,23 @@ func NewExactRangeEmptinessUint64(keys []uint64, keyBits uint32) (*ExactRangeEmp
 
 	i := 0
 	for b := 0; b < numBlocks; b++ {
+		D.PushBack(true)
 		countInBlock := 0
 		for i < n && (keys[i]>>(keyBits-k)) == uint64(b) {
 			suffixes = append(suffixes, keys[i]&suffixMask)
 			countInBlock++
 			i++
 		}
-
-		if countInBlock > 0 {
-			D1.PushBack(true)
-			D2.PushBack(true)
-			for c := 0; c < countInBlock; c++ {
-				D2.PushBack(false)
-			}
-		} else {
-			D1.PushBack(false)
+		for c := 0; c < countInBlock; c++ {
+			D.PushBack(false)
 		}
 	}
-	D2.PushBack(true) // sentinel
+	D.PushBack(true) // sentinel
 
 	packed := packUint64Local(suffixes, int(w))
 
 	return &ExactRangeEmptiness{
-		D1:         D1,
-		D2:         D2,
+		D:          D,
 		packedData: packed,
 		n:          n,
 		numBlocks:  numBlocks,
@@ -194,19 +177,9 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 		blockB = uint64(ere.numBlocks - 1)
 	}
 
-	// 1. Check intermediate full blocks
-	if blockB > blockA+1 {
-		onesBeforeB := ere.D1.Rank(blockB, true)
-		onesBeforeA1 := ere.D1.Rank(blockA+1, true)
-		if onesBeforeB > onesBeforeA1 {
-			return false
-		}
-	}
-
-	// 2. Check boundary blocks
 	if blockA == blockB {
-		if ere.D1.Bit(blockA) {
-			start, end := ere.getBlockRange(blockA)
+		start, end := ere.getBlockRange(blockA)
+		if start < end {
 			suffA := extractSuffixAsUint64(a, ere.w)
 			suffB := extractSuffixAsUint64(b, ere.w)
 			if !ere.searchBucket(start, end, suffA, suffB) {
@@ -214,23 +187,29 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 			}
 		}
 	} else {
+		startA, endA := ere.getBlockRange(blockA)
+		startB, endB := ere.getBlockRange(blockB)
+
+		// Any points between the two boundary blocks imply non-emptiness immediately.
+		if startB > endA {
+			return false
+		}
+
 		// Check blockA for elements in [suffA, max]
-		if ere.D1.Bit(blockA) {
-			start, end := ere.getBlockRange(blockA)
+		if startA < endA {
 			suffA := extractSuffixAsUint64(a, ere.w)
 			maxSuff := (uint64(1) << ere.w) - 1
 			if ere.w == 64 {
 				maxSuff = ^uint64(0)
 			}
-			if !ere.searchBucket(start, end, suffA, maxSuff) {
+			if !ere.searchBucket(startA, endA, suffA, maxSuff) {
 				return false
 			}
 		}
 		// Check blockB for elements in [0, suffB]
-		if ere.D1.Bit(blockB) {
-			start, end := ere.getBlockRange(blockB)
+		if startB < endB {
 			suffB := extractSuffixAsUint64(b, ere.w)
-			if !ere.searchBucket(start, end, 0, suffB) {
+			if !ere.searchBucket(startB, endB, 0, suffB) {
 				return false
 			}
 		}
@@ -240,11 +219,10 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
 }
 
 func (ere *ExactRangeEmptiness) getBlockRange(blockIdx uint64) (int, int) {
-	numNonEmptyBefore := int(ere.D1.Rank(blockIdx, true))
-	posInD2 := ere.D2.Select(uint64(numNonEmptyBefore), true)
-	startIndex := int(posInD2 - uint64(numNonEmptyBefore))
-	posEndInD2 := ere.D2.Select(uint64(numNonEmptyBefore+1), true)
-	endIndex := int(posEndInD2 - uint64(numNonEmptyBefore+1))
+	posStart := ere.D.Select(blockIdx, true)
+	posEnd := ere.D.Select(blockIdx+1, true)
+	startIndex := int(posStart - blockIdx)
+	endIndex := int(posEnd - (blockIdx + 1))
 	return startIndex, endIndex
 }
 
@@ -321,19 +299,9 @@ func (ere *ExactRangeEmptiness) LinearIsEmpty(a, b bits.BitString) bool {
 		blockB = uint64(ere.numBlocks - 1)
 	}
 
-	// 1. Check intermediate full blocks
-	if blockB > blockA+1 {
-		onesBeforeB := ere.D1.Rank(blockB, true)
-		onesBeforeA1 := ere.D1.Rank(blockA+1, true)
-		if onesBeforeB > onesBeforeA1 {
-			return false
-		}
-	}
-
-	// 2. Check boundary blocks
 	if blockA == blockB {
-		if ere.D1.Bit(blockA) {
-			start, end := ere.getBlockRange(blockA)
+		start, end := ere.getBlockRange(blockA)
+		if start < end {
 			suffA := extractSuffixAsUint64(a, ere.w)
 			suffB := extractSuffixAsUint64(b, ere.w)
 			if !ere.isRangeEmptyInBlockLinear(start, end, suffA, suffB) {
@@ -341,21 +309,26 @@ func (ere *ExactRangeEmptiness) LinearIsEmpty(a, b bits.BitString) bool {
 			}
 		}
 	} else {
-		if ere.D1.Bit(blockA) {
-			start, end := ere.getBlockRange(blockA)
+		startA, endA := ere.getBlockRange(blockA)
+		startB, endB := ere.getBlockRange(blockB)
+
+		if startB > endA {
+			return false
+		}
+
+		if startA < endA {
 			suffA := extractSuffixAsUint64(a, ere.w)
 			maxSuff := (uint64(1) << ere.w) - 1
 			if ere.w == 64 {
 				maxSuff = ^uint64(0)
 			}
-			if !ere.isRangeEmptyInBlockLinear(start, end, suffA, maxSuff) {
+			if !ere.isRangeEmptyInBlockLinear(startA, endA, suffA, maxSuff) {
 				return false
 			}
 		}
-		if ere.D1.Bit(blockB) {
-			start, end := ere.getBlockRange(blockB)
+		if startB < endB {
 			suffB := extractSuffixAsUint64(b, ere.w)
-			if !ere.isRangeEmptyInBlockLinear(start, end, 0, suffB) {
+			if !ere.isRangeEmptyInBlockLinear(startB, endB, 0, suffB) {
 				return false
 			}
 		}
@@ -388,8 +361,7 @@ func (ere *ExactRangeEmptiness) ByteSize() int {
 		return 0
 	}
 	size := int(unsafe.Sizeof(*ere))
-	size += ere.D1.AllocSize()
-	size += ere.D2.AllocSize()
+	size += ere.D.AllocSize()
 	size += len(ere.packedData) * 8
 	return size
 }
@@ -399,10 +371,9 @@ func (ere *ExactRangeEmptiness) SizeInBits() uint64 {
 		return 0
 	}
 	// RSDic internal size + packed data
-	d1Bits := uint64(ere.numBlocks)
-	d2Bits := uint64(ere.n + ere.numBlocks)
+	dBits := uint64(ere.n + ere.numBlocks + 1)
 	suffixBits := uint64(ere.n) * uint64(ere.w)
-	return d1Bits + d2Bits + suffixBits
+	return dBits + suffixBits
 }
 
 type Stats struct {
@@ -416,15 +387,16 @@ type Stats struct {
 }
 
 func (ere *ExactRangeEmptiness) GetStats() Stats {
-	nonEmpty := int(ere.D1.Rank(uint64(ere.numBlocks), true))
+	nonEmpty := 0
 	maxKeys := 0
 	for b := uint64(0); b < uint64(ere.numBlocks); b++ {
-		if ere.D1.Bit(b) {
-			start, end := ere.getBlockRange(b)
-			count := end - start
-			if count > maxKeys {
-				maxKeys = count
-			}
+		start, end := ere.getBlockRange(b)
+		count := end - start
+		if count > 0 {
+			nonEmpty++
+		}
+		if count > maxKeys {
+			maxKeys = count
 		}
 	}
 
@@ -448,8 +420,7 @@ func (ere *ExactRangeEmptiness) MemDetailed() utils.MemReport {
 		TotalBytes: ere.ByteSize(),
 		Children: []utils.MemReport{
 			{Name: "metadata", TotalBytes: int(unsafe.Sizeof(*ere))},
-			{Name: "D1_blocks", TotalBytes: ere.D1.AllocSize()},
-			{Name: "D2_counts", TotalBytes: ere.D2.AllocSize()},
+			{Name: "D_blocks", TotalBytes: ere.D.AllocSize()},
 			{Name: "suffixes_packed", TotalBytes: len(ere.packedData) * 8},
 		},
 	}
