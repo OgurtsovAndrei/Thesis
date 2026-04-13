@@ -2,40 +2,90 @@
 \label{sec:ere}
 
 The inner layer of every approximate filter is an \emph{Exact Range Emptiness} (ERE)
-structure: given a universe $[r]$ of $\ell = \lceil \log_2 r \rceil$-bit keys
-and a set $S' \subseteq [r]$ of $n$ keys, it answers
+structure: given a universe $U'$ of $K$-bit keys
+and a set $S' \subseteq U'$ of $n$ keys, it answers
 ``$[a, b] \cap S' = \emptyset$?'' exactly (no false positives or false negatives).
-Throughout this chapter, $S'$ denotes the input to ERE; in the ARE pipeline
-(Chapter~\ref{chap:hash}), $S' = h(S)$.
 
-\subsection{Two-Level Hierarchy}
+\begin{remark}
+    Throughout this chapter, $S'$ denotes the input to ERE; in the ARE pipeline (Chapter~\ref{chap:hash}), $S' = h(S)$.
+\end{remark}
 
-To achieve the information-theoretic minimum of $n \log_2(r/n) + O(n)$ bits, the
-structure divides the universe $[r]$ into $n$ equal-sized blocks:
+\subsection{High-Level Structure}
+\label{subsec:ere-high-level-structure}
 
-\paragraph{Global level (succinct indexing).}
-Two bit-vectors provide $O(1)$ navigation:
-\begin{itemize}
-  \item $D_1$ (size $n$ bits): $D_1[i] = 1$ if block $i$ contains at least one key.
-  \item $D_2$ (size ${\sim}2n$ bits): an Elias--Fano~\citep{elias1974efficient,fano1971number}
-    representation of block counts. Each non-empty block $i$ contributes a $1$ followed
-    by $n_i$ zeros. A \textsc{Select}$_1$ / \textsc{Rank}$_0$ pair maps any block index
-    to its starting position in the data array in $O(1)$ time.
-\end{itemize}
+To achieve the information-theoretic minimum of $n \cdot (K - \log_2(n) + O(1)) = n \log_2(\frac{r}{n}) + O(n)$ bits, the
+structure divides the universe $U'$ into $B = 2^{\lfloor \log_2 n \rfloor}$ equal-sized blocks.
+Conceptually, ERE has two levels: a succinct navigation layer over blocks, and a compact local representation of the keys.
 
-\paragraph{Local level (bit-packed suffixes).}
-Instead of storing full keys, only the suffix $x \bmod (r/n)$ is stored for each
-key~$x$. The suffix length is $W = |r| - \lceil \log_2 n \rceil$ bits. All suffixes are packed into a dense \texttt{uint64} array using bit-shifts,
-eliminating per-element overhead.
+All keys inside one block have common $\log_2 B = \lfloor \log_2 n \rfloor$ bits prefix.
+Therefore, key suffixes can be stored in the array with $K - \lfloor \log_2 n \rfloor$ bits per key.
+The succinct navigation layer is used to determine block boundaries.
+
+\subsection{Original ERE Structure}
+\label{subsec:ere-original-structure}
+
+We now describe the original ERE construction of \citet{goswami2015approximate}
+more precisely.
+It consists of the following parts:
+
+\begin{enumerate}
+    \item $D_1$ succinct bit vector: stores block occupancy: $D_1[i] = 1$ iff block $i$ contains at least one key.
+    \item $D_2$ succinct bit vector: encodes the sizes of non-empty blocks in unary form.
+    If a non-empty block $i$ contains $n_i$ keys, then it contributes a $1$ followed by $n_i$ zeros.
+    \item $A_{ds}$ the array of structures: each data structure consists of:
+    \subitem The sorted list of suffixes
+    \subitem The indexing data structure for Weak Prefix Search \colorbox{orange}{TODO: What is the Weak Prefix Search}; see Section~\ref{subsec:ere-local-search}.
+\end{enumerate}
+
+A query range is split into at most three parts: a sequence of complete blocks
+and up to two partially covered boundary blocks.
+The complete-block part is answered by the global succinct layer using $D_1$
+and $D_2$.
+The boundary parts are answered by locating the corresponding local
+structure in $A_{ds}$ via $D_1$ and $D_2$, and then querying that local
+structure inside the block.
+\colorbox{orange}{TODO: Should I say how WPS + sorted suffixes are used to check emptiness?};
 
 \subsection{Local Search in Buckets}
-\label{sec:ere-local-search}
+\label{subsec:ere-local-search}
 
 The original paper~\citep{goswami2015approximate} suggests a Weak Prefix Search structure
 (Hollow Z-Fast Trie) for $O(1)$ worst-case local queries.
-We use binary search on bit-packed suffixes instead, with an adaptive
-fallback to linear scan for small buckets.
-Section~\ref{sec:ere-no-wps} details why.
+We use binary search on bit-packed suffixes, with an adaptive fallback to linear scan for small buckets instead.
+The reason is practical.
+Binary search and linear scan are faster in practice than
+accessing an additional $O(1)$ indexing structure with a big hidden constant, while also avoiding its
+memory overhead.
+Details are given in Section~\ref{sec:ere-no-wps}.
+
+\subsection{One-Vector Optimization}
+\label{subsec:ere-one-vector}
+
+In the optimized variant, we simplify the navigation layer.
+Instead of storing occupancy and non-empty block offsets separately in $D_1$ and $D_2$, we replace them with a single succinct bit-vector $D$.
+Every block $i$ with $n_i$ keys is encoded as a single $1$ followed by $n_i$ zeros, whether the block is empty or not.
+In particular, an empty block (with $n_i = 0$) is encoded by a single $1$.
+One final sentinel $1$ is appended at the end.
+
+\paragraph{Effect on space and navigation.}
+Let $M$ denote the number of non-empty blocks.
+In the original layout, the metadata size is
+\[
+    |D_1| + |D_2| = B + (n + M + 1).
+\]
+In the optimized layout, the metadata becomes
+\[
+    |D| = B + n + 1.
+\]
+The exact metadata reduction is $M$ bits.
+Operationally, this means that the old two-stage lookup through $D_1$
+and $D_2$ is replaced by direct navigation via \textsc{Select} on $D$.
+
+In our experiments this optimization reduced average memory usage by about 0.83 bits per key and improved average query time by about 9.1%.
+\colorbox{orange}{TODO: Maybe add some table with results?}
+
+\subsection{Block sizes and Lookup strategy}
+\label{subsec:block-sizes-and-lookup-strategy}
 
 \paragraph{Block occupancy under uniform distribution.}
 The structure divides the universe into $m = 2^{\lfloor \log_2 n \rfloor}$ blocks;
@@ -57,7 +107,7 @@ $\Pr[\mathrm{Poisson}(\lambda) \geq k] = 1 - \sum_{j=0}^{k-1} e^{-\lambda}\lambd
 The probability that \emph{any} of the $m$ blocks contains $\geq k$ keys
 is at most
 \[
-  \Pr\!\bigl[\max_i X_i \geq k\bigr]
+    \Pr\!\bigl[\max_i X_i \geq k\bigr]
     \;\leq\; m \cdot \Pr[\mathrm{Poisson}(\lambda) \geq k].
 \]
 The expected number of blocks with occupancy $\geq k$ drops below~1 when
@@ -67,25 +117,25 @@ Table~\ref{tab:ere-bucket-stats} shows that this threshold closely matches
 the measured maximum.
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}rrrrrr@{}}
-\toprule
-$n$ & Empty (\%) & Avg / non-empty & Max (meas.) &
-  $k^*$ & $n \cdot \Pr[X \geq k^*]$ \\
-\midrule
-$2^{20}$ & 36.75 & 1.58 & 9  & 10 & 0.12 \\
-$2^{24}$ & 36.79 & 1.58 & 9  & 11 & 0.17 \\
-$2^{27}$ & 36.79 & 1.58 & 10 & 12 & 0.11 \\
-$2^{30}$ & 36.79 & 1.58 & 13 & 12 & 0.89 \\
-\bottomrule
-\end{tabular}
-\caption{ERE bucket statistics for uniform keys with $\lambda = 1$ ($m = n$).
-  $k^*$ is the smallest $k$ such that $n \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.
-  The measured maximum can exceed $k^*$ (e.g.\ $n = 2^{30}$: max $= 13 > k^* = 12$)
-  because the bound is not tight;
-  $n \cdot \Pr[\mathrm{Poisson}(1) \geq 13] \approx 0.07$ at $n = 2^{30}$
-  (see Table~\ref{tab:ere-poisson-tail}).}
-\label{tab:ere-bucket-stats}
+    \centering
+    \begin{tabular}{@{}rrrrrr@{}}
+        \toprule
+        $n$ & Empty (\%) & Avg / non-empty & Max (meas.) &
+        $k^*$ & $n \cdot \Pr[X \geq k^*]$ \\
+        \midrule
+        $2^{20}$ & 36.75 & 1.58 & 9  & 10 & 0.12 \\
+        $2^{24}$ & 36.79 & 1.58 & 9  & 11 & 0.17 \\
+        $2^{27}$ & 36.79 & 1.58 & 10 & 12 & 0.11 \\
+        $2^{30}$ & 36.79 & 1.58 & 13 & 12 & 0.89 \\
+        \bottomrule
+    \end{tabular}
+    \caption{ERE bucket statistics for uniform keys with $\lambda = 1$ ($m = n$).
+        $k^*$ is the smallest $k$ such that $n \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.
+        The measured maximum can exceed $k^*$ (e.g.\ $n = 2^{30}$: max $= 13 > k^* = 12$)
+        because the bound is not tight;
+        $n \cdot \Pr[\mathrm{Poisson}(1) \geq 13] \approx 0.07$ at $n = 2^{30}$
+        (see Table~\ref{tab:ere-poisson-tail}).}
+    \label{tab:ere-bucket-stats}
 \end{table}
 
 Table~\ref{tab:ere-poisson-tail} shows how rapidly the tail probability
@@ -94,25 +144,25 @@ $\geq 20$ keys is below $10^{-10}$, making buckets larger than ${\sim}15$
 keys virtually impossible for uniform data.
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}rrr@{}}
-\toprule
-$k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ &
-  $n \cdot \Pr[X \geq k]$,\; $n = 2^{30}$ \\
-\midrule
-10 & $1.1 \times 10^{-7}$  & $1.2 \times 10^{2\phantom{0}}$ \\
-13 & $6.4 \times 10^{-11}$ & $6.8 \times 10^{-2}$ \\
-15 & $3.0 \times 10^{-13}$ & $3.2 \times 10^{-4}$ \\
-20 & $1.6 \times 10^{-19}$ & $1.7 \times 10^{-10}$ \\
-25 & $2.5 \times 10^{-26}$ & $2.6 \times 10^{-17}$ \\
-\bottomrule
-\end{tabular}
-\caption{Poisson tail probabilities for bucket occupancy ($\lambda = 1$),
-  computed via $\Pr[X \geq k] = 1 - \sum_{j=0}^{k-1} e^{-1}/j!$.
-  At $k = 13$ the expected number of such blocks across all $n = 2^{30}$
-  blocks is ${\sim}0.07$ --- consistent with observing max $= 13$ occasionally.
-  At $k = 20$ it is below $10^{-10}$ even for $n = 2^{30}$.}
-\label{tab:ere-poisson-tail}
+    \centering
+    \begin{tabular}{@{}rrr@{}}
+        \toprule
+        $k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ &
+        $n \cdot \Pr[X \geq k]$,\; $n = 2^{30}$ \\
+        \midrule
+        10 & $1.1 \times 10^{-7}$  & $1.2 \times 10^{2\phantom{0}}$ \\
+        13 & $6.4 \times 10^{-11}$ & $6.8 \times 10^{-2}$           \\
+        15 & $3.0 \times 10^{-13}$ & $3.2 \times 10^{-4}$           \\
+        20 & $1.6 \times 10^{-19}$ & $1.7 \times 10^{-10}$          \\
+        25 & $2.5 \times 10^{-26}$ & $2.6 \times 10^{-17}$          \\
+        \bottomrule
+    \end{tabular}
+    \caption{Poisson tail probabilities for bucket occupancy ($\lambda = 1$),
+        computed via $\Pr[X \geq k] = 1 - \sum_{j=0}^{k-1} e^{-1}/j!$.
+        At $k = 13$ the expected number of such blocks across all $n = 2^{30}$
+        blocks is ${\sim}0.07$ --- consistent with observing max $= 13$ occasionally.
+        At $k = 20$ it is below $10^{-10}$ even for $n = 2^{30}$.}
+    \label{tab:ere-poisson-tail}
 \end{table}
 
 \paragraph{Non-uniform distributions and worst-case bounds.}
@@ -166,24 +216,24 @@ LERLOC (\textbf{L}ocal \textbf{E}xact \textbf{R}ange \textbf{LOC}ator),
 differing in the trie and MMPH components used:
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}lrr@{}}
-\toprule
-Variant & Space (bits/key) & Query (ns), $L{=}64$ \\
-\midrule
-LERLOC Fast (HZFT + BoomPHF)     & 179 & 1095--1466 \\
-LERLOC Compact (SHZFT + BoomPHF) & 151 & 372--567   \\
-LeMon-LERLOC (SHZFT + LeMonHash) &  59 & 537--762   \\
-\bottomrule
-\end{tabular}
-\caption{LERLOC variants: space and query latency on Apple~M4~Max,
-  $n = 1024$--$32768$, 64-bit keys.
-  LeMon-LERLOC breakdown: SHZFT trie ${\sim}35$~BPK, LeMonHash MMPH ${\sim}19$~BPK,
-  RSDic leaf bitvector ${\sim}5$~BPK.
-  The MMPH indexes the boundary set $P$ of the trie: 3 strings per node
-  ($n$ leaves $+ (n{-}1)$ internal), so $|P| \leq 3(2n - 1) = 6n - 3$
-  before deduplication; empirically $|P|/n \approx 4.3$ for $n > 10^5$.}
-\label{tab:lerloc-cost}
+    \centering
+    \begin{tabular}{@{}lrr@{}}
+        \toprule
+        Variant                          & Space (bits/key) & Query (ns), $L{=}64$ \\
+        \midrule
+        LERLOC Fast (HZFT + BoomPHF)     & 179              & 1095--1466           \\
+        LERLOC Compact (SHZFT + BoomPHF) & 151              & 372--567             \\
+        LeMon-LERLOC (SHZFT + LeMonHash) & 59               & 537--762             \\
+        \bottomrule
+    \end{tabular}
+    \caption{LERLOC variants: space and query latency on Apple~M4~Max,
+        $n = 1024$--$32768$, 64-bit keys.
+        LeMon-LERLOC breakdown: SHZFT trie ${\sim}35$~BPK, LeMonHash MMPH ${\sim}19$~BPK,
+        RSDic leaf bitvector ${\sim}5$~BPK.
+        The MMPH indexes the boundary set $P$ of the trie: 3 strings per node
+        ($n$ leaves $+ (n{-}1)$ internal), so $|P| \leq 3(2n - 1) = 6n - 3$
+        before deduplication; empirically $|P|/n \approx 4.3$ for $n > 10^5$.}
+    \label{tab:lerloc-cost}
 \end{table}
 
 The high space cost stems from three expansion factors hidden behind
@@ -214,7 +264,7 @@ inside a bucket, while Rank/Select navigation on $D_1$ and $D_2$
 Each LERLOC call descends the trie (pointer chasing through hash tables), then
 performs an MMPH rank lookup --- at least 370~ns for the Compact variant at $L = 64$.
 Binary search on a typical bucket of ${\sim}12$ keys takes 5--9~ns
-(Section~\ref{sec:ere-local-search}), making LERLOC $40$--$110 \times$
+(Section~\ref{subsec:ere-local-search}), making LERLOC $40$--$110 \times$
 slower for the operation it replaces.
 
 The root cause is that the $O(1)$ theoretical guarantee hides large constants:
@@ -229,39 +279,39 @@ Even in an adversarial worst case --- every key in a single bucket ---
 binary search remains fast:
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}rrr@{}}
-\toprule
-$w$ (suffix bits) & Bucket size ($2^w$) & Binary search (ns) \\
-\midrule
-12 & 4\,096   & 37 \\
-15 & 32\,768  & 48 \\
-17 & 131\,072 & 58 \\
-\bottomrule
-\end{tabular}
-\caption{Worst-case binary search on a fully packed bucket (Apple~M4~Max).
-  At $w = 12$ (BPK~$\approx 15$), the entire bucket search costs 37~ns ---
-  still $10 \times$ faster than the best LERLOC variant.}
-\label{tab:ere-worst-case-binsearch}
+    \centering
+    \begin{tabular}{@{}rrr@{}}
+        \toprule
+        $w$ (suffix bits) & Bucket size ($2^w$) & Binary search (ns) \\
+        \midrule
+        12                & 4\,096              & 37                 \\
+        15                & 32\,768             & 48                 \\
+        17                & 131\,072            & 58                 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Worst-case binary search on a fully packed bucket (Apple~M4~Max).
+    At $w = 12$ (BPK~$\approx 15$), the entire bucket search costs 37~ns ---
+    still $10 \times$ faster than the best LERLOC variant.}
+    \label{tab:ere-worst-case-binsearch}
 \end{table}
 
 \subsection{Space Analysis}
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-$\ell$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
-\midrule
-64   & 44.07  & 3.2 & 47.27  \\
-128  & 108.07 & 3.2 & 111.27 \\
-256  & 236.07 & 3.2 & 239.27 \\
-512  & 492.07 & 3.2 & 495.27 \\
-\bottomrule
-\end{tabular}
-\caption{Measured ERE space with $n = 10^6$ keys. Metadata ($D_1 + D_2$ + rank/select
-  indices) is constant at ${\sim}3.2$ BPK.}
-\label{tab:ere-space}
+    \centering
+    \begin{tabular}{@{}lrrr@{}}
+        \toprule
+        $\ell$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
+        \midrule
+        64                & 44.07                          & 3.2      & 47.27     \\
+        128               & 108.07                         & 3.2      & 111.27    \\
+        256               & 236.07                         & 3.2      & 239.27    \\
+        512               & 492.07                         & 3.2      & 495.27    \\
+        \bottomrule
+    \end{tabular}
+    \caption{Measured ERE space with $n = 10^6$ keys. Metadata ($D_1 + D_2$ + rank/select
+    indices) is constant at ${\sim}3.2$ BPK.}
+    \label{tab:ere-space}
 \end{table}
 
 Space grows linearly with $\ell$ --- unavoidable for an exact structure, since it must
@@ -273,11 +323,11 @@ independent of the original key length~$\ell$.
 \subsection{Complexity Summary}
 
 \begin{itemize}
-  \item \textbf{Build:} $O(n \cdot |r|)$ --- a single pass over sorted keys.
-  \item \textbf{Query:} $O(|r|/w)$ expected (block index + binary search over ${\sim}2$
+    \item \textbf{Build:} $O(n \cdot |r|)$ --- a single pass over sorted keys.
+    \item \textbf{Query:} $O(|r|/w)$ expected (block index + binary search over ${\sim}2$
     keys of $\ell$ bits each); $O((|r|/w) \log n)$ worst case if all keys collide in a
     single block. When used inside ARE with $K$-bit fingerprints fitting in one machine
     word, this reduces to $O(1)$ expected.
-  \item \textbf{Space:} $n \log_2(r/n) + O(n)$ bits, matching the information-theoretic
+    \item \textbf{Space:} $n \log_2(r/n) + O(n)$ bits, matching the information-theoretic
     lower bound.
 \end{itemize}
