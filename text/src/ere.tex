@@ -88,40 +88,33 @@ In our experiments this optimization reduced average memory usage by about 0.83 
 \label{subsec:block-sizes-and-lookup-strategy}
 
 \paragraph{Block occupancy under uniform distribution.}
-The structure divides the universe into $m = 2^{\lfloor \log_2 n \rfloor}$ blocks;
+The structure divides the universe into $B = 2^{\lfloor \log_2 n \rfloor}$ blocks;
 each non-empty block stores its keys' suffixes in a packed array (a \emph{bucket}).
 The expected
-number of keys per block is $\lambda = n/m \in [1,\,2)$.
-When $n$ is a power of two, $m = n$ and $\lambda = 1$ exactly.
+number of keys per block is $\lambda = n/B \in [1,\,2)$.
+When $n$ is a power of two, $B = n$ and $\lambda = 1$ exactly.
 Each key falls into a uniformly random block, so the occupancy of a fixed block
-follows $\mathrm{Bin}(n,\,1/m)$, which converges to $\mathrm{Poisson}(\lambda)$
+follows $\mathrm{Bin}(n,\,1/B)$, which converges to $\mathrm{Poisson}(\lambda)$
 as $n \to \infty$~\citep[Ch.~5]{mitzenmacher2017probability}.
 
 For $\lambda = 1$, the fraction of empty blocks converges to $e^{-1} \approx 36.8\%$,
 and the mean occupancy among non-empty blocks to $1/(1 - e^{-1}) \approx 1.58$.
 
-To estimate the maximum bucket size, we use a union bound.
-The probability that a fixed block contains at least $k$ keys is
-$\Pr[\mathrm{Poisson}(\lambda) \geq k] = 1 - \sum_{j=0}^{k-1} e^{-\lambda}\lambda^j/j!$
-(which simplifies to $1 - \sum_{j=0}^{k-1} e^{-1}/j!$ when $\lambda = 1$).
-The probability that \emph{any} of the $m$ blocks contains $\geq k$ keys
-is at most
-\[
-    \Pr\!\bigl[\max_i X_i \geq k\bigr]
-    \;\leq\; m \cdot \Pr[\mathrm{Poisson}(\lambda) \geq k].
-\]
-The expected number of blocks with occupancy $\geq k$ drops below~1 when
-$m \cdot \Pr[\mathrm{Poisson}(\lambda) \geq k] < 1$.
-In the tables below we use $\lambda = 1$ ($m = n$, powers of two).
-Table~\ref{tab:ere-bucket-stats} shows that this threshold closely matches
-the measured maximum.
+The classical balls-into-bins analysis~\citep[Lemma~5.1]{mitzenmacher2017probability}
+bounds the maximum load by $3\ln n / \ln\ln n$ with probability $\geq 1 - 1/n$.
+At $n = 2^{30}$ this gives $\approx 21$ keys per bucket.
+Table~\ref{tab:ere-bucket-stats} reports the empirical maxima alongside the
+Poisson reference $k^*$ --- the smallest $k$ with $B \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$;
+all measured maxima are well below the Lemma~5.1 bound.
+Each observed max is the largest bucket over a single realisation of $n$ uniform
+random 64-bit keys, taken across all $B$ blocks.
 
 \begin{table}[h]
     \centering
     \begin{tabular}{@{}rrrrrr@{}}
         \toprule
-        $n$ & Empty (\%) & Avg / non-empty & Max (meas.) &
-        $k^*$ & $n \cdot \Pr[X \geq k^*]$ \\
+        $n$ & empty (\%) & avg load\textsuperscript{*} & observed max &
+        $k^*$ & $B \cdot \Pr[X \geq k^*]$ \\
         \midrule
         $2^{20}$ & 36.75 & 1.58 & 9  & 10 & 0.12 \\
         $2^{24}$ & 36.79 & 1.58 & 9  & 11 & 0.17 \\
@@ -129,26 +122,22 @@ the measured maximum.
         $2^{30}$ & 36.79 & 1.58 & 13 & 12 & 0.89 \\
         \bottomrule
     \end{tabular}
-    \caption{ERE bucket statistics for uniform keys with $\lambda = 1$ ($m = n$).
-        $k^*$ is the smallest $k$ such that $n \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.
-        The measured maximum can exceed $k^*$ (e.g.\ $n = 2^{30}$: max $= 13 > k^* = 12$)
-        because the bound is not tight;
-        $n \cdot \Pr[\mathrm{Poisson}(1) \geq 13] \approx 0.07$ at $n = 2^{30}$
-        (see Table~\ref{tab:ere-poisson-tail}).}
+    \caption{Bucket statistics for $n$ keys in $B = n$ bins ($\lambda = 1$).
+        \textsuperscript{*}Averaged over non-empty bins.
+        $k^*$: smallest $k$ with $B \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.}
     \label{tab:ere-bucket-stats}
 \end{table}
 
-Table~\ref{tab:ere-poisson-tail} shows how rapidly the tail probability
-drops with $k$: even at $n = 2^{30}$, the probability of any block containing
-$\geq 20$ keys is below $10^{-10}$, making buckets larger than ${\sim}15$
-keys virtually impossible for uniform data.
+Table~\ref{tab:ere-poisson-tail} shows how rapidly the Poisson tail drops with $k$:
+even at $B = 2^{30}$, the expected number of blocks with $\geq 20$ keys is below
+$10^{-10}$, making buckets larger than ${\sim}20$ keys virtually impossible for
+uniform data.
 
 \begin{table}[h]
     \centering
     \begin{tabular}{@{}rrr@{}}
         \toprule
-        $k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ &
-        $n \cdot \Pr[X \geq k]$,\; $n = 2^{30}$ \\
+        $k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ & expected bins \\
         \midrule
         10 & $1.1 \times 10^{-7}$  & $1.2 \times 10^{2\phantom{0}}$ \\
         13 & $6.4 \times 10^{-11}$ & $6.8 \times 10^{-2}$           \\
@@ -157,11 +146,7 @@ keys virtually impossible for uniform data.
         25 & $2.5 \times 10^{-26}$ & $2.6 \times 10^{-17}$          \\
         \bottomrule
     \end{tabular}
-    \caption{Poisson tail probabilities for bucket occupancy ($\lambda = 1$),
-        computed via $\Pr[X \geq k] = 1 - \sum_{j=0}^{k-1} e^{-1}/j!$.
-        At $k = 13$ the expected number of such blocks across all $n = 2^{30}$
-        blocks is ${\sim}0.07$ --- consistent with observing max $= 13$ occasionally.
-        At $k = 20$ it is below $10^{-10}$ even for $n = 2^{30}$.}
+    \caption{Poisson tail for bucket occupancy ($\lambda = 1$), $n = B = 2^{30}$.}
     \label{tab:ere-poisson-tail}
 \end{table}
 
