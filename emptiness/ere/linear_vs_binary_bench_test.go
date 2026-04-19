@@ -81,6 +81,54 @@ func BenchmarkBucketSearch_WorstCase(b *testing.B) {
 	}
 }
 
+func BenchmarkBucketSearch_Dense(b *testing.B) {
+	// Dense-bucket grid: k ∈ {4096, 16384, 65536, 131072} × w ∈ {15, 17, 20}
+	// with constraint k ≤ 2^w.
+	cases := []struct {
+		w  uint32
+		sz int
+	}{
+		{15, 4096},
+		{15, 16384},
+		{17, 4096},
+		{17, 16384},
+		{17, 65536},
+		{17, 131072},
+		{20, 4096},
+		{20, 16384},
+		{20, 65536},
+		{20, 131072},
+	}
+
+	for _, c := range cases {
+		if c.sz > (1 << c.w) {
+			continue
+		}
+
+		suffixes := genSortedSuffixes(c.sz, c.w)
+		packed := packUint64Local(suffixes, int(c.w))
+		minSuff := suffixes[c.sz/4]
+		maxSuff := suffixes[c.sz*3/4]
+
+		ere := &ExactRangeEmptiness{
+			packedData: packed,
+			w:          c.w,
+		}
+
+		b.Run(fmt.Sprintf("w=%d/n=%d/binary", c.w, c.sz), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				ere.isRangeEmptyInBlock(0, c.sz, minSuff, maxSuff)
+			}
+		})
+
+		b.Run(fmt.Sprintf("w=%d/n=%d/linear", c.w, c.sz), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				ere.isRangeEmptyInBlockLinear(0, c.sz, minSuff, maxSuff)
+			}
+		})
+	}
+}
+
 func genSortedSuffixes(n int, w uint32) []uint64 {
 	mask := uint64((1 << w) - 1)
 	seen := make(map[uint64]bool, n)
