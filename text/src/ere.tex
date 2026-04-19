@@ -18,7 +18,7 @@ structure divides the universe $U'$ into $B = 2^{\lfloor \log_2 n \rfloor}$ equa
 Conceptually, ERE has two levels: a succinct navigation layer over blocks, and a compact local representation of the keys.
 
 All keys inside one block have common $\log_2 B = \lfloor \log_2 n \rfloor$ bits prefix.
-Therefore, key suffixes can be stored in the array with $K - \lfloor \log_2 n \rfloor$ bits per key.
+Therefore, key suffixes can be stored in the array with $w = K - \lfloor \log_2 n \rfloor$ bits per key.
 The succinct navigation layer is used to determine block boundaries.
 
 \subsection{Original ERE Structure}
@@ -193,73 +193,54 @@ the remainder is Rank/Select navigation on the metadata bit vectors.
 \subsection{Why Not Weak Prefix Search}
 \label{sec:ere-no-wps}
 
-\citet{goswami2015approximate} propose $O(1)$ worst-case local queries via a Weak Prefix
-Search structure built from a Hollow Z-Fast Trie (HZFT) and Monotone Minimal
-Perfect Hashing (MMPH). The authors analyse these components in a word-RAM model
-where hash table lookups and trie navigation cost $O(1)$, and the space is
-expressed up to $O(n)$ additive terms. This is sufficient for a theoretical result,
-but the hidden constants become dominant in practice.
+\citet{goswami2015approximate} propose $O(1)$ worst-case local queries via a
+Weak Prefix Search (WPS) structure, analysed in a word-RAM model where hash
+table lookups and trie navigation cost $O(1)$ and space is expressed up to
+$O(n)$ additive terms. This is sufficient for a theoretical result, but the
+hidden constants become dominant in practice.
 
-We implemented three variants of Weak Prefix Search, collectively referred to as
-LERLOC (\textbf{L}ocal \textbf{E}xact \textbf{R}ange \textbf{LOC}ator),
-differing in the trie and MMPH components used:
+We implemented three WPS variants, pairing a Z-Fast trie (standard or
+succinct) with a Monotone Minimal Perfect Hash Function (MMPHF; fast or
+compressed):
 
 \begin{table}[h]
     \centering
     \begin{tabular}{@{}lrr@{}}
         \toprule
-        Variant                          & Space (bits/key) & Query (ns), $L{=}64$ \\
+        Variant                                    & Space (bits/key) & Query (ns) \\
         \midrule
-        LERLOC Fast (HZFT + BoomPHF)     & 179              & 1095--1466           \\
-        LERLOC Compact (SHZFT + BoomPHF) & 151              & 372--567             \\
-        LeMon-LERLOC (SHZFT + LeMonHash) & 59               & 537--762             \\
+        Baseline (standard trie + fast MMPHF)      & 179              & 1095--1466 \\
+        Compact (succinct trie + fast MMPHF)       & 151              & 372--567   \\
+        Learned (succinct trie + learned MMPHF)    & 59               & 537--762   \\
         \bottomrule
     \end{tabular}
-    \caption{LERLOC variants: space and query latency on Apple~M4~Max,
-        $n = 1024$--$32768$, 64-bit keys.
-        LeMon-LERLOC breakdown: SHZFT trie ${\sim}35$~BPK, LeMonHash MMPH ${\sim}19$~BPK,
-        RSDic leaf bitvector ${\sim}5$~BPK.
-        The MMPH indexes the boundary set $P$ of the trie: 3 strings per node
-        ($n$ leaves $+ (n{-}1)$ internal), so $|P| \leq 3(2n - 1) = 6n - 3$
-        before deduplication; empirically $|P|/n \approx 4.3$ for $n > 10^5$.}
-    \label{tab:lerloc-cost}
+    \caption{Three WPS variants: space and query latency on Apple~M4~Max,
+        $L = 64$, $n = 1024$--$32768$, 64-bit keys.
+        \colorbox{orange}{TODO: link to implementation details and full space breakdown.}}
+    \label{tab:wps-cost}
 \end{table}
 
-The high space cost stems from three expansion factors hidden behind
-$O(n)$ in the paper:
-(1)~the SHZFT hash table stores not only $2n{-}1$ true descriptors but also
-${\sim}3.5n$ pseudo-descriptors required by Fat Binary Search, totalling
-${\sim}5.5n$ entries at ${\sim}35$~BPK;
-(2)~the range locator boundary set $P$ contains 3~strings per trie node
-($\leq 6n{-}3$ before deduplication, empirically ${\sim}4.3n$);
-(3)~the MMPH on $P$ stores a \texttt{uint8} rank per element ($8$~bits
-$\times\,4.3 \approx 34$~BPK).
-These factors stack: the total ``$O(n)$ additional space'' becomes
-${\sim}100$~bits/key in practice (see the detailed breakdown in
-\texttt{locators/rloc/MEMORY\_INVESTIGATION.md}).
+Even the most compact variant costs 59~BPK --- and this is an auxiliary
+index \emph{on top of} the packed suffix array, which WPS accelerates but
+does not replace. In our use case (ERE inside an ARE
+filter, Section~\ref{sec:soda}), the suffix width $w$ is typically
+$7$--$13$ bits per key, so WPS adds $5$--$8\times$ more space than the
+suffix data it indexes.
 
-When ERE is used inside an ARE filter,
-the suffix width is $w = K - \lfloor \log_2 n \rfloor \approx \lceil \log_2(\mathcal{L}/\varepsilon) \rceil$
-(since $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$),
-which depends only on the range length $\mathcal{L}$ and FPR $\varepsilon$,
-not on $n$. For typical parameters ($\mathcal{L} \leq 64$,
-$\varepsilon \geq 0.01$), $w$ is $7$--$13$ bits.
-The data itself costs $w$ bits per key; even the most compact LERLOC variant (59~BPK)
-adds $5$--$8 \times$ more space than the data it indexes.
-
-Query latency is equally problematic. LERLOC replaces only the local search
-inside a bucket, while Rank/Select navigation on $D_1$ and $D_2$
-(${\sim}27$~ns) remains unchanged.
-Each LERLOC call descends the trie (pointer chasing through hash tables), then
-performs an MMPH rank lookup --- at least 370~ns for the Compact variant at $L = 64$.
-Binary search on a typical bucket of ${\sim}12$ keys takes 5--9~ns
-(Section~\ref{subsec:ere-local-search}), making LERLOC $40$--$110 \times$
+Query latency is equally problematic. WPS replaces only the local search
+inside a bucket, while Rank/Select navigation on the metadata bit vectors
+(${\sim}27$~ns) remains unchanged. Each WPS call descends the trie (pointer
+chasing through hash tables) and performs a hash lookup --- at least
+370~ns for the Compact variant at $L = 64$. Binary search on a typical
+bucket of ${\sim}12$ keys takes $5$--$9$~ns, and stays under ${\sim}60$~ns
+even on pathologically large buckets of tens of thousands of keys
+(Section~\ref{subsec:ere-local-search}), making WPS $40$--$110\times$
 slower for the operation it replaces.
 
 The root cause is that the $O(1)$ theoretical guarantee hides large constants:
 each ``constant-time'' trie step involves hashing a variable-length prefix,
 probing a hash table, and following a pointer --- operations that are
-individually cheap but accumulate across $O(\log \log r)$ trie levels.
+individually cheap but accumulate over several hash probes per query.
 For the small buckets that arise in practice (${\leq}13$ keys for uniform
 data, ${\leq}2^w$ in general), binary search on packed suffixes is both
 faster and requires no additional space.
@@ -279,8 +260,8 @@ binary search remains fast:
         \bottomrule
     \end{tabular}
     \caption{Worst-case binary search on a fully packed bucket (Apple~M4~Max).
-    At $w = 12$ (BPK~$\approx 15$), the entire bucket search costs 37~ns ---
-    still $10 \times$ faster than the best LERLOC variant.}
+    At $w = 12$, the entire bucket search costs 37~ns ---
+    still $10\times$ faster than the best WPS variant.}
     \label{tab:ere-worst-case-binsearch}
 \end{table}
 
@@ -290,33 +271,41 @@ binary search remains fast:
     \centering
     \begin{tabular}{@{}lrrr@{}}
         \toprule
-        $\ell$ (key bits) & Suffix bits ($|r| - \log_2 n$) & Metadata & Total BPK \\
+        $K$ (key bits) & Suffix bits ($w = K - \log_2 n$) & Metadata & Total BPK \\
         \midrule
-        64                & 44.07                          & 3.2      & 47.27     \\
-        128               & 108.07                         & 3.2      & 111.27    \\
-        256               & 236.07                         & 3.2      & 239.27    \\
-        512               & 492.07                         & 3.2      & 495.27    \\
+        64                & 44.07                          & 2.86     & 46.93     \\
+        128               & 108.07                         & 2.83     & 110.90    \\
+        256               & 236.07                         & 2.83     & 238.90    \\
+        512               & 492.07                         & 2.83     & 494.90    \\
         \bottomrule
     \end{tabular}
-    \caption{Measured ERE space with $n = 10^6$ keys. Metadata ($D_1 + D_2$ + rank/select
-    indices) is constant at ${\sim}3.2$ BPK.}
+    \caption{Measured ERE space with $n = 10^6$ keys, one-vector layout
+    (Section~\ref{subsec:ere-one-vector}). Metadata (single bit vector $D$
+    + rank/select indices) is constant at ${\sim}2.83$ BPK.}
     \label{tab:ere-space}
 \end{table}
 
-Space grows linearly with $\ell$ --- unavoidable for an exact structure, since it must
-store the information distinguishing the keys. This linear dependence motivates the
+Space grows linearly with $K$ --- unavoidable for an exact structure, since it must
+store the information distinguishing the keys.
+This linear dependence motivates the
 move to approximate range emptiness: by storing hashed fingerprints of length
 $K \approx \log_2(\mathcal{L}/\varepsilon)$ instead of full keys, the space becomes
 independent of the original key length~$\ell$.
 
 \subsection{Complexity Summary}
 
+Here $W$ denotes the machine word size.
+
 \begin{itemize}
-    \item \textbf{Build:} $O(n \cdot |r|)$ --- a single pass over sorted keys.
-    \item \textbf{Query:} $O(|r|/w)$ expected (block index + binary search over ${\sim}2$
-    keys of $\ell$ bits each); $O((|r|/w) \log n)$ worst case if all keys collide in a
-    single block. When used inside ARE with $K$-bit fingerprints fitting in one machine
-    word, this reduces to $O(1)$ expected.
-    \item \textbf{Space:} $n \log_2(r/n) + O(n)$ bits, matching the information-theoretic
+    \item \textbf{Build:} $O(n \cdot K)$ --- a single pass over sorted keys.
+    \item \textbf{Query:}
+    \subitem \emph{Expected} (uniform data): $O(\frac{K}{W})$ --- block index lookup
+    dominates; bucket size is $O(1)$ on average
+    (Section~\ref{subsec:block-sizes-and-lookup-strategy}).
+    \subitem \emph{Worst case} (all keys collide in a single block):
+    $O(\frac{K}{W} \log n)$.
+    \subitem \emph{Inside ARE} with $K$-bit fingerprints fitting in one machine
+    word ($K \leq W$): reduces to $O(1)$ expected.
+    \item \textbf{Space:} $n (K - \log_2 n) + O(n)$ bits, matching the information-theoretic
     lower bound.
 \end{itemize}
