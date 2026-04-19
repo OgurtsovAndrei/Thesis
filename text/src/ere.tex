@@ -157,34 +157,38 @@ concentrate in a few blocks. When ERE is used inside SODA~ARE
 per-block constant) maps consecutive keys to consecutive hashed values,
 preserving local density.
 
-However, the bucket size is always bounded by the block capacity $2^w$,
-where $w = K - \lfloor \log_2 n \rfloor$ is the suffix length
-and $K$ is the fingerprint width in bits (defined in Section~\ref{sec:soda}).
-For industry-standard space budgets (BPK~$\leq 15$; since BPK~$\approx w + 3.2$
-from Table~\ref{tab:ere-space}, this gives $w \leq 12$),
-so the maximum bucket contains at most $2^{12} = 4096$ keys.
-At $w = 12$ bits, such a worst-case bucket occupies
-$4096 \times 12 / 8 = 6144$~bytes --- well within L1 cache (typically 32--64~KB).
+\colorbox{orange}{TODO: Lets discuss this section, not sure how to write this in better way?} \\
+Regardless of distribution, the bucket size is bounded by the block capacity
+$2^w$, where $w$ is the suffix length. Typical values of $w$ in the ARE
+pipeline are $12$--$15$ bits. Binary search on the bucket therefore terminates
+in at most $w$ iterations, independent of $n$ and of the input distribution;
+even in the worst case the bucket fits in L2 cache. In practice, buckets
+almost always fit entirely in L1.
+
+\colorbox{orange}{\parbox{\linewidth}{TODO: is this informal framing (typical $w \in [12, 15]$, worst-case L2 cache + $w$ bin-search iterations, L1 hit in practice) acceptable, or should this be made more formal?}}
+
+Moreover, distributions with dense ranges can be handled by the hybrid filter of
+Chapter~\ref{chap:hybrid}: each cluster is isolated into its own exact
+sub-filter, turning local density into a compression advantage.
 
 \paragraph{Search strategy.}
-We implement both binary search ($O(\log k)$) and linear scan ($O(k)$) over
-bit-packed suffixes in a bucket of $k$ keys.
-Benchmarks on Apple~M4~Max show that linear scan is ${\sim}3\times$ faster
-for $k \leq 12$ (1.3--2.7~ns vs.\ 5--9~ns) due to sequential prefetch,
-while binary search wins for $k > 128$ (21~ns vs.\ 35~ns at $k = 256$).
-The crossover is at $k \approx 128$ and is stable across suffix widths
-$w \in \{8, 11, 16, 20\}$.
+We implement both binary search $O(\log k)$ and linear scan $O(k)$ over
+the $k$ suffixes of a bucket, and pick at query time based on $k$.
+Apple~M4~Max benchmarks on uniform random $w$-bit suffixes:
+linear scan is fastest for small buckets (${\sim}3$~ns at $k = 12$,
+${\sim}5$~ns at $k = 24$, ${\sim}10$~ns at $k = 64$), while binary search
+stays cheap even for pathologically large buckets (${\sim}40$~ns at
+$k = 2^{12}$, ${\sim}60$~ns at $k = 2^{17}$) --- logarithmic growth
+compresses the worst case to tens of nanoseconds.
 
-The default query uses adaptive dispatch: linear scan for buckets with
-$k \leq 128$, binary search above.
-The total ERE query takes ${\sim}36$~ns on Apple~M4~Max (stable across
-$n \in [2^{10},\, 2^{20}]$ and key widths 64--512 bits), of which
-${\sim}27$--$35$~ns is Rank/Select overhead on $D_1$ and $D_2$.
-Bucket search contributes at most ${\sim}9$~ns (binary, $k = 12$) or
-${\sim}2.7$~ns (linear, $k = 12$) --- roughly 7--25\% of the total.
-This makes the choice between search strategies a micro-optimization;
-the key property is that even in the worst case ($k = 2^w$, binary search),
-query time grows only logarithmically.
+The default adaptive dispatch (linear for $k \leq 128$, binary above) gives
+the best of both regimes: near-optimal in the common case and graceful
+degradation on adversarial distributions.
+
+For uniform 64-bit keys with non-empty queries, the total ERE query takes
+${\sim}33$--$36$~ns on Apple~M4~Max, stable across $n \in [2^{20},\, 2^{26}]$.
+Bucket search contributes only ${\sim}3$~ns at the typical $k \approx 12$;
+the remainder is Rank/Select navigation on the metadata bit vectors.
 
 \subsection{Why Not Weak Prefix Search}
 \label{sec:ere-no-wps}
@@ -239,7 +243,7 @@ the suffix width is $w = K - \lfloor \log_2 n \rfloor \approx \lceil \log_2(\mat
 (since $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$),
 which depends only on the range length $\mathcal{L}$ and FPR $\varepsilon$,
 not on $n$. For typical parameters ($\mathcal{L} \leq 64$,
-$\varepsilon \geq 0.01$), $w$ is $7$--$12$ bits.
+$\varepsilon \geq 0.01$), $w$ is $7$--$13$ bits.
 The data itself costs $w$ bits per key; even the most compact LERLOC variant (59~BPK)
 adds $5$--$8 \times$ more space than the data it indexes.
 
