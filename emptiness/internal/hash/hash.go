@@ -31,3 +31,20 @@ func SortAndDedup(keys []bits.BitString) []bits.BitString {
 	}
 	return unique
 }
+
+// SortAndDedupUint64 sorts the slice in place and removes consecutive duplicates,
+// returning a sub-slice of the input backing array.
+func SortAndDedupUint64(keys []uint64) []uint64 {
+	if len(keys) == 0 {
+		return keys
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	w := 1
+	for i := 1; i < len(keys); i++ {
+		if keys[i] != keys[i-1] {
+			keys[w] = keys[i]
+			w++
+		}
+	}
+	return keys[:w]
+}

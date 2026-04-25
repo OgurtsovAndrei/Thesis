@@ -80,6 +80,109 @@ func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error)
 	}, nil
 }
 
+// NewSodaAREUint64 builds a SodaARE via the uint64 fast-path, avoiding the
+// allocation of n bits.BitString values during construction. Semantics match
+// NewSodaARE: input keys are not mutated.
+func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE, error) {
+	n := len(keys)
+	if n == 0 {
+		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
+	}
+
+	rTarget := float64(n) * float64(rangeLen) / epsilon
+	K := uint32(math.Ceil(math.Log2(rTarget)))
+	if K > 64 {
+		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
+	}
+
+	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	hashA := rng.Uint64() | 1 // odd
+	hashB := rng.Uint64()
+
+	rMask := ^uint64(0)
+	if K < 64 {
+		rMask = (uint64(1) << K) - 1
+	}
+
+	hashed := make([]uint64, n)
+	for i, x := range keys {
+		blockIdx := uint64(0)
+		if K < 64 {
+			blockIdx = x >> K
+		}
+		ux := internalhash.PairwiseHash(blockIdx, hashA, hashB, K)
+		hashed[i] = (ux + x) & rMask
+	}
+
+	uniqueHashed := internalhash.SortAndDedupUint64(hashed)
+
+	ereFilter, err := exactbackend.NewUint64(uniqueHashed, K)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SodaARE{
+		ere:      ereFilter,
+		K:        K,
+		RangeLen: rangeLen,
+		n:        n,
+		hashA:    hashA,
+		hashB:    hashB,
+	}, nil
+}
+
+// NewSodaAREUint64InPlace is the destructive variant of NewSodaAREUint64. It
+// hashes, sorts and deduplicates directly inside the caller-supplied keys
+// slice, avoiding the per-key extra allocation. The input slice is consumed
+// and mutated; callers must not rely on its post-call contents (neither
+// values nor length-versus-capacity). This is the lowest-memory build path.
+//
+// Unlike NewSodaARE, K is supplied directly rather than derived from epsilon,
+// matching NewSodaAREFromK.
+func NewSodaAREUint64InPlace(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error) {
+	n := len(keys)
+	if n == 0 {
+		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
+	}
+	if K > 64 {
+		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
+	}
+
+	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	hashA := rng.Uint64() | 1 // odd
+	hashB := rng.Uint64()
+
+	rMask := ^uint64(0)
+	if K < 64 {
+		rMask = (uint64(1) << K) - 1
+	}
+
+	for i, x := range keys {
+		blockIdx := uint64(0)
+		if K < 64 {
+			blockIdx = x >> K
+		}
+		ux := internalhash.PairwiseHash(blockIdx, hashA, hashB, K)
+		keys[i] = (ux + x) & rMask
+	}
+
+	uniqueHashed := internalhash.SortAndDedupUint64(keys)
+
+	ereFilter, err := exactbackend.NewUint64(uniqueHashed, K)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SodaARE{
+		ere:      ereFilter,
+		K:        K,
+		RangeLen: rangeLen,
+		n:        n,
+		hashA:    hashA,
+		hashB:    hashB,
+	}, nil
+}
+
 func (are *SodaARE) IsEmpty(a, b uint64) bool {
 	if are.n == 0 || a > b {
 		return true
@@ -181,4 +284,11 @@ func (are *SodaARE) EREStats() exactbackend.Stats {
 		return exactbackend.Stats{}
 	}
 	return exactbackend.StatsOf(are.ere)
+}
+
+func (are *SodaARE) ERENonEmptyBlockSizes() []int {
+	if are.ere == nil {
+		return nil
+	}
+	return exactbackend.NonEmptyBlockSizesOf(are.ere)
 }

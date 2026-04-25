@@ -25,10 +25,22 @@ type Stats struct {
 	AvgKeysPerBlock float64
 	MaxKeysInBlock  int
 	EmptyBlockPct   float64
+	SumSquaredKeys  uint64
 }
 
 type StatsProvider interface {
 	GetStats() Stats
+}
+
+type BucketSizesProvider interface {
+	NonEmptyBlockSizes() []int
+}
+
+func NonEmptyBlockSizesOf(f Filter) []int {
+	if bp, ok := f.(BucketSizesProvider); ok {
+		return bp.NonEmptyBlockSizes()
+	}
+	return nil
 }
 
 type Variant uint32
@@ -155,6 +167,7 @@ func (f classicFilter) GetStats() Stats {
 		AvgKeysPerBlock: s.AvgKeysPerBlock,
 		MaxKeysInBlock:  s.MaxKeysInBlock,
 		EmptyBlockPct:   s.EmptyBlockPct,
+		SumSquaredKeys:  s.SumSquaredKeys,
 	}
 }
 
@@ -172,5 +185,6 @@ func (f oneDFilter) GetStats() Stats {
 		AvgKeysPerBlock: s.AvgKeysPerBlock,
 		MaxKeysInBlock:  s.MaxKeysInBlock,
 		EmptyBlockPct:   s.EmptyBlockPct,
+		SumSquaredKeys:  s.SumSquaredKeys,
 	}
 }

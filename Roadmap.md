@@ -201,6 +201,9 @@ More details in [succinct_bit_vector.md](succinct_bit_vector/SuccinctBitVector.m
     - [x] Fix formatting
     - [ ] reread 
 
+- [ ] Its pairwise collision probability
+- [ ] Go to size 1 << 30, 1 << 31, 1 << 32
+
 ### Real-world datasets
 
 Варианты:

@@ -399,11 +399,13 @@ type Stats struct {
 	AvgKeysPerBlock float64
 	MaxKeysInBlock  int
 	EmptyBlockPct   float64
+	SumSquaredKeys  uint64
 }
 
 func (ere *ExactRangeEmptiness) GetStats() Stats {
 	nonEmpty := 0
 	maxKeys := 0
+	var sumSq uint64
 	for b := uint64(0); b < uint64(ere.numBlocks); b++ {
 		start, end := ere.getBlockRange(b)
 		count := end - start
@@ -413,6 +415,7 @@ func (ere *ExactRangeEmptiness) GetStats() Stats {
 		if count > maxKeys {
 			maxKeys = count
 		}
+		sumSq += uint64(count) * uint64(count)
 	}
 
 	return Stats{
@@ -423,7 +426,25 @@ func (ere *ExactRangeEmptiness) GetStats() Stats {
 		AvgKeysPerBlock: float64(ere.n) / float64(nonEmpty),
 		MaxKeysInBlock:  maxKeys,
 		EmptyBlockPct:   float64(ere.numBlocks-nonEmpty) / float64(ere.numBlocks) * 100,
+		SumSquaredKeys:  sumSq,
 	}
+}
+
+// NonEmptyBlockSizes returns k_b for every non-empty block, in block-index
+// order.
+func (ere *ExactRangeEmptiness) NonEmptyBlockSizes() []int {
+	if ere == nil || ere.n == 0 {
+		return nil
+	}
+	out := make([]int, 0, ere.numBlocks)
+	for b := uint64(0); b < uint64(ere.numBlocks); b++ {
+		start, end := ere.getBlockRange(b)
+		count := end - start
+		if count > 0 {
+			out = append(out, count)
+		}
+	}
+	return out
 }
 
 func (ere *ExactRangeEmptiness) MemDetailed() utils.MemReport {

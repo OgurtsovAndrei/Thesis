@@ -90,6 +90,85 @@ Practical implication:
 
 That is why this package exists as a separate benchmark target instead of replacing `ere` immediately.
 
+### Rank/Select Operation Count Per Query Case
+
+The single-vector encoding does **not** strictly reduce the number of Rank/Select calls.
+The `D1.Bit(b)` guard in the original `ere` allowed an early exit on empty boundary blocks
+with zero Rank/Select. The single-vector design gives that up: it always pays at least two
+`Select(D)` per boundary block, but every call hits one contiguous bitvector, and the
+intermediate-block check becomes a free index comparison instead of two extra `D1.Rank`.
+
+Counts below include only Rank and Select on succinct bitvectors (`Bit` is a single-word
+read and is not counted). Bucket scan is identical in both versions and is excluded.
+
+#### Case A — Both endpoints in the same block (`blockA == blockB`)
+
+| Sub-case | `ere` operations | `ere_one_d` operations | Delta |
+|---|---|---|---|
+| Block non-empty | `1x Rank(D1) + 2x Select(D2)` = 3 | `2x Select(D)` = 2 | **-1** |
+| Block empty | early exit, 0 | `2x Select(D)` = 2 | +2 |
+
+#### Case B — Endpoints in two adjacent blocks (`blockB == blockA + 1`)
+
+`ere_one_d` uses a specialized path: three sequential `Select(D)` calls for positions
+`blockA`, `blockA+1`, `blockA+2`. The `startB > endA` short-circuit cannot fire here
+because adjacent blocks satisfy `startB == endA`.
+
+| Sub-case | `ere` operations | `ere_one_d` operations | Delta |
+|---|---|---|---|
+| Both blocks non-empty | `2x Rank(D1) + 4x Select(D2)` = 6 | `3x Select(D)` = 3 | **-3** |
+| One block non-empty | `1x Rank(D1) + 2x Select(D2)` = 3 | `3x Select(D)` = 3 | 0 |
+| Both blocks empty | early exit, 0 | `3x Select(D)` = 3 | +3 |
+
+#### Case C — Long range with intermediate blocks (`blockB > blockA + 1`)
+
+In `ere`, intermediate non-emptiness is detected via two `D1.Rank` calls before the
+boundary blocks are touched. In `ere_one_d`, the same information is encoded in
+`startB > endA` — a free integer comparison on values already produced by the two
+`getBlockRange` calls.
+
+| Sub-case | `ere` operations | `ere_one_d` operations | Delta |
+|---|---|---|---|
+| Intermediate non-empty (early exit) | `2x Rank(D1)` = 2 | `4x Select(D)` = 4 | +2 |
+| Intermediate empty, both boundaries non-empty | `4x Rank(D1) + 4x Select(D2)` = 8 | `4x Select(D)` = 4 | **-4** |
+| Intermediate empty, both boundaries empty | `2x Rank(D1)` = 2 | `4x Select(D)` = 4 | +2 |
+
+### Cross-Case Summary
+
+All seven sub-cases collapsed into a single table. `R(D1)` is `Rank` on the occupancy
+bitvector, `S(D2)` is `Select` on the count bitvector, `S(D)` is `Select` on the unified
+bitvector.
+
+In typical ARE workloads the dominant query patterns are short ranges that hit one
+non-empty block or two adjacent non-empty blocks — those are the rows highlighted in
+bold below, and they are precisely the rows where `ere_one_d` reduces the operation
+count.
+
+| Query type | `ere` R/S | `ere_one_d` R/S | Delta | Note |
+|---|---|---|---|---|
+| **Same block, non-empty** | **3 (`1x R(D1) + 2x S(D2)`)** | **2 (`2x S(D)`)** | **-1** | **Most frequent, hot path** |
+| Same block, empty | 0 | 2 (`2x S(D)`) | +2 | Cold-path regression |
+| **Adjacent, both non-empty** | **6 (`2x R(D1) + 4x S(D2)`)** | **3 (`3x S(D)`)** | **-3** | **Most frequent, main hot-path case** |
+| Adjacent, both empty | 0 | 3 (`3x S(D)`) | +3 | Cold-path regression |
+| Long range, both boundaries non-empty | 8 (`4x R(D1) + 4x S(D2)`) | 4 (`4x S(D)`) | **-4** | Op count halved |
+| Long range, intermediate non-empty (early exit) | 2 (`2x R(D1)`) | 4 (`4x S(D)`) | +2 | More ops, one vector |
+| Long range, all empty | 2 (`2x R(D1)`) | 4 (`4x S(D)`) | +2 | Cold-path regression |
+
+### Summary
+
+The hot path — queries that hit non-empty boundaries and actually carry payload — gets
+cheaper everywhere: **-1** for same-block, **-3** for adjacent-block, **-4** for
+full-range queries. The cold path (empty boundaries or early intermediate exit) pays
+2-3 extra `Select` calls, but those queries do no further work, so the absolute overhead
+is small.
+
+The structural win matters more than the op count: every Rank/Select now hits one
+contiguous `RSDic` instead of two. The second `Select(D)` in a query is very likely to
+share the auxiliary index pages and cache lines loaded by the first, while the original
+`ere` always alternates between `D1` and `D2`. This is what the measured **9.1%-13.2%**
+average query speedup in [ARE Benchmark Results](#are-benchmark-results) reflects,
+despite the operation count occasionally going up.
+
 ## Implementation Notes
 
 - both `ere` and `ere_one_d` use the local optimized succinct bitvector implementation:
