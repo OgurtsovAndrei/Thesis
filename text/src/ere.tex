@@ -324,32 +324,20 @@ For the small buckets that arise in practice (${\leq}13$ keys for uniform
 data, ${\leq}2^w$ in general), binary search on packed suffixes is both
 faster and requires no additional space.
 
-\subsection{Space Analysis} \colorbox{orange}{TODO: maybe this part is not needed at all?, RM, table, just explain}
+\subsection{Space Analysis}
 
-\begin{table}[h]
-    \centering
-    \begin{tabular}{@{}lrrr@{}}
-        \toprule
-        $K$ (key bits) & Suffix bits ($w = K - \log_2 n$) & Metadata & Total BPK \\
-        \midrule
-        64             & 44.07                            & 2.86     & 46.93     \\
-        128            & 108.07                           & 2.83     & 110.90    \\
-        256            & 236.07                           & 2.83     & 238.90    \\
-        512            & 492.07                           & 2.83     & 494.90    \\
-        \bottomrule
-    \end{tabular}
-    \caption{Measured ERE space with $n = 10^6$ keys, one-vector layout
-        (Section~\ref{subsec:ere-one-vector}). Metadata (single bit vector $D$
-        + rank/select indices) is constant at ${\sim}2.83$ BPK.}
-    \label{tab:ere-space}
-\end{table}
+For $K$-bit keys, ERE stores $w = K - \lfloor \log_2 n \rfloor$ bits of
+suffix per key plus ${\sim}2.83$~BPK of metadata (single bit vector $D$
+with rank/select indices, Section~\ref{subsec:ere-one-vector}).
+At $K = 64$ and $n = 10^6$ this gives ${\sim}47$~BPK total --- only about a
+quarter smaller than honestly storing the full 64-bit keys ($64$~BPK).
 
-Space grows linearly with $K$ --- unavoidable for an exact structure, since it must
-store the information distinguishing the keys.
-This linear dependence motivates the
-move to approximate range emptiness: by storing hashed fingerprints of length
-$K \approx \log_2(\mathcal{L}/\varepsilon)$ instead of full keys, the space becomes
-independent of the original key length~$\ell$.
+Space grows linearly with $K$ --- unavoidable for an exact structure,
+since it must store the information distinguishing the keys.
+This linear dependence motivates the move to approximate range emptiness:
+by storing hashed fingerprints of length
+$K \approx \log_2(\mathcal{L}/\varepsilon)$ instead of full keys, the
+space becomes independent of the original key length.
 
 \subsection{Complexity Summary}
 
