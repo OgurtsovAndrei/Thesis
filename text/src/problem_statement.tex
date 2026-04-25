@@ -1,7 +1,7 @@
 \section{Problem Statement}
 \label{sec:problem}
 
-Let $U = \{0,1\}^L$ be a universe of $L$-bit keys.
+Let $U = [0, 2^L)$ be the universe of $L$-bit keys (Section~\ref{sec:notation}).
 Given a set $S \subseteq U$ of $n$ keys, a maximum query range length $\mathcal{L}$,
 and a target false positive rate $\varepsilon$, the \emph{approximate range emptiness problem} asks
 to build a data structure that answers ``$[a, b] \cap S = \emptyset$?'' for intervals of
@@ -14,7 +14,7 @@ length $\leq \mathcal{L}$, with:
     ``not empty'' with probability at most $\varepsilon$.
 \end{itemize}
 
-Let $Y = U \setminus S$ denote all keys not stored in the structure.
+Let $Y = U \setminus S$ denote all keys not in the filter.
 
 \subsection{Information-Theoretic Bounds}
 \label{sec:bounds}
@@ -60,11 +60,11 @@ for an absolute constant $c > 0$.
 The lower bound of Theorem~1 is achieved up to an additive $O(n)$ term
 via two layers:
 \begin{enumerate}
-    \item A locality-preserving hash (Section~\ref{sec:soda}) $h\colon U \to U'$, where $U' = \{0,1\}^K$ and $r = |U'| = 2^K$.
+    \item A locality-preserving hash (Section~\ref{sec:soda}) $h\colon U \to U'$, where $U' = [0, 2^K)$ and $r = |U'| = 2^K$.
     The hash partitions $U$ into blocks of size $r$, applies an independent rotation
     within each block, and then maps the shifted block onto $U'$ by translation.
-    Its pairwise collision probability is at most $1/2^K$.
-    \colorbox{orange}{TODO: no pairwise collision probability}
+    The hash is drawn from a pairwise-independent family, so for any two distinct
+    keys $x_1, x_2 \in U$, $\Pr[h(x_1) = h(x_2)] \leq 1/2^K$.
 
     \item An \textbf{Exact Range Emptiness (ERE)} (Section~\ref{sec:ere}) structure over $S' = h(S) \subseteq U'$:
     a succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits, which answers ``$[a', b'] \cap S' = \emptyset$?''.
@@ -75,8 +75,8 @@ The resulting space is $n \log_2(\mathcal{L}/\varepsilon) + O(n)$ bits, or equiv
 $\log_2(\mathcal{L}/\varepsilon) + O(1)$ bits per key --- matching the lower bound.
 
 The fingerprint length $K = \lceil\log_2(n\mathcal{L}/\varepsilon)\rceil$ controls accuracy:
-because each pairwise collision occurs with probability at most $1/2^K$, the overall error probability of the
-construction is bounded by $\varepsilon \le n\mathcal{L}/2^K$.
+because $\Pr[h(x_1) = h(x_2)] \leq 1/2^K$ for any two distinct keys, the overall error
+probability of the construction is bounded by $\varepsilon \le n\mathcal{L}/2^K$.
 Thus, increasing $K$ by one bit halves the false positive rate. After ERE compression
 (which subtracts $\log_2 n$ for block indexing), the effective cost per key is
 $K - \log_2 n = \log_2(\mathcal{L}/\varepsilon) + O(1)$
@@ -85,13 +85,12 @@ $K - \log_2 n = \log_2(\mathcal{L}/\varepsilon) + O(1)$
 \label{sec:hash-role}
 
 The hash $h$ projects $U$ down to $U'$.
-Under this projection, the stored keys
-$S$ map to fingerprints $S' = h(S)$, and the non-keys $Y = U \setminus S$ map to
-$Y' = h(Y)$.
+Under this projection, the keys $S$ map to fingerprints $S' = h(S)$, and the
+non-keys $Y = U \setminus S$ map to $Y' = h(Y)$.
 
 A false positive occurs when $Y'$ overlaps with $S'$: a query point $y \in Y$ has
 $h(y) \in S'$, so the structure cannot distinguish it from a real key.
-We call the pre-images of a stored fingerprint $x' \in S'$ its \textbf{phantom points} --- all keys $y$ such that $h(y) = x'$.
+We call the pre-images of a fingerprint $x' \in S'$ its \textbf{phantom points} --- all keys $y$ such that $h(y) = x'$.
 The fewer phantoms overlap with $Y'$, the lower the FPR.
 
 The ideal hash would map $S'$ and $Y'$ to disjoint regions of $U'$ --- zero

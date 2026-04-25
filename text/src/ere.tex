@@ -118,7 +118,7 @@ In our experiments this optimization reduced average memory usage by about 0.83 
 \label{subsec:block-sizes-and-lookup-strategy}
 
 \paragraph{Block occupancy under uniform distribution.}
-The Exact Range Empties structure divides the universe into $B = 2^{\lfloor \log_2 n \rfloor}$ blocks;
+The Exact Range Emptiness structure divides the universe into $B = 2^{\lfloor \log_2 n \rfloor}$ blocks;
 each non-empty block stores its keys' suffixes in a packed array (a \emph{bucket}).
 The expected
 number of keys per block is $\lambda = n/B \in [1,\,2)$.
@@ -199,13 +199,19 @@ cache-resident in L2.
 Regardless of distribution, the bucket size is hard-bounded above by
 the block capacity $2^w$, where $w = K - \lfloor \log_2 n \rfloor$ is
 the suffix length: each bucket physically holds at most $2^w$ distinct
-$w$-bit suffixes. The choice of $w$ is constrained by the overall
+$w$-bit suffixes.
+The choice of $w$ is constrained by the overall
 filter size: the total ARE filter occupies approximately
 $n \cdot (w + 2)$ bits ($w$ bits of suffix data plus ${\sim}2$~BPK of
-metadata). Compared to honest storage of 64-bit keys ($64 n$ bits),
-the filter is meaningfully smaller only for $w$ well below $64$;
-in industrial practice $w \in [12, 15]$~bits
-\colorbox{orange}{TODO: cite industry papers for the $w \in [12, 15]$ range}.
+metadata).
+Compared to honest storage of 64-bit keys ($64 n$ bits),
+the filter is meaningfully smaller only for $w$ well below $64$.
+In published range filter evaluations the total per-key budget falls
+in the $10$--$20$~BPK range, with $14$--$16$~BPK as the typical
+headline configuration (Table~\ref{tab:industry-bpk},
+Chapter~\ref{chap:evaluation}).
+After subtracting the ${\sim}2$~BPK of rank/select metadata, this
+corresponds to a suffix width $w \in [12, 15]$~bits in our pipeline.
 A side benefit of $w = 16$ is that 16-bit suffixes align with SIMD
 lanes for vector-friendly comparisons.
 
@@ -213,7 +219,8 @@ At $w = 15$ the hard upper bound is $2^{15} = 32\,768$~keys per bucket.
 On a fully packed bucket of $2^w$ keys binary search terminates in at most
 $\log_2(2^w) = w$ iterations --- and at $w = 15$ this still costs only
 ${\sim}48$~ns, comparable to a single Rank/Select on the metadata bit
-vector. The bound is distribution-independent and depends only on $w$,
+vector.
+The bound is distribution-independent and depends only on $w$,
 not on $n$.
 In real workloads observed buckets are typically two orders of
 magnitude smaller than this hard limit; the worst case is bounded

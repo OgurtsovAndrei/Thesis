@@ -14,7 +14,7 @@ where $u: [U/r] \to [r]$ is drawn from a pairwise-independent family, stored as 
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.85\textwidth]{soda_hash_mechanism}
-  \caption{SODA hash mechanism: per-block cyclic shift maps keys to $[0, 2^K)$.
+  \caption{SODA hash mechanism: per-block rotation maps keys to $[0, 2^K)$.
     A query range spanning two blocks produces at most two intervals in
     the mapped space.}
   \label{fig:soda-mechanism}
@@ -24,7 +24,7 @@ Properties of the hash:
 \begin{itemize}
   \item \textbf{Pairwise-independent:} $\Pr[h(x_1) = h(x_2)] \leq 1/r$ regardless of
     key structure. This holds for sequential, clustered, or adversarial data.
-  \item \textbf{Locality-preserving:} the hash applies a per-block cyclic shift, so
+  \item \textbf{Locality-preserving:} the hash applies a per-block rotation, so
     consecutive keys within the same block map to consecutive positions in $[r]$. A query
     range $[a, b]$ spans at most 2 blocks, producing at most 2 intervals in
     the mapped space.
@@ -47,7 +47,7 @@ Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE fi
     $(a \cdot \text{blockIdx}(x) + b)$.
   \item Hash each key via Equation~\eqref{eq:soda-hash}.
   \item Sort, deduplicate, build ERE over $[0, 2^K)$.
-  \item Query: hash both endpoints; cyclic shift may split the range into two
+  \item Query: hash both endpoints; rotation may split the range into two
     intervals --- check both in ERE.
 \end{enumerate}
 

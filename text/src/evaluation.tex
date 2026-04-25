@@ -156,6 +156,41 @@ We report this metric separately for each of the 9 benchmark distributions: 4 re
 (SOSD) and 5 synthetic. Each distribution exercises different filter strengths --- a
 filter that excels on clustered data may be mediocre on uniform, and vice versa.
 
+\subsection*{Literature Reference Points}
+\label{subsec:eval-industry-bpk}
+
+Before reporting our own measurements, we summarise the per-key memory budgets used in
+recent range filter literature (Table~\ref{tab:industry-bpk}). Published evaluations
+consistently operate in the $10$--$20$~BPK range, with $14$--$16$~BPK as the typical
+headline configuration. This regime informs the budget choices for the experiments
+below and is the basis for the $w \in [12, 15]$~bits suffix-width range cited in
+Section~\ref{subsec:block-sizes-and-lookup-strategy}.
+
+\begin{table}[h]
+    \centering
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{@{}llcl@{}}
+        \toprule
+        Filter & BPK budget & Reported FPR & Notes \\
+        \midrule
+        SuRF~\citep{zhang2018surf}        & $10$--$14$ & ${\sim}10^{-3}$ at $16$~BPK\textsuperscript{*} & RocksDB-anchored \\
+        Rosetta~\citep{luo2020rosetta}    & $10$--$20$ & $10^{-2}$ to $10^{-4}$              & FPR-vs-BPK sweep \\
+        SNARF~\citep{vaidya2022snarf}     & $16$       & $6.2 \times 10^{-5}$\textsuperscript{*} & Headline result \\
+        Memento~\citep{eslami2024memento} & $\geq 12$  & $\varepsilon$-parameterised         & Design minimum \\
+        Grafite~\citep{grafite2024}       & ${\sim}12$ & $\leq \mathcal{L}/2^{\mathrm{BPK}-2}$ & Adversarial bound \\
+        \bottomrule
+    \end{tabular}
+    \caption{Per-key memory budgets and corresponding false positive rates
+    reported in recent range filter literature.
+    The $10$--$20$~BPK range is the practical operating window;
+    $14$--$16$~BPK is the typical headline configuration.
+    FPR depends strongly on range length~$\mathcal{L}$ and workload.
+    \textsuperscript{*}SuRF and SNARF FPR values at $16$~BPK are both reported in
+    \citet{vaidya2022snarf} for direct comparison.}
+    \label{tab:industry-bpk}
+\end{table}
+
 % TODO: fill in all tables with final benchmark results
 
 \subsubsection*{SOSD Distributions}

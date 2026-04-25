@@ -2,13 +2,18 @@
 \label{sec:notation}
 
 \paragraph{General.}
-We denote by $\{0,1\}^L$ the set of all bit strings of length $L$.
+We identify $L$-bit keys with the integers $\{0, 1, \dots, 2^L - 1\}$ via
+the standard binary representation. Lexicographic comparison of bit strings
+of the same length coincides with numerical comparison of the corresponding
+integers, so we use the integer view throughout (this is the natural
+formulation when the construction performs arithmetic such as rotations
+or reductions modulo a power of two).
 
 \paragraph{Sets and parameters.}
 \begin{description}[style=nextline, leftmargin=4cm, labelwidth=3.4cm]
   \item[$L$] Key length in bits.
-  \item[{$U = [0, 2^L]$}] Universe of $L$-bit keys.
-  \item[$n$] Number of stored keys.
+  \item[{$U = [0, 2^L)$}] Universe of $L$-bit keys.
+  \item[$n$] Number of input keys, $n = |S|$.
   \item[$S \subseteq U$] The set of keys in a Range Filter, $|S| = n$.
   \item[$Y = U \setminus S$] Non-keys (all points not in $S$).
   \item[$\mathcal{L}$] Maximum query range length.
@@ -19,9 +24,9 @@ We denote by $\{0,1\}^L$ the set of all bit strings of length $L$.
 \begin{description}[style=nextline, leftmargin=4cm, labelwidth=3.4cm]
   \item[$h$] Hash function $h\colon U \to U'$.
   \item[$K$] Fingerprint length in bits, $K = \lceil\log_2(n\mathcal{L}/\varepsilon)\rceil$.
-  \item[{$U' = [0, 2^K]$}] Mapped universe.
+  \item[{$U' = [0, 2^K)$}] Mapped universe.
   \item[{$r = 2^K$}] Mapped universe size.
-  \item[$S' = h(S)$] Fingerprints of stored keys.
+  \item[$S' = h(S)$] Fingerprints of the input keys.
   \item[$Y' = h(Y)$] Images of non-keys under $h$.
 \end{description}
 
