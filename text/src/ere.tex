@@ -81,14 +81,44 @@ The exact metadata reduction is $M$ bits.
 Operationally, this means that the old two-stage lookup through $D_1$
 and $D_2$ is replaced by direct navigation via \textsc{Select} on $D$.
 
-In our experiments this optimization reduced average memory usage by about 0.83 bits per key and improved average query time by about 9.1%.
-\colorbox{orange}{TODO: Maybe add some table with results?}
+\paragraph{Effect on query operation count.}
+The single-vector layout does not strictly reduce the number of \textsc{Rank}/\textsc{Select} calls in every case: the original two-vector layout could short-circuit empty boundary blocks via a $D_1.\textsc{Bit}$ probe, while the new layout always pays at least two \textsc{Select}$(D)$ per boundary block.
+However, in the two most common ARE query patterns --- short ranges that hit a single non-empty block, or that span two adjacent non-empty blocks --- the new layout saves \emph{one} and \emph{three} \textsc{Rank}/\textsc{Select} calls per query, respectively, with long ranges that scan both boundary buckets saving up to four.
+The structural advantage is that every \textsc{Rank}/\textsc{Select} now hits one contiguous succinct bit vector $D$ instead of alternating between $D_1$ and $D_2$, so the auxiliary index pages and cache lines loaded by the first call are likely to serve subsequent calls in the same query.
+The full per-case breakdown is given in Table~\ref{tab:ere-rank-select}.
+
+In our experiments this optimization reduced average memory usage by about 0.83 bits per key and improved average query time by about 9.1\%.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{@{}lccrl@{}}
+        \toprule
+        Query type                            & $(D_1, D_2)$ ops  & $D$ ops    & $\Delta$      & Note                             \\
+        \midrule
+        \textbf{Same block, non-empty}        & $1\,R + 2\,S = 3$ & $2\,S = 2$ & $\mathbf{-1}$ & \textbf{Most frequent, hot path} \\
+        Same block, empty                     & $0$               & $2\,S = 2$ & $+2$          & Cold-path regression             \\
+        \textbf{Adjacent, both non-empty}     & $2\,R + 4\,S = 6$ & $3\,S = 3$ & $\mathbf{-3}$ & \textbf{Most frequent, hot path} \\
+        Adjacent, both empty                  & $0$               & $3\,S = 3$ & $+3$          & Cold-path regression             \\
+        Long range, both boundaries non-empty & $4\,R + 4\,S = 8$ & $4\,S = 4$ & $-4$          & Op count halved                  \\
+        Long range, intermediate non-empty    & $2\,R = 2$        & $4\,S = 4$ & $+2$          & More ops, single vector          \\
+        Long range, all empty                 & $2\,R = 2$        & $4\,S = 4$ & $+2$          & Cold-path regression             \\
+        \bottomrule
+    \end{tabular}
+    \caption{Number of \textsc{Rank}/\textsc{Select} operations per query case for the
+    original two-vector $(D_1, D_2)$ layout (Section~\ref{subsec:ere-original-structure})
+        versus the one-vector $D$ layout (Section~\ref{subsec:ere-one-vector}).
+        $R$ denotes \textsc{Rank} on $D_1$; $S$ denotes \textsc{Select} on $D_2$ or $D$ as
+        appropriate. Bolded rows are the dominant query patterns in typical ARE workloads.
+        \textsc{Bit} probes and bucket-scan operations are not counted (identical between
+        layouts).}
+    \label{tab:ere-rank-select}
+\end{table}
 
 \subsection{Block sizes and Lookup strategy}
 \label{subsec:block-sizes-and-lookup-strategy}
 
 \paragraph{Block occupancy under uniform distribution.}
-The structure divides the universe into $B = 2^{\lfloor \log_2 n \rfloor}$ blocks;
+The Exact Range Empties structure divides the universe into $B = 2^{\lfloor \log_2 n \rfloor}$ blocks;
 each non-empty block stores its keys' suffixes in a packed array (a \emph{bucket}).
 The expected
 number of keys per block is $\lambda = n/B \in [1,\,2)$.
@@ -123,7 +153,7 @@ random 64-bit keys, taken across all $B$ blocks.
         \bottomrule
     \end{tabular}
     \caption{Bucket statistics for $n$ keys in $B = n$ bins ($\lambda = 1$).
-        \textsuperscript{*}Averaged over non-empty bins.
+    \textsuperscript{*}Averaged over non-empty bins.
         $k^*$: smallest $k$ with $B \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.}
     \label{tab:ere-bucket-stats}
 \end{table}
@@ -137,13 +167,13 @@ uniform data.
     \centering
     \begin{tabular}{@{}rrr@{}}
         \toprule
-        $k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ & expected bins \\
+        $k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ & expected bins                  \\
         \midrule
-        10 & $1.1 \times 10^{-7}$  & $1.2 \times 10^{2\phantom{0}}$ \\
-        13 & $6.4 \times 10^{-11}$ & $6.8 \times 10^{-2}$           \\
-        15 & $3.0 \times 10^{-13}$ & $3.2 \times 10^{-4}$           \\
-        20 & $1.6 \times 10^{-19}$ & $1.7 \times 10^{-10}$          \\
-        25 & $2.5 \times 10^{-26}$ & $2.6 \times 10^{-17}$          \\
+        10  & $1.1 \times 10^{-7}$              & $1.2 \times 10^{2\phantom{0}}$ \\
+        13  & $6.4 \times 10^{-11}$             & $6.8 \times 10^{-2}$           \\
+        15  & $3.0 \times 10^{-13}$             & $3.2 \times 10^{-4}$           \\
+        20  & $1.6 \times 10^{-19}$             & $1.7 \times 10^{-10}$          \\
+        25  & $2.5 \times 10^{-26}$             & $2.6 \times 10^{-17}$          \\
         \bottomrule
     \end{tabular}
     \caption{Poisson tail for bucket occupancy ($\lambda = 1$), $n = B = 2^{30}$.}
@@ -159,15 +189,63 @@ preserving local density.
 
 \colorbox{orange}{TODO: Lets discuss this section, not sure how to write this in better way?} \\
 Regardless of distribution, the bucket size is bounded by the block capacity
-$2^w$, where $w$ is the suffix length. Typical values of $w$ in the ARE
-pipeline are $12$--$15$ bits. Binary search on the bucket therefore terminates
+$2^w$, where $w$ is the suffix length.
+Binary search on the bucket therefore terminates
 in at most $w$ iterations, independent of $n$ and of the input distribution;
+
+However, it is the worst case, typically for uniformed .distr it is at most 12 elements.
+Typical values of $w$ in the ARE
+pipeline are $12$--$15$ bits.
 even in the worst case the bucket fits in L2 cache. In practice, buckets
 almost always fit entirely in L1.
 
+\colorbox{orange}{The of ARE (resulls strcuture) is approximate n * (w + 2), so w > 15 / w > 17 bits will not be used in industry}
+
 \colorbox{orange}{\parbox{\linewidth}{TODO: is this informal framing (typical $w \in [12, 15]$, worst-case L2 cache + $w$ bin-search iterations, L1 hit in practice) acceptable, or should this be made more formal?}}
 
-Moreover, distributions with dense ranges can be handled by the hybrid filter of
+\colorbox{orange}{}
+
+
+\paragraph{Non-uniform distributions and worst-case bounds NEW.}
+
+For uniform data the previous paragraph showed that bucket sizes
+concentrate around $\lambda = 1$: empirical maxima stay below
+${\sim}13$ keys even at $n = 2^{30}$
+(Table~\ref{tab:ere-bucket-stats}), regardless of $n$.
+
+Real-world data is rarely uniform. The original ARE
+construction~\citep{goswami2015approximate} uses a \emph{locality-preserving}
+hash: consecutive input keys map to consecutive hashed values, so dense
+input regions stay dense in the hashed universe. On heavily clustered
+benchmarks the heaviest bucket reaches ${\sim}10^6$~keys, while median
+and P90 stay in the thousands (Table~\ref{tab:eval-bucket-fill},
+Chapter~\ref{chap:evaluation}). Worst-case footprint is $\leq 2$~MB ---
+cache-resident in L2.
+
+Regardless of distribution, the bucket size is hard-bounded above by
+the block capacity $2^w$, where $w = K - \lfloor \log_2 n \rfloor$ is
+the suffix length: each bucket physically holds at most $2^w$ distinct
+$w$-bit suffixes. The choice of $w$ is constrained by the overall
+filter size: the total ARE filter occupies approximately
+$n \cdot (w + 2)$ bits ($w$ bits of suffix data plus ${\sim}2$~BPK of
+metadata). Compared to honest storage of 64-bit keys ($64 n$ bits),
+the filter is meaningfully smaller only for $w$ well below $64$;
+in industrial practice $w \in [12, 15]$~bits
+\colorbox{orange}{TODO: cite industry papers for the $w \in [12, 15]$ range}.
+A side benefit of $w = 16$ is that 16-bit suffixes align with SIMD
+lanes for vector-friendly comparisons.
+
+At $w = 15$ the hard upper bound is $2^{15} = 32\,768$~keys per bucket.
+On a fully packed bucket of $2^w$ keys binary search terminates in at most
+$\log_2(2^w) = w$ iterations --- and at $w = 15$ this still costs only
+${\sim}48$~ns, comparable to a single Rank/Select on the metadata bit
+vector. The bound is distribution-independent and depends only on $w$,
+not on $n$.
+In real workloads observed buckets are typically two orders of
+magnitude smaller than this hard limit; the worst case is bounded
+but rare.
+
+By the way, distributions with dense ranges can be handled by the hybrid filter of
 Chapter~\ref{chap:hybrid}: each cluster is isolated into its own exact
 sub-filter, turning local density into a compression advantage.
 
@@ -207,11 +285,11 @@ compressed):
     \centering
     \begin{tabular}{@{}lrr@{}}
         \toprule
-        Variant                                    & Space (bits/key) & Query (ns) \\
+        Variant                                 & Space (bits/key) & Query (ns) \\
         \midrule
-        Baseline (standard trie + fast MMPHF)      & 179              & 1095--1466 \\
-        Compact (succinct trie + fast MMPHF)       & 151              & 372--567   \\
-        Learned (succinct trie + learned MMPHF)    & 59               & 537--762   \\
+        Baseline (standard trie + fast MMPHF)   & 179              & 1095--1466 \\
+        Compact (succinct trie + fast MMPHF)    & 151              & 372--567   \\
+        Learned (succinct trie + learned MMPHF) & 59               & 537--762   \\
         \bottomrule
     \end{tabular}
     \caption{Three WPS variants: space and query latency on Apple~M4~Max,
@@ -229,7 +307,9 @@ suffix data it indexes.
 
 Query latency is equally problematic. WPS replaces only the local search
 inside a bucket, while Rank/Select navigation on the metadata bit vectors
-(${\sim}27$~ns) remains unchanged. Each WPS call descends the trie (pointer
+(${\sim}27$~ns) remains unchanged.
+\colorbox{orange}{TODO: table instead}
+Each WPS call descends the trie (pointer
 chasing through hash tables) and performs a hash lookup --- at least
 370~ns for the Compact variant at $L = 64$. Binary search on a typical
 bucket of ${\sim}12$ keys takes $5$--$9$~ns, and stays under ${\sim}60$~ns
@@ -245,27 +325,7 @@ For the small buckets that arise in practice (${\leq}13$ keys for uniform
 data, ${\leq}2^w$ in general), binary search on packed suffixes is both
 faster and requires no additional space.
 
-Even in an adversarial worst case --- every key in a single bucket ---
-binary search remains fast:
-
-\begin{table}[h]
-    \centering
-    \begin{tabular}{@{}rrr@{}}
-        \toprule
-        $w$ (suffix bits) & Bucket size ($2^w$) & Binary search (ns) \\
-        \midrule
-        12                & 4\,096              & 37                 \\
-        15                & 32\,768             & 48                 \\
-        17                & 131\,072            & 58                 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Worst-case binary search on a fully packed bucket (Apple~M4~Max).
-    At $w = 12$, the entire bucket search costs 37~ns ---
-    still $10\times$ faster than the best WPS variant.}
-    \label{tab:ere-worst-case-binsearch}
-\end{table}
-
-\subsection{Space Analysis}
+\subsection{Space Analysis} \colorbox{orange}{TODO: maybe this part is not needed at all?, RM, table, just explain}
 
 \begin{table}[h]
     \centering
@@ -273,15 +333,15 @@ binary search remains fast:
         \toprule
         $K$ (key bits) & Suffix bits ($w = K - \log_2 n$) & Metadata & Total BPK \\
         \midrule
-        64                & 44.07                          & 2.86     & 46.93     \\
-        128               & 108.07                         & 2.83     & 110.90    \\
-        256               & 236.07                         & 2.83     & 238.90    \\
-        512               & 492.07                         & 2.83     & 494.90    \\
+        64             & 44.07                            & 2.86     & 46.93     \\
+        128            & 108.07                           & 2.83     & 110.90    \\
+        256            & 236.07                           & 2.83     & 238.90    \\
+        512            & 492.07                           & 2.83     & 494.90    \\
         \bottomrule
     \end{tabular}
     \caption{Measured ERE space with $n = 10^6$ keys, one-vector layout
-    (Section~\ref{subsec:ere-one-vector}). Metadata (single bit vector $D$
-    + rank/select indices) is constant at ${\sim}2.83$ BPK.}
+        (Section~\ref{subsec:ere-one-vector}). Metadata (single bit vector $D$
+        + rank/select indices) is constant at ${\sim}2.83$ BPK.}
     \label{tab:ere-space}
 \end{table}
 

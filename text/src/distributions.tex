@@ -86,6 +86,17 @@ Dataset & $n$ (full) & Character \\
 \label{tab:sosd}
 \end{table}
 
+\paragraph{Note on duplicate keys.}
+We sort and deduplicate every dataset on load. The Facebook, Books and OSM
+files contain unique keys (no entries dropped), but the Wiki file has many
+repeated timestamps --- multiple edits committed within the same wall-clock
+second. The duplicate density also grows with offset into the file: empirically,
+the first $10$M~entries are ${\sim}12\%$ duplicated, the first $50$M are
+${\sim}35\%$, and the first $134$M ($= 2^{27}$) collapse to only ${\sim}65$M
+unique keys (${\sim}51\%$ duplicated). For Wiki-based experiments the effective
+$n$ is therefore smaller than the requested raw count; tables in
+Chapter~\ref{chap:evaluation} report the actual post-dedupe key count.
+
 % TODO: regenerate histograms with better binning (rank-based or adaptive)
 \begin{figure}[h]
   \centering

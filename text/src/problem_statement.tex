@@ -3,7 +3,7 @@
 
 Let $U = \{0,1\}^L$ be a universe of $L$-bit keys.
 Given a set $S \subseteq U$ of $n$ keys, a maximum query range length $\mathcal{L}$,
-and a target false positive rate $\varepsilon$, the \emph{range emptiness problem} asks
+and a target false positive rate $\varepsilon$, the \emph{approximate range emptiness problem} asks
 to build a data structure that answers ``$[a, b] \cap S = \emptyset$?'' for intervals of
 length $\leq \mathcal{L}$, with:
 
@@ -61,9 +61,10 @@ The lower bound of Theorem~1 is achieved up to an additive $O(n)$ term
 via two layers:
 \begin{enumerate}
     \item A locality-preserving hash (Section~\ref{sec:soda}) $h\colon U \to U'$, where $U' = \{0,1\}^K$ and $r = |U'| = 2^K$.
-    The hash partitions $U$ into blocks of size $r$, applies an independent cyclic
-    shift within each block, and then maps the shifted block onto $U'$ by translation.
+    The hash partitions $U$ into blocks of size $r$, applies an independent rotation
+    within each block, and then maps the shifted block onto $U'$ by translation.
     Its pairwise collision probability is at most $1/2^K$.
+    \colorbox{orange}{TODO: no pairwise collision probability}
 
     \item An \textbf{Exact Range Emptiness (ERE)} (Section~\ref{sec:ere}) structure over $S' = h(S) \subseteq U'$:
     a succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits, which answers ``$[a', b'] \cap S' = \emptyset$?''.
