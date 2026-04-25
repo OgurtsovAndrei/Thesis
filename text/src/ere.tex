@@ -287,16 +287,34 @@ $7$--$13$ bits per key, so WPS adds $5$--$8\times$ more space than the
 suffix data it indexes.
 
 Query latency is equally problematic. WPS replaces only the local search
-inside a bucket, while Rank/Select navigation on the metadata bit vectors
-(${\sim}27$~ns) remains unchanged.
-\colorbox{orange}{TODO: table instead}
-Each WPS call descends the trie (pointer
-chasing through hash tables) and performs a hash lookup --- at least
-370~ns for the Compact variant at $L = 64$. Binary search on a typical
-bucket of ${\sim}12$ keys takes $5$--$9$~ns, and stays under ${\sim}60$~ns
-even on pathologically large buckets of tens of thousands of keys
-(Section~\ref{subsec:ere-local-search}), making WPS $40$--$110\times$
-slower for the operation it replaces.
+inside a bucket; Rank/Select navigation on the metadata bit vectors
+(${\sim}27$~ns) is identical for both approaches.
+Table~\ref{tab:wps-vs-binsearch} compares the bucket-search step alone
+across representative bucket sizes.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{@{}lrrr@{}}
+        \toprule
+        Bucket size $k$                & Binary search (ns) & WPS Compact (ns) & Speedup            \\
+        \midrule
+        ${\sim}12$ (typical, uniform)  & $5$--$9$           & $370$--$567$     & $40$--$110\times$  \\
+        $2^{12}$ ($k \approx 4{,}000$) & ${\sim}40$         & $370$--$567$     & $9$--$14\times$    \\
+        $2^{17}$ ($k \approx 131{,}000$) & ${\sim}60$       & $370$--$567$     & $6$--$9\times$     \\
+        \bottomrule
+    \end{tabular}
+    \caption{Bucket-search latency on Apple~M4~Max, $L = 64$, 64-bit keys.
+    WPS Compact numbers are from Table~\ref{tab:wps-cost}; binary search
+    numbers are from the bucket-scan benchmark of
+    Section~\ref{subsec:ere-local-search}. WPS pays a large per-call
+    constant from trie pointer-chasing and hash probing that does not
+    amortise with $k$, while binary search on packed suffixes scales as
+    $O(\log k)$ with small constants on contiguous memory.}
+    \label{tab:wps-vs-binsearch}
+\end{table}
+
+Even on adversarial bucket sizes WPS stays at least $6\times$ slower for
+the operation it replaces.
 
 The root cause is that the $O(1)$ theoretical guarantee hides large constants:
 each ``constant-time'' trie step involves hashing a variable-length prefix,
