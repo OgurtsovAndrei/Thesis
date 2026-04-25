@@ -180,33 +180,7 @@ uniform data.
     \label{tab:ere-poisson-tail}
 \end{table}
 
-\paragraph{Non-uniform distributions and worst-case bounds.}
-For non-uniform input, the Poisson model does not apply: clustered keys
-concentrate in a few blocks. When ERE is used inside SODA~ARE
-(Section~\ref{sec:soda}), the locality-preserving hash $h(x) = (u + x) \bmod 2^K$ (where $u$ is a
-per-block constant) maps consecutive keys to consecutive hashed values,
-preserving local density.
-
-\colorbox{orange}{TODO: Lets discuss this section, not sure how to write this in better way?} \\
-Regardless of distribution, the bucket size is bounded by the block capacity
-$2^w$, where $w$ is the suffix length.
-Binary search on the bucket therefore terminates
-in at most $w$ iterations, independent of $n$ and of the input distribution;
-
-However, it is the worst case, typically for uniformed .distr it is at most 12 elements.
-Typical values of $w$ in the ARE
-pipeline are $12$--$15$ bits.
-even in the worst case the bucket fits in L2 cache. In practice, buckets
-almost always fit entirely in L1.
-
-\colorbox{orange}{The of ARE (resulls strcuture) is approximate n * (w + 2), so w > 15 / w > 17 bits will not be used in industry}
-
-\colorbox{orange}{\parbox{\linewidth}{TODO: is this informal framing (typical $w \in [12, 15]$, worst-case L2 cache + $w$ bin-search iterations, L1 hit in practice) acceptable, or should this be made more formal?}}
-
-\colorbox{orange}{}
-
-
-\paragraph{Non-uniform distributions and worst-case bounds NEW.}
+\paragraph{Non-uniform distributions and worst-case bounds}
 
 For uniform data the previous paragraph showed that bucket sizes
 concentrate around $\lambda = 1$: empirical maxima stay below
