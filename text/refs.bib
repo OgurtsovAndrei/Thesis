@@ -87,10 +87,11 @@
 
 @inproceedings{grafite2024,
   title={Grafite: Taming Adversarial Queries with Optimal Range Filters},
-  author={Boffa, Antonio and Cenzato, Davide and Ferragina, Paolo and Vinciguerra, Giorgio},
+  author={Costa, Marco and Ferragina, Paolo and Vinciguerra, Giorgio},
   booktitle={Proceedings of the 2024 International Conference on Management of Data (SIGMOD '24)},
   year={2024},
-  organization={ACM}
+  organization={ACM},
+  doi={10.1145/3639258}
 }
 
 @inproceedings{eslami2024memento,
@@ -100,6 +101,50 @@
   year={2024},
   organization={ACM},
   doi={10.1145/3698820}
+}
+
+@inproceedings{wisckey2016,
+  title={{WiscKey}: Separating Keys from Values in {SSD}-Conscious Storage},
+  author={Lu, Lanyue and Pillai, Thanumalayan Sankaranarayana and Arpaci-Dusseau, Andrea C. and Arpaci-Dusseau, Remzi H.},
+  booktitle={14th {USENIX} Conference on File and Storage Technologies ({FAST} '16)},
+  pages={133--148},
+  year={2016},
+  organization={USENIX Association}
+}
+
+@article{wang2024grf,
+  title={{GRF}: A Global Range Filter for {LSM}-Trees with Shape Encoding},
+  author={Wang, Hengrui and Guo, Te and Yang, Junzhao and Zhang, Huanchen},
+  journal={Proceedings of the {ACM} on Management of Data},
+  volume={2},
+  number={3},
+  articleno={141},
+  numpages={27},
+  year={2024},
+  doi={10.1145/3654944}
+}
+
+% === LSM-tree filter design ===
+
+@inproceedings{monkey2017,
+  title={{Monkey}: Optimal Navigable Key-Value Store},
+  author={Dayan, Niv and Athanassoulis, Manos and Idreos, Stratos},
+  booktitle={Proceedings of the 2017 ACM International Conference on Management of Data (SIGMOD '17)},
+  pages={79--94},
+  year={2017},
+  organization={ACM},
+  doi={10.1145/3035918.3064054}
+}
+
+% === Production LSM workloads ===
+
+@inproceedings{cao2020facebook,
+  title={Characterizing, Modeling, and Benchmarking {RocksDB} Key-Value Workloads at {Facebook}},
+  author={Cao, Zhichao and Dong, Siying and Vemuri, Sagar and Du, David H. C.},
+  booktitle={18th {USENIX} Conference on File and Storage Technologies ({FAST} '20)},
+  pages={209--223},
+  year={2020},
+  organization={USENIX Association}
 }
 
 @article{bloom1970space,
@@ -144,6 +189,33 @@
   url     = {https://s2geometry.io},
   note    = {Accessed: 2026-03-25}
 }
+
+% === Production system docs ===
+
+@misc{rocksdb-bloom,
+  title  = {{RocksDB} {B}loom Filter},
+  author = {{Facebook}},
+  year   = {2024},
+  url    = {https://github.com/facebook/rocksdb/wiki/RocksDB-Bloom-Filter},
+  note   = {Accessed: 2026-04-26}
+}
+
+@misc{cassandra-bloom,
+  title  = {{Apache Cassandra} Documentation: {B}loom Filters},
+  author = {{Apache Software Foundation}},
+  year   = {2024},
+  url    = {https://cassandra.apache.org/doc/latest/cassandra/managing/operating/bloom_filters.html},
+  note   = {Accessed: 2026-04-26}
+}
+
+@misc{rocksdb-leveled,
+  title  = {{RocksDB} Leveled Compaction},
+  author = {{Facebook}},
+  year   = {2024},
+  url    = {https://github.com/facebook/rocksdb/wiki/Leveled-Compaction},
+  note   = {Accessed: 2026-04-26}
+}
+
 
 % === Benchmarks ===
 

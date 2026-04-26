@@ -329,11 +329,15 @@ faster and requires no additional space.
 For $K$-bit keys, ERE stores $w = K - \lfloor \log_2 n \rfloor$ bits of
 suffix per key plus ${\sim}2.83$~BPK of metadata (single bit vector $D$
 with rank/select indices, Section~\ref{subsec:ere-one-vector}).
-At $K = 64$ this gives ${\sim}47$~BPK total at $n = 10^6$ ($w = 45$) and
-${\sim}37$~BPK at $n = 2^{30}$ ($w = 34$) --- a $26\%$--$42\%$ reduction
-over honestly storing the full 64-bit keys ($64$~BPK), but still
-${\sim}2$--$3\times$ above the $14$--$16$~BPK budget of industrial range
-filters (Table~\ref{tab:industry-bpk}, Chapter~\ref{chap:evaluation}).
+\colorbox{orange}{\parbox{\linewidth}{TODO: re-measure metadata BPK on the
+one-vector layout --- the ${\sim}2.83$ figure was taken from the
+two-vector $(D_1, D_2)$ layout; after the merge into a single $D$ it
+should be lower.}}
+At $K = 64$ and $n = 2^{30}$ ($w = 34$) this gives ${\sim}37$~BPK total
+--- a ${\sim}42\%$ reduction over honestly storing the full 64-bit keys
+($64$~BPK), but still ${\sim}2.5\times$ above the $14$--$16$~BPK budget
+of industrial range filters
+(Table~\ref{tab:industry-bpk}, Chapter~\ref{chap:evaluation}).
 
 Space grows linearly with $K$ --- unavoidable for an exact structure,
 since it must store the information distinguishing the keys.
