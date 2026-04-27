@@ -14,6 +14,16 @@ type SeriesData struct {
 	Dashed bool
 	Marker string // "circle", "square", "diamond", "triangle", "star"
 	Points []Point
+
+	// EndStop, when true, replaces the last marker with a small X (cross)
+	// signalling that the series terminates here for an external reason
+	// (e.g. an underlying library cannot operate beyond this point) rather
+	// than just having no more measurements. The X is drawn on top of the
+	// regular line+markers so it always reads as an explicit terminator.
+	EndStop bool
+	// EndCaption is rendered below the series name in the legend with a
+	// matching small X marker, in italic muted style. Empty = no caption.
+	EndCaption string
 }
 
 // Point is an (X, Y) data point.
@@ -354,11 +364,33 @@ func drawSeriesLines(sb *strings.Builder, series []SeriesData, toX, toY func(flo
 			marker = "circle"
 		}
 		if marker != "none" {
-			for _, p := range s.Points {
+			lastIdx := len(s.Points) - 1
+			for i, p := range s.Points {
+				if s.EndStop && i == lastIdx {
+					continue // last marker drawn separately as X (after the loop)
+				}
 				drawMarker(sb, marker, s.Color, toX(p.X), toY(p.Y))
 			}
 		}
 	}
+	// Draw EndStop X markers last so they render on top of any neighbouring lines.
+	for _, s := range series {
+		if !s.EndStop || len(s.Points) == 0 {
+			continue
+		}
+		last := s.Points[len(s.Points)-1]
+		drawXMarker(sb, s.Color, toX(last.X), toY(last.Y), 3, 2.0)
+	}
+}
+
+// drawXMarker writes an X (cross) at (cx,cy) with given half-arm length and stroke width.
+func drawXMarker(sb *strings.Builder, color string, cx, cy, arm, stroke float64) {
+	sb.WriteString(fmt.Sprintf(
+		`<g transform="translate(%.1f,%.1f)">`+
+			`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f" stroke-linecap="round"/>`+
+			`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f" stroke-linecap="round"/>`+
+			`</g>`+"\n",
+		cx, cy, -arm, -arm, arm, arm, color, stroke, -arm, arm, arm, -arm, color, stroke))
 }
 
 func drawLegend(sb *strings.Builder, series []SeriesData, mL, mT, plotW float64) {
@@ -381,6 +413,16 @@ func drawLegend(sb *strings.Builder, series []SeriesData, mL, mT, plotW float64)
 		drawMarker(sb, marker, s.Color, lx+8, ly)
 		sb.WriteString(fmt.Sprintf(`<text class="label" x="%.0f" y="%.0f">%s</text>`+"\n", lx+22, ly+4, s.Name))
 		ly += 18
+		// Optional secondary caption (e.g. "(library limit)") with a small
+		// X marker, signalling that the series carries an EndStop terminator.
+		if s.EndCaption != "" {
+			capY := ly - 5
+			drawXMarker(sb, s.Color, lx+8, capY, 3, 2.0)
+			sb.WriteString(fmt.Sprintf(
+				`<text x="%.0f" y="%.0f" style="font-size:9px;fill:#666;font-style:italic">%s</text>`+"\n",
+				lx+22, capY+3, s.EndCaption))
+			ly += 14
+		}
 	}
 }
 
