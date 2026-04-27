@@ -58,15 +58,33 @@ All current `bench_results/` data is stale: it predates the one-vector ERE optim
 
 (Old data is preserved on disk for reference; the dir can be deleted after defence if desired.)
 
-### Task 0.4 — Extend `bpkSweep` density up to 28
+### Task 0.4 — Adaptive point density for CGo filter sweeps
+
+**Why dense pre-sweep is wrong:** `[4,5,6,…,28]` would burn compute on uninteresting regions of the curve (high-BPK tail where FPR is already at floor). Better: keep current sparse sweep `[4,6,8,…,20]`, then **after** initial points are measured, refine adaptively only where the descent is steep or the tail hasn't reached the floor.
+
+**Concrete failure mode:** in `bench_results/plots/N16777216/sosd_fb/L1.svg`, Grafite drops from FPR≈10⁻¹ at BPK=10 to floor at BPK≈11.5 in **one sweep step**. The descent shape (BPK=10.5, 11) is invisible because we never measure there.
 
 **Files:**
-- Modify: `bench/sosd_test.go:33` and any other declarations of `bpkSweep`. Replace `[4, 6, 8, 10, 12, 14, 16, 18, 20]` with `[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 26, 28]`.
+- Modify: `bench/comparison_test.go` — extend the CGo bpkSweep loop (~lines 414–510) with a single refinement pass per series.
 
-- [ ] **Step 1:** `grep -n "bpkSweep" bench/*.go` — find all declarations; pick one canonical location.
-- [ ] **Step 2:** Replace the array.
-- [ ] **Step 3:** This **automatically invalidates** Grafite/SNARF/SuRF series (their `paramsBPKSweep` hash changes). On next run they rebuild; k-grid series cache stays untouched.
-- [ ] **Step 4:** Commit: `git commit -m "bench: densify bpkSweep up to 28 BPK for CGo filter coverage"`
+**Algorithm:**
+After the initial sweep populates `allSeries[name].Points` for each CGo series:
+
+1. Sort points by BPK ascending.
+2. For each consecutive pair `(p_i, p_{i+1})`:
+   - If `BPK_{i+1} − BPK_i ≥ 2` **and** `|log₁₀(FPR_i) − log₁₀(FPR_{i+1})| ≥ 1.5` (steep drop), insert midpoint `BPK = (BPK_i + BPK_{i+1}) / 2`.
+3. Tail extension: while last point's FPR > floor (≈ `3/queryCount`) **and** last point's BPK < `XMax` (= 25), append `BPK_last + 2`.
+4. Run the filter at the resulting `extraBPK` set; append points; re-render.
+
+One refinement pass is enough for thesis quality. Avoid recursion — diminishing returns vs added complexity.
+
+- [ ] **Step 1:** Read `bench/comparison_test.go:414–510` to map the current CGo loop structure.
+- [ ] **Step 2:** Implement the refinement function (separate helper `refineCGoSweep(series *SeriesData, queryCount int, xMax float64) []float64`) — returns extra BPK values.
+- [ ] **Step 3:** Wire it into the loop after initial sweep completes; re-run filter for `extraBPK` values; append to `Points`.
+- [ ] **Step 4:** Cache implications: `paramsBPKSweep` hash includes the refinement seed, so a future re-run with different floor or XMax automatically invalidates. Verify behavior unchanged for cached data.
+- [ ] **Step 5:** Commit: `git commit -m "feat(bench): adaptive midpoint refinement for CGo sweeps"`
+
+Effort: ~2–3 hours.
 
 ### Task 0.5 — Drop redundant filters from `allSeries` map
 
@@ -120,33 +138,63 @@ Rationale for keeps:
 
 This task is the only one in Week 0 that can fail and force scope rollback. Schedule it on a day when you have ~3 hours uninterrupted, ideally before Task 0.7.
 
-### Task 0.7 — Smoke test framework changes on one (dist × L) cell
+### Task 0.7 — Phase 1: single distribution end-to-end validation
 
-- [ ] **Step 1:** Pick smallest realistic combination: SOSD Books, n=2²⁰, L=128.
-- [ ] **Step 2:** Run cleanly (no env vars needed — `bench_results/` is fresh):
-  ```
-  go test -run "TestComparison/sosd_books" -v -timeout 1h ./bench/
-  ```
-- [ ] **Step 3:** Inspect resulting `bench_results/plots/N1048576/sosd_books/L128.svg`. Verify: 8 series in legend, X-axis capped at 25, no premature truncation, SOSD at full 64-bit (large universe span).
-- [ ] **Step 4:** If anything looks wrong, fix before launching mass rerun.
+Don't launch a multi-day mass rerun until everything works on one ground-truth cell. This is the framework smoke test.
 
-### Task 0.8 — Kick off mass rerun (background, multi-day)
+**Target:** SOSD FB at $n=2^{20}$, all L values `{1, 16, 128, 1024, 4096, 16384, 65536}`, 8 final filters.
 
-**Files:**
-- Create: `bench_results/rerun_2026_04_28.log`
+Why FB: it's the headline distribution; visible Grafite descent and Scan-ARE dominance both happen here. If anything is broken (filter rendering, X-cap, adaptive refinement, 64-bit refactor), it shows up.
 
-- [ ] **Step 1:** Decide scope. Recommended for headline + tables:
-  - Distributions: SOSD (4) at $n=2^{24}$ — and try $n=2^{28}$ on Books/FB if Task 0.6 cleared the 64-bit refactor (Wiki still capped by intrinsic dedup); synthetic (5) at $n=2^{20}$.
-  - L values: full sweep `{1, 16, 128, 1024, 4096, 16384, 65536}`.
-  - Filters: 8 final from Task 0.5.
-- [ ] **Step 2:** Launch single-threaded in background (per repo CLAUDE.md, never parallelize benchmarks):
+- [ ] **Step 1:** Foreground run, ~1–2 hours estimated:
   ```
-  go test -run TestComparison -v -timeout 96h ./bench/ 2>&1 \
-    | tee bench_results/rerun_2026_04_28.log &
+  cd /Users/andrei.ogurtsov/Thesis-Bench-industry
+  go test -run "TestComparison/sosd_fb" -v -timeout 4h ./bench/ 2>&1 \
+    | tee bench_results/phase1.log
   ```
-- [ ] **Step 3:** Capture PID: `echo $! > bench_results/rerun.pid`. Verify alive: `ps -p $(cat bench_results/rerun.pid)`.
-- [ ] **Step 4:** Don't block. Move to Week 1 tasks. Check progress daily with `tail -50 bench_results/rerun_2026_04_28.log`.
-- [ ] **Step 5:** When rerun finishes (estimate: 3–5 days at $n=2^{24}$, longer if $n=2^{28}$ is included), commit: `git add bench_results/plots/ bench_results/data/ && git commit -m "bench: rerun all FPR-vs-BPK with one-vector ERE + 8-series filter set"`
+- [ ] **Step 2:** Inspect plots in `bench_results/plots/N1048576/sosd_fb/L*.svg`. Verify:
+  - 8 series in legend (Theoretical, Grafite, SNARF, SuRFReal(8), BloomARE, SODA, Greedy+Merge, Scan-ARE)
+  - X-axis capped at 25
+  - Grafite descent visible (multiple intermediate points, not single vertical drop)
+  - Scan-ARE reaches floor on L=65536
+  - No premature truncation in mid-curve regions
+- [ ] **Step 3:** If anything looks wrong: fix before Phase 2. Common breakages: missing filter (allSeries entry deleted but conditional left in), X-cap not applied (caller missing XMax: 25), 64-bit overflow somewhere (Grafite or SuRF panics).
+- [ ] **Step 4:** Commit: `git add bench_results/ && git commit -m "bench: phase 1 — sosd_fb at n=2^20 validated end-to-end"`
+
+### Task 0.8 — Phase 2: all distributions at $n=2^{20}$
+
+After Phase 1 passes. End-to-end at small scale across the full distribution matrix; catches distribution-specific issues before scaling N.
+
+**Target:** all 9 distributions (4 SOSD + 5 synthetic) at $n=2^{20}$, all L values, 8 filters.
+
+- [ ] **Step 1:** Background launch (estimate ~12–18h sequential at $n=2^{20}$):
+  ```
+  go test -run TestComparison -v -timeout 24h ./bench/ 2>&1 \
+    | tee bench_results/phase2.log &
+  echo $! > bench_results/phase2.pid
+  ```
+- [ ] **Step 2:** Don't block. Continue with text-stream tasks (Week 1: introduction, related work). Check progress every few hours: `tail -50 bench_results/phase2.log`.
+- [ ] **Step 3:** When done, scan all 9 distributions × 7 L values (63 plots). Look for systemic issues (one distribution broken across all L, or one L broken across all distributions).
+- [ ] **Step 4:** Commit: `git add bench_results/ && git commit -m "bench: phase 2 — all 9 distributions at n=2^20"`
+
+### Task 0.9 — Phase 3: SOSD scale-up to $n=2^{24}$ (final headline data)
+
+After Phase 2 passes. This produces the headline numbers for the thesis tables.
+
+**Target:** 4 SOSD distributions at $n=2^{24}$, all L values, 8 filters. Synthetic stays at $n=2^{20}$ per scale decision in plan header.
+
+If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and FB at $n=2^{28}$ — Wiki and OSM keep $n=2^{24}$ due to intrinsic dedup.
+
+- [ ] **Step 1:** Background launch (estimate ~3–5 days sequential at $n=2^{24}$, longer with $n=2^{28}$):
+  ```
+  go test -run "TestComparison/sosd_" -v -timeout 168h ./bench/ 2>&1 \
+    | tee bench_results/phase3.log &
+  echo $! > bench_results/phase3.pid
+  ```
+  (The exact test invocation depends on how distributions × N are configured in `bench/comparison_test.go`. Check existing test setup; may require an env var like `N=16777216` or a dedicated test run name.)
+- [ ] **Step 2:** Monitor daily: `tail -50 bench_results/phase3.log` and `ps -p $(cat bench_results/phase3.pid)`.
+- [ ] **Step 3:** This runs in background through most of Week 1 and into Week 2. Don't block on it.
+- [ ] **Step 4:** When finished, commit: `git add bench_results/ && git commit -m "bench: phase 3 — SOSD at n=2^24, final headline data"`.
 
 ---
 
