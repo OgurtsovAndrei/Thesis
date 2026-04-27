@@ -1,9 +1,9 @@
-# 4-Week Thesis Lock-In Plan (2026-04-27 → 2026-05-25)
+# Thesis Lock-In Plan (2026-04-27 → 2026-05-20 text submission; defence shortly after)
 
 > Source spec: `Thesis/text/defence/talk-structure.md`
 > Adapted from `superpowers:writing-plans` for non-code deliverables.
 
-**Goal:** submit a finished thesis text on 2026-05-25 and present an 11–12 minute defence with modular DLC support, on the structure agreed in `talk-structure.md`.
+**Goal:** submit a finished thesis text on 2026-05-20 and present an 11–12 minute defence with modular DLC support, on the structure agreed in `talk-structure.md`.
 
 **Architecture:** three parallel streams that converge in week 4.
 - **Text stream** — finish missing chapters (intro, related work, conclusion, abstract, limitations); fill 9 empty BPK tables; remove all `\colorbox{orange}{TODO}` markers.
@@ -226,36 +226,13 @@
 
 ---
 
-## Week 4: Polish + dry runs + submission (May 18 – May 24; submit May 25)
+## Week 4: Text close-out (May 18 – May 20)
 
-### Task 4.1 — Pre-defence dry run (timed) + fix slow spots
+The text submission deadline is **2026-05-20**. Tasks 4.1–4.3 must complete by that date. Slide work is decoupled and continues in **Phase B** below — it has its own pacing tied to the defence date.
 
-**Files:** none — record a stopwatch sheet inline as a markdown comment in `defence/slides/defence.tex`.
+If you finish text close-out early on May 18 or 19, jump to Phase B; do not let extra time leak into perfectionist text edits.
 
-- [ ] **Step 1:** Compile final deck (core only, no DLC). Walk through out loud with stopwatch. Record per-slide actual time.
-- [ ] **Step 2:** Identify any slide >150% of budget. Cut or rephrase.
-- [ ] **Step 3:** Re-time. Target: ≤ 11:00.
-- [ ] **Step 4:** Don't commit timing yet — wait until after Task 4.2.
-
-### Task 4.2 — Pre-defence with supervisor / lab
-
-- [ ] **Step 1:** Schedule the meeting (calendar permitting; ideally early week 4).
-- [ ] **Step 2:** Walk through full core (10 slides). Then offer the 4 DLC modules with the question: "Which would you like in the talk?"
-- [ ] **Step 3:** Record the chosen DLC list + any direct feedback in `defence/pre-defence-notes.md`.
-- [ ] **Step 4:** Commit notes: `git -C Thesis add text/defence/pre-defence-notes.md && git -C Thesis commit -m "docs(defence): pre-defence feedback and DLC selection"`
-
-### Task 4.3 — Insert chosen DLC modules and re-time
-
-**Files:**
-- Modify: `defence/slides/defence.tex` to `\input` chosen DLC files at the right points.
-
-- [ ] **Step 1:** Wire selected DLC into `defence.tex` according to the M1–M4 insertion points in `talk-structure.md`.
-- [ ] **Step 2:** Compile, verify total slide count increased by chosen-DLC count.
-- [ ] **Step 3:** Second timed dry run. Target: ≤ 12:30.
-- [ ] **Step 4:** Adjust if over.
-- [ ] **Step 5:** Commit: `git -C Thesis add text/defence/slides/defence.tex && git -C Thesis commit -m "feat(defence): integrate chosen DLC modules"`
-
-### Task 4.4 — Final text proofread
+### Task 4.1 — Final text proofread
 
 **Files:** all of `Thesis/text/src/*.tex` and main `practical-range-emptiness.tex`.
 
@@ -268,21 +245,54 @@
 - [ ] **Step 4:** Verify: PDF page count is in the program's range; all figures render; bibliography prints.
 - [ ] **Step 5:** Commit: `git -C Thesis add . && git -C Thesis commit -m "chore(text): final proofread pass"`
 
-### Task 4.5 — Bump submodule pointer in parent repo
+### Task 4.2 — Bump submodule pointer in parent repo
 
 **Files:**
-- Modify: parent repo's submodule pointer (single commit, end of week 4 only — per standing rule).
+- Modify: parent repo's submodule pointer (single commit, before submission — per standing rule).
 
 - [ ] **Step 1:** From parent repo: `cd /Users/andrei.ogurtsov/Thesis-Bench-industry && git status` — should show `Thesis` modified.
-- [ ] **Step 2:** Commit: `git add Thesis && git commit -m "chore: bump Thesis submodule (defence prep, final text)"`
+- [ ] **Step 2:** Commit: `git add Thesis && git commit -m "chore: bump Thesis submodule (final text submission)"`
 - [ ] **Step 3:** Don't push automatically. User decides when.
 
-### Task 4.6 — Submit text (2026-05-25)
+### Task 4.3 — Submit text (2026-05-20, hard deadline)
 
 - [ ] **Step 1:** Follow program submission procedure (portal upload, signed forms, etc.). Out of scope for this plan; user knows the procedure.
 - [ ] **Step 2:** Save submission confirmation to `defence/submission-receipt.{pdf,eml}`.
 
-### Task 4.7 — Day-before defence prep
+---
+
+## Phase B: Defence prep (post-submission, May 20 → defence date)
+
+Slide work continues without text-deadline pressure. Pacing depends on the defence date.
+
+### Task B.1 — Pre-defence dry run (timed) + fix slow spots
+
+**Files:** none — record a stopwatch sheet inline as a markdown comment in `defence/slides/defence.tex`.
+
+- [ ] **Step 1:** Compile final deck (core only, no DLC). Walk through out loud with stopwatch. Record per-slide actual time.
+- [ ] **Step 2:** Identify any slide >150% of budget. Cut or rephrase.
+- [ ] **Step 3:** Re-time. Target: ≤ 11:00.
+- [ ] **Step 4:** Don't commit timing yet — wait until after Task B.2.
+
+### Task B.2 — Pre-defence with supervisor / lab
+
+- [ ] **Step 1:** Schedule the meeting. Aim for ~5–7 days before defence.
+- [ ] **Step 2:** Walk through full core (10 slides). Then offer the 4 DLC modules with the question: "Which would you like in the talk?"
+- [ ] **Step 3:** Record the chosen DLC list + any direct feedback in `defence/pre-defence-notes.md`.
+- [ ] **Step 4:** Commit notes: `git -C Thesis add text/defence/pre-defence-notes.md && git -C Thesis commit -m "docs(defence): pre-defence feedback and DLC selection"`
+
+### Task B.3 — Insert chosen DLC modules and re-time
+
+**Files:**
+- Modify: `defence/slides/defence.tex` to `\input` chosen DLC files at the right points.
+
+- [ ] **Step 1:** Wire selected DLC into `defence.tex` according to the M1–M4 insertion points in `talk-structure.md`.
+- [ ] **Step 2:** Compile, verify total slide count increased by chosen-DLC count.
+- [ ] **Step 3:** Second timed dry run. Target: ≤ 12:30.
+- [ ] **Step 4:** Adjust if over.
+- [ ] **Step 5:** Commit: `git -C Thesis add text/defence/slides/defence.tex && git -C Thesis commit -m "feat(defence): integrate chosen DLC modules"`
+
+### Task B.4 — Day-before defence prep
 
 - [ ] **Step 1:** Memorize the 4 critical numbers: **−24%** metadata, **6–110×** WPS, **FPR=0** exact mode, **<10⁻⁸ @ 5 BPK**.
 - [ ] **Step 2:** Render 3 copies of the Beamer PDF: local laptop, USB stick, cloud (Google Drive).
@@ -300,7 +310,8 @@
 | Pre-defence cannot be scheduled | Low | Self-pick DLC | Default selection: **M1 (one-vector detail) + M3 (LSM context)** — covers technical depth + applied framing |
 | LaTeX build breaks at submission | Low | Late submission | Render on Overleaf as fallback; fallback PDF rendered earlier in week 4 |
 | Beamer figure rendering fails on projector | Low | Slides incomplete | PNG fallback rendered in Task 4.7 |
-| Chapter writing slips by >2 days | Medium | Compresses week 3 | Cut B10 (codebase backup) and B9 (future work backup) — they are cosmetic |
+| Chapter writing slips by >2 days | Medium | Compresses week 3, threatens May 20 deadline | Cut B10 + B9 (cosmetic backups) immediately; if still slipping, cut Task 3.4 entirely (move all backup slides to Phase B); text close-out (Tasks 4.1–4.3) is non-negotiable |
+| May 20 deadline missed | Low | Late submission penalty per program rules | Identify gating chapter on May 17 morning; if conclusion or abstract not started, escalate to supervisor by EOD May 17 — do not silently slip |
 | Synthetic-at-n=2²⁴ requested by supervisor | Low | Major scope expansion | Push back: "SOSD at industrial scale is the headline; synthetic at smaller scale isolates effects independently — both are reported." |
 
 ---
