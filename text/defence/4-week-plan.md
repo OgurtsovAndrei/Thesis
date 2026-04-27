@@ -479,6 +479,50 @@ Slide work continues without text-deadline pressure. Pacing depends on the defen
 
 ---
 
+## Phase C: Post-defence release cleanup (deferred)
+
+Issues spotted during defence prep that don't block submission or the
+talk, but are real performance / API debt to clear before any public
+release of the codebase. Recorded here so we don't lose them.
+
+### Task C.1 — Lift ARE/ERE public API to `uint64` keys
+
+**Problem.** Every public `IsEmpty(a, b bits.BitString) bool` allocates
+two `bits.BitString` values per query (and the build path allocates one
+per key). On the FPR-vs-BPK benchmark this is ~6e6 allocations per
+configuration just from the trampoline `func(a, b uint64) bool { return
+f.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }`. Heap pressure
+fragments the GC pacer and competes with the actual filter work.
+
+**Reality check.** Every benchmark we run — synthetic and SOSD —
+produces keys that fit in `uint64`. The `BitString`-typed surface is
+only useful inside the trie internals (variable-width hashing,
+prefix/suffix splits). It does not need to be the API contract.
+
+**Plan.**
+- Add `IsEmptyU64(lo, hi uint64) bool` and `BuildU64([]uint64, ...)`
+  fast paths to every ARE/ERE package whose underlying logic accepts
+  uint64-shaped keys (trunc, adaptive, soda_hash, hybrid_scan,
+  greedy_scan, bloom — almost all of them).
+- Convert internally where width-conversion is unavoidable; do it once
+  per call instead of inside the user-facing closure.
+- Update `bench/comparison_test.go` and the Thesis test suites to call
+  the uint64 path first; keep `BitString` versions as a thin wrapper.
+- Re-run the throughput / latency benchmarks (B6 backup) and quantify
+  the saved time — this is presentation-grade evidence for the
+  conclusion slide's "future work" line.
+
+**Why not now.** Touches every ARE filter package and a lot of test
+fixtures. Risk of breaking the cached JSON used by the headline plot
+(any signature change forces a re-measurement). Schedule **after** the
+text submission and after the headline data lock so we can refactor
+freely without invalidating the defence run.
+
+### Task C.2 — Audit other allocation hot spots flagged during the
+performance review (TBD list — fill in as we spot them).
+
+---
+
 ## Risks and contingencies
 
 | Risk | Probability | Impact | Contingency |
