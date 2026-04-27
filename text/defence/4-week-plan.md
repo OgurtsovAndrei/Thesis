@@ -10,7 +10,9 @@
 - **Measurement stream** — confirm n=2²⁴ SOSD coverage suffices; run B6 (build throughput + query latency vs Grafite/SNARF/SuRF).
 - **Slide stream** — build Beamer deck in `defence/slides/` matching `talk-structure.md` (10 core + 4 DLC + 10 backup).
 
-**Critical path:** data audit → fill BPK tables → finalize evaluation chapter → conclusion text → slide 10 → pre-defence → DLC selection → final talk.
+**Critical path:** framework fixes → kick off full rerun (background) → fill BPK tables → finalize evaluation chapter → conclusion text → slide 10 → pre-defence → DLC selection → final talk.
+
+**Why Week 0 exists:** all current data in `bench_results/` was generated **before** the one-vector ERE optimization landed. It's stale and must be regenerated. Before kicking off a multi-day rerun we make targeted framework fixes so the new plots are publication-quality (otherwise we re-run twice).
 
 **Compile commands:**
 - Thesis: `cd Thesis/text && make thesis`
@@ -20,7 +22,107 @@
 
 ---
 
-## Week 1: Foundation (Apr 27 – May 3)
+## Week 0: Framework fixes + kick off mass rerun (Apr 27 – Apr 30)
+
+All current `bench_results/` data is stale: it predates the one-vector ERE optimization. Cache invalidation does **not** trigger automatically for implementation-only changes (`framework_test.go:426` compares params, not impl). Before kicking off the multi-day rerun we make targeted plot-quality fixes — otherwise we run twice.
+
+**Cache architecture (must respect, don't break):**
+- Per-series storage in `bench_results/data/Nxxx/<dist>/Lxxx.json`, keyed by series name.
+- Skip decision (`framework_test.go:441 shouldSkipSeries`): cache hit only when `paramsEqual` between cached and current params.
+- `ONLY=A,B,C` / `SKIP=A,B,C` env vars give point-selective control but **do not bypass `paramsEqual`** — to force rebuild on unchanged params we add a `FORCE` env var (Task 0.3).
+- Series we drop from `allSeries` (Task 0.5) leave orphaned entries in JSON; harmless, no need to scrub.
+
+### Task 0.1 — X-axis cap at 25 BPK (no rerun, render only)
+
+**Files:**
+- Modify: `Thesis/testutils/plot.go:104–115` — add `XMax` field to `PlotConfig`; in linear scale mode clamp `axMaxX = min(axMaxX, XMax)`.
+- Modify: callers in `bench/comparison_test.go`, `bench/sosd_test.go` — pass `XMax: 25`.
+
+- [ ] **Step 1:** Read `Thesis/testutils/plot.go` lines 100–130 to confirm the auto-scaling block.
+- [ ] **Step 2:** Add `XMax float64` to `PlotConfig`. In the linear branch: `if cfg.XMax > 0 && axMaxX > cfg.XMax { axMaxX = cfg.XMax }`.
+- [ ] **Step 3:** In all `GenerateTradeoffSVG` call sites, set `XMax: 25` (or `30`; pick one and stick).
+- [ ] **Step 4:** Re-render existing plots in plot-only mode: `PLOT_ONLY=1 go test -run TestComparison -v ./bench/ -timeout 5m`. Verify visual change in one SVG.
+- [ ] **Step 5:** Commit: `git add testutils/plot.go bench/comparison_test.go bench/sosd_test.go && git commit -m "feat(plot): cap X-axis at 25 BPK to focus on production-relevant range"`. (Parent repo this time, not Thesis submodule — `bench/` lives in parent.)
+
+### Task 0.2 — Dynamic measurement floor (no rerun, render only)
+
+**Files:**
+- Modify: `Thesis/testutils/plot.go:410–423` — read floor from `cfg.YFloor`, default to `1.0 / cfg.QueryCount`.
+- Modify: `bench/sosd_test.go:546` (and similar call sites) — pass `YFloor` based on `cfg.queryCount`.
+
+- [ ] **Step 1:** Read `plot.go:410–423` to confirm the hardcoded `3e-7` floor.
+- [ ] **Step 2:** Replace constant with `cfg.YFloor`; if zero, fall back to `1.0 / float64(cfg.QueryCount)`.
+- [ ] **Step 3:** Re-render with `PLOT_ONLY=1`. Verify curves no longer truncate prematurely on low-count runs.
+- [ ] **Step 4:** Commit: `git commit -m "feat(plot): scale measurement floor with query count, drop hardcoded 3e-7"`
+
+### Task 0.3 — Add `FORCE` env var to bypass param-equality skip
+
+**Files:**
+- Modify: `bench/framework_test.go:441–457 shouldSkipSeries` — at top, check `if forceSet != nil && forceSet[name] { return false, "" }`.
+- Modify: `bench/comparison_test.go:46–47` — parse `FORCE` env var alongside `ONLY` / `SKIP`.
+
+- [ ] **Step 1:** Add `parseEnvSet("FORCE")` and thread through to `shouldSkipSeries`.
+- [ ] **Step 2:** Document in commit message: `FORCE=Truncation,SODA,Scan-ARE` rebuilds those series even if params match. Used to invalidate after implementation changes (e.g., post 1D-opt).
+- [ ] **Step 3:** Smoke test: `FORCE=Truncation go test -run TestComparison -v ./bench/ -timeout 5m` — verify Truncation rebuilds, others use cache.
+- [ ] **Step 4:** Commit: `git commit -m "feat(bench): add FORCE env var to invalidate cache without param change"`
+
+### Task 0.4 — Extend `bpkSweep` density up to 28
+
+**Files:**
+- Modify: `bench/sosd_test.go:33` and any other declarations of `bpkSweep`. Replace `[4, 6, 8, 10, 12, 14, 16, 18, 20]` with `[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 26, 28]`.
+
+- [ ] **Step 1:** `grep -n "bpkSweep" bench/*.go` — find all declarations; pick one canonical location.
+- [ ] **Step 2:** Replace the array.
+- [ ] **Step 3:** This **automatically invalidates** Grafite/SNARF/SuRF series (their `paramsBPKSweep` hash changes). On next run they rebuild; k-grid series cache stays untouched.
+- [ ] **Step 4:** Commit: `git commit -m "bench: densify bpkSweep up to 28 BPK for CGo filter coverage"`
+
+### Task 0.5 — Drop redundant filters from `allSeries` map
+
+**Files:**
+- Modify: `bench/comparison_test.go:52–67`. Remove entries for: `SuRF`, `SuRFHash(8)`, `Hybrid`, `Greedy+Merge`, `CDF-ARE`, `BloomARE`. Remove their downstream conditional blocks.
+
+Final filter set on FPR-vs-BPK plots (8 series):
+- **Reference:** Theoretical
+- **Industry:** Grafite, SNARF, SuRFReal(8)
+- **This work — building blocks:** SODA, Truncation, Adaptive (t=0)
+- **This work — headline:** Scan-ARE
+
+`Greedy+Merge` keeps existing data in JSON for the ERE-backend comparison table (`evaluation.tex` §sec:eval-ere-backend); just doesn't appear on FPR-vs-BPK plots. Same for `BloomARE` — cited in text only.
+
+- [ ] **Step 1:** Read lines 52–67 and downstream conditionals (200–510 area).
+- [ ] **Step 2:** Remove the 6 dropped series from `allSeries`, `seriesParams`, the `richData` family switch, and the rebuild groups.
+- [ ] **Step 3:** Re-render with `PLOT_ONLY=1`. Verify legend has 8 entries.
+- [ ] **Step 4:** Commit: `git commit -m "feat(plot): drop redundant filters; unified 8-series legend across plots"`
+
+### Task 0.6 — Smoke test framework changes on one (dist × L) cell
+
+- [ ] **Step 1:** Pick smallest realistic combination: SOSD Books, n=2²⁰, L=128.
+- [ ] **Step 2:** Run with `FORCE` covering all 8 final series: `FORCE=Theoretical,Grafite,SNARF,SuRFReal(8),SODA,Truncation,Adaptive\ (t=0),Scan-ARE go test -run "TestComparison/sosd_books" -v -timeout 1h ./bench/`
+- [ ] **Step 3:** Inspect resulting `bench_results/plots/N1048576/sosd_books/L128.svg`. Verify: 8 series in legend, X-axis capped at 25, no premature truncation in middle of curve.
+- [ ] **Step 4:** If anything looks wrong, fix before launching mass rerun.
+
+### Task 0.7 — Kick off mass rerun (background, multi-day)
+
+**Files:**
+- Create: `bench_results/rerun_2026_04_28.log`
+
+- [ ] **Step 1:** Decide scope. Recommended for headline + tables:
+  - Distributions: SOSD (4) at n=2²⁴; synthetic (5) at n=2²⁰
+  - L values: full sweep `{1, 16, 128, 1024, 4096, 16384, 65536}`
+  - Filters: 8 final from Task 0.5; for k-grid families add `FORCE=...` to invalidate post-1D-opt
+- [ ] **Step 2:** Launch single-threaded in background (per repo CLAUDE.md, never parallelize benchmarks):
+  ```
+  FORCE=SODA,Truncation,Adaptive\ (t=0),Scan-ARE \
+    go test -run TestComparison -v -timeout 72h ./bench/ 2>&1 \
+    | tee bench_results/rerun_2026_04_28.log &
+  ```
+- [ ] **Step 3:** Capture PID, save to `bench_results/rerun.pid`. Verify alive: `ps -p $(cat bench_results/rerun.pid)`.
+- [ ] **Step 4:** Don't block. Move to Week 1 tasks. Check progress at end of each day with `tail -50 bench_results/rerun_2026_04_28.log`.
+- [ ] **Step 5:** When rerun finishes (likely day 3–5), commit the new plots and JSON: `git add bench_results/plots/ bench_results/data/ && git commit -m "bench: rerun all FPR-vs-BPK with one-vector ERE + cleaned filter set"`
+
+---
+
+## Week 1: Foundation (May 1 – May 3 — compressed; rerun runs in background)
 
 ### Task 1.1 — Audit measurement coverage
 
