@@ -385,10 +385,29 @@ func (ere *ExactRangeEmptiness) SizeInBits() uint64 {
 	if ere == nil || ere.n == 0 {
 		return 0
 	}
-	// RSDic internal size + packed data
-	dBits := uint64(ere.n + ere.numBlocks + 1)
+	dBits := ere.D.Num()
 	suffixBits := uint64(ere.n) * uint64(ere.w)
 	return dBits + suffixBits
+}
+
+// MetadataNumBits returns the logical (information-theoretic) metadata bit
+// count, namely the number of bits actually pushed into D (excluding the
+// packed suffix array A_ds and any rank/select auxiliary indices).
+func (ere *ExactRangeEmptiness) MetadataNumBits() uint64 {
+	if ere == nil || ere.n == 0 {
+		return 0
+	}
+	return ere.D.Num()
+}
+
+// MetadataAllocBits returns the actual allocated metadata size in bits, namely
+// the rsdic backing storage of D (raw bit array + rank/select indices).
+// Excludes the packed suffix array A_ds.
+func (ere *ExactRangeEmptiness) MetadataAllocBits() uint64 {
+	if ere == nil || ere.n == 0 {
+		return 0
+	}
+	return uint64(ere.D.AllocSize()) * 8
 }
 
 type Stats struct {
