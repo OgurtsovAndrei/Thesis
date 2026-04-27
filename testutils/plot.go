@@ -168,6 +168,7 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%.0f" height="%.0f" viewBox="0 0 %.0f %.0f">`+"\n", w, h, w, h))
+	sb.WriteString(fmt.Sprintf(`<defs><clipPath id="plot-region"><rect x="%.1f" y="%.1f" width="%.1f" height="%.1f"/></clipPath></defs>`+"\n", mL, mT, plotW, plotH))
 	sb.WriteString(`<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:11px;fill:#444}</style>` + "\n")
 	sb.WriteString(fmt.Sprintf(`<text x="%.0f" y="28" text-anchor="middle" style="font-size:14px;font-weight:bold">%s</text>`+"\n", w/2, cfg.Title))
 
@@ -195,7 +196,9 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 			mL+plotW, py-4, cfg.YFloor))
 	}
 
+	sb.WriteString(`<g clip-path="url(#plot-region)">` + "\n")
 	drawSeriesLines(&sb, series, xToPlot, yToPlot)
+	sb.WriteString("</g>\n")
 
 	drawLegend(&sb, series, mL, mT, plotW)
 
