@@ -34,7 +34,8 @@ It consists of the following parts:
     If a non-empty block $i$ contains $n_i$ keys, then it contributes a $1$ followed by $n_i$ zeros.
     \item $A_{ds}$ the array of structures: each data structure consists of:
     \subitem The sorted list of suffixes
-    \subitem The indexing data structure for Weak Prefix Search \colorbox{orange}{TODO: What is the Weak Prefix Search}; see Section~\ref{subsec:ere-local-search}.
+    \subitem A Weak Prefix Search index over those suffixes
+    (Section~\ref{sec:wps}).
 \end{enumerate}
 
 A query range is split into at most three parts: a sequence of complete blocks
@@ -43,8 +44,8 @@ The complete-block part is answered by the global succinct layer using $D_1$
 and $D_2$.
 The boundary parts are answered by locating the corresponding local
 structure in $A_{ds}$ via $D_1$ and $D_2$, and then querying that local
-structure inside the block.
-\colorbox{orange}{TODO: Should I say how WPS + sorted suffixes are used to check emptiness?};
+structure inside the block; the local emptiness check itself reduces
+to two weak prefix queries (Section~\ref{sec:wps}).
 
 \subsection{Local Search in Buckets}
 \label{subsec:ere-local-search}
@@ -56,7 +57,7 @@ The reason is practical.
 Binary search and linear scan are faster in practice than
 accessing an additional $O(1)$ indexing structure with a big hidden constant, while also avoiding its
 memory overhead.
-Details are given in Section~\ref{sec:ere-no-wps}.
+Details are given in Section~\ref{sec:wps}.
 
 \subsection{One-Vector Optimization}
 \label{subsec:ere-one-vector}
@@ -299,14 +300,40 @@ ${\sim}33$--$36$~ns on Apple~M4~Max, stable across $n \in [2^{20},\, 2^{26}]$.
 Bucket search contributes only ${\sim}3$~ns at the typical $k \approx 12$;
 the remainder is Rank/Select navigation on the metadata bit vectors.
 
-\subsection{Why Not Weak Prefix Search}
-\label{sec:ere-no-wps}
+\subsection{Weak Prefix Search}
+\label{sec:wps}
 
-\citet{goswami2015approximate} propose $O(1)$ worst-case local queries via a
-Weak Prefix Search (WPS) structure, analysed in a word-RAM model where hash
-table lookups and trie navigation cost $O(1)$ and space is expressed up to
-$O(n)$ additive terms. This is sufficient for a theoretical result, but the
-hidden constants become dominant in practice.
+\paragraph{Definition.}
+A \emph{weak prefix query} on a sorted set $S' \subseteq U'$ is
+specified by a bit string $p$ of length at most $\log_2 |U'|$ and
+returns the interval of ranks of points in $S'$ whose binary
+representation has $p$ as a prefix~\citep[\S 3.2]{goswami2015approximate}.
+If no such points exist, the answer is arbitrary --- hence
+\emph{weak}. The supporting index answers the query in $O(1)$
+time on the word-RAM model.
+
+\paragraph{Use in ERE.}
+Given a query range $[a, b]$ inside a single block, the original
+construction~\citep[\S 3.2]{goswami2015approximate} reduces local
+emptiness to two weak prefix queries. Let $p$ be the longest common
+prefix of the binary representations of $a$ and $b$ (an $O(1)$
+most-significant-bit operation). Then $S' \cap [a, b] \neq \emptyset$
+iff at least one of the following holds:
+\begin{itemize}
+    \item the largest point in $S'$ prefixed by $p \cdot 0$ exists
+          and is $\geq a$, or
+    \item the smallest point in $S'$ prefixed by $p \cdot 1$ exists
+          and is $\leq b$.
+\end{itemize}
+Each side is one WPS query plus a comparison, giving $O(1)$ local
+queries. The index is realised as a Z-Fast trie keyed by a Monotone
+Minimal Perfect Hash Function~\citep{belazzougui2009monotone}.
+
+\paragraph{Why we don't use it.}
+The $O(1)$ guarantee is in the word-RAM model where hash table
+lookups and trie navigation cost $O(1)$ and space is expressed up
+to $O(n)$ additive terms. The hidden constants dominate in
+practice.
 
 We implemented three WPS variants, pairing a Z-Fast trie (standard or
 succinct) with a Monotone Minimal Perfect Hash Function (MMPHF; fast or
@@ -377,12 +404,10 @@ faster and requires no additional space.
 \subsection{Space Analysis}
 
 For $K$-bit keys, ERE stores $w = K - \lfloor \log_2 n \rfloor$ bits of
-suffix per key plus ${\sim}2.83$~BPK of metadata (single bit vector $D$
-with rank/select indices, Section~\ref{subsec:ere-one-vector}).
-\colorbox{orange}{\parbox{\linewidth}{TODO: re-measure metadata BPK on the
-one-vector layout --- the ${\sim}2.83$ figure was taken from the
-two-vector $(D_1, D_2)$ layout; after the merge into a single $D$ it
-should be lower.}}
+suffix per key plus ${\sim}2.53$~BPK of metadata on the one-vector
+layout (single bit vector $D$ with rank/select indices,
+Section~\ref{subsec:ere-one-vector}; physical figure from
+Table~\ref{tab:ere-metadata-bpk}, stable across $n$).
 At $K = 64$ and $n = 2^{30}$ ($w = 34$) this gives ${\sim}37$~BPK total
 --- a ${\sim}42\%$ reduction over honestly storing the full 64-bit keys
 ($64$~BPK), but still ${\sim}2.5\times$ above the $14$--$16$~BPK budget
