@@ -37,6 +37,7 @@ type PlotConfig struct {
 	XScale   AxisScale
 	YScale   AxisScale
 	YFloor   float64 // if >0 and YScale==Log10, draws a measurement floor line at this value
+	XMax     float64 // if >0 and using linear X-scale, hard-cap the X-axis at this value
 }
 
 // GeneratePerformanceSVG creates an SVG plot with configurable axis scales.
@@ -104,6 +105,9 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 		padX := (maxX - minX) * 0.05
 		axMinX := math.Max(0, minX-padX)
 		axMaxX := maxX + padX
+		if cfg.XMax > 0 && axMaxX > cfg.XMax {
+			axMaxX = cfg.XMax
+		}
 		xToPlot = func(x float64) float64 {
 			return mL + plotW*(x-axMinX)/(axMaxX-axMinX)
 		}
@@ -420,5 +424,6 @@ func GenerateTradeoffSVG(title, xLabel, yLabel string, series []SeriesData, outP
 		XScale: Linear,
 		YScale: Log10,
 		YFloor: fl,
+		XMax:   25,
 	}, series, outPath)
 }

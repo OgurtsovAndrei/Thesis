@@ -268,6 +268,7 @@ func TestEREComparison(t *testing.T) {
 		testutils.GeneratePerformanceSVG(testutils.PlotConfig{
 			Title: "ERE Variants — Build Time", XLabel: "N (keys)", YLabel: "ns / key",
 			XScale: testutils.Log10, YScale: testutils.Log10,
+			XMax: 25,
 		}, toSlice(m, buildNames), plotDir+"/build_time.svg")
 	}
 
@@ -280,6 +281,7 @@ func TestEREComparison(t *testing.T) {
 		testutils.GeneratePerformanceSVG(testutils.PlotConfig{
 			Title: "ERE Variants — Memory", XLabel: "N (keys)", YLabel: "bits / key",
 			XScale: testutils.Log10, YScale: testutils.Linear,
+			XMax: 25,
 		}, toSlice(m, buildNames), plotDir+"/memory.svg")
 	}
 
@@ -296,6 +298,7 @@ func TestEREComparison(t *testing.T) {
 			Title:  fmt.Sprintf("ERE Variants — Query Time (L=%d)", L),
 			XLabel: "N (keys)", YLabel: "ns / query",
 			XScale: testutils.Log10, YScale: testutils.Log10,
+			XMax: 25,
 		}, toSlice(m, queryNames), fmt.Sprintf("%s/query_L%d.svg", plotDir, L))
 	}
 
