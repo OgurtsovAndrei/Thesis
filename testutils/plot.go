@@ -148,10 +148,16 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 				}
 			}
 		}
-		if minY <= 0 {
+		if minY <= 0 || minY < floor {
+			// minY was computed before clamping; cap at floor so the axis
+			// doesn't extend into orders of magnitude with no plotted data
+			// (e.g. theoretical curves at high K with FPR ≈ 2^-K).
 			minY = floor
 		}
-		lMin := math.Floor(math.Log10(minY)) - 0.5
+		// Round down to the next full power of 10 below minY so the floor
+		// dashed line has a visible decade of breathing room above the
+		// X axis (otherwise it merges with the bottom border).
+		lMin := math.Floor(math.Log10(minY)) - 1.0
 		lMax := math.Ceil(math.Log10(maxY)) + 0.5
 		yToPlot = func(y float64) float64 {
 			if y <= 0 {
@@ -246,6 +252,13 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 					continue
 				}
 				px := xToPlot(bpk)
+				// Skip markers that would land past the visible plot region.
+				// Without this, e.g. BloomARE on small-FPR distributions
+				// hits the threshold at BPK > XMax and the marker bleeds
+				// past the right edge of the chart.
+				if px < mL || px > mL+plotW {
+					continue
+				}
 				marker := s.Marker
 				if marker == "" {
 					marker = "circle"
