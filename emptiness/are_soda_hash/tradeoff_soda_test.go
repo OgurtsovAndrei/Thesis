@@ -167,6 +167,7 @@ func TestTradeoff_SodaPlots(t *testing.T) {
 				"False Positive Rate (FPR)",
 				[]testutils.SeriesData{*theoretical, *sodaSeries},
 				svgPath,
+				1.0/float64(queryCount*nRuns),
 			)
 			if err != nil {
 				t.Errorf("SVG generation failed: %v", err)
