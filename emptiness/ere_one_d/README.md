@@ -165,7 +165,7 @@ is small.
 The structural win matters more than the op count: every Rank/Select now hits one
 contiguous `RSDic` instead of two. The second `Select(D)` in a query is very likely to
 share the auxiliary index pages and cache lines loaded by the first, while the original
-`ere` always alternates between `D1` and `D2`. This is what the measured **9.1%-13.2%**
+`ere` always alternates between `D1` and `D2`. This is what the measured **7.6%-12.7%**
 average query speedup in [ARE Benchmark Results](#are-benchmark-results) reflects,
 despite the operation count occasionally going up.
 
@@ -175,6 +175,15 @@ despite the operation count occasionally going up.
   - `Thesis/succinct_bit_vector/rsdic`
 
 ## ARE Benchmark Results
+
+The previous version of these tables was generated with a buggy `SizeInBits()`
+formula in `ere` that over-counted `D2` by `numBlocks - m - 1` bits (it used a
+hardcoded length expression instead of `D2.Num()`). The numbers below reflect
+the corrected formula, which calls `D1.Num() + D2.Num()` directly. As a
+consequence the per-distribution `Delta bpk` now tracks the theoretical value
+`m / n` (number of non-empty blocks per key) instead of an inflated
+`(B - 1) / n`, so reductions are smaller, especially on dense distributions
+where `m` is close to `B`.
 
 Measured with `ere_one_d` used as the exact backend inside:
 
@@ -204,36 +213,48 @@ Hardware:
 
 | Dataset | Classic build ms | One-D build ms | Classic query ns | One-D query ns | Speedup | Classic bpk | One-D bpk | Delta bpk |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| uniform | 256.79 | 258.61 | 164.00 | 133.57 | 1.23x | 22.000 | 21.000 | 1.000 |
-| clustered | 174.77 | 176.75 | 331.33 | 322.27 | 1.03x | 22.000 | 21.000 | 1.000 |
-| sosd_fb | 37.95 | 35.85 | 671.93 | 566.48 | 1.19x | 22.000 | 21.000 | 1.000 |
-| sosd_wiki | 32.12 | 31.99 | 630.27 | 586.65 | 1.07x | 22.060 | 21.530 | 0.530 |
-| sosd_osm | 212.76 | 221.79 | 365.04 | 196.08 | 1.86x | 22.000 | 21.500 | 0.500 |
-| sosd_books | 49.21 | 36.75 | 590.96 | 584.60 | 1.01x | 22.000 | 21.000 | 1.000 |
-| **Average** | **127.27** | **126.96** | **458.92** | **398.28** | **1.15x** | **22.010** | **21.172** | **0.838** |
+| uniform | 252.07 | 254.47 | 156.24 | 140.47 | 1.11x | 21.632 | 21.000 | 0.632 |
+| clustered | 191.94 | 186.50 | 370.00 | 314.24 | 1.18x | 21.110 | 21.000 | 0.110 |
+| sosd_fb | 41.03 | 40.71 | 703.01 | 618.96 | 1.14x | 21.001 | 21.000 | 0.001 |
+| sosd_wiki | 33.18 | 33.69 | 562.60 | 533.66 | 1.05x | 21.530 | 21.530 | 0.000 |
+| sosd_osm | 199.25 | 220.08 | 306.16 | 162.44 | 1.88x | 21.930 | 21.500 | 0.430 |
+| sosd_books | 56.84 | 39.83 | 656.68 | 635.21 | 1.03x | 21.000 | 21.000 | 0.000 |
+| **Average** | **129.05** | **129.21** | **459.12** | **400.83** | **1.15x** | **21.367** | **21.172** | **0.196** |
 
 Briefly:
 
-- `one_d` improved average query time by about **13.2%**
-- average memory improved by about **0.84 bpk**
+- `one_d` improved average query time by about **12.7%**
+- average memory improved by about **0.20 bpk**; the saving tracks `m / n`,
+  where `m` is the count of non-empty blocks. Uniform input gives the Poisson
+  value `1 - e^{-1} ~= 0.63 bpk` (at `lambda = 1` about `e^{-1} ~= 37%` of
+  blocks are empty). Heavily clustered inputs (`sosd_fb`, `sosd_wiki`,
+  `sosd_books`) leave most blocks empty after the locality-preserving hash,
+  so `m << B` and the saving collapses toward zero. The theoretical upper
+  bound is `B / n = 1 bpk`, attained only when every block holds at least
+  one key
 - build time stayed effectively unchanged
 
 ### Greedy+Merge
 
 | Dataset | Classic build ms | One-D build ms | Classic query ns | One-D query ns | Speedup | Classic bpk | One-D bpk | Delta bpk |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| uniform | 84.81 | 91.07 | 222.60 | 159.53 | 1.40x | 22.000 | 21.000 | 1.000 |
-| clustered | 63.92 | 55.72 | 474.78 | 344.38 | 1.38x | 17.696 | 16.961 | 0.734 |
-| sosd_fb | 56.46 | 56.49 | 250.56 | 331.06 | 0.76x | 12.000 | 11.000 | 1.000 |
-| sosd_wiki | 51.86 | 57.75 | 299.52 | 359.13 | 0.83x | 10.061 | 9.530 | 0.530 |
-| sosd_osm | 113.58 | 111.45 | 450.82 | 418.10 | 1.08x | 33.263 | 32.525 | 0.738 |
-| sosd_books | 60.34 | 65.84 | 283.79 | 189.92 | 1.49x | 5.000 | 4.000 | 1.000 |
-| **Average** | **71.83** | **73.05** | **330.34** | **300.35** | **1.10x** | **16.670** | **15.836** | **0.834** |
+| uniform | 102.91 | 91.73 | 199.72 | 169.96 | 1.18x | 21.632 | 21.000 | 0.632 |
+| clustered | 65.56 | 62.24 | 523.28 | 389.84 | 1.34x | 17.201 | 16.961 | 0.240 |
+| sosd_fb | 70.49 | 60.95 | 251.06 | 322.66 | 0.78x | 11.232 | 11.000 | 0.232 |
+| sosd_wiki | 64.10 | 50.30 | 276.41 | 346.92 | 0.80x | 9.708 | 9.530 | 0.177 |
+| sosd_osm | 119.76 | 115.91 | 453.06 | 427.85 | 1.06x | 32.817 | 32.525 | 0.293 |
+| sosd_books | 67.22 | 70.36 | 315.90 | 208.96 | 1.51x | 4.517 | 4.000 | 0.517 |
+| **Average** | **81.67** | **75.25** | **336.57** | **311.03** | **1.08x** | **16.184** | **15.836** | **0.349** |
 
 Briefly:
 
-- `one_d` improved average query time by about **9.1%**
-- average memory improved by about **0.83 bpk**
+- `one_d` improved average query time by about **7.6%**
+- average memory improved by about **0.35 bpk**; same `m / n` rule as above.
+  Inputs that fill more blocks (`uniform` and `sosd_books`, which after the
+  Greedy+Merge fingerprinting still leave many blocks populated) approach
+  the Poisson `~0.63 bpk` saving, while the heavily clustered SOSD inputs
+  (`sosd_fb`, `sosd_wiki`) leave most blocks empty (`m << B`) and save very
+  little
 - there are still bad latency cases on `sosd_fb` and `sosd_wiki`
 
 ### Short Takeaway

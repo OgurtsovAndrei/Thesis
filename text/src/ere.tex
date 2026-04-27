@@ -81,13 +81,63 @@ The exact metadata reduction is $M$ bits.
 Operationally, this means that the old two-stage lookup through $D_1$
 and $D_2$ is replaced by direct navigation via \textsc{Select} on $D$.
 
+\paragraph{Metadata footprint on uniform input.}
+Table~\ref{tab:ere-metadata-bpk} reports the metadata BPK on $n$
+uniform 64-bit keys for $n \in \{2^{20},\ 2^{24},\ 2^{28}\}$.
+The information-theoretic delta is ${\sim}0.63$~BPK, matching the
+analytic prediction $M/n \to 1 - e^{-1} \approx 0.632$ at $\lambda = 1$
+(each block is independently empty with probability $e^{-1}$,
+Section~\ref{subsec:block-sizes-and-lookup-strategy}).
+The physical delta is ${\sim}0.80$~BPK, amplified by a constant
+${\sim}26\%$ overhead from the rank/select index --- intrinsic to
+succinct bit vectors and required for the $O(1)$ navigation
+guarantees, not a Go allocation artefact.
+Both deltas are stable across $n$.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{@{}rcc@{\hskip 24pt}cc@{}}
+        \toprule
+        & \multicolumn{2}{c}{\textbf{Num} (logical bits)} & \multicolumn{2}{c}{\textbf{Alloc} (with rank/select index)} \\
+        \cmidrule(r){2-3} \cmidrule(l){4-5}
+        $n$      & two-vector & one-vector & two-vector & one-vector \\
+        \midrule
+        $2^{20}$ & $2.63$     & $2.00$     & $3.33$     & $2.53$     \\
+        $2^{24}$ & $2.63$     & $2.00$     & $3.33$     & $2.53$     \\
+        $2^{28}$ & $2.63$     & $2.00$     & $3.33$     & $2.53$     \\
+        \midrule
+        $\Delta$ & \multicolumn{2}{c}{$-0.63$ BPK ($-24\%$)} & \multicolumn{2}{c}{$-0.80$ BPK ($-24\%$)} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Metadata BPK for the two-vector $(D_1, D_2)$ layout
+        (Section~\ref{subsec:ere-original-structure}) versus the
+        one-vector $D$ layout, on $n$ uniform 64-bit keys.
+        \emph{Num}: logical bitvector length ($D_1.\textsc{Num} + D_2.\textsc{Num}$
+        vs.\ $D.\textsc{Num}$); matches the analytic
+        $|D_1|+|D_2| = B + (n + M + 1)$ and $|D| = B + n + 1$ formulas above.
+        \emph{Alloc}: physical RSDic footprint (bits plus pointer, rank, and
+        select indices). The suffix array $A_{ds}$ is excluded --- identical
+        in both layouts.}
+    \label{tab:ere-metadata-bpk}
+\end{table}
+
+Against the $\sim 20$~BPK total ERE footprint --- dominated by the
+suffix array $A_{ds}$, which is identical between the two layouts ---
+the absolute saving of $0.80$~BPK looks small.
+But it is a $\sim 24\%$ reduction in metadata: the only part that
+can shrink without information loss.
+Cross-distribution measurements are deferred to
+Chapter~\ref{chap:evaluation}
+(Table~\ref{tab:ere-backend-cross-distribution}).
+
 \paragraph{Effect on query operation count.}
 The single-vector layout does not strictly reduce the number of \textsc{Rank}/\textsc{Select} calls in every case: the original two-vector layout could short-circuit empty boundary blocks via a $D_1.\textsc{Bit}$ probe, while the new layout always pays at least two \textsc{Select}$(D)$ per boundary block.
 However, in the two most common ARE query patterns --- short ranges that hit a single non-empty block, or that span two adjacent non-empty blocks --- the new layout saves \emph{one} and \emph{three} \textsc{Rank}/\textsc{Select} calls per query, respectively, with long ranges that scan both boundary buckets saving up to four.
 The structural advantage is that every \textsc{Rank}/\textsc{Select} now hits one contiguous succinct bit vector $D$ instead of alternating between $D_1$ and $D_2$, so the auxiliary index pages and cache lines loaded by the first call are likely to serve subsequent calls in the same query.
-The full per-case breakdown is given in Table~\ref{tab:ere-rank-select}.
-
-In our experiments this optimization reduced average memory usage by about 0.83 bits per key and improved average query time by about 9.1\%.
+The full per-case breakdown is given in Table~\ref{tab:ere-rank-select};
+end-to-end query latency on uniform and clustered data is reported in
+Chapter~\ref{chap:evaluation}
+(Table~\ref{tab:ere-backend-query-latency}).
 
 \begin{table}[h]
     \centering
@@ -241,7 +291,7 @@ $k = 2^{12}$, ${\sim}60$~ns at $k = 2^{17}$) --- logarithmic growth
 compresses the worst case to tens of nanoseconds.
 
 The default adaptive dispatch (linear for $k \leq 128$, binary above) gives
-the best of both regimes: near-optimal in the common case and graceful
+the best of both branches: near-optimal in the common case and graceful
 degradation on adversarial distributions.
 
 For uniform 64-bit keys with non-empty queries, the total ERE query takes
