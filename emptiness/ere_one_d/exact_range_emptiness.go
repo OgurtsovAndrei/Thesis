@@ -275,7 +275,16 @@ func (ere *ExactRangeEmptiness) getPackedSuffix(idx int) uint64 {
 }
 
 func (ere *ExactRangeEmptiness) isRangeEmptyInBlockLinear(start, end int, minSuff, maxSuff uint64) bool {
+	if start >= end {
+		return true
+	}
 	w := int(ere.w)
+	if w == 0 {
+		// All suffixes are the empty string (value 0). The bucket is non-empty
+		// (start < end), so the range matches iff 0 ∈ [minSuff, maxSuff].
+		// Since maxSuff is uint64, the upper-bound check is always true.
+		return minSuff > 0
+	}
 	mask := uint64(1<<w) - 1
 	if w == 64 {
 		mask = ^uint64(0)
