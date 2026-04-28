@@ -43,6 +43,54 @@ Total: $\log_2(\mathcal{L}/\varepsilon) + \sim 3$ bits per key.
 
 SODA tracks the theoretical bound on both distributions. On uniform data the gap is ~3 BPK (ERE overhead from $D_1$, $D_2$). On clustered data it narrows to ~1 BPK: hash collisions within clusters reduce the number of unique fingerprints, making ERE more compact per key.
 
+## Note on the small-universe regime (SOSD-Books, Wiki, OSM)
+
+When the actual key universe $U$ is much smaller than the nominal
+64-bit type — e.g. SOSD-Books at $n=2^{24}$ has $|U| \approx 4 \cdot 10^7$
+($\lceil \log_2 |U| \rceil = 26$ bits) — the construction enters an
+implicit *exact-storage* regime once the fingerprint length crosses
+the universe width: $K \ge \lceil \log_2 |U| \rceil$.
+
+In this regime every key has the same `blockIdx = 0`, so the per-block
+rotation $h(x) = (u(0) + x) \bmod 2^K$ becomes a *bijection* on
+$[0, |U|) \subset [0, 2^K)$. Distinct keys map to distinct fingerprints
+and a query range $[a, a+\mathcal{L}-1]$ outside $S$ can never collide
+with any stored fingerprint — **FPR drops to 0 deterministically**.
+
+Empirically (`bench_results/data/N16777216/sosd_books/L65536.json`):
+SODA reaches FPR $= 0$ at $\sim 6.15$ BPK on Books regardless of
+$\mathcal{L}$. This sits below the Goswami lower-bound curve drawn
+on the FPR-vs-BPK plot, which assumes a worst-case universe with
+$|U| \gg n\mathcal{L}/\varepsilon$. The gap is the universe-size
+advantage, not a violation of the bound.
+
+### Verifying the effect
+
+A small probe (`/tmp/exact_mode_probe`, not part of the regular
+suite) confirms:
+
+| Random 64-bit keys added | universe                 | $K = 28$ BPK | $K = 28$ FPR |
+|--------------------------|--------------------------|-------------:|-------------:|
+| $0$                      | 26-bit (Books native)    | 6.15         | $0$          |
+| $1$                      | 64-bit (one outlier)     | 6.15         | $0$          |
+| $100$                    | 64-bit (sparse)          | 6.15         | $0$          |
+| $10^4$                   | 64-bit (sparse)          | 6.15         | $3.8 \cdot 10^{-4}$ |
+| $10^6$                   | 64-bit (denser)          | 6.11         | $5.9 \cdot 10^{-2}$ |
+
+Two takeaways:
+
+* BPK is essentially constant as we widen the universe: ERE
+  storage cost $\approx K - \log_2 n + O(1)$ depends only on $K$
+  and $n$, not on $|U|$.
+* FPR is what changes. To keep FPR $\le \varepsilon$ on a true
+  64-bit-universe distribution, $K$ must grow to
+  $\lceil \log_2(n \mathcal{L} / \varepsilon) \rceil$, so the
+  Books-only ``$\sim 6$ BPK at FPR $= 0$'' result does not
+  generalise to large-universe data — there SODA settles at
+  the predicted $\log_2(\mathcal{L}/\varepsilon) + \sim 3$ BPK.
+
+(Candidate appendix material if there is room in the thesis.)
+
 ## Implementation (see [are_soda_hash.go](are_soda_hash.go))
 
 1. Divide $U$ into blocks of size $r = 2^K$.
