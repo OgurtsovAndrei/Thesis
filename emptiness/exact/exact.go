@@ -1,8 +1,8 @@
 package exact
 
 import (
-	"Thesis/emptiness/ere"
-	"Thesis/emptiness/ere_one_d"
+	"Thesis/emptiness/exact/ere"
+	"Thesis/emptiness/exact/ere_one_d"
 	"Thesis/utils"
 	"fmt"
 	"strings"

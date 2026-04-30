@@ -83,26 +83,26 @@ Recommended reading order (top to bottom):
 
 | Package                                        | Description                                                          |
 |------------------------------------------------|----------------------------------------------------------------------|
-| [`ere`](ere/README.md)                         | Exact Range Emptiness (Layer 2). Zero error, space $O(n \log(U/n))$. |
-| [`are_soda_hash`](are_soda_hash/README.md)     | ARE via the SODA 2015 pairwise-independent hash (paper baseline).    |
-| [`are_pgm`](are_pgm/README.md)                 | ARE via CDF mapping (PGM index). Experimental.                       |
-| [`are_trunc`](are_trunc/README.md)             | ARE via prefix truncation.                                           |
-| [`are_adaptive`](are_adaptive/README.md)       | ARE via adaptive prefix truncation with threshold $t$.               |
-| [`are_hybrid`](are_hybrid/README.md)           | ARE with per-cluster segmentation (gap-percentile).                  |
-| [`are_hybrid_scan`](are_hybrid_scan/README.md) | **Best implementation.** 1D DBSCAN segmentation + dual fallback.     |
-| [`are_bloom`](are_bloom/README.md)             | Bloom filter baseline.                                               |
+| [`ere`](exact/ere/README.md)                         | Exact Range Emptiness (Layer 2). Zero error, space $O(n \log(U/n))$. |
+| [`are_soda_hash`](approx/are_soda_hash/README.md)     | ARE via the SODA 2015 pairwise-independent hash (paper baseline).    |
+| [`are_pgm`](approx/are_pgm/README.md)                 | ARE via CDF mapping (PGM index). Experimental.                       |
+| [`are_trunc`](approx/are_trunc/README.md)             | ARE via prefix truncation.                                           |
+| [`are_adaptive`](approx/are_adaptive/README.md)       | ARE via adaptive prefix truncation with threshold $t$.               |
+| [`are_hybrid`](approx/are_hybrid/README.md)           | ARE with per-cluster segmentation (gap-percentile).                  |
+| [`are_hybrid_scan`](approx/are_hybrid_scan/README.md) | **Best implementation.** 1D DBSCAN segmentation + dual fallback.     |
+| [`are_bloom`](approx/are_bloom/README.md)             | Bloom filter baseline.                                               |
 
 ### Highlight: Exact Clusters at $\mathcal{L} = 65536$
 
-The hybrid implementations ([`are_hybrid_scan`](are_hybrid_scan/README.md)) combine
-density-based segmentation with [adaptive ARE](are_adaptive/README.md) exact mode:
+The hybrid implementations ([`are_hybrid_scan`](approx/are_hybrid_scan/README.md)) combine
+density-based segmentation with [adaptive ARE](approx/are_adaptive/README.md) exact mode:
 dense clusters are stored with **FPR = 0** regardless of $\mathcal{L}$, because exact
 filters don't hash — the range length never enters their space cost.
 
 At $\mathcal{L} = 65536$ on [SOSD](https://github.com/learnedsystems/SOSD) real-world
 datasets ($n = 2^{24}$), Scan-ARE achieves FPR $< 10^{-8}$ at ~5 BPK — while SODA,
 Truncation, and Bloom all degrade to FPR $\approx 1$ at comparable budgets.
-See [benchmarks and plots](are_hybrid_scan/README.md#large-range-performance-exact-clusters-at-mathcall--65536).
+See [benchmarks and plots](approx/are_hybrid_scan/README.md#large-range-performance-exact-clusters-at-mathcall--65536).
 
 ### Advanced topics
 
@@ -113,4 +113,4 @@ hollow tries, Z-fast tries):
 | Package                                                   | Description                                                 |
 |-----------------------------------------------------------|-------------------------------------------------------------|
 | [`lerloc`](../locators/lerloc/)                           | LERLOC — Range Locator via Weak Prefix Search (MMPH + Hollow Z-Fast Trie). |
-| [`ere_theoretical`](ere_theoretical/)                     | Theoretical ERE baseline using LERLOC for $O(1)$ worst-case queries. |
+| [`ere_theoretical`](exact/ere_theoretical/)                     | Theoretical ERE baseline using LERLOC for $O(1)$ worst-case queries. |

@@ -27,7 +27,7 @@ $O(\text{segment\_size})$ memory beyond the filter itself.
 Original keys (variable-length strings, 50–200 bytes in practice) are hashed
 during iteration into $K$-bit fingerprints ($K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$,
 typically 27–38 bits ≈ 4–5 bytes). The buffer of hashed keys is sorted after
-iteration, then passed to [ERE](ere/README.md).
+iteration, then passed to [ERE](exact/ere/README.md).
 
 Memory: $O(n \cdot K/8)$ bytes — **20–50× smaller** than buffering original keys.
 
@@ -41,7 +41,7 @@ Memory: $O(n \cdot K/8)$ bytes — **20–50× smaller** than buffering original
 
 ## Per-Filter Analysis
 
-### [`are_bloom`](are_bloom/README.md) — Pure Streaming
+### [`are_bloom`](approx/are_bloom/README.md) — Pure Streaming
 
 **Build process:** iterate keys, call `bf.Add()` for each. No random access,
 no look-ahead, no re-sorting.
@@ -52,18 +52,18 @@ no look-ahead, no re-sorting.
 
 ---
 
-### [`are_trunc`](are_trunc/README.md) — Pure Streaming
+### [`are_trunc`](approx/are_trunc/README.md) — Pure Streaming
 
-**Build process** ([`are_trunc.go:39–82`](are_trunc/approximate_range_emptiness.go)):
+**Build process** ([`are_trunc.go:39–82`](approx/are_trunc/approximate_range_emptiness.go)):
 
 1. Compute `spread = maxKey - minKey`, derive `spreadStart`.
 2. Single forward pass: for each key, `normalizeToK(key, minKey, spreadStart, K)` → deduplicate → collect.
-3. Build [ERE](ere/README.md) on truncated keys.
+3. Build [ERE](exact/ere/README.md) on truncated keys.
 
 **Why it streams:** normalization is a pointwise operation on each key. Deduplication
 only compares with the previous truncated key. No random access.
 
-**ERE itself is streaming** ([`ere.go:50–72`](ere/exact_range_emptiness.go)):
+**ERE itself is streaming** ([`ere.go:50–72`](exact/ere/exact_range_emptiness.go)):
 iterates sorted keys left-to-right, `PushBack` bits into D1/D2
 (RSDic supports sequential append), collects packed suffixes. Single pass.
 
@@ -73,18 +73,18 @@ iterates sorted keys left-to-right, `PushBack` bits into D1/D2
 
 ---
 
-### [`are_greedy_scan`](are_greedy_scan/) — Pure Streaming ★
+### [`are_greedy_scan`](approx/are_greedy_scan/) — Pure Streaming ★
 
-**Build process** ([`segment.go:27–65`](are_greedy_scan/segment.go), [
-`greedy_scan_are.go:75–132`](are_greedy_scan/greedy_scan_are.go)):
+**Build process** ([`segment.go:27–65`](approx/are_greedy_scan/segment.go), [
+`greedy_scan_are.go:75–132`](approx/are_greedy_scan/greedy_scan_are.go)):
 
 1. **Greedy segmentation** — single forward scan: track segment start value,
    split when `curVal - startVal > 2^K`. Pure $O(n)$ streaming.
 2. **Merge pass** — operates on segment metadata only (count, min, max).
    $O(\text{num\_segments})$, not $O(n)$.
-3. Per exact-mode segment: build [Adaptive ARE](are_adaptive/README.md)
+3. Per exact-mode segment: build [Adaptive ARE](approx/are_adaptive/README.md)
    in exact mode (streamable, FPR = 0).
-4. Wide-spread segments → [Truncation ARE](are_trunc/README.md) fallback (streamable).
+4. Wide-spread segments → [Truncation ARE](approx/are_trunc/README.md) fallback (streamable).
 
 **Why it streams:** greedy segmentation is inherently an iterator pattern — compare
 current key with segment start, decide split. Each segment's keys are buffered only
@@ -118,9 +118,9 @@ func (b *GreedyScanBuilder) Finish() (*GreedyScanARE, error) { ... }
 
 ---
 
-### [`are_adaptive`](are_adaptive/README.md) — Depends on Mode
+### [`are_adaptive`](approx/are_adaptive/README.md) — Depends on Mode
 
-**Build process** ([`are_adaptive.go:66–159`](are_adaptive/are_adaptive.go)):
+**Build process** ([`are_adaptive.go:66–159`](approx/are_adaptive/are_adaptive.go)):
 
 1. Compute spread $M = \lceil \log_2(\max(S) - \min(S)) \rceil$.
 2. **Exact mode** ($M \leq K$): normalize keys → build ERE directly.
@@ -142,9 +142,9 @@ sort after iteration. $O(n \cdot K/8)$ memory.
 
 ---
 
-### [`are_soda_hash`](are_soda_hash/README.md) — Compact Hash Buffer Only
+### [`are_soda_hash`](approx/are_soda_hash/README.md) — Compact Hash Buffer Only
 
-**Build process** ([`are_soda_hash.go:36–81`](are_soda_hash/are_soda_hash.go)):
+**Build process** ([`are_soda_hash.go:36–81`](approx/are_soda_hash/are_soda_hash.go)):
 
 1. Hash each key: `hx = (PairwiseHash(blockIdx, a, b, K) + x) mod 2^K`.
 2. `SortAndDedup(hashedKeys)`.
@@ -161,9 +161,9 @@ Practical for typical SSTable sizes.
 
 ---
 
-### [`are_hybrid`](are_hybrid/README.md) — Not Streamable
+### [`are_hybrid`](approx/are_hybrid/README.md) — Not Streamable
 
-**Build process** ([`cluster_detect.go:25–94`](are_hybrid/cluster_detect.go)):
+**Build process** ([`cluster_detect.go:25–94`](approx/are_hybrid/cluster_detect.go)):
 
 1. **Cluster detection:** compute all $n-1$ gaps between consecutive keys.
    Quickselect on the gap array to find the 95th-percentile threshold.
@@ -177,15 +177,15 @@ bytes of `uint64` values. Unlike hashed fingerprints, gaps cannot be made more c
 **Why compact hash buffer doesn't help:** the bottleneck is cluster detection
 (before any hashing), not the per-cluster filter build.
 
-**Verdict:** not streamable. Use [Greedy+Merge](are_greedy_scan/) instead —
+**Verdict:** not streamable. Use [Greedy+Merge](approx/are_greedy_scan/) instead —
 it achieves the same goal (segmentation + exact clusters) with a streaming-compatible
 greedy scan instead of percentile-based detection.
 
 ---
 
-### [`are_hybrid_scan`](are_hybrid_scan/README.md) — Not Streamable
+### [`are_hybrid_scan`](approx/are_hybrid_scan/README.md) — Not Streamable
 
-**Build process** ([`dbscan_detect.go:29–144`](are_hybrid_scan/dbscan_detect.go)):
+**Build process** ([`dbscan_detect.go:29–144`](approx/are_hybrid_scan/dbscan_detect.go)):
 
 1. **Forward sweep:** two-pointer scan to identify core points.
 2. **Backward sweep:** reverse two-pointer scan — needs the full key array
@@ -200,9 +200,9 @@ and two passes over the data.
 
 ---
 
-### [`are_pgm`](are_pgm/README.md) — Not Streamable
+### [`are_pgm`](approx/are_pgm/README.md) — Not Streamable
 
-**Build process** ([`are_pgm.go:59–189`](are_pgm/are_pgm.go)):
+**Build process** ([`are_pgm.go:59–189`](approx/are_pgm/are_pgm.go)):
 
 1. Build PGM index on all keys (needs full key array).
 2. Query PGM for each key's position.
@@ -222,19 +222,19 @@ points. Max density computation also requires all CDF points.
 
 | Filter                                     | Pure Streaming | Compact Hash Buffer | Peak Memory         | SSTable-Ready |
 |--------------------------------------------|:--------------:|:-------------------:|---------------------|:-------------:|
-| [BloomARE](are_bloom/README.md)            |       ✓        |          —          | $O(\text{filter})$  |       ✓       |
-| [Truncation](are_trunc/README.md)          |       ✓        |          —          | $O(1)$ + ERE output |       ✓       |
-| [**Greedy+Merge**](are_greedy_scan/)       |     **✓**      |          —          | $O(\text{segment})$ |     **★**     |
-| [Adaptive (exact)](are_adaptive/README.md) |       ✓        |          —          | $O(1)$ + ERE output |       ✓       |
-| [Adaptive (SODA)](are_adaptive/README.md)  |       ✗        |          ✓          | $O(n \cdot K/8)$    |       ✓       |
-| [SODA Hash](are_soda_hash/README.md)       |       ✗        |          ✓          | $O(n \cdot K/8)$    |       ✓       |
-| [Hybrid (gap)](are_hybrid/README.md)       |       ✗        |          ✗          | $O(n \cdot 8)$ gaps |       ✗       |
-| [Hybrid Scan](are_hybrid_scan/README.md)   |       ✗        |          ✗          | $O(n)$ bidir        |       ✗       |
-| [CDF-ARE (PGM)](are_pgm/README.md)         |       ✗        |          ✗          | $O(n)$ batch        |       ✗       |
+| [BloomARE](approx/are_bloom/README.md)            |       ✓        |          —          | $O(\text{filter})$  |       ✓       |
+| [Truncation](approx/are_trunc/README.md)          |       ✓        |          —          | $O(1)$ + ERE output |       ✓       |
+| [**Greedy+Merge**](approx/are_greedy_scan/)       |     **✓**      |          —          | $O(\text{segment})$ |     **★**     |
+| [Adaptive (exact)](approx/are_adaptive/README.md) |       ✓        |          —          | $O(1)$ + ERE output |       ✓       |
+| [Adaptive (SODA)](approx/are_adaptive/README.md)  |       ✗        |          ✓          | $O(n \cdot K/8)$    |       ✓       |
+| [SODA Hash](approx/are_soda_hash/README.md)       |       ✗        |          ✓          | $O(n \cdot K/8)$    |       ✓       |
+| [Hybrid (gap)](approx/are_hybrid/README.md)       |       ✗        |          ✗          | $O(n \cdot 8)$ gaps |       ✗       |
+| [Hybrid Scan](approx/are_hybrid_scan/README.md)   |       ✗        |          ✗          | $O(n)$ bidir        |       ✗       |
+| [CDF-ARE (PGM)](approx/are_pgm/README.md)         |       ✗        |          ✗          | $O(n)$ batch        |       ✗       |
 
 ### Recommendation for SSTable Integration
 
-**[Greedy+Merge](are_greedy_scan/)** is the natural fit for SSTable compaction:
+**[Greedy+Merge](approx/are_greedy_scan/)** is the natural fit for SSTable compaction:
 
 1. Greedy segmentation is already a forward scan — it maps directly to an iterator.
 2. Each segment is buffered only until it closes, then its filter is built and memory freed.
@@ -243,7 +243,7 @@ points. Max density computation also requires all CDF points.
 5. The Truncation fallback for wide-spread segments is also streaming.
 
 **Alternative:** if distribution-independent FPR guarantees are needed (adversarial
-workloads), [SODA Hash](are_soda_hash/README.md) with compact hash buffer provides
+workloads), [SODA Hash](approx/are_soda_hash/README.md) with compact hash buffer provides
 a predictable $O(n \cdot 4\text{–}5\ \text{bytes})$ build at any distribution.
 
 ### Required Metadata from SSTable

@@ -30,7 +30,7 @@ Breaks the linear space dependence on $L$ by using hashed fingerprints.
     - Returns `true` if $[a, b] \cap S = \emptyset$.
     - Returns `false` with high probability if $[a, b] \cap S \neq \emptyset$.
 
-### `ExactRangeEmptiness` [exact_range_emptiness.md](emptiness/ere/exact_range_emptiness.md)
+### `ExactRangeEmptiness` [exact_range_emptiness.md](emptiness/exact/ere/exact_range_emptiness.md)
 
 Succinct data structure that answers exact 1D range emptiness queries $[a, b] \cap S \neq \emptyset$ in $O(1)$ time.
 Based on Section 3 of *Approximate Range Emptiness in Constant Time and Optimal Space*.
