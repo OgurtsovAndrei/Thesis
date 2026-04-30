@@ -1,8 +1,7 @@
 package are_pgm
 
 import (
-	"Thesis/bits"
-	exactbackend "Thesis/emptiness/exact"
+	"Thesis/emptiness/ere_one_d"
 	"fmt"
 	"math"
 	"sort"
@@ -31,7 +30,7 @@ type CDFPoint struct {
 // loses precision for keys > 2^53.
 type PGMApproximateRangeEmptiness struct {
 	cdf       []CDFPoint
-	ere       exactbackend.Filter
+	ere       *ere_one_d.ExactRangeEmptiness
 	K         uint32
 	n         int
 	minKey    uint64
@@ -169,18 +168,17 @@ func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, 
 	}
 
 	// Map all keys through the same cdfMap used for queries (consistency!)
-	mapped := make([]bits.BitString, 0, n)
+	mapped := make([]uint64, 0, n)
 	var lastVal uint64
 	for i, key := range sorted {
 		m := filter.cdfMap(key)
 		if i == 0 || m != lastVal {
-			mapped = append(mapped, bits.NewFromTrieUint64(m, K))
+			mapped = append(mapped, m)
 			lastVal = m
 		}
 	}
 
-	universe := bits.NewBitString(K)
-	ereFilter, err := exactbackend.New(mapped, universe)
+	ereFilter, err := ere_one_d.NewExactRangeEmptiness(mapped, K)
 	if err != nil {
 		return nil, err
 	}
@@ -258,10 +256,7 @@ func (p *PGMApproximateRangeEmptiness) IsEmpty(a, b uint64) bool {
 	mappedA := p.cdfMap(a)
 	mappedB := p.cdfMap(b)
 
-	return p.ere.IsEmpty(
-		bits.NewFromTrieUint64(mappedA, p.K),
-		bits.NewFromTrieUint64(mappedB, p.K),
-	)
+	return p.ere.IsEmpty(mappedA, mappedB)
 }
 
 func (p *PGMApproximateRangeEmptiness) SizeInBits() uint64 {

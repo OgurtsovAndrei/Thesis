@@ -2,7 +2,7 @@ package are_trunc
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/ere"
+	"Thesis/emptiness/ere_one_d"
 	"Thesis/testutils"
 	"fmt"
 	"math/rand"
@@ -27,14 +27,14 @@ func TestTruncARE_FinalSmooth(t *testing.T) {
 	fmt.Println("N,K,BitsPerKey,ActualFPR")
 
 	nValues := []int{135000, 150000, 170000, 195000, 220000, 250000}
-	
+
 	var wg sync.WaitGroup
 	resultsChan := make(chan string, 200)
 	semaphore := make(chan struct{}, runtime.NumCPU())
 
 	for _, n := range nValues {
 		keys := testutils.GetBenchKeys(64, n)
-		
+
 		for K := uint32(18); K <= 30; K++ {
 			wg.Add(1)
 			go func(nVal int, kVal uint32, kset []bits.BitString) {
@@ -43,7 +43,7 @@ func TestTruncARE_FinalSmooth(t *testing.T) {
 				defer func() { <-semaphore }()
 
 				are, _ := buildAREWithKFinal(kset, kVal)
-				
+
 				falsePositives := 0
 				validQueries := 0
 				for _, q := range queries {
@@ -53,9 +53,11 @@ func TestTruncARE_FinalSmooth(t *testing.T) {
 							falsePositives++
 						}
 					}
-					if validQueries >= 1000000 { break }
+					if validQueries >= 1000000 {
+						break
+					}
 				}
-				
+
 				fpr := float64(falsePositives) / float64(validQueries)
 				bitsPerKey := float64(are.ByteSize()) * 8 / float64(nVal)
 				resultsChan <- fmt.Sprintf("%d,%d,%.2f,%.10f", nVal, kVal, bitsPerKey, fpr)
@@ -98,16 +100,15 @@ func buildAREWithKFinal(keys []bits.BitString, K uint32) (*TruncARE, error) {
 	maxKey := keys[n-1]
 	spread := maxKey.Sub(minKey)
 	spreadStart := trieFirstSetBit(spread)
-	truncatedKeys := make([]bits.BitString, 0, n)
+	truncatedKeys := make([]uint64, 0, n)
 	var lastKey bits.BitString
 	for i, k := range keys {
 		trunc := normalizeToK(k, minKey, spreadStart, K)
 		if i == 0 || trunc.Compare(lastKey) > 0 {
-			truncatedKeys = append(truncatedKeys, trunc)
+			truncatedKeys = append(truncatedKeys, trunc.TrieUint64())
 			lastKey = trunc
 		}
 	}
-	universe := bits.NewBitString(K)
-	exact, _ := ere.NewExactRangeEmptiness(truncatedKeys, universe)
+	exact, _ := ere_one_d.NewExactRangeEmptiness(truncatedKeys, K)
 	return &TruncARE{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadStart: spreadStart}, nil
 }

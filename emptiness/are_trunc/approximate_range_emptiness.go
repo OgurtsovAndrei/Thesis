@@ -2,7 +2,7 @@ package are_trunc
 
 import (
 	"Thesis/bits"
-	exactbackend "Thesis/emptiness/exact"
+	"Thesis/emptiness/ere_one_d"
 	"Thesis/utils"
 	"fmt"
 	"math"
@@ -14,7 +14,7 @@ import (
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
 type TruncARE struct {
-	exact       exactbackend.Filter
+	exact       *ere_one_d.ExactRangeEmptiness
 	K           uint32
 	minKey      bits.BitString
 	maxKey      bits.BitString
@@ -51,13 +51,13 @@ func NewTruncAREFromK(keys []bits.BitString, K uint32) (*TruncARE, error) {
 	spread := maxKey.Sub(minKey)
 	spreadStart := trieFirstSetBit(spread)
 
-	truncatedKeys := make([]bits.BitString, 0, n)
+	truncatedKeys := make([]uint64, 0, n)
 	var lastKey bits.BitString
 	for i, k := range keys {
 		trunc := normalizeToK(k, minKey, spreadStart, K)
 
 		if i == 0 || trunc.Compare(lastKey) > 0 {
-			truncatedKeys = append(truncatedKeys, trunc)
+			truncatedKeys = append(truncatedKeys, trunc.TrieUint64())
 			lastKey = trunc
 		} else if trunc.Compare(lastKey) == 0 {
 			continue
@@ -66,8 +66,7 @@ func NewTruncAREFromK(keys []bits.BitString, K uint32) (*TruncARE, error) {
 		}
 	}
 
-	universe := bits.NewBitString(K)
-	exact, err := exactbackend.New(truncatedKeys, universe)
+	exact, err := ere_one_d.NewExactRangeEmptiness(truncatedKeys, K)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +128,7 @@ func (are *TruncARE) IsEmpty(a, b bits.BitString) bool {
 		truncB = normalizeToK(b, are.minKey, are.spreadStart, are.K)
 	}
 
-	return are.exact.IsEmpty(truncA, truncB)
+	return are.exact.IsEmpty(truncA.TrieUint64(), truncB.TrieUint64())
 }
 
 func (are *TruncARE) SizeInBits() uint64 {

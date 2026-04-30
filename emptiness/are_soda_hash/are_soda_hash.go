@@ -1,8 +1,7 @@
 package are_soda_hash
 
 import (
-	"Thesis/bits"
-	exactbackend "Thesis/emptiness/exact"
+	"Thesis/emptiness/ere_one_d"
 	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
@@ -10,7 +9,7 @@ import (
 )
 
 type SodaARE struct {
-	ere      exactbackend.Filter
+	ere      *ere_one_d.ExactRangeEmptiness
 	K        uint32
 	RangeLen uint64
 	n        int
@@ -51,7 +50,7 @@ func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error)
 		rMask = (uint64(1) << K) - 1
 	}
 
-	hashedKeys := make([]bits.BitString, n)
+	hashed := make([]uint64, n)
 	for i, x := range keys {
 		blockIdx := uint64(0)
 		if K < 64 {
@@ -59,13 +58,12 @@ func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error)
 		}
 		ux := internalhash.PairwiseHash(blockIdx, hashA, hashB, K)
 		hx := (ux + x) & rMask
-		hashedKeys[i] = bits.NewFromTrieUint64(hx, K)
+		hashed[i] = hx
 	}
 
-	uniqueHashed := internalhash.SortAndDedup(hashedKeys)
+	uniqueHashed := internalhash.SortAndDedupUint64(hashed)
 
-	universe := bits.NewBitString(K)
-	ereFilter, err := exactbackend.New(uniqueHashed, universe)
+	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, K)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +114,7 @@ func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE
 
 	uniqueHashed := internalhash.SortAndDedupUint64(hashed)
 
-	ereFilter, err := exactbackend.NewUint64(uniqueHashed, K)
+	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, K)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +166,7 @@ func NewSodaAREUint64InPlace(keys []uint64, rangeLen uint64, K uint32) (*SodaARE
 
 	uniqueHashed := internalhash.SortAndDedupUint64(keys)
 
-	ereFilter, err := exactbackend.NewUint64(uniqueHashed, K)
+	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, K)
 	if err != nil {
 		return nil, err
 	}
@@ -203,23 +201,19 @@ func (are *SodaARE) IsEmpty(a, b uint64) bool {
 		blockB = b >> are.K
 	}
 
-	toBS := func(val uint64) bits.BitString {
-		return bits.NewFromTrieUint64(val, are.K)
-	}
-
 	if blockA == blockB {
 		u := internalhash.PairwiseHash(blockA, are.hashA, are.hashB, are.K)
 		hA := (u + a) & rMask
 		hB := (u + b) & rMask
 
 		if hA <= hB {
-			return are.ere.IsEmpty(toBS(hA), toBS(hB))
+			return are.ere.IsEmpty(hA, hB)
 		}
 		// Wrapped range [hA, rMask] U [0, hB]
-		if !are.ere.IsEmpty(toBS(hA), toBS(rMask)) {
+		if !are.ere.IsEmpty(hA, rMask) {
 			return false
 		}
-		return are.ere.IsEmpty(toBS(0), toBS(hB))
+		return are.ere.IsEmpty(0, hB)
 	}
 
 	// Multi-block: check suffix of first block
@@ -233,19 +227,19 @@ func (are *SodaARE) IsEmpty(a, b uint64) bool {
 	hAStart := (uA + a) & rMask
 	hAEnd := (uA + maxA) & rMask
 	if hAStart <= hAEnd {
-		if !are.ere.IsEmpty(toBS(hAStart), toBS(hAEnd)) {
+		if !are.ere.IsEmpty(hAStart, hAEnd) {
 			return false
 		}
 	} else {
-		if !are.ere.IsEmpty(toBS(hAStart), toBS(rMask)) ||
-			!are.ere.IsEmpty(toBS(0), toBS(hAEnd)) {
+		if !are.ere.IsEmpty(hAStart, rMask) ||
+			!are.ere.IsEmpty(0, hAEnd) {
 			return false
 		}
 	}
 
 	// Intermediate full blocks
 	if blockB > blockA+1 {
-		if !are.ere.IsEmpty(toBS(0), toBS(rMask)) {
+		if !are.ere.IsEmpty(0, rMask) {
 			return false
 		}
 	}
@@ -259,12 +253,12 @@ func (are *SodaARE) IsEmpty(a, b uint64) bool {
 	hBStart := (uB + minB) & rMask
 	hBEnd := (uB + b) & rMask
 	if hBStart <= hBEnd {
-		if !are.ere.IsEmpty(toBS(hBStart), toBS(hBEnd)) {
+		if !are.ere.IsEmpty(hBStart, hBEnd) {
 			return false
 		}
 	} else {
-		if !are.ere.IsEmpty(toBS(hBStart), toBS(rMask)) ||
-			!are.ere.IsEmpty(toBS(0), toBS(hBEnd)) {
+		if !are.ere.IsEmpty(hBStart, rMask) ||
+			!are.ere.IsEmpty(0, hBEnd) {
 			return false
 		}
 	}
@@ -279,16 +273,16 @@ func (are *SodaARE) SizeInBits() uint64 {
 	return are.ere.SizeInBits()
 }
 
-func (are *SodaARE) EREStats() exactbackend.Stats {
+func (are *SodaARE) EREStats() ere_one_d.Stats {
 	if are.ere == nil {
-		return exactbackend.Stats{}
+		return ere_one_d.Stats{}
 	}
-	return exactbackend.StatsOf(are.ere)
+	return are.ere.GetStats()
 }
 
 func (are *SodaARE) ERENonEmptyBlockSizes() []int {
 	if are.ere == nil {
 		return nil
 	}
-	return exactbackend.NonEmptyBlockSizesOf(are.ere)
+	return are.ere.NonEmptyBlockSizes()
 }

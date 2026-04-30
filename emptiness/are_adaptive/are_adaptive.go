@@ -2,7 +2,7 @@ package are_adaptive
 
 import (
 	"Thesis/bits"
-	exactbackend "Thesis/emptiness/exact"
+	"Thesis/emptiness/ere_one_d"
 	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
@@ -11,7 +11,7 @@ import (
 )
 
 type AdaptiveApproximateRangeEmptiness struct {
-	ere          exactbackend.Filter
+	ere          *ere_one_d.ExactRangeEmptiness
 	K            uint32
 	RangeLen     uint64
 	MinKey       bits.BitString
@@ -24,12 +24,7 @@ type AdaptiveApproximateRangeEmptiness struct {
 
 // hashBlockIndex hashes a block index BitString to a K-bit uint64.
 func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
-	var blockVal uint64
-	if block.SizeBits() <= 64 {
-		blockVal = block.TrieUint64()
-	} else {
-		blockVal = block.HashWithSeed(0)
-	}
+	blockVal := block.TrieUint64()
 	return internalhash.PairwiseHash(blockVal, a, b, K)
 }
 
@@ -108,12 +103,12 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 	hashA := rng.Uint64() | 1
 	hashB := rng.Uint64()
 
-	hashedKeys := make([]bits.BitString, n)
+	hashedKeys := make([]uint64, n)
 	for i, x := range keys {
 		xPrime := x.Sub(minKey).ShiftRight(t)
 
 		if isExactMode {
-			hashedKeys[i] = bits.NewFromTrieUint64(xPrime.TrieUint64(), M)
+			hashedKeys[i] = xPrime.TrieUint64()
 		} else {
 			W := xPrime.SizeBits()
 			var block bits.BitString
@@ -133,14 +128,13 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 			}
 
 			u := hashBlockIndex(block, hashA, hashB, K)
-			hx := (u + offsetVal) & rMask
-			hashedKeys[i] = bits.NewFromTrieUint64(hx, K)
+			hashedKeys[i] = (u + offsetVal) & rMask
 		}
 	}
 
-	uniqueHashed := internalhash.SortAndDedup(hashedKeys)
+	uniqueHashed := internalhash.SortAndDedupUint64(hashedKeys)
 
-	ereFilter, err := exactbackend.New(uniqueHashed, bits.NewBitString(finalUniverseBits))
+	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, finalUniverseBits)
 	if err != nil {
 		return nil, err
 	}
@@ -177,10 +171,7 @@ func (are *AdaptiveApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool 
 	bPrime = b.Sub(are.MinKey).ShiftRight(are.TruncateBits)
 
 	if are.IsExactMode {
-		// Convert normalized values to integer representation in the M-bit universe
-		aBS := bits.NewFromTrieUint64(aPrime.TrieUint64(), are.K)
-		bBS := bits.NewFromTrieUint64(bPrime.TrieUint64(), are.K)
-		return are.ere.IsEmpty(aBS, bBS)
+		return are.ere.IsEmpty(aPrime.TrieUint64(), bPrime.TrieUint64())
 	}
 	return are.sodaIsEmpty(aPrime, bPrime)
 }
@@ -208,22 +199,18 @@ func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) b
 		offB = b.TrieUint64()
 	}
 
-	toBS := func(val uint64) bits.BitString {
-		return bits.NewFromTrieUint64(val, are.K)
-	}
-
 	if blockA.Equal(blockB) {
 		u := hashBlockIndex(blockA, are.hashA, are.hashB, are.K)
 		hA := (u + offA) & rMask
 		hB := (u + offB) & rMask
 
 		if hA <= hB {
-			return are.ere.IsEmpty(toBS(hA), toBS(hB))
+			return are.ere.IsEmpty(hA, hB)
 		}
-		if !are.ere.IsEmpty(toBS(hA), toBS(rMask)) {
+		if !are.ere.IsEmpty(hA, rMask) {
 			return false
 		}
-		return are.ere.IsEmpty(toBS(0), toBS(hB))
+		return are.ere.IsEmpty(0, hB)
 	}
 
 	// Multi-block: check suffix of first block
@@ -231,18 +218,18 @@ func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) b
 	hAStart := (uA + offA) & rMask
 	hAEnd := (uA + rMask) & rMask
 	if hAStart <= hAEnd {
-		if !are.ere.IsEmpty(toBS(hAStart), toBS(hAEnd)) {
+		if !are.ere.IsEmpty(hAStart, hAEnd) {
 			return false
 		}
 	} else {
-		if !are.ere.IsEmpty(toBS(hAStart), toBS(rMask)) ||
-			!are.ere.IsEmpty(toBS(0), toBS(hAEnd)) {
+		if !are.ere.IsEmpty(hAStart, rMask) ||
+			!are.ere.IsEmpty(0, hAEnd) {
 			return false
 		}
 	}
 
 	// Intermediate full blocks
-	if !are.ere.IsEmpty(toBS(0), toBS(rMask)) {
+	if !are.ere.IsEmpty(0, rMask) {
 		return false
 	}
 
@@ -251,12 +238,12 @@ func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) b
 	hBStart := (uB + 0) & rMask
 	hBEnd := (uB + offB) & rMask
 	if hBStart <= hBEnd {
-		if !are.ere.IsEmpty(toBS(hBStart), toBS(hBEnd)) {
+		if !are.ere.IsEmpty(hBStart, hBEnd) {
 			return false
 		}
 	} else {
-		if !are.ere.IsEmpty(toBS(hBStart), toBS(rMask)) ||
-			!are.ere.IsEmpty(toBS(0), toBS(hBEnd)) {
+		if !are.ere.IsEmpty(hBStart, rMask) ||
+			!are.ere.IsEmpty(0, hBEnd) {
 			return false
 		}
 	}
