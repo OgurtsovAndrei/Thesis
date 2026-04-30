@@ -2,10 +2,23 @@ package are_greedy_scan
 
 import (
 	"Thesis/testutils"
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
 )
+
+// kFromEps maps the legacy (n, L, eps) target to K = ceil(log2(n*(L+1)/eps)).
+func kFromEps(n int, rangeLen uint64, eps float64) uint32 {
+	k := uint32(math.Ceil(math.Log2(float64(n) * (float64(rangeLen) + 1) / eps)))
+	if k == 0 {
+		k = 1
+	}
+	if k > 64 {
+		k = 64
+	}
+	return k
+}
 
 func sortedUint64(raw []uint64) []uint64 {
 	cp := append([]uint64(nil), raw...)
@@ -14,7 +27,7 @@ func sortedUint64(raw []uint64) []uint64 {
 }
 
 func TestGreedyScan_Empty(t *testing.T) {
-	g, err := NewGreedyScanARE(nil, 60, Config{RangeLen: 100, Eps: 0.01})
+	g, err := NewGreedyScanARE(nil, 60, Config{K: 20})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +38,7 @@ func TestGreedyScan_Empty(t *testing.T) {
 
 func TestGreedyScan_SingleKey(t *testing.T) {
 	keys := []uint64{500}
-	g, err := NewGreedyScanARE(keys, 60, Config{RangeLen: 10, Eps: 0.01})
+	g, err := NewGreedyScanARE(keys, 60, Config{K: kFromEps(len(keys), 10, 0.01)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +69,7 @@ func TestGreedyScan_NoFN(t *testing.T) {
 			keys := sortedUint64(rawKeys)
 
 			var rangeLen uint64 = 128
-			g, err := NewGreedyScanARE(keys, 60, Config{RangeLen: float64(rangeLen), Eps: 0.01})
+			g, err := NewGreedyScanARE(keys, 60, Config{K: kFromEps(len(keys), rangeLen, 0.01)})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -75,7 +88,7 @@ func TestGreedyScan_Stats(t *testing.T) {
 	raw, _ := testutils.GenerateClusterDistribution(10000, 5, 0.15, rng)
 	keys := sortedUint64(raw)
 
-	g, err := NewGreedyScanAREFromK(keys, 60, ConfigFromK{RangeLen: 128, K: 20})
+	g, err := NewGreedyScanARE(keys, 60, Config{K: 20})
 	if err != nil {
 		t.Fatal(err)
 	}

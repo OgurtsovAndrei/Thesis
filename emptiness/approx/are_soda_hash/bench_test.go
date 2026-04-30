@@ -3,6 +3,7 @@ package are_soda_hash
 import (
 	"Thesis/emptiness/approx/are_trunc"
 	"fmt"
+	"math"
 	mathbits "math/bits"
 	"math/rand"
 	"sort"
@@ -22,7 +23,8 @@ func BenchmarkARE_Comparison(b *testing.B) {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 	keyBits := uint32(max(1, mathbits.Len64(keys[len(keys)-1])))
-	filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{Eps: epsilon})
+	K := uint32(math.Ceil(math.Log2(2.0 * float64(n) / epsilon)))
+	filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{K: K})
 	filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 	fmt.Printf("\n--- Space Analysis (N=%d, eps=%f, L=%d) ---\n", n, epsilon, L)

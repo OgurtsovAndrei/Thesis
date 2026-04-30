@@ -9,12 +9,13 @@ import (
 )
 
 const (
-	propTestRuns      = 200
-	propMinN          = 100
-	propMaxExtraN     = 5000
-	propTargetEpsilon = 0.001
-	propRangeLen      = float64(100)
-	propTruncateBits  = 0
+	propTestRuns     = 200
+	propMinN         = 100
+	propMaxExtraN    = 5000
+	propTruncateBits = 0
+	// Equivalent to (rangeLen=100, eps=0.001) for n up to ~5100:
+	// K = ceil(log2(n*(L+1)/eps)) ≈ 30 bits at the upper end.
+	propK = uint32(30)
 )
 
 func setupAdaptiveData(rng *rand.Rand, n int) ([]uint64, *AdaptiveARE, error) {
@@ -29,14 +30,14 @@ func setupAdaptiveData(rng *rand.Rand, n int) ([]uint64, *AdaptiveARE, error) {
 	}
 	sort.Slice(sortedKeys, func(i, j int) bool { return sortedKeys[i] < sortedKeys[j] })
 
-	cfg := Config{RangeLen: propRangeLen, Eps: propTargetEpsilon, Threshold: propTruncateBits}
+	cfg := Config{K: propK, Threshold: propTruncateBits}
 	filter, err := NewAdaptiveARE(sortedKeys, 64, cfg)
 	return sortedKeys, filter, err
 }
 
 func setupAdaptiveDataClustered(rng *rand.Rand, n int) ([]uint64, *AdaptiveARE, error) {
 	keys, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
-	cfg := Config{RangeLen: propRangeLen, Eps: propTargetEpsilon, Threshold: propTruncateBits}
+	cfg := Config{K: propK, Threshold: propTruncateBits}
 	filter, err := NewAdaptiveARE(keys, 64, cfg)
 	return keys, filter, err
 }

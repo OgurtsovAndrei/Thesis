@@ -14,17 +14,17 @@ func TestAdaptiveARE_NormalizationAndTruncation(t *testing.T) {
 		keys[i] = base + uint64(i*1000)
 	}
 
-	rangeLen := float64(500)
-	epsilon := 0.01
-	truncateBits := 5
+	// Equivalent to (rangeLen=500, eps=0.01, t=5): K = ceil(log2(n*((L>>t)+1)/eps)) = 14.
+	const truncateBits = 5
+	const K uint32 = 14
 
-	filter, err := NewAdaptiveARE(keys, 64, Config{RangeLen: rangeLen, Eps: epsilon, Threshold: truncateBits})
+	filter, err := NewAdaptiveARE(keys, 64, Config{K: K, Threshold: truncateBits})
 	if err != nil {
 		t.Fatalf("Failed to create filter: %v", err)
 	}
 
 	fmt.Printf("\n--- Adaptive ARE Test ---\n")
-	fmt.Printf("Keys: %d, RangeLen: %g, Truncate: %d bits\n", n, rangeLen, truncateBits)
+	fmt.Printf("Keys: %d, K: %d, Truncate: %d bits\n", n, K, truncateBits)
 	fmt.Printf("SODA K: %d bits, ExactMode: %v\n", filter.K, filter.IsExactMode)
 	fmt.Printf("Total Size: %d bits (%.2f bits/key)\n", filter.SizeInBits(), float64(filter.SizeInBits())/float64(n))
 

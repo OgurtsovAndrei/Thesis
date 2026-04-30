@@ -5,28 +5,20 @@ import (
 	"Thesis/emptiness/approx/are_trunc"
 	"Thesis/utils/errutil"
 	"fmt"
-	"math"
 	mbits "math/bits"
 	"sort"
 )
 
-// Config holds construction parameters for GreedyScanARE (epsilon-based).
+// Config holds construction parameters for GreedyScanARE. K is the fingerprint
+// width in bits; larger K → lower FPR, higher BPK.
 type Config struct {
-	RangeLen float64
-	Eps      float64
+	K uint32
 }
 
-// ConfigFromK holds construction parameters for GreedyScanARE with explicit K.
-type ConfigFromK struct {
-	RangeLen float64
-	K        uint32
-}
-
-// ConfigFromKRaw holds construction parameters for GreedyScanARE with explicit K
-// and no merge pass — pure greedy split only, no hierarchical merge and no fallback.
-type ConfigFromKRaw struct {
-	RangeLen float64
-	K        uint32
+// ConfigRaw holds construction parameters for GreedyScanARE with no merge pass —
+// pure greedy split only, no hierarchical merge and no fallback.
+type ConfigRaw struct {
+	K uint32
 }
 
 type clusterFilter struct {
@@ -70,39 +62,21 @@ type GreedyScanARE struct {
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewGreedyScanARE(keys []uint64, keyBits uint32, cfg Config) (*GreedyScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
-	n := len(keys)
-	if n == 0 {
-		return &GreedyScanARE{}, nil
-	}
-
-	rangeLen := uint64(cfg.RangeLen)
-	effectiveRangeLen := rangeLen + 1
-	rTarget := float64(n) * float64(effectiveRangeLen) / cfg.Eps
-	K := uint32(math.Ceil(math.Log2(rTarget)))
-	if K > 64 {
-		K = 64
-	}
-
-	return NewGreedyScanAREFromK(keys, keyBits, ConfigFromK{RangeLen: cfg.RangeLen, K: K})
-}
-
-// NewGreedyScanAREFromK builds a GreedyScanARE with an explicit fingerprint width K.
-// keys need not be sorted; a copy is sorted internally.
-func NewGreedyScanAREFromK(keys []uint64, keyBits uint32, cfg ConfigFromK) (*GreedyScanARE, error) {
-	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, uint64(cfg.RangeLen), cfg.K, true)
+	return buildGreedy(cp, keyBits, cfg.K, true)
 }
 
-// NewGreedyScanAREFromKRaw builds without merge and without fallback — pure greedy split only.
+// NewGreedyScanARERaw builds without merge and without fallback — pure greedy split only.
 // keys need not be sorted; a copy is sorted internally.
-func NewGreedyScanAREFromKRaw(keys []uint64, keyBits uint32, cfg ConfigFromKRaw) (*GreedyScanARE, error) {
+func NewGreedyScanARERaw(keys []uint64, keyBits uint32, cfg ConfigRaw) (*GreedyScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, uint64(cfg.RangeLen), cfg.K, false)
+	return buildGreedy(cp, keyBits, cfg.K, false)
 }
 
-func buildGreedy(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, merge bool) (*GreedyScanARE, error) {
+func buildGreedy(keys []uint64, keyBits uint32, K uint32, merge bool) (*GreedyScanARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &GreedyScanARE{}, nil
@@ -138,7 +112,7 @@ func buildGreedy(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, merge
 	// Build exact-mode cluster filters.
 	g.clusters = make([]clusterFilter, 0, len(exactSegs))
 	for _, seg := range exactSegs {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, float64(rangeLen), K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}

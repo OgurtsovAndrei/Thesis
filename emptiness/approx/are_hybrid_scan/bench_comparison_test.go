@@ -156,11 +156,12 @@ func generateBenchQueries(queryCount int, rangeLen uint64, rng *rand.Rand) [][2]
 // the built filter plus median build throughput in Mkeys/s.
 func measureBuildHybridScan(keys []uint64, rangeLen uint64, eps float64) (*HybridScanARE, float64, error) {
 	n := len(keys)
+	K := kFromEps(n, rangeLen, eps)
 	durations := make([]time.Duration, benchBuildRuns)
 	var last *HybridScanARE
 	for r := 0; r < benchBuildRuns; r++ {
 		start := time.Now()
-		f, err := NewHybridScanARE(keys, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
+		f, err := NewHybridScanARE(keys, 64, Config{K: K})
 		durations[r] = time.Since(start)
 		if err != nil {
 			return nil, 0, err

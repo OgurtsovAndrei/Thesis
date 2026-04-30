@@ -3,6 +3,7 @@ package are_soda_hash
 import (
 	"Thesis/emptiness/approx/are_trunc"
 	"fmt"
+	"math"
 	mathbits "math/bits"
 	"testing"
 )
@@ -25,8 +26,9 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 	fmt.Printf("| RangeLen | Trunc Bits | Soda Bits | Trunc FPR | Soda FPR |\n")
 	fmt.Printf("|----------|------------|-----------|-----------|----------|\n")
 
+	K := uint32(math.Ceil(math.Log2(2.0 * float64(n) / epsilon)))
 	for _, L := range rangeLens {
-		filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{Eps: epsilon})
+		filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{K: K})
 		filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 		fpT, fpS := 0, 0

@@ -1,6 +1,7 @@
 package are_trunc
 
 import (
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
@@ -9,6 +10,7 @@ import (
 func BenchmarkARE_PerformanceDegradation_Large(b *testing.B) {
 	n := 1 << 20
 	epsilon := 0.001
+	K := uint32(math.Ceil(math.Log2(2.0 * float64(n) / epsilon)))
 
 	rngU := rand.New(rand.NewSource(42))
 	keysUniform := make([]uint64, n)
@@ -16,7 +18,7 @@ func BenchmarkARE_PerformanceDegradation_Large(b *testing.B) {
 		keysUniform[i] = rngU.Uint64()
 	}
 	sort.Slice(keysUniform, func(i, j int) bool { return keysUniform[i] < keysUniform[j] })
-	filterUniform, _ := NewTruncARE(keysUniform, 64, Config{Eps: epsilon})
+	filterUniform, _ := NewTruncARE(keysUniform, 64, Config{K: K})
 
 	rngH := rand.New(rand.NewSource(42))
 	kInternal := 21
@@ -27,7 +29,7 @@ func BenchmarkARE_PerformanceDegradation_Large(b *testing.B) {
 		keysHeavy[i] = fixedPrefix | suffix
 	}
 	sort.Slice(keysHeavy, func(i, j int) bool { return keysHeavy[i] < keysHeavy[j] })
-	filterHeavy, _ := NewTruncARE(keysHeavy, 64, Config{Eps: epsilon})
+	filterHeavy, _ := NewTruncARE(keysHeavy, 64, Config{K: K})
 
 	b.Run("Uniform_N20", func(b *testing.B) {
 		b.ResetTimer()

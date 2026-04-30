@@ -2,21 +2,23 @@ package are_trunc
 
 import (
 	"Thesis/emptiness/exact/ere_one_d"
-	"Thesis/utils/errutil"
 	"Thesis/utils"
+	"Thesis/utils/errutil"
 	"fmt"
-	"math"
 	mathbits "math/bits"
 	"sort"
 )
 
-// Config holds the construction parameters for TruncARE.
+// Config holds the construction parameters for TruncARE. K is the fingerprint
+// width in bits (the payload size per key, excluding metadata). Larger K → lower FPR,
+// higher BPK.
 type Config struct {
-	Eps float64
+	K uint32
 }
 
 // TruncARE is a probabilistic data structure that answers 1D range emptiness
-// queries with a guaranteed upper bound on the false positive probability (epsilon).
+// queries via prefix truncation. The user controls the FPR/BPK trade-off
+// directly through the fingerprint width K.
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
 type TruncARE struct {
@@ -32,6 +34,7 @@ type TruncARE struct {
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewTruncARE(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
 	return NewTruncAREInPlace(cp, keyBits, cfg)
 }
@@ -40,6 +43,7 @@ func NewTruncARE(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, error) {
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewTruncAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 
 	n := len(keys)
 	if n == 0 {
@@ -56,13 +60,7 @@ func NewTruncAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, e
 	}
 	keys = out
 
-	val := (2.0 * float64(len(keys))) / cfg.Eps
-	K := uint32(math.Ceil(math.Log2(val)))
-	if K == 0 {
-		K = 1
-	}
-
-	return newTruncAREFromKSorted(keys, keyBits, K)
+	return newTruncAREFromKSorted(keys, keyBits, cfg.K)
 }
 
 // NewTruncAREFromK builds a TruncARE with an explicit fingerprint width K.

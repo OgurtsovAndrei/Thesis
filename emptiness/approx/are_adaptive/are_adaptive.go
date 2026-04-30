@@ -4,17 +4,16 @@ import (
 	"Thesis/emptiness/exact/ere_one_d"
 	internalhash "Thesis/emptiness/internal/hash"
 	"Thesis/utils/errutil"
-	"fmt"
-	"math"
 	mbits "math/bits"
 	"math/rand"
 	"sort"
 )
 
-// Config holds the construction parameters for AdaptiveARE.
+// Config holds the construction parameters for AdaptiveARE. K is the fingerprint
+// width in bits (the payload size per key, excluding metadata). Threshold is the
+// number of low-order bits to truncate from each key before hashing.
 type Config struct {
-	RangeLen  float64
-	Eps       float64
+	K         uint32
 	Threshold int
 }
 
@@ -23,7 +22,6 @@ type Config struct {
 type AdaptiveARE struct {
 	ere          *ere_one_d.ExactRangeEmptiness
 	K            uint32
-	rangeLen     uint64
 	minKey       uint64
 	keyBits      uint32
 	truncateBits uint32
@@ -41,7 +39,7 @@ func hashBlockIndex(block uint64, a, b uint64, K uint32) uint64 {
 // ExactModeViable reports whether exact mode would trigger for a segment
 // with the given spread, without building the filter.
 // spread is max(S) - min(S) in the original key space.
-func ExactModeViable(spread uint64, rangeLen uint64, K uint32) bool {
+func ExactModeViable(spread uint64, K uint32) bool {
 	if K == 0 || K > 64 {
 		return false
 	}
@@ -56,6 +54,7 @@ func ExactModeViable(spread uint64, rangeLen uint64, K uint32) bool {
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewAdaptiveARE(keys []uint64, keyBits uint32, cfg Config) (*AdaptiveARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
 	return NewAdaptiveAREInPlace(cp, keyBits, cfg)
 }
@@ -64,46 +63,36 @@ func NewAdaptiveARE(keys []uint64, keyBits uint32, cfg Config) (*AdaptiveARE, er
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewAdaptiveAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*AdaptiveARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 
 	n := len(keys)
 	if n == 0 {
 		return &AdaptiveARE{n: 0, keyBits: keyBits}, nil
 	}
 
-	rangeLen := uint64(cfg.RangeLen)
-	t := uint32(cfg.Threshold)
-
-	effectiveRangeLen := (rangeLen >> t) + 1
-	rTarget := float64(n) * float64(effectiveRangeLen) / cfg.Eps
-	K := uint32(math.Ceil(math.Log2(rTarget)))
-	if K > 64 {
-		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
-	}
-
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return newAdaptiveAREFromKSorted(keys, keyBits, rangeLen, K, t)
+	return newAdaptiveAREFromKSorted(keys, keyBits, cfg.K, uint32(cfg.Threshold))
 }
 
 // NewAdaptiveAREFromK builds an AdaptiveARE with an explicit fingerprint width K.
-// keys need not be sorted; they are sorted in place.
-func NewAdaptiveAREFromK(keys []uint64, keyBits uint32, rangeLen float64, K uint32, threshold int) (*AdaptiveARE, error) {
+// keys need not be sorted; they are sorted in place. Used by other ARE packages
+// that already have K computed and want to skip Config wrapping.
+func NewAdaptiveAREFromK(keys []uint64, keyBits uint32, K uint32, threshold int) (*AdaptiveARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 
 	n := len(keys)
 	if n == 0 {
 		return &AdaptiveARE{n: 0, keyBits: keyBits}, nil
 	}
-	if K > 64 {
-		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
-	}
+	errutil.BugOn(K == 0 || K > 64, "K must be in (0, 64], got %d", K)
 
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return newAdaptiveAREFromKSorted(keys, keyBits, uint64(rangeLen), K, uint32(threshold))
+	return newAdaptiveAREFromKSorted(keys, keyBits, K, uint32(threshold))
 }
 
 // newAdaptiveAREFromKSorted is the shared build path.
 // keys must be sorted ascending.
-func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, t uint32) (*AdaptiveARE, error) {
+func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, K uint32, t uint32) (*AdaptiveARE, error) {
 	n := len(keys)
 
 	minKey := keys[0]
@@ -123,7 +112,7 @@ func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, rangeLen uint64, K
 		finalUniverseBits = M
 	}
 
-	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	rng := rand.New(rand.NewSource(int64(n) ^ int64(K)))
 	hashA := rng.Uint64() | 1
 	hashB := rng.Uint64()
 
@@ -167,7 +156,6 @@ func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, rangeLen uint64, K
 	return &AdaptiveARE{
 		ere:          ereFilter,
 		K:            finalUniverseBits,
-		rangeLen:     rangeLen,
 		minKey:       minKey,
 		keyBits:      keyBits,
 		truncateBits: t,

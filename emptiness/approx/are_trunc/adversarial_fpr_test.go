@@ -2,10 +2,23 @@ package are_trunc
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
 )
+
+// kFromEpsTrunc maps the legacy Trunc target eps to K = ceil(log2(2n/eps)).
+func kFromEpsTrunc(n int, eps float64) uint32 {
+	k := uint32(math.Ceil(math.Log2(2.0 * float64(n) / eps)))
+	if k == 0 {
+		k = 1
+	}
+	if k > 64 {
+		k = 64
+	}
+	return k
+}
 
 // TestARE_FPR_RandomEmptyRanges measures FPR on random point queries
 // that are guaranteed to be empty. This validates the epsilon bound.
@@ -29,7 +42,7 @@ func TestARE_FPR_RandomEmptyRanges(t *testing.T) {
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
-	filter, err := NewTruncARE(keys, 64, Config{Eps: epsilon})
+	filter, err := NewTruncARE(keys, 64, Config{K: kFromEpsTrunc(len(keys), epsilon)})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package are_trunc
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
@@ -26,11 +27,12 @@ func BenchmarkApproximateRangeEmptiness_Grid(b *testing.B) {
 		}
 		sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
+		K := uint32(math.Ceil(math.Log2(2.0 * float64(count) / epsilon)))
 		b.Run(name+"/Build", func(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				are, _ := NewTruncARE(keys, 64, Config{Eps: epsilon})
+				are, _ := NewTruncARE(keys, 64, Config{K: K})
 				if i == 0 {
 					size := are.ByteSize()
 					b.ReportMetric(float64(size)*8/float64(count), "bits_per_key")
@@ -38,7 +40,7 @@ func BenchmarkApproximateRangeEmptiness_Grid(b *testing.B) {
 			}
 		})
 
-		are, _ := NewTruncARE(keys, 64, Config{Eps: epsilon})
+		are, _ := NewTruncARE(keys, 64, Config{K: K})
 		queryA := make([]uint64, 100)
 		queryB := make([]uint64, 100)
 		for i := 0; i < 100; i++ {

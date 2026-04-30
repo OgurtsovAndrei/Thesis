@@ -2,6 +2,7 @@ package are_hybrid_scan
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
@@ -11,8 +12,22 @@ import (
 	"Thesis/testutils"
 )
 
+// kFromEps maps the legacy (n, L, eps) target to the K it would have produced
+// in the old API: K = ceil(log2(n*(L+1)/eps)). Tests use this to preserve their
+// original FPR/BPK regimes after the refactor to K-only Config.
+func kFromEps(n int, rangeLen uint64, eps float64) uint32 {
+	k := uint32(math.Ceil(math.Log2(float64(n) * (float64(rangeLen) + 1) / eps)))
+	if k == 0 {
+		k = 1
+	}
+	if k > 64 {
+		k = 64
+	}
+	return k
+}
+
 func TestHybridScanARE_Empty(t *testing.T) {
-	h, err := NewHybridScanARE(nil, 64, Config{RangeLen: 100, Eps: 0.01})
+	h, err := NewHybridScanARE(nil, 64, Config{K: 20})
 	require.NoError(t, err)
 	if !h.IsEmpty(0, 1000) {
 		t.Error("empty filter should return true for any query")
@@ -21,7 +36,7 @@ func TestHybridScanARE_Empty(t *testing.T) {
 
 func TestHybridScanARE_SingleKey(t *testing.T) {
 	keys := []uint64{42}
-	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
+	h, err := NewHybridScanARE(keys, 64, Config{K: 20})
 	require.NoError(t, err)
 
 	if h.IsEmpty(42, 42) {
@@ -33,7 +48,7 @@ func TestHybridScanARE_NoFalseNegatives(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 	keys := generateTestClusterKeys(5000, 5, 0.15, rng)
 
-	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
+	h, err := NewHybridScanARE(keys, 64, Config{K: 20})
 	require.NoError(t, err)
 
 	nc, nf, nt := h.Stats()
@@ -53,7 +68,7 @@ func TestHybridScanARE_NoFalseNegatives_Sequential(t *testing.T) {
 		keys[i] = 1000 + uint64(i)*100
 	}
 
-	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
+	h, err := NewHybridScanARE(keys, 64, Config{K: 20})
 	require.NoError(t, err)
 
 	nc, nf, nt := h.Stats()
@@ -77,7 +92,7 @@ func TestHybridScanARE_FPR_Bounded(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 	keys := generateTestClusterKeys(n, 5, 0.15, rng)
 
-	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
+	h, err := NewHybridScanARE(keys, 64, Config{K: kFromEps(n, rangeLen, eps)})
 	require.NoError(t, err)
 
 	nc, nf, nt := h.Stats()
@@ -140,7 +155,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 					}
 					sort.Slice(sortedU64, func(i, j int) bool { return sortedU64[i] < sortedU64[j] })
 
-					filter, err := NewHybridScanARE(sortedU64, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
+					filter, err := NewHybridScanARE(sortedU64, 64, Config{K: kFromEps(n, rangeLen, eps)})
 					require.NoError(t, err)
 
 					qrng := rand.New(rand.NewSource(123))
@@ -182,7 +197,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 					}
 					sort.Slice(sortedU64, func(i, j int) bool { return sortedU64[i] < sortedU64[j] })
 
-					filter, err := NewHybridScanARE(sortedU64, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
+					filter, err := NewHybridScanARE(sortedU64, 64, Config{K: kFromEps(n, rangeLen, eps)})
 					require.NoError(t, err)
 
 					nc, nf, _ := filter.Stats()
@@ -215,7 +230,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 						sortedU64[i] = base + uint64(i)*gap
 					}
 
-					filter, err := NewHybridScanARE(sortedU64, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
+					filter, err := NewHybridScanARE(sortedU64, 64, Config{K: kFromEps(n, rangeLen, eps)})
 					require.NoError(t, err)
 
 					nc, nf, _ := filter.Stats()
@@ -241,7 +256,7 @@ func TestHybridScanARE_SizeInBits(t *testing.T) {
 	rng := rand.New(rand.NewSource(42))
 	keys := generateTestClusterKeys(5000, 5, 0.15, rng)
 
-	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
+	h, err := NewHybridScanARE(keys, 64, Config{K: 20})
 	require.NoError(t, err)
 
 	sizeBits := h.SizeInBits()

@@ -4,6 +4,7 @@ import (
 	"Thesis/emptiness/approx/are_trunc"
 	"Thesis/testutils"
 	"fmt"
+	"math"
 	mathbits "math/bits"
 	"math/rand"
 	"sort"
@@ -28,8 +29,9 @@ func TestMaster_AccuracyRecalculation(t *testing.T) {
 	fmt.Printf("| RangeLen | Fast FPR | Robust FPR | Fast bits/k | Robust bits/k |\n")
 	fmt.Printf("|----------|----------|------------|-------------|---------------|\n")
 
+	K := uint32(math.Ceil(math.Log2(2.0 * float64(n) / epsilon)))
 	for _, L := range rangeLens {
-		filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{Eps: epsilon})
+		filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{K: K})
 		filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 		fpT, fpS := 0, 0

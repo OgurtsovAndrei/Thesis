@@ -7,19 +7,19 @@ import (
 
 func TestAdaptiveARE_AdaptiveMode(t *testing.T) {
 	n := 100
-	rangeLen := float64(100)
-	epsilon := 0.01
+
+	// Equivalent to (rangeLen=100, eps=0.01): K = ceil(log2(n*(L+1)/eps)) ≈ 20 bits.
+	const K uint32 = 20
 
 	// Scenario 1: Compact data (Exact Mode)
 	// Keys: 1000, 1010, ..., 1990 — spread M = log2(990) ~ 10 bits
-	// Required K for eps=0.01, n=100, L=100: log2(100*101/0.01) ~ 20 bits
 	// M (10) <= K (20) => Exact Mode
 	keysCompact := make([]uint64, n)
 	for i := 0; i < n; i++ {
 		keysCompact[i] = uint64(1000 + i*10)
 	}
 
-	filterCompact, err := NewAdaptiveARE(keysCompact, 64, Config{RangeLen: rangeLen, Eps: epsilon, Threshold: 0})
+	filterCompact, err := NewAdaptiveARE(keysCompact, 64, Config{K: K, Threshold: 0})
 	if err != nil {
 		t.Fatalf("Compact: %v", err)
 	}
@@ -33,13 +33,13 @@ func TestAdaptiveARE_AdaptiveMode(t *testing.T) {
 
 	// Scenario 2: Spread data (SODA Mode)
 	// Keys: 0, 10^12, 2*10^12, ... — spread M ~ 46 bits
-	// K ~ 20 bits => M > K => SODA Mode
+	// K = 20 bits => M > K => SODA Mode
 	keysSpread := make([]uint64, n)
 	for i := 0; i < n; i++ {
 		keysSpread[i] = uint64(i) * 1_000_000_000_000
 	}
 
-	filterSpread, err := NewAdaptiveARE(keysSpread, 64, Config{RangeLen: rangeLen, Eps: epsilon, Threshold: 0})
+	filterSpread, err := NewAdaptiveARE(keysSpread, 64, Config{K: K, Threshold: 0})
 	if err != nil {
 		t.Fatalf("Spread: %v", err)
 	}

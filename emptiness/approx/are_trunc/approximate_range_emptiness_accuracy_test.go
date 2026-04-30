@@ -2,6 +2,7 @@ package are_trunc
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"testing"
 )
@@ -23,7 +24,8 @@ func TestApproximateRangeEmptiness_Accuracy(t *testing.T) {
 	// NewTruncARE sorts internally
 	for _, targetEps := range epsilons {
 		t.Run(fmt.Sprintf("Eps=%v", targetEps), func(t *testing.T) {
-			are, err := NewTruncARE(keys, 64, Config{Eps: targetEps})
+			K := uint32(math.Ceil(math.Log2(2.0 * float64(n) / targetEps)))
+			are, err := NewTruncARE(keys, 64, Config{K: K})
 			if err != nil {
 				t.Fatalf("Failed to build ARE: %v", err)
 			}

@@ -27,7 +27,7 @@ func setupHybridScanData(rng *rand.Rand, n int) ([]uint64, *HybridScanARE, error
 		}
 	}
 	sort.Slice(sortedKeys, func(i, j int) bool { return sortedKeys[i] < sortedKeys[j] })
-	filter, err := NewHybridScanARE(sortedKeys, 64, Config{RangeLen: float64(propRangeLen), Eps: propTargetEpsilon})
+	filter, err := NewHybridScanARE(sortedKeys, 64, Config{K: kFromEps(len(sortedKeys), propRangeLen, propTargetEpsilon)})
 	return sortedKeys, filter, err
 }
 
@@ -107,7 +107,7 @@ func runParallelHybridScan(t *testing.T, testFn func(t *testing.T, rng *rand.Ran
 func setupHybridScanDataClustered(rng *rand.Rand, n int) ([]uint64, *HybridScanARE, error) {
 	keys64, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
 	sort.Slice(keys64, func(i, j int) bool { return keys64[i] < keys64[j] })
-	filter, err := NewHybridScanARE(keys64, 64, Config{RangeLen: float64(propRangeLen), Eps: propTargetEpsilon})
+	filter, err := NewHybridScanARE(keys64, 64, Config{K: kFromEps(len(keys64), propRangeLen, propTargetEpsilon)})
 	return keys64, filter, err
 }
 

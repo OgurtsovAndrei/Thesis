@@ -72,7 +72,7 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
 		seg64 := bsToU64(seg.keys)
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg64, keyBits, float64(rangeLen), K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg64, keyBits, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}

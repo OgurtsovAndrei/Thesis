@@ -53,7 +53,7 @@ func NewDPScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*DPSca
 		if len(seg.keys) > 0 {
 			keyBits = seg.keys[0].SizeBits()
 		}
-		f, err := are_adaptive.NewAdaptiveAREFromK(keys64, keyBits, float64(rangeLen), K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromK(keys64, keyBits, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}

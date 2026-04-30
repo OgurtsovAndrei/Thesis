@@ -5,7 +5,6 @@ import (
 	"Thesis/emptiness/approx/are_trunc"
 	"Thesis/utils/errutil"
 	"fmt"
-	"math"
 	"sort"
 )
 
@@ -57,97 +56,75 @@ type HybridScanARE struct {
 	n         int
 }
 
-// Config holds construction parameters for NewHybridScanARE.
+// Config holds construction parameters for NewHybridScanARE. K is the
+// fingerprint width in bits; larger K → lower FPR, higher BPK.
 type Config struct {
-	RangeLen float64
-	Eps      float64
-}
-
-// ConfigFromK holds construction parameters for NewHybridScanAREFromK.
-type ConfigFromK struct {
-	RangeLen float64
-	K        uint32
+	K uint32
 }
 
 // ConfigWithPolicy holds construction parameters for NewHybridScanAREWithPolicy.
+// RangeLen is forwarded to the FallbackPolicy (e.g. FallbackPhantom uses it to
+// compare phantom region size against query length); it does not affect filter
+// construction otherwise.
 type ConfigWithPolicy struct {
-	RangeLen float64
 	K        uint32
+	RangeLen uint64
 	Policy   FallbackPolicy
-}
-
-// ConfigFromBPK holds construction parameters for NewHybridScanAREFromBPK.
-type ConfigFromBPK struct {
-	RangeLen float64
-	BPK      float64
 }
 
 // --- public constructors ---
 
+// NewHybridScanARE builds Scan-ARE with the default Auto fallback policy.
 func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
-	n := len(keys)
-	if n == 0 {
-		return &HybridScanARE{n: 0}, nil
-	}
-
-	rangeLen := uint64(cfg.RangeLen)
-	effectiveRangeLen := rangeLen + 1
-	rTarget := float64(n) * float64(effectiveRangeLen) / cfg.Eps
-	K := uint32(math.Ceil(math.Log2(rTarget)))
-	if K > 64 {
-		K = 64
-	}
-
-	dbscanEps := uint64(cfg.RangeLen / cfg.Eps * epsMultiplier)
-	return newHybridScanARE(keys, keyBits, rangeLen, K, dbscanEps, FallbackAuto{})
-}
-
-func NewHybridScanAREFromK(keys []uint64, keyBits uint32, cfg ConfigFromK) (*HybridScanARE, error) {
-	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	if len(keys) == 0 {
 		return &HybridScanARE{n: 0}, nil
 	}
-	rangeLen := uint64(cfg.RangeLen)
-	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, cfg.K)
-	return newHybridScanARE(keys, keyBits, rangeLen, cfg.K, dbscanEps, FallbackAuto{})
+	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
+	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAuto{})
 }
 
 // NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.
+// cfg.RangeLen is consulted only by RangeLen-aware policies (e.g. FallbackPhantom).
 func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPolicy) (*HybridScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	if len(keys) == 0 {
 		return &HybridScanARE{n: 0}, nil
 	}
-	rangeLen := uint64(cfg.RangeLen)
-	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, cfg.K)
-	return newHybridScanARE(keys, keyBits, rangeLen, cfg.K, dbscanEps, cfg.Policy)
+	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
+	return newHybridScanARE(keys, keyBits, cfg.K, cfg.RangeLen, dbscanEps, cfg.Policy)
 }
 
-func NewHybridScanAREFromBPK(keys []uint64, keyBits uint32, cfg ConfigFromBPK) (*HybridScanARE, error) {
-	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
-	K := uint32(math.Ceil(cfg.BPK))
-	if K == 0 {
-		K = 1
+// dbscanEpsFromK returns the DBSCAN density window in key-space units.
+// Derivation: the legacy formula was rangeLen / eps * epsMultiplier with
+// eps = n * (L+1) / 2^K. Substituting gives 2^K * L / (n*(L+1)) * epsMultiplier
+// → epsMultiplier * 2^K / n in the L >> 1 limit. We use this L-independent form
+// since K already encodes the desired density.
+func dbscanEpsFromK(n int, K uint32) uint64 {
+	if n == 0 {
+		return 0
 	}
-	if K > 64 {
-		K = 64
+	var pow float64
+	if K >= 64 {
+		pow = float64(^uint64(0)) + 1
+	} else {
+		pow = float64(uint64(1) << K)
 	}
-	return NewHybridScanAREFromK(keys, keyBits, ConfigFromK{RangeLen: cfg.RangeLen, K: K})
-}
-
-func dbscanEpsFromK(n int, rangeLen uint64, K uint32) uint64 {
-	effectiveRangeLen := float64(rangeLen) + 1
-	epsilon := float64(n) * effectiveRangeLen / math.Pow(2, float64(K))
-	if epsilon <= 0 || epsilon > 1 {
-		epsilon = 0.01
+	v := float64(epsMultiplier) * pow / float64(n)
+	if v < 1 {
+		return 1
 	}
-	return uint64(float64(rangeLen) / epsilon * epsMultiplier)
+	if v > float64(^uint64(0)) {
+		return ^uint64(0)
+	}
+	return uint64(v)
 }
 
 // --- core build ---
 
-func newHybridScanARE(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
+func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
 
@@ -167,7 +144,7 @@ func newHybridScanARE(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, 
 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, float64(rangeLen), K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -200,7 +177,7 @@ func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, pol
 		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
 	}
 
-	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, keyBits, float64(rangeLen), K, 0)
+	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, keyBits, K, 0)
 	if err != nil {
 		return nil, fmt.Errorf("fallback adaptive build: %w", err)
 	}

@@ -35,7 +35,7 @@ func measureFPRScan(t *testing.T, keys []uint64, queries [][2]uint64, filter *Hy
 // buildScanFilter builds HybridScanARE and fatals on error.
 func buildScanFilter(t *testing.T, keys []uint64, rangeLen uint64, epsilon float64) *HybridScanARE {
 	t.Helper()
-	f, err := NewHybridScanARE(keys, 64, Config{RangeLen: float64(rangeLen), Eps: epsilon})
+	f, err := NewHybridScanARE(keys, 64, Config{K: kFromEps(len(keys), rangeLen, epsilon)})
 	if err != nil {
 		t.Fatalf("NewHybridScanARE build failed: %v", err)
 	}

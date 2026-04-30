@@ -23,7 +23,7 @@ type adversarialResult struct {
 
 func buildScan(t *testing.T, keys []uint64, rangeLen uint64, epsilon float64) *HybridScanARE {
 	t.Helper()
-	s, err := NewHybridScanARE(keys, 64, Config{RangeLen: float64(rangeLen), Eps: epsilon})
+	s, err := NewHybridScanARE(keys, 64, Config{K: kFromEps(len(keys), rangeLen, epsilon)})
 	if err != nil {
 		t.Fatalf("HybridScanARE build: %v", err)
 	}

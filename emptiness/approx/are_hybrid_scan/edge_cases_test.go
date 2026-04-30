@@ -20,18 +20,19 @@ func bpkOf(h *HybridScanARE) float64 {
 	return float64(h.SizeInBits()) / float64(h.n)
 }
 
-// buildFromK is a thin wrapper for NewHybridScanAREFromK.
+// buildFromK is a thin wrapper for NewHybridScanARE with explicit K.
 func buildFromK(t *testing.T, vals []uint64, rangeLen uint64, K uint32) *HybridScanARE {
 	t.Helper()
-	h, err := NewHybridScanAREFromK(vals, 64, ConfigFromK{RangeLen: float64(rangeLen), K: K})
+	_ = rangeLen
+	h, err := NewHybridScanARE(vals, 64, Config{K: K})
 	require.NoError(t, err)
 	return h
 }
 
-// buildEps is a thin wrapper for NewHybridScanARE.
+// buildEps maps a legacy (rangeLen, eps) target to K and builds the filter.
 func buildEps(t *testing.T, vals []uint64, rangeLen uint64, eps float64) *HybridScanARE {
 	t.Helper()
-	h, err := NewHybridScanARE(vals, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
+	h, err := NewHybridScanARE(vals, 64, Config{K: kFromEps(len(vals), rangeLen, eps)})
 	require.NoError(t, err)
 	return h
 }
