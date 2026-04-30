@@ -129,10 +129,146 @@ Select call when running under the full pipeline. The bucket binary
 search at depth 14 contributes the remaining ~600 ns through 14
 `bits.UnpackBit` reads on the packed-suffix array.
 
-### Why Select1 is so slow here, and how we know it isn't the algorithm
+### Why Select1 is so slow here
 
-We ran two complementary isolated benchmarks to check whether
-`rsdic.Select1` is intrinsically slow.
+Initial isolated benches were misleading: random ranks in
+$[0, \mathrm{oneNum})$ on the same rsdic gave Select1 a flat ~67 ns.
+The 23× slowdown only appears when Select1 is fed the actual rank
+stream that ERE.getBlockRange uses — small ranks (block ids in
+$[0, 1024]$ for FB at L=65536) on a heavily-clustered bitvector.
+
+A line-level cpuprofile of `BenchmarkSelect1RealBlockIDs` reveals the
+mechanism. ~90% of Select1's wall time is in two hot regions:
+
+```go
+// rsdic.go:171
+func (rs RSDic) Select1(rank uint64) uint64 {
+    ...
+    selectInd := rank / kSelectBlockSize           // kSelectBlockSize = 4096
+    lblock := rs.selectOneInds[selectInd]
+    for ; lblock < uint64(len(rs.rankBlocks)); lblock++ {  // 36% of total
+        if rank < rs.rankBlocks[lblock] {                  // ←
+            break
+        }
+    }
+    ...
+    return sblock*kSmallBlockSize +
+        uint64(enumSelect1(code, rankSB, uint8(remain)))   // 32% of total
+}
+```
+
+**The rankBlocks linear scan pathologises on clustered bitvectors.**
+`selectOneInds[selectInd]` is a hint pointing to the large block of
+the $(\textsf{selectInd} \cdot 4096)$-th 1-bit; the loop walks
+`rankBlocks` forward from that hint until cumulative 1-count first
+exceeds `rank`. The implicit promise — that the loop runs $O(1)$
+iterations — assumes 1-bits are roughly uniformly distributed across
+bit positions, so 4096 ones span ~8192 bits ≈ 8 large blocks.
+
+In the SODA-degenerate ERE, the encoding is
+$0^{|B_0|} 1\, 0^{|B_1|} 1\, \dots\, 0^{|B_{N-1}|} 1$ — one 1-bit per
+ERE block. With FB at $L=65536$ only 760 of $2^{24}$ blocks are
+populated; populated blocks contribute $\sim22000$ zeros, empty blocks
+contribute zero zeros. So 1-bits cluster into long runs separated by
+long 0-runs. Between two select-hints (4096 ones apart) the bitvector
+can span millions of bits ⇒ thousands of large blocks ⇒ the
+"O(1)" inner loop iterates **thousands** of times for typical small
+ranks.
+
+Empirically Select1 measures **~1825 ns/call** under this rank stream,
+versus 67 ns on the same rsdic with uniform ranks. The cumulative loop
+counter explains the 27× slowdown directly. Two further contributors:
+
+- **`enumSelect1` inline (32%)**: hot because Select1 is called so
+  often per second and the small-block decoder runs once per call.
+- **`runtime.duffcopy` (9%)**: `Select1` has a value receiver
+  `(rs RSDic) Select1(...)`, so every call copies a ~104-byte struct
+  (5 slice headers + 7 scalars). Apple Silicon makes this cheap but
+  not free.
+
+### Validation — bracketed binary search fixes it
+
+To confirm the diagnosis, we wrote `Select1Fast` (`select1_fast.go`)
+which replaces the rankBlocks linear scan with a binary search
+bracketed by `selectOneInds[selectInd]` and
+`selectOneInds[selectInd+1]+1` (or end of array). Pointer receiver,
+all other state and helpers reused. Property test
+`TestSelect1FastEquivalence` exhaustively checks
+`Select1Fast(rank) == Select1(rank)` for all valid ranks across three
+bitvector patterns: uniform-50%, sparse-1%, and a clustered-unary
+pattern modelling the ERE encoding. All pass.
+
+Microbench (`BenchmarkSelect1VsFastClustered`, 1024 blocks with 30%
+populated at ~22000 zeros each, ranks uniform in $[0, 1024)$):
+
+| Implementation        | ns/op | speedup |
+|-----------------------|------:|--------:|
+| Original `Select1`    | 859   | 1.0×    |
+| `Select1Fast`         |  59   | **14.6×** |
+
+Sanity-check on uniform 50%-density bitvectors with random ranks
+(`BenchmarkSelect1VsFastUniform`):
+
+| Implementation        | ns/op |
+|-----------------------|------:|
+| Original `Select1`    | 43.9  |
+| `Select1Fast`         | 45.1  |
+
+No regression on the well-behaved case.
+
+**End-to-end validation**
+(`bench/soda_fast_path_bench_test.go`,
+`Thesis/emptiness/exact/ere_one_d/select_fast_variant.go`). We added
+`ExactRangeEmptiness.IsEmptyFast` — functionally identical to
+`IsEmpty` but routing all `Select` calls through `Select1Fast`. On
+n=2^24 / sosd_fb / L=65536:
+
+| Path                                  | ns/query | fp_rate |
+|---------------------------------------|---------:|--------:|
+| Original `ere.IsEmpty`                | 3732     | 0.7950  |
+| `ere.IsEmptyFast`                     |  **320** | 0.7951  |
+| Equivalence subtest (1000 queries)    | PASS     | —       |
+
+**11.7× end-to-end speedup**, identical fp behaviour. The fix is even
+larger than the Select1-only number predicts because once Select1
+stops dominating the query path, the bucket binsearch and ERE wrap
+also fit the L1 budget cleanly (no rsdic state to evict their working
+set).
+
+Adopting `Select1Fast` as the production `Select1` path is the
+recommended action for a follow-up release: it deletes the worst-case
+behaviour with no performance trade-off on the well-behaved case and
+makes SODA's $L=65536$ regime broadly usable on real-world (clustered)
+key distributions.
+
+### Independent verification — isolated rsdic with the same rank stream
+
+To confirm the rank-stream is the actual driver — not interaction with
+the surrounding ERE.packedData accesses — we ran
+`BenchmarkSelect1RealBlockIDs` (`bench/soda_breakdown_bench_test.go`):
+Select1 in a tight loop on the SODA-FB rsdic, but with the rank stream
+extracted from real B6 smart-mix queries (block ids ≤ 1024). Result:
+**1825 ns/call** in pure isolation, no packedData access whatsoever.
+
+We also ran a controlled cache-thrash microbench
+(`bench/rsdic_thrash_bench_test.go`): isolated Select1 on uniform
+random ranks, but interleaved with 14 random byte reads from a
+synthetic blob of size up to 192 MB:
+
+| Thrash size | Select1 ns/op |
+|---|---:|
+| 0 MB | 67 |
+| 1 MB | 77 |
+| 4 MB | 79 |
+| 16 MB | 91 |
+| 48 MB (= packedData scale) | 102 |
+| 192 MB | 185 |
+
+Even with 48 MB of cache pressure, Select1 only inflates to 102 ns —
+**not** 1825 ns. So the cost is not cache eviction by surrounding
+binsearch reads. The rank distribution is what matters.
+
+### Two complementary baseline benches (kept for context)
 
 **(a) Synthetic 50%-density scaling** —
 `Thesis/succinct_bit_vector/rsdic/scaling_test.go`: Select1 / Rank /
@@ -159,46 +295,15 @@ load it back, and benchmark Select1 with no other working set in cache:
 | sosd_fb      | 65536  |    1.06    |        66.8  |                      116.8 |
 | uniform      | 65536  |    3.80    |        50.1  |                       78.0 |
 
-So in isolation the SODA-FB rsdic answers Select1 in **67 ns**, flat in
-$L$ and consistent with the synthetic 50%-density curve at the same
-size. **The factor-of-23 inflation to ~1585 ns under the SODA pipeline
-is therefore not a property of rsdic itself — it is interaction-driven
-cache thrashing.**
-
-### What is being thrashed
-
-`rsdic.RSDic` doesn't hold a single bitvector — it holds **five
-parallel arrays**, all touched on every Select1:
-
-1. `bits` — the encoded variable-rate bit stream (~4 MB at $n=2^{24}$).
-2. `rankBlocks` — large-block prefix sums (one entry per 1024 bits).
-3. `selectOneInds` — pointers into rankBlocks for fast Select.
-4. `rankSmallBlocks` — small-block deltas (one byte per 64 bits).
-5. `pointerBlocks` — bit offsets into `bits`.
-
-A single Select1 walks `selectOneInds` → `rankBlocks` → `rankSmallBlocks`
-loop → `bits[]` decode. Four random-access fetches across four arrays
-that share no cache lines. In isolation those four cache lines stay
-warm in L1/L2 across iterations because nothing else is fighting them.
-
-Under the SODA query pipeline we additionally touch the
-`ExactRangeEmptiness.packedData` array, which is **~48 MB at $L=65536$**
-(width $w=23$, one entry per key) — far larger than M4's 16 MB shared
-L2 and aggressively random-accessed by the bucket binary search. Each
-binsearch step pulls fresh 4 KB pages, evicting rsdic's working set.
-The next Select1 then re-misses on all four of its index arrays.
-
-The Apple M4 Max has a 256-entry data TLB; 48 MB of packedData spans
-~12k 4 KB pages, so essentially every binsearch hop incurs a TLB walk
-on top of the cache miss. ~1585 ns/Select decomposes roughly as:
-
-- ~150 ns × 4 cache misses (one per index array, cold L2/DRAM)
-- ~30 ns × 4 TLB walks
-- ~40 ns × 6 small-block iterations on the bits-decode path
+So with **uniform random ranks** the SODA-FB rsdic answers Select1 in
+67 ns, flat in $L$. With the **actual rank stream that ERE feeds it**
+(small ranks $\le 1024$ on the same rsdic), Select1 takes 1825 ns —
+the structural rsdic flaw analysed above.
 
 Reconciling the full latency budget at $L=65536$ on sosd_fb:
 
-- 2 × Select1 under cache pressure ≈ 3170 ns (70%).
+- 2 × Select1 with the real rank stream ≈ 3170 ns (70%) — the
+  rankBlocks-scan pathology.
 - 14 binsearch hops × `bits.UnpackBit` on the packed-suffix array ≈
   600 ns (13%).
 - ERE.IsEmpty body, SODA wrapper, branch overhead ≈ 720 ns (16%).
@@ -245,12 +350,19 @@ practical $L \cdot 1/\varepsilon$ — fall outside it.
    distribution; the same construction gives 241 ns or 5173 ns
    depending on whether the keys span a single SODA super-block.
 
-2. **The bottleneck is `rsdic.Select1` under cache pressure**, not the
-   bucket binary search. pprof attributes 70% of total query time to
-   `Select1` (≈ 1585 ns/call) and only 13% to `bits.UnpackBit` inside
-   the binsearch. Isolated, the same Select1 measures 67 ns — the 23×
-   inflation comes from rsdic's five-array index layout being evicted
-   on every binsearch step into the 48 MB packed-suffix array.
+2. **The bottleneck is `rsdic.Select1` on a clustered bitvector**,
+   not the bucket binary search and not cache thrashing. pprof
+   attributes 70% of total query time to `Select1` (≈ 1825 ns/call)
+   and only 13% to `bits.UnpackBit`. Line-level profiling shows the
+   cost is concentrated in the `rankBlocks` linear scan inside
+   Select1: `selectOneInds` samples only every 4096-th 1-bit, and the
+   loop walks `rankBlocks` forward from the hint until cumulative ones
+   exceed `rank`. On the SODA-degenerate ERE bitvector the 4096 ones
+   between two hints can span millions of bits ⇒ thousands of large
+   blocks ⇒ thousands of inner-loop iterations. With uniform ranks on
+   the same rsdic, isolated Select1 is 67 ns; with the actual ERE
+   rank stream (block ids ≤ 1024 on a clustered bitvector) it is
+   1825 ns.
 
 3. **This is not a 1D-vs-classic ERE regression.** Both backends share
    the same `rsdic` Select implementation and the same packed-bit bucket
@@ -259,19 +371,25 @@ practical $L \cdot 1/\varepsilon$ — fall outside it.
 
 4. **Optimisation opportunities** (out of scope for the defence run, but
    worth recording):
-   - Co-locate rsdic's index arrays (bits, rankBlocks, rankSmallBlocks,
-     selectInds, pointerBlocks) into one cache-friendly struct. Five
-     parallel arrays at random offsets ⇒ five evicted lines per Select;
-     a packed Select-on-flat-bitvector layout pays ~$n$ extra bits in
-     exchange for ≤ 2 cache lines per Select.
+   - **Replace the `rankBlocks` linear scan with a binary search**
+     bracketed by `selectOneInds[selectInd]` and
+     `selectOneInds[selectInd+1]` (or `len(rankBlocks)` for the last
+     bracket). Turns the worst-case clustered Select1 from
+     $O(\text{bracket length})$ into $O(\log)$ — for our case from
+     thousands of iterations to ~12. This is a one-screen patch in
+     `rsdic.go:171`.
+   - **Make `Select1` a pointer-receiver method.** Currently
+     `(rs RSDic)` forces a 104-byte struct copy on every call (~9% of
+     observed flat time via `runtime.duffcopy`). Same fix for
+     `Select0`, `Rank`, etc.
    - In SODA, when the input universe fits in one super-block, fall
      through to a different mode (e.g. directly use a Truncation-style
      ERE on the natural prefix bits without the redundant identity
      hash + ERE wrap).
    - Increase ERE $k$ above $\log_2 n$ when the populated-block count
      is small, so populated buckets shrink. Trades metadata bits for
-     query speed and reduces packed-suffix size below the L2 threshold,
-     which would also relieve the rsdic-eviction effect.
+     query speed *and* shortens the bracketed rankBlocks scan
+     proportionally.
 
 5. **Defence-text framing.** The headline FPR-vs-BPK plots are
    unaffected — those depend only on memory and false-positive rate,
