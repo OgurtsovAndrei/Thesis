@@ -1,7 +1,6 @@
 package are_adaptive
 
 import (
-	"Thesis/bits"
 	"Thesis/testutils"
 	"fmt"
 	"math/rand"
@@ -14,48 +13,41 @@ const (
 	propMinN          = 100
 	propMaxExtraN     = 5000
 	propTargetEpsilon = 0.001
-	propRangeLen      = uint64(100)
-	propTruncateBits  = uint32(0)
+	propRangeLen      = float64(100)
+	propTruncateBits  = 0
 )
 
-func setupAdaptiveData(rng *rand.Rand, n, bl int) ([]bits.BitString, *AdaptiveApproximateRangeEmptiness, error) {
-	keySet := make(map[string]bool)
-	sortedKeys := make([]bits.BitString, 0, n)
+func setupAdaptiveData(rng *rand.Rand, n int) ([]uint64, *AdaptiveARE, error) {
+	keySet := make(map[uint64]bool)
+	sortedKeys := make([]uint64, 0, n)
 	for len(sortedKeys) < n {
-		bs := randomBitString(rng, bl)
-		str := string(bs.Data())
-		if !keySet[str] {
-			keySet[str] = true
-			sortedKeys = append(sortedKeys, bs)
+		k := rng.Uint64()
+		if !keySet[k] {
+			keySet[k] = true
+			sortedKeys = append(sortedKeys, k)
 		}
 	}
-	sort.Slice(sortedKeys, func(i, j int) bool {
-		return sortedKeys[i].Compare(sortedKeys[j]) < 0
-	})
+	sort.Slice(sortedKeys, func(i, j int) bool { return sortedKeys[i] < sortedKeys[j] })
 
-	filter, err := NewAdaptiveARE(sortedKeys, propRangeLen, propTargetEpsilon, propTruncateBits)
+	cfg := Config{RangeLen: propRangeLen, Eps: propTargetEpsilon, Threshold: propTruncateBits}
+	filter, err := NewAdaptiveARE(sortedKeys, 64, cfg)
 	return sortedKeys, filter, err
 }
 
-func setupAdaptiveDataClustered(rng *rand.Rand, n int) ([]bits.BitString, *AdaptiveApproximateRangeEmptiness, error) {
-	keys64, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
-	keysBS := make([]bits.BitString, len(keys64))
-	for i, k := range keys64 {
-		keysBS[i] = bits.NewFromTrieUint64(k, 64)
-	}
-	filter, err := NewAdaptiveARE(keysBS, propRangeLen, propTargetEpsilon, propTruncateBits)
-	return keysBS, filter, err
+func setupAdaptiveDataClustered(rng *rand.Rand, n int) ([]uint64, *AdaptiveARE, error) {
+	keys, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
+	cfg := Config{RangeLen: propRangeLen, Eps: propTargetEpsilon, Threshold: propTruncateBits}
+	filter, err := NewAdaptiveARE(keys, 64, cfg)
+	return keys, filter, err
 }
 
-func runParallelAdaptive(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness)) {
-	bitLens := []int{64, 128, 256, 512}
+func runParallelAdaptive(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE)) {
 	for i := 0; i < propTestRuns; i++ {
 		i := i
-		bl := bitLens[i%len(bitLens)]
-		t.Run(fmt.Sprintf("BitLen%d/Iter%d", bl, i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Iter%d", i), func(t *testing.T) {
 			t.Parallel()
 			rng := rand.New(rand.NewSource(int64(i + 200)))
-			keys, filter, err := setupAdaptiveData(rng, propMinN+rng.Intn(propMaxExtraN), bl)
+			keys, filter, err := setupAdaptiveData(rng, propMinN+rng.Intn(propMaxExtraN))
 			if err != nil {
 				t.Fatalf("Setup failed: %v", err)
 			}
@@ -64,7 +56,7 @@ func runParallelAdaptive(t *testing.T, testFn func(t *testing.T, rng *rand.Rand,
 	}
 }
 
-func runParallelAdaptiveClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness)) {
+func runParallelAdaptiveClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE)) {
 	const clusterTestRuns = 200
 	for i := 0; i < clusterTestRuns; i++ {
 		i := i
@@ -83,7 +75,7 @@ func runParallelAdaptiveClustered(t *testing.T, testFn func(t *testing.T, rng *r
 
 func TestAdaptive_Property_PointInclusion(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if filter.IsEmpty(key, key) {
@@ -95,17 +87,17 @@ func TestAdaptive_Property_PointInclusion(t *testing.T) {
 
 func TestAdaptive_Property_TightOverhang(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
-			if !key.IsAllZeros() {
-				prev := key.Predecessor()
+			if key != 0 {
+				prev := key - 1
 				if filter.IsEmpty(prev, key) {
 					t.Errorf("Range [%v, %v] failed", prev, key)
 				}
 			}
-			if !key.IsAllOnes() {
-				next := key.Successor()
+			if key != ^uint64(0) {
+				next := key + 1
 				if filter.IsEmpty(key, next) {
 					t.Errorf("Range [%v, %v] failed", key, next)
 				}
@@ -116,7 +108,7 @@ func TestAdaptive_Property_TightOverhang(t *testing.T) {
 
 func TestAdaptive_Property_SpanningRanges(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		n := len(keys)
 		for j := 0; j < 10; j++ {
 			idx1 := rng.Intn(n - 5)
@@ -131,7 +123,7 @@ func TestAdaptive_Property_SpanningRanges(t *testing.T) {
 
 func TestAdaptive_Property_MassiveSpan(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptive(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
 			t.Errorf("Massive span failed")
 		}
@@ -140,7 +132,7 @@ func TestAdaptive_Property_MassiveSpan(t *testing.T) {
 
 func TestAdaptive_Property_PointInclusion_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if filter.IsEmpty(key, key) {
@@ -152,7 +144,7 @@ func TestAdaptive_Property_PointInclusion_Clustered(t *testing.T) {
 
 func TestAdaptive_Property_SpanningRanges_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		n := len(keys)
 		for j := 0; j < 10; j++ {
 			idx1 := rng.Intn(n - 5)
@@ -167,18 +159,11 @@ func TestAdaptive_Property_SpanningRanges_Clustered(t *testing.T) {
 
 func TestAdaptive_Property_MassiveSpan_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *AdaptiveApproximateRangeEmptiness) {
+	runParallelAdaptiveClustered(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *AdaptiveARE) {
 		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
 			t.Errorf("Massive span failed")
 		}
 	})
-}
-
-func randomBitString(rng *rand.Rand, bitLen int) bits.BitString {
-	byteLen := (bitLen + 7) / 8
-	data := make([]byte, byteLen)
-	rng.Read(data)
-	return bits.NewFromDataAndSize(data, uint32(bitLen))
 }
 
 func minInt(a, b int) int {

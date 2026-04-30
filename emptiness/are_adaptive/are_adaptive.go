@@ -1,31 +1,41 @@
 package are_adaptive
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/ere_one_d"
+	"Thesis/errutil"
 	internalhash "Thesis/emptiness/internal/hash"
 	"fmt"
 	"math"
 	mbits "math/bits"
 	"math/rand"
+	"sort"
 )
 
-type AdaptiveApproximateRangeEmptiness struct {
+// Config holds the construction parameters for AdaptiveARE.
+type Config struct {
+	RangeLen  float64
+	Eps       float64
+	Threshold int
+}
+
+// AdaptiveARE is an approximate range emptiness filter that adaptively chooses
+// between exact mode (when the key spread fits in K bits) and SODA hashing mode.
+type AdaptiveARE struct {
 	ere          *ere_one_d.ExactRangeEmptiness
 	K            uint32
-	RangeLen     uint64
-	MinKey       bits.BitString
-	TruncateBits uint32
+	rangeLen     uint64
+	minKey       uint64
+	keyBits      uint32
+	truncateBits uint32
 	IsExactMode  bool
 	n            int
 	hashA        uint64
 	hashB        uint64
 }
 
-// hashBlockIndex hashes a block index BitString to a K-bit uint64.
-func hashBlockIndex(block bits.BitString, a, b uint64, K uint32) uint64 {
-	blockVal := block.TrieUint64()
-	return internalhash.PairwiseHash(blockVal, a, b, K)
+// hashBlockIndex hashes a block index (uint64) to a K-bit uint64.
+func hashBlockIndex(block uint64, a, b uint64, K uint32) uint64 {
+	return internalhash.PairwiseHash(block, a, b, K)
 }
 
 // ExactModeViable reports whether exact mode would trigger for a segment
@@ -37,62 +47,76 @@ func ExactModeViable(spread uint64, rangeLen uint64, K uint32) bool {
 	}
 	var M uint32
 	if spread > 0 {
-		M = uint32(64 - mbits.LeadingZeros64(spread))
+		M = uint32(mbits.Len64(spread))
 	}
 	return M <= K
 }
 
-func NewAdaptiveARE(keys []bits.BitString, rangeLen uint64, epsilon float64, t uint32) (*AdaptiveApproximateRangeEmptiness, error) {
+// NewAdaptiveARE builds an AdaptiveARE from a copy of keys.
+// keys must fit in keyBits bits (high bits above keyBits must be zero).
+func NewAdaptiveARE(keys []uint64, keyBits uint32, cfg Config) (*AdaptiveARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	cp := append([]uint64(nil), keys...)
+	return NewAdaptiveAREInPlace(cp, keyBits, cfg)
+}
+
+// NewAdaptiveAREInPlace builds an AdaptiveARE, sorting keys in place.
+// keys must fit in keyBits bits (high bits above keyBits must be zero).
+func NewAdaptiveAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*AdaptiveARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+
 	n := len(keys)
 	if n == 0 {
-		return &AdaptiveApproximateRangeEmptiness{n: 0}, nil
+		return &AdaptiveARE{n: 0, keyBits: keyBits}, nil
 	}
 
+	rangeLen := uint64(cfg.RangeLen)
+	t := uint32(cfg.Threshold)
+
 	effectiveRangeLen := (rangeLen >> t) + 1
-	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
+	rTarget := float64(n) * float64(effectiveRangeLen) / cfg.Eps
 	K := uint32(math.Ceil(math.Log2(rTarget)))
 	if K > 64 {
 		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
 	}
 
-	return NewAdaptiveAREFromK(keys, rangeLen, K, t)
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return newAdaptiveAREFromKSorted(keys, keyBits, rangeLen, K, t)
 }
 
-func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uint32) (*AdaptiveApproximateRangeEmptiness, error) {
+// NewAdaptiveAREFromK builds an AdaptiveARE with an explicit fingerprint width K.
+// keys need not be sorted; they are sorted in place.
+func NewAdaptiveAREFromK(keys []uint64, keyBits uint32, rangeLen float64, K uint32, threshold int) (*AdaptiveARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+
 	n := len(keys)
 	if n == 0 {
-		return &AdaptiveApproximateRangeEmptiness{n: 0}, nil
+		return &AdaptiveARE{n: 0, keyBits: keyBits}, nil
 	}
 	if K > 64 {
 		return nil, fmt.Errorf("required K=%d exceeds 64 bits. Increase truncation 't'", K)
 	}
 
-	// 1. Find Min and Max keys (by Compare = trie order)
-	minKey := keys[0]
-	maxKey := keys[0]
-	for _, k := range keys {
-		if k.Compare(minKey) < 0 {
-			minKey = k
-		}
-		if k.Compare(maxKey) > 0 {
-			maxKey = k
-		}
-	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return newAdaptiveAREFromKSorted(keys, keyBits, uint64(rangeLen), K, uint32(threshold))
+}
 
-	// 2. Calculate data spread M (after subtraction and truncation)
-	spread := maxKey.Sub(minKey).ShiftRight(t)
+// newAdaptiveAREFromKSorted is the shared build path.
+// keys must be sorted ascending.
+func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, t uint32) (*AdaptiveARE, error) {
+	n := len(keys)
+
+	minKey := keys[0]
+	maxKey := keys[n-1]
+
+	// spread after subtraction and truncation
+	spreadVal := (maxKey - minKey) >> t
 
 	var M uint32
-	if spread.SizeBits() <= 64 {
-		spreadVal := spread.TrieUint64()
-		if spreadVal > 0 {
-			M = uint32(64 - mbits.LeadingZeros64(spreadVal))
-		}
-	} else {
-		M = 65 // multi-word spread → always SODA mode (K ≤ 64)
+	if spreadVal > 0 {
+		M = uint32(mbits.Len64(spreadVal))
 	}
 
-	// 3. Adaptive: Exact vs Approximate
 	isExactMode := (M <= K)
 	finalUniverseBits := K
 	if isExactMode {
@@ -104,27 +128,28 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 	hashB := rng.Uint64()
 
 	hashedKeys := make([]uint64, n)
+
+	rMask := (uint64(1) << K) - 1
+	if K == 64 {
+		rMask = ^uint64(0)
+	}
+
 	for i, x := range keys {
-		xPrime := x.Sub(minKey).ShiftRight(t)
+		xPrime := (x - minKey) >> t
 
 		if isExactMode {
-			hashedKeys[i] = xPrime.TrieUint64()
+			hashedKeys[i] = xPrime
 		} else {
-			W := xPrime.SizeBits()
-			var block bits.BitString
+			var block uint64
 			var offsetVal uint64
 
-			rMask := (uint64(1) << K) - 1
-			if K == 64 {
-				rMask = ^uint64(0)
-			}
-
-			if W > K {
-				block = xPrime.Prefix(int(W - K))
-				offsetVal = xPrime.Suffix(K).TrieUint64()
+			if xPrime>>K > 0 {
+				// xPrime has more than K bits: top bits form block, low K bits are offset
+				block = xPrime >> K
+				offsetVal = xPrime & rMask
 			} else {
-				block = bits.NewBitString(0)
-				offsetVal = xPrime.TrieUint64()
+				block = 0
+				offsetVal = xPrime
 			}
 
 			u := hashBlockIndex(block, hashA, hashB, K)
@@ -139,12 +164,13 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 		return nil, err
 	}
 
-	return &AdaptiveApproximateRangeEmptiness{
+	return &AdaptiveARE{
 		ere:          ereFilter,
 		K:            finalUniverseBits,
-		RangeLen:     rangeLen,
-		MinKey:       minKey,
-		TruncateBits: t,
+		rangeLen:     rangeLen,
+		minKey:       minKey,
+		keyBits:      keyBits,
+		truncateBits: t,
 		IsExactMode:  isExactMode,
 		n:            n,
 		hashA:        hashA,
@@ -152,55 +178,62 @@ func NewAdaptiveAREFromK(keys []bits.BitString, rangeLen uint64, K uint32, t uin
 	}, nil
 }
 
-func (are *AdaptiveApproximateRangeEmptiness) IsEmpty(a, b bits.BitString) bool {
-	if are.n == 0 || a.Compare(b) > 0 {
+// IsEmpty reports whether [lo, hi] contains no stored key.
+func (are *AdaptiveARE) IsEmpty(lo, hi uint64) bool {
+	if are.n == 0 || lo > hi {
 		return true
 	}
 
-	// Normalize
-	var aPrime, bPrime bits.BitString
-	if a.Compare(are.MinKey) < 0 {
-		aPrime = bits.NewBitString(a.SizeBits()).ShiftRight(are.TruncateBits)
+	t := are.truncateBits
+
+	// Normalize lo: clamp values below minKey to 0 in shifted space
+	var loPrime uint64
+	if lo < are.minKey {
+		loPrime = 0
 	} else {
-		aPrime = a.Sub(are.MinKey).ShiftRight(are.TruncateBits)
+		loPrime = (lo - are.minKey) >> t
 	}
 
-	if b.Compare(are.MinKey) < 0 {
+	// If hi < minKey, no keys can be in [lo, hi]
+	if hi < are.minKey {
 		return true
 	}
-	bPrime = b.Sub(are.MinKey).ShiftRight(are.TruncateBits)
+	hiPrime := (hi - are.minKey) >> t
 
 	if are.IsExactMode {
-		return are.ere.IsEmpty(aPrime.TrieUint64(), bPrime.TrieUint64())
+		return are.ere.IsEmpty(loPrime, hiPrime)
 	}
-	return are.sodaIsEmpty(aPrime, bPrime)
+	return are.sodaIsEmpty(loPrime, hiPrime)
 }
 
-func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) bool {
-	rMask := (uint64(1) << are.K) - 1
-	if are.K == 64 {
+func (are *AdaptiveARE) sodaIsEmpty(a, b uint64) bool {
+	K := are.K
+	rMask := (uint64(1) << K) - 1
+	if K == 64 {
 		rMask = ^uint64(0)
 	}
 
-	W := a.SizeBits()
-	var blockA, blockB bits.BitString
+	var blockA, blockB uint64
 	var offA, offB uint64
 
-	if W > are.K {
-		prefixLen := int(W - are.K)
-		blockA = a.Prefix(prefixLen)
-		blockB = b.Prefix(prefixLen)
-		offA = a.Suffix(are.K).TrieUint64()
-		offB = b.Suffix(are.K).TrieUint64()
+	if a>>K > 0 {
+		blockA = a >> K
+		offA = a & rMask
 	} else {
-		blockA = bits.NewBitString(0)
-		blockB = bits.NewBitString(0)
-		offA = a.TrieUint64()
-		offB = b.TrieUint64()
+		blockA = 0
+		offA = a
 	}
 
-	if blockA.Equal(blockB) {
-		u := hashBlockIndex(blockA, are.hashA, are.hashB, are.K)
+	if b>>K > 0 {
+		blockB = b >> K
+		offB = b & rMask
+	} else {
+		blockB = 0
+		offB = b
+	}
+
+	if blockA == blockB {
+		u := hashBlockIndex(blockA, are.hashA, are.hashB, K)
 		hA := (u + offA) & rMask
 		hB := (u + offB) & rMask
 
@@ -214,7 +247,7 @@ func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) b
 	}
 
 	// Multi-block: check suffix of first block
-	uA := hashBlockIndex(blockA, are.hashA, are.hashB, are.K)
+	uA := hashBlockIndex(blockA, are.hashA, are.hashB, K)
 	hAStart := (uA + offA) & rMask
 	hAEnd := (uA + rMask) & rMask
 	if hAStart <= hAEnd {
@@ -234,7 +267,7 @@ func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) b
 	}
 
 	// Prefix of last block
-	uB := hashBlockIndex(blockB, are.hashA, are.hashB, are.K)
+	uB := hashBlockIndex(blockB, are.hashA, are.hashB, K)
 	hBStart := (uB + 0) & rMask
 	hBEnd := (uB + offB) & rMask
 	if hBStart <= hBEnd {
@@ -251,7 +284,7 @@ func (are *AdaptiveApproximateRangeEmptiness) sodaIsEmpty(a, b bits.BitString) b
 	return true
 }
 
-func (are *AdaptiveApproximateRangeEmptiness) SizeInBits() uint64 {
+func (are *AdaptiveARE) SizeInBits() uint64 {
 	if are.ere == nil {
 		return 0
 	}
