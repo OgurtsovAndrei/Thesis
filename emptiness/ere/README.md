@@ -1,5 +1,7 @@
 # Exact Range Emptiness (Succinct, SODA 2015 §3.2)
 
+**Legacy two-vector backend.** Retained for the `exactbackend` classic-vs-one_d comparison test. Not the default — see `ere_one_d` for the production path.
+
 This package implements a **succinct** 1D range emptiness data structure that answers
 queries $[a, b] \cap S \neq \emptyset$ in $O(1)$ expected time using $n \log(U/n) + O(n)$ space.
 

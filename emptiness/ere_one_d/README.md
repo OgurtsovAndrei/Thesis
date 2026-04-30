@@ -1,5 +1,7 @@
 # ERE One-D
 
+**Production default backend.** Selected by `exactbackend.NewUint64()` since Phase C migration (2026-04-30).
+
 This package is a variant of `Thesis/emptiness/ere` with one structural optimization:
 
 - the original `ere` stores two succinct bitvectors, `D1` and `D2`

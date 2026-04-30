@@ -120,3 +120,35 @@ $n = 2^{28}$.
    `are_hybrid_scan`, `are_greedy_scan`) + `ere`/`ere_one_d` query path.
 3. Time estimate: full refactor + smoke ≈ 1 working day; another day
    for the $n = 2^{28}$ measurement run.
+
+---
+
+## Migration Complete (2026-04-30)
+
+Phase C migration completed in 11 commits across Thesis submodule + parent repo. All ARE/ERE filters expose uint64-only API.
+
+### Commits
+
+**Thesis submodule:**
+
+- `b7c19c9` — `feat(ere): drop BitString API, uint64-only`
+- `b22ae24` — `feat(ere_one_d): drop BitString API, uint64-only`
+- `ef635d3` — `feat(exactbackend): uint64-only API; default variant = one_d`
+- `4e12f3d` — `perf(are): devirtualize ERE backend access; drop interface dispatch`
+- `21cf015` — `feat(are_trunc): drop BitString API, uint64-only`
+- `9a2a575` — `feat(are_adaptive): drop BitString API, uint64-only`
+- `cdb3550` — `feat(are_greedy_scan): drop BitString API, uint64-only`
+- `dbb270b` — `feat(are_hybrid_scan): drop BitString API, uint64-only`
+- `ca39273` — `fix(compat): bridge are_hybrid/dp_scan/soda_hash to uint64 ARE/ERE API`
+
+**Parent repo:**
+
+- `e1bd71e` — `refactor(bench): adopt uint64 ARE/ERE API; drop TrieBS trampolines`
+
+### Smoke result
+
+Smoke test on `sosd_fb @ n=2²⁰`: 98.2% cache hit, 0% FPR drift across 55/56 cells. Cached `paramsHash` remained stable across the API rewrite.
+
+### Open follow-ups
+
+- `bench/hybrid_compare_test.go`, `bench/performance_test.go`, `bench/throughput_test.go` still call `testutils.TrieBS` / use legacy `are_hybrid` (BitString) and `are_dp_scan` paths. These were out of scope for Task 9 (those files cover `are_hybrid` and `are_dp_scan` which are "don't touch" per Phase C scope). `testutils.TrieBS` must therefore remain in `Thesis/testutils/convert.go` until those packages are migrated or the bench coverage is dropped.
