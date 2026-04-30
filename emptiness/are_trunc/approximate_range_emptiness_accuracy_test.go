@@ -1,8 +1,6 @@
 package are_trunc
 
 import (
-	"Thesis/bits"
-	"Thesis/testutils"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -10,22 +8,27 @@ import (
 
 func TestApproximateRangeEmptiness_Accuracy(t *testing.T) {
 	n := 100000
-	bitLen := 64
-	// We'll test 1% and 0.1%
 	epsilons := []float64{0.01, 0.001}
 
-	// Generate random keys with seed 42
-	keys := testutils.GetBenchKeys(bitLen, n)
-
+	rng := rand.New(rand.NewSource(42))
+	keys := make([]uint64, 0, n)
+	seen := make(map[uint64]bool, n)
+	for len(keys) < n {
+		v := rng.Uint64()
+		if !seen[v] {
+			seen[v] = true
+			keys = append(keys, v)
+		}
+	}
+	// NewTruncARE sorts internally
 	for _, targetEps := range epsilons {
 		t.Run(fmt.Sprintf("Eps=%v", targetEps), func(t *testing.T) {
-			are, err := NewTruncARE(keys, targetEps)
+			are, err := NewTruncARE(keys, 64, Config{Eps: targetEps})
 			if err != nil {
 				t.Fatalf("Failed to build ARE: %v", err)
 			}
 
-			// Use a DIFFERENT seed for queries to ensure independence
-			rng := rand.New(rand.NewSource(12345))
+			queryRng := rand.New(rand.NewSource(12345))
 
 			numQueries := 100000
 			falsePositives := 0
@@ -35,21 +38,19 @@ func TestApproximateRangeEmptiness_Accuracy(t *testing.T) {
 			// so we can skip queries that fall in an occupied block (unavoidable FPs).
 			prefixes := make(map[uint64]bool)
 			for _, k := range keys {
-				prefixes[normalizeToK(k, are.minKey, are.spreadStart, are.K).TrieUint64()] = true
+				prefixes[normalizeToK(k, are.minKey, are.spreadLen, are.K)] = true
 			}
 
 			for queriesPerformed < numQueries {
-				val := rng.Uint64()
-				queryBs := bits.NewFromUint64(val)
+				val := queryRng.Uint64()
 
 				// Skip if this query key maps to an occupied block
-				if prefixes[normalizeToK(queryBs, are.minKey, are.spreadStart, are.K).TrieUint64()] {
+				if prefixes[normalizeToK(val, are.minKey, are.spreadLen, are.K)] {
 					continue
 				}
 
 				queriesPerformed++
-				// Check point interval [queryBs, queryBs]
-				if !are.IsEmpty(queryBs, queryBs) {
+				if !are.IsEmpty(val, val) {
 					falsePositives++
 				}
 			}

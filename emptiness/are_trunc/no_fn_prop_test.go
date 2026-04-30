@@ -1,7 +1,6 @@
 package are_trunc
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/internal/testutil"
 	"math/rand"
 	"testing"
@@ -16,14 +15,14 @@ const (
 
 func TestARE_NoFN_Properties(t *testing.T) {
 	t.Parallel()
-	testutil.RunBitStringNoFNProps(t, testRuns, minN, maxExtraN, func(keys []bits.BitString, _ *rand.Rand) (testutil.BitStringChecker, error) {
-		return NewTruncARE(keys, targetEpsilon)
+	testutil.RunUint64NoFNProps(t, testRuns, minN, maxExtraN, ^uint64(0), func(keys []uint64, _ *rand.Rand) (testutil.Uint64Checker, error) {
+		return NewTruncARE(keys, 64, Config{Eps: targetEpsilon})
 	})
 }
 
 func TestARE_NoFN_Properties_Clustered(t *testing.T) {
 	t.Parallel()
-	testutil.RunBitStringNoFNPropsClustered(t, 200, minN, maxExtraN, func(keys []bits.BitString, _ *rand.Rand) (testutil.BitStringChecker, error) {
-		return NewTruncARE(keys, targetEpsilon)
+	testutil.RunUint64NoFNPropsClustered(t, 200, minN, maxExtraN, ^uint64(0), func(keys []uint64, _ *rand.Rand) (testutil.Uint64Checker, error) {
+		return NewTruncARE(keys, 64, Config{Eps: targetEpsilon})
 	})
 }

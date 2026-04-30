@@ -1,7 +1,6 @@
 package are_trunc_test
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/are_soda_hash"
 	"Thesis/emptiness/are_trunc"
 	"Thesis/testutils"
@@ -34,11 +33,6 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 		}
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-	keysBS := make([]bits.BitString, len(keys))
-	for i, v := range keys {
-		keysBS[i] = testutils.TrieBS(v)
-	}
 
 	seeds := []int64{12345, 54321, 99999}
 	querySets := make([][][2]uint64, nRuns)
@@ -78,11 +72,11 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 	var tasks []task
 
 	for _, K := range kGrid {
-		if f, err := are_trunc.NewTruncAREFromK(keysBS, K); err == nil {
+		if f, err := are_trunc.NewTruncAREFromK(keys, 64, K); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
 			f := f
 			tasks = append(tasks, task{"Truncation", K, bpk,
-				func(a, b uint64) bool { return f.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) }})
+				func(a, b uint64) bool { return f.IsEmpty(a, b) }})
 		}
 		if f, err := are_soda_hash.NewSodaAREFromK(keys, rangeLen, K); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
@@ -136,6 +130,5 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 		fmt.Printf("SVG written to %s\n", svgPath)
 	}
 
-	// Clean up old L16 artifact if present
 	os.Remove("tradeoff_uniform_L16.svg")
 }

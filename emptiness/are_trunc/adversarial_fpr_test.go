@@ -1,7 +1,6 @@
 package are_trunc
 
 import (
-	"Thesis/bits"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -20,17 +19,17 @@ func TestARE_FPR_RandomEmptyRanges(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(42))
 	keySet := make(map[uint64]bool)
-	keys := make([]bits.BitString, 0, n)
+	keys := make([]uint64, 0, n)
 	for len(keys) < n {
 		val := rng.Uint64()
 		if !keySet[val] {
 			keySet[val] = true
-			keys = append(keys, bits.NewFromUint64(val))
+			keys = append(keys, val)
 		}
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i].Compare(keys[j]) < 0 })
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
-	filter, err := NewTruncARE(keys, epsilon)
+	filter, err := NewTruncARE(keys, 64, Config{Eps: epsilon})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,9 +39,8 @@ func TestARE_FPR_RandomEmptyRanges(t *testing.T) {
 	numQueries := 100_000
 
 	for i := 0; i < numQueries; i++ {
-		// Random point query — overwhelmingly likely to be empty
-		q := bits.NewFromUint64(rng.Uint64())
-		if keySet[q.Word(0)] {
+		q := rng.Uint64()
+		if keySet[q] {
 			continue
 		}
 		trials++

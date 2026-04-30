@@ -1,12 +1,12 @@
 package are_trunc
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/ere_one_d"
-	"Thesis/testutils"
 	"fmt"
+	"math/bits"
 	"math/rand"
 	"runtime"
+	"sort"
 	"sync"
 	"testing"
 )
@@ -15,13 +15,13 @@ func TestTruncARE_FinalSmooth(t *testing.T) {
 	queryRng := rand.New(rand.NewSource(1337))
 	numQueries := 1000000
 	type qry struct {
-		a, b bits.BitString
+		a, b uint64
 	}
 	queries := make([]qry, numQueries)
 	for i := 0; i < numQueries; i++ {
 		v1 := queryRng.Uint64()
 		v2 := v1 + uint64(queryRng.Intn(200))
-		queries[i] = qry{bits.NewFromUint64(v1), bits.NewFromUint64(v2)}
+		queries[i] = qry{v1, v2}
 	}
 
 	fmt.Println("N,K,BitsPerKey,ActualFPR")
@@ -33,11 +33,21 @@ func TestTruncARE_FinalSmooth(t *testing.T) {
 	semaphore := make(chan struct{}, runtime.NumCPU())
 
 	for _, n := range nValues {
-		keys := testutils.GetBenchKeys(64, n)
+		rng := rand.New(rand.NewSource(42))
+		seen := make(map[uint64]bool, n)
+		keys := make([]uint64, 0, n)
+		for len(keys) < n {
+			v := rng.Uint64()
+			if !seen[v] {
+				seen[v] = true
+				keys = append(keys, v)
+			}
+		}
+		sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 		for K := uint32(18); K <= 30; K++ {
 			wg.Add(1)
-			go func(nVal int, kVal uint32, kset []bits.BitString) {
+			go func(nVal int, kVal uint32, kset []uint64) {
 				defer wg.Done()
 				semaphore <- struct{}{}
 				defer func() { <-semaphore }()
@@ -75,40 +85,46 @@ func TestTruncARE_FinalSmooth(t *testing.T) {
 	}
 }
 
-func isTrulyEmptyFinal(keys []bits.BitString, a, b bits.BitString) bool {
+func isTrulyEmptyFinal(keys []uint64, a, b uint64) bool {
 	l, r := 0, len(keys)
 	for l < r {
 		mid := l + (r-l)/2
-		if keys[mid].Compare(a) < 0 {
+		if keys[mid] < a {
 			l = mid + 1
 		} else {
 			r = mid
 		}
 	}
-	if l < len(keys) && keys[l].Compare(b) <= 0 {
-		return false
-	}
-	return true
+	return l >= len(keys) || keys[l] > b
 }
 
-func buildAREWithKFinal(keys []bits.BitString, K uint32) (*TruncARE, error) {
+func buildAREWithKFinal(keys []uint64, K uint32) (*TruncARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &TruncARE{K: K}, nil
 	}
 	minKey := keys[0]
 	maxKey := keys[n-1]
-	spread := maxKey.Sub(minKey)
-	spreadStart := trieFirstSetBit(spread)
+	spread := maxKey - minKey
+
+	spreadLen := uint32(bits.Len64(spread))
+
 	truncatedKeys := make([]uint64, 0, n)
-	var lastKey bits.BitString
+	var lastTrunc uint64
 	for i, k := range keys {
-		trunc := normalizeToK(k, minKey, spreadStart, K)
-		if i == 0 || trunc.Compare(lastKey) > 0 {
-			truncatedKeys = append(truncatedKeys, trunc.TrieUint64())
-			lastKey = trunc
+		trunc := normalizeToK(k, minKey, spreadLen, K)
+		if i == 0 || trunc > lastTrunc {
+			truncatedKeys = append(truncatedKeys, trunc)
+			lastTrunc = trunc
 		}
 	}
 	exact, _ := ere_one_d.NewExactRangeEmptiness(truncatedKeys, K)
-	return &TruncARE{exact: exact, K: K, minKey: minKey, maxKey: maxKey, spreadStart: spreadStart}, nil
+	return &TruncARE{
+		exact:     exact,
+		K:         K,
+		keyBits:   64,
+		minKey:    minKey,
+		maxKey:    maxKey,
+		spreadLen: spreadLen,
+	}, nil
 }

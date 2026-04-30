@@ -1,68 +1,108 @@
 package are_trunc
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/ere_one_d"
+	"Thesis/errutil"
 	"Thesis/utils"
 	"fmt"
+	mathbits "math/bits"
 	"math"
-	mbits "math/bits"
+	"sort"
 )
 
+// Config holds the construction parameters for TruncARE.
+type Config struct {
+	Eps float64
+}
+
 // TruncARE is a probabilistic data structure that answers 1D range emptiness
-// queries with a guaranteed upper bound on the false positive probability (\epsilon).
+// queries with a guaranteed upper bound on the false positive probability (epsilon).
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
 type TruncARE struct {
-	exact       *ere_one_d.ExactRangeEmptiness
-	K           uint32
-	minKey      bits.BitString
-	maxKey      bits.BitString
-	spreadStart uint32 // trie position of first significant bit in (maxKey - minKey)
+	exact     *ere_one_d.ExactRangeEmptiness
+	K         uint32
+	keyBits   uint32
+	minKey    uint64
+	maxKey    uint64
+	spreadLen uint32 // Len64(maxKey - minKey): number of significant bits in (maxKey - minKey)
 }
 
-func NewTruncARE(keys []bits.BitString, epsilon float64) (*TruncARE, error) {
+// NewTruncARE builds a TruncARE from a copy of keys (sorted and deduplicated internally).
+// keys must fit in keyBits bits (high bits above keyBits must be zero).
+func NewTruncARE(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	cp := append([]uint64(nil), keys...)
+	return NewTruncAREInPlace(cp, keyBits, cfg)
+}
+
+// NewTruncAREInPlace builds a TruncARE, sorting and deduplicating keys in place.
+// keys must fit in keyBits bits (high bits above keyBits must be zero).
+func NewTruncAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+
 	n := len(keys)
 	if n == 0 {
-		return &TruncARE{exact: nil, K: 0}, nil
+		return &TruncARE{exact: nil, K: 0, keyBits: keyBits}, nil
 	}
 
-	val := (2.0 * float64(n)) / epsilon
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	// deduplicate in-place
+	out := keys[:1]
+	for _, v := range keys[1:] {
+		if v != out[len(out)-1] {
+			out = append(out, v)
+		}
+	}
+	keys = out
+
+	val := (2.0 * float64(len(keys))) / cfg.Eps
 	K := uint32(math.Ceil(math.Log2(val)))
 	if K == 0 {
 		K = 1
 	}
 
-	return NewTruncAREFromK(keys, K)
+	return newTruncAREFromKSorted(keys, keyBits, K)
 }
 
-func NewTruncAREFromK(keys []bits.BitString, K uint32) (*TruncARE, error) {
+// NewTruncAREFromK builds a TruncARE with an explicit fingerprint width K.
+// keys must be sorted in ascending order and deduplicated.
+func NewTruncAREFromK(keys []uint64, keyBits uint32, K uint32) (*TruncARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+
 	n := len(keys)
 	if n == 0 {
-		return &TruncARE{exact: nil, K: 0}, nil
+		return &TruncARE{exact: nil, K: 0, keyBits: keyBits}, nil
 	}
 	if K == 0 {
 		K = 1
 	}
 
+	return newTruncAREFromKSorted(keys, keyBits, K)
+}
+
+// newTruncAREFromKSorted is the shared build path. keys must be sorted ascending and deduplicated.
+func newTruncAREFromKSorted(keys []uint64, keyBits uint32, K uint32) (*TruncARE, error) {
+	n := len(keys)
 	minKey := keys[0]
 	maxKey := keys[n-1]
 
-	spread := maxKey.Sub(minKey)
-	spreadStart := trieFirstSetBit(spread)
+	spread := maxKey - minKey
+	spreadLen := uint32(mathbits.Len64(spread)) // number of significant bits in spread
 
 	truncatedKeys := make([]uint64, 0, n)
-	var lastKey bits.BitString
-	for i, k := range keys {
-		trunc := normalizeToK(k, minKey, spreadStart, K)
-
-		if i == 0 || trunc.Compare(lastKey) > 0 {
-			truncatedKeys = append(truncatedKeys, trunc.TrieUint64())
-			lastKey = trunc
-		} else if trunc.Compare(lastKey) == 0 {
+	var lastTrunc uint64
+	var hasLast bool
+	for _, k := range keys {
+		trunc := normalizeToK(k, minKey, spreadLen, K)
+		if !hasLast || trunc > lastTrunc {
+			truncatedKeys = append(truncatedKeys, trunc)
+			lastTrunc = trunc
+			hasLast = true
+		} else if trunc == lastTrunc {
 			continue
 		} else {
-			return nil, fmt.Errorf("keys must be sorted by Compare")
+			return nil, fmt.Errorf("keys must be sorted ascending")
 		}
 	}
 
@@ -72,63 +112,60 @@ func NewTruncAREFromK(keys []bits.BitString, K uint32) (*TruncARE, error) {
 	}
 
 	return &TruncARE{
-		exact:       exact,
-		K:           K,
-		minKey:      minKey,
-		maxKey:      maxKey,
-		spreadStart: spreadStart,
+		exact:     exact,
+		K:         K,
+		keyBits:   keyBits,
+		minKey:    minKey,
+		maxKey:    maxKey,
+		spreadLen: spreadLen,
 	}, nil
 }
 
-// trieFirstSetBit returns the trie position of the first set bit (MSB in trie order).
-// Returns bs.SizeBits() if the value is zero.
-func trieFirstSetBit(bs bits.BitString) uint32 {
-	W := bs.SizeBits()
-	numWords := (W + 63) / 64
-	for i := uint32(0); i < numWords; i++ {
-		w := bs.Word(i)
-		if w != 0 {
-			return i*64 + uint32(mbits.TrailingZeros64(w))
-		}
+// normalizeToK maps key into a K-bit fingerprint in [0, 2^K-1], monotone in key:
+//  1. Subtract minKey (offset in [0, spread]).
+//  2. Scale so spread occupies K bits:
+//     - if K <= spreadLen: right-shift by (spreadLen - K) to take top K bits
+//     - if K >  spreadLen: left-shift by (K - spreadLen) to fill K bits
+func normalizeToK(key, minKey uint64, spreadLen, K uint32) uint64 {
+	if K == 0 || spreadLen == 0 {
+		return 0
 	}
-	return W
+	offset := key - minKey
+	if K <= spreadLen {
+		return offset >> (spreadLen - K)
+	}
+	// K > spreadLen: scale up; result fits because offset < 2^spreadLen
+	return offset << (K - spreadLen)
 }
 
-// normalizeToK maps key into a K-bit prefix by:
-//  1. Subtracting minKey (so the minimum maps to 0)
-//  2. Extracting K bits starting at spreadStart (first significant bit of the spread)
-func normalizeToK(key, minKey bits.BitString, spreadStart, K uint32) bits.BitString {
-	offset := key.Sub(minKey)
-	return offset.BitRange(spreadStart, K)
-}
-
-func (are *TruncARE) IsEmpty(a, b bits.BitString) bool {
+// IsEmpty reports whether [lo, hi] contains no stored key.
+func (are *TruncARE) IsEmpty(lo, hi uint64) bool {
 	if are.exact == nil {
 		return true
 	}
 
-	if b.Compare(are.minKey) < 0 {
+	if hi < are.minKey {
 		return true
 	}
-	if a.Compare(are.maxKey) > 0 {
+	if lo > are.maxKey {
 		return true
 	}
 
-	var truncA bits.BitString
-	if a.Compare(are.minKey) < 0 {
-		truncA = bits.NewBitString(are.K)
+	var truncLo uint64
+	if lo <= are.minKey {
+		truncLo = 0
 	} else {
-		truncA = normalizeToK(a, are.minKey, are.spreadStart, are.K)
+		truncLo = normalizeToK(lo, are.minKey, are.spreadLen, are.K)
 	}
 
-	var truncB bits.BitString
-	if b.Compare(are.maxKey) > 0 {
-		truncB = normalizeToK(are.maxKey, are.minKey, are.spreadStart, are.K)
+	var truncHi uint64
+	if hi >= are.maxKey {
+		truncHi = normalizeToK(are.maxKey, are.minKey, are.spreadLen, are.K)
 	} else {
-		truncB = normalizeToK(b, are.minKey, are.spreadStart, are.K)
+		truncHi = normalizeToK(hi, are.minKey, are.spreadLen, are.K)
 	}
 
-	return are.exact.IsEmpty(truncA.TrieUint64(), truncB.TrieUint64())
+	return are.exact.IsEmpty(truncLo, truncHi)
 }
 
 func (are *TruncARE) SizeInBits() uint64 {
