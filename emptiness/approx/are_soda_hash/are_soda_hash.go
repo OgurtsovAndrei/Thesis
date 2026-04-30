@@ -286,3 +286,7 @@ func (are *SodaARE) ERENonEmptyBlockSizes() []int {
 	}
 	return are.ere.NonEmptyBlockSizes()
 }
+
+func (are *SodaARE) ERE() *ere_one_d.ExactRangeEmptiness {
+	return are.ere
+}
