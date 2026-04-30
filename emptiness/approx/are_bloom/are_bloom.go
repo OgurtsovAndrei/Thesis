@@ -24,6 +24,24 @@ func NewBloomARE(keys []uint64, rangeLen uint64, epsilon float64) (*BloomARE, er
 		return nil, fmt.Errorf("bloom: point FPR underflow for ε=%g, L=%d", epsilon, rangeLen)
 	}
 
+	return NewBloomAREFromPointFPR(keys, pointFPR)
+}
+
+// NewBloomAREFromPointFPR builds the bloom filter for a target per-point
+// FPR, directly. The structure is L-independent: a query [a, a+L-1] is
+// answered by L successive bloom probes on the same filter, so range
+// FPR = 1 - (1-pointFPR)^L is computed implicitly at query time, never
+// baked into the filter.
+//
+// Use this constructor when the bench wants to reuse one Bloom across
+// many L values; pass the per-point FPR you want, not the per-range eps.
+func NewBloomAREFromPointFPR(keys []uint64, pointFPR float64) (*BloomARE, error) {
+	if pointFPR <= 0 || pointFPR >= 1 || math.IsNaN(pointFPR) {
+		return nil, fmt.Errorf("bloom: invalid pointFPR %g", pointFPR)
+	}
+	if len(keys) == 0 {
+		return &BloomARE{filter: bloom.NewWithEstimates(1, pointFPR)}, nil
+	}
 	bf := bloom.NewWithEstimates(uint(len(keys)), pointFPR)
 	var buf [8]byte
 	for _, k := range keys {
