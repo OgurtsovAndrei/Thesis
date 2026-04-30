@@ -1,9 +1,8 @@
 package are_soda_hash
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/are_trunc"
-	"Thesis/testutils"
+	mathbits "math/bits"
 	"fmt"
 	"testing"
 )
@@ -16,19 +15,18 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 	rangeLens := []uint64{1, 2, 4, 8, 16, 32, 64, 128, 256, 512}
 
 	keys := make([]uint64, n)
-	bsKeys := make([]bits.BitString, n)
 	for i := 0; i < n; i++ {
-		val := uint64(i) * step
-		keys[i] = val
-		bsKeys[i] = testutils.TrieBS(val)
+		keys[i] = uint64(i) * step
 	}
+
+	keyBits := uint32(max(1, mathbits.Len64(keys[len(keys)-1])))
 
 	fmt.Printf("\n--- Corrected Sequential Sweep (N=%d, Step=%d, eps=0.01) ---\n", n, step)
 	fmt.Printf("| RangeLen | Trunc Bits | Soda Bits | Trunc FPR | Soda FPR |\n")
 	fmt.Printf("|----------|------------|-----------|-----------|----------|\n")
 
 	for _, L := range rangeLens {
-		filterTrunc, _ := are_trunc.NewTruncARE(bsKeys, epsilon)
+		filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{Eps: epsilon})
 		filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 		fpT, fpS := 0, 0
@@ -38,8 +36,8 @@ func TestSequentialSweep_Corrected(t *testing.T) {
 			// as long as L < step (1000)
 			a := keys[i] + 1
 			b := a + L - 1
-			
-			if !filterTrunc.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b)) {
+
+			if !filterTrunc.IsEmpty(a, b) {
 				fpT++
 			}
 			if !filterSoda.IsEmpty(a, b) {

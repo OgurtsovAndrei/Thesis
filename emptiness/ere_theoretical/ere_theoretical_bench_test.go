@@ -86,7 +86,7 @@ func TestEREComparison(t *testing.T) {
 
 	for _, n := range benchNs {
 		rng := rand.New(rand.NewSource(42))
-		_, keysBS := generateBenchKeys(n, rng)
+		keysU64, keysBS := generateBenchKeys(n, rng)
 
 		fmt.Printf("\n--- N=%d ---\n", n)
 
@@ -96,7 +96,7 @@ func TestEREComparison(t *testing.T) {
 			var lastERE *ere.ExactRangeEmptiness
 			for r := 0; r < nRuns; r++ {
 				start := time.Now()
-				e, err := ere.NewExactRangeEmptiness(keysBS, universe)
+				e, err := ere.NewExactRangeEmptiness(keysU64, bitLen60)
 				totalNs += time.Since(start).Nanoseconds()
 				if err != nil {
 					t.Fatalf("ERE build failed (N=%d): %v", n, err)
@@ -148,7 +148,7 @@ func TestEREComparison(t *testing.T) {
 		}
 
 		// Pre-build once for queries
-		ereStruct, _ := ere.NewExactRangeEmptiness(keysBS, universe)
+		ereStruct, _ := ere.NewExactRangeEmptiness(keysU64, bitLen60)
 		tereStruct, _ := NewTheoreticalExactRangeEmptiness(keysBS, universe)
 		gereStruct, _ := ere_global.NewGlobalExactRangeEmptiness(keysBS, universe)
 
@@ -156,8 +156,8 @@ func TestEREComparison(t *testing.T) {
 			name string
 			fn   isEmptyFunc
 		}{
-			{"ERE", ereStruct.IsEmpty},
-			{"ERE (linear)", ereStruct.LinearIsEmpty},
+			{"ERE", func(a, b bits.BitString) bool { return ereStruct.IsEmpty(a.TrieUint64(), b.TrieUint64()) }},
+			{"ERE (linear)", func(a, b bits.BitString) bool { return ereStruct.LinearIsEmpty(a.TrieUint64(), b.TrieUint64()) }},
 			{"TheoreticalERE", tereStruct.IsEmpty},
 			{"GlobalERE", gereStruct.IsEmpty},
 		}

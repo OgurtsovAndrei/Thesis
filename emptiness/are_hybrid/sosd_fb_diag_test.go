@@ -237,11 +237,11 @@ func TestHybrid_SOSD_FB_Diagnostic(t *testing.T) {
 				t.Logf("  HybridARE.IsEmpty(%d, %d) = %v (want true)",
 					knownNonKey, knownNonKey, h.IsEmpty(aBS, aBS))
 				for i, c := range h.clusters {
-					clusterResult := c.filter.IsEmpty(aBS, aBS)
+					clusterResult := c.filter.IsEmpty(knownNonKey, knownNonKey)
 					t.Logf("  cluster[%d] (range [%d,%d]) IsEmpty = %v", i, c.minKey, c.maxKey, clusterResult)
 				}
 				if h.fallback != nil {
-					t.Logf("  fallback.IsEmpty = %v", h.fallback.IsEmpty(aBS, aBS))
+					t.Logf("  fallback.IsEmpty = %v", h.fallback.IsEmpty(knownNonKey, knownNonKey))
 				}
 			}
 		})

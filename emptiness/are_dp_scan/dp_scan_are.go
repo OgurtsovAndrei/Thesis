@@ -9,7 +9,7 @@ import (
 )
 
 type clusterFilter struct {
-	filter *are_adaptive.AdaptiveApproximateRangeEmptiness
+	filter *are_adaptive.AdaptiveARE
 	minKey uint64
 	maxKey uint64
 }
@@ -48,7 +48,12 @@ func NewDPScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*DPSca
 
 	clusters := make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, rangeLen, K, 0)
+		keys64 := bsToU64(seg.keys)
+		var keyBits uint32
+		if len(seg.keys) > 0 {
+			keyBits = seg.keys[0].SizeBits()
+		}
+		f, err := are_adaptive.NewAdaptiveAREFromK(keys64, keyBits, float64(rangeLen), K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -75,12 +80,21 @@ func (d *DPScanARE) IsEmpty(a, b bits.BitString) bool {
 	})
 
 	for i := lo; i < len(d.clusters) && d.clusters[i].minKey <= bVal; i++ {
-		if !d.clusters[i].filter.IsEmpty(a, b) {
+		if !d.clusters[i].filter.IsEmpty(aVal, bVal) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// bsToU64 converts a []bits.BitString slice to []uint64 using TrieUint64.
+func bsToU64(keys []bits.BitString) []uint64 {
+	out := make([]uint64, len(keys))
+	for i, k := range keys {
+		out[i] = k.TrieUint64()
+	}
+	return out
 }
 
 func (d *DPScanARE) SizeInBits() uint64 {

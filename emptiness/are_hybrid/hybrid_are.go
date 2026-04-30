@@ -10,7 +10,7 @@ import (
 )
 
 type clusterFilter struct {
-	filter *are_adaptive.AdaptiveApproximateRangeEmptiness
+	filter *are_adaptive.AdaptiveARE
 	minKey uint64
 	maxKey uint64
 }
@@ -46,7 +46,12 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are_trunc.NewTruncAREFromK(keys, K)
+			keys64 := bsToU64(keys)
+			keyBits := keys[0].SizeBits()
+			if keyBits > 64 {
+				keyBits = 64
+			}
+			fb, err := are_trunc.NewTruncAREFromK(keys64, keyBits, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -58,10 +63,16 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	segments, fallbackKeys := detectClusters(keys, 0.95, 0.01)
 
+	keyBits := keys[0].SizeBits()
+	if keyBits > 64 {
+		keyBits = 64
+	}
+
 	// Build cluster filters
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, rangeLen, K, 0)
+		seg64 := bsToU64(seg.keys)
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg64, keyBits, float64(rangeLen), K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -75,7 +86,8 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 
 	// Build fallback filter
 	if len(fallbackKeys) > 0 {
-		fb, err := are_trunc.NewTruncAREFromK(fallbackKeys, K)
+		fb64 := bsToU64(fallbackKeys)
+		fb, err := are_trunc.NewTruncAREFromK(fb64, keyBits, K)
 		if err != nil {
 			return nil, fmt.Errorf("fallback build: %w", err)
 		}
@@ -84,6 +96,15 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 	}
 
 	return h, nil
+}
+
+// bsToU64 converts a []bits.BitString slice to []uint64 using TrieUint64.
+func bsToU64(keys []bits.BitString) []uint64 {
+	out := make([]uint64, len(keys))
+	for i, k := range keys {
+		out[i] = k.TrieUint64()
+	}
+	return out
 }
 
 func (h *HybridARE) IsEmpty(a, b bits.BitString) bool {
@@ -101,14 +122,14 @@ func (h *HybridARE) IsEmpty(a, b bits.BitString) bool {
 
 	// Walk overlapping clusters
 	for i := lo; i < len(h.clusters) && h.clusters[i].minKey <= bVal; i++ {
-		if !h.clusters[i].filter.IsEmpty(a, b) {
+		if !h.clusters[i].filter.IsEmpty(aVal, bVal) {
 			return false
 		}
 	}
 
 	// Always check fallback
 	if h.fallback != nil {
-		if !h.fallback.IsEmpty(a, b) {
+		if !h.fallback.IsEmpty(aVal, bVal) {
 			return false
 		}
 	}

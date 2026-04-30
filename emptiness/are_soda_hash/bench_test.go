@@ -1,8 +1,8 @@
 package are_soda_hash
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/are_trunc"
+	mathbits "math/bits"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -16,16 +16,13 @@ func BenchmarkARE_Comparison(b *testing.B) {
 
 	rng := rand.New(rand.NewSource(42))
 	keys := make([]uint64, n)
-	bsKeys := make([]bits.BitString, n)
 	for i := 0; i < n; i++ {
-		val := rng.Uint64()
-		keys[i] = val
-		bsKeys[i] = bits.NewFromUint64(val)
+		keys[i] = rng.Uint64()
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	sort.Slice(bsKeys, func(i, j int) bool { return bsKeys[i].Compare(bsKeys[j]) < 0 })
 
-	filterTrunc, _ := are_trunc.NewTruncARE(bsKeys, epsilon)
+	keyBits := uint32(max(1, mathbits.Len64(keys[len(keys)-1])))
+	filterTrunc, _ := are_trunc.NewTruncARE(keys, keyBits, are_trunc.Config{Eps: epsilon})
 	filterSoda, _ := NewSodaARE(keys, L, epsilon)
 
 	fmt.Printf("\n--- Space Analysis (N=%d, eps=%f, L=%d) ---\n", n, epsilon, L)
@@ -36,7 +33,7 @@ func BenchmarkARE_Comparison(b *testing.B) {
 	b.Run("Truncation_Uniform", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			k := bsKeys[i%n]
+			k := keys[i%n]
 			filterTrunc.IsEmpty(k, k)
 		}
 	})
