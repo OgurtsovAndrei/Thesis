@@ -2,7 +2,7 @@ package ere_global
 
 import (
 	"Thesis/bits"
-	"Thesis/locators/lerloc"
+	"Thesis/research/wps/locators/lerloc"
 	"fmt"
 	"math"
 	"unsafe"

@@ -44,7 +44,9 @@
 # OS noise
 .DS_Store
 /locators/benchmarks_parsed.csv
-/mmph/lemonhash/build
+
+# CGo build artifacts (LeMonHash wrapper)
+/research/wps/locators/lemonhash/build/
 
 # Benchmark outputs (regenerable)
 bench_results/
