@@ -2,9 +2,7 @@ package are_dp_scan
 
 import (
 	"Thesis/bits"
-	"Thesis/emptiness/are_greedy_scan"
 	"Thesis/testutils"
-	mathbits "math/bits"
 	"math/rand"
 	"sort"
 	"testing"
@@ -96,40 +94,5 @@ func TestDPScan_Stats(t *testing.T) {
 	}
 	if totalKeys != len(keys) {
 		t.Errorf("totalKeys=%d, want %d", totalKeys, len(keys))
-	}
-}
-
-// TestDPScan_BPKOptimal verifies that DP segmentation achieves BPK ≤ greedy
-// on the same key set. The DP solution is optimal w.r.t. the cost estimate,
-// so it should never be worse than greedy's merge-based approach.
-func TestDPScan_BPKOptimal(t *testing.T) {
-	rng := rand.New(rand.NewSource(1234))
-	for _, n := range []int{500, 5000} {
-		n := n
-		t.Run("", func(t *testing.T) {
-			raw, _ := testutils.GenerateClusterDistribution(n, 8, 0.15, rng)
-			keys := sortedTrieBS(raw)
-
-			const K = 20
-			const rangeLen = 128
-
-			dp, err := NewDPScanAREFromK(keys, rangeLen, K)
-			if err != nil {
-				t.Fatal(err)
-			}
-			keyBits := uint32(max(1, mathbits.Len64(raw[len(raw)-1])))
-			greedy, err := are_greedy_scan.NewGreedyScanAREFromK(raw, keyBits, are_greedy_scan.ConfigFromK{RangeLen: float64(rangeLen), K: K})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			dpBPK := float64(dp.SizeInBits()) / float64(n)
-			greedyBPK := float64(greedy.SizeInBits()) / float64(n)
-
-			// Greedy now routes large-spread clusters to TruncARE fallback,
-			// which can be more efficient than DP's AdaptiveARE-per-cluster approach.
-			// Log the comparison for diagnostic purposes only.
-			t.Logf("n=%d: DP BPK=%.3f, Greedy BPK=%.3f", n, dpBPK, greedyBPK)
-		})
 	}
 }
