@@ -1,13 +1,12 @@
 package are_greedy_scan
 
 import (
-	"Thesis/bits"
 	"math"
 )
 
 // segment holds the final key slice for building AdaptiveARE.
 type segment struct {
-	keys   []bits.BitString
+	keys   []uint64
 	minKey uint64
 	maxKey uint64
 }
@@ -24,7 +23,7 @@ func (r segmentRef) nKeys() int { return r.end - r.start }
 // segmentBySpreadRefs scans sorted keys left-to-right, creating a new cluster
 // whenever the spread would exceed 2^K. O(n) time, every key assigned.
 // Returns lightweight refs — no key copying.
-func segmentBySpreadRefs(keys []bits.BitString, K uint32) []segmentRef {
+func segmentBySpreadRefs(keys []uint64, K uint32) []segmentRef {
 	n := len(keys)
 	if n == 0 {
 		return nil
@@ -39,16 +38,16 @@ func segmentBySpreadRefs(keys []bits.BitString, K uint32) []segmentRef {
 
 	var refs []segmentRef
 	clusterStart := 0
-	startVal := keys[0].TrieUint64()
+	startVal := keys[0]
 
 	for i := 1; i < n; i++ {
-		curVal := keys[i].TrieUint64()
+		curVal := keys[i]
 		if curVal-startVal > maxSpread {
 			refs = append(refs, segmentRef{
 				start:  clusterStart,
 				end:    i,
 				minKey: startVal,
-				maxKey: keys[i-1].TrieUint64(),
+				maxKey: keys[i-1],
 			})
 			clusterStart = i
 			startVal = curVal
@@ -57,8 +56,8 @@ func segmentBySpreadRefs(keys []bits.BitString, K uint32) []segmentRef {
 	refs = append(refs, segmentRef{
 		start:  clusterStart,
 		end:    n,
-		minKey: keys[clusterStart].TrieUint64(),
-		maxKey: keys[n-1].TrieUint64(),
+		minKey: keys[clusterStart],
+		maxKey: keys[n-1],
 	})
 
 	return refs
@@ -142,7 +141,7 @@ func mergeSmallClustersRefs(refs []segmentRef, K uint32) []segmentRef {
 }
 
 // finalizeRefs converts segment refs back to segments with actual key slices.
-func finalizeRefs(keys []bits.BitString, refs []segmentRef) []segment {
+func finalizeRefs(keys []uint64, refs []segmentRef) []segment {
 	segs := make([]segment, len(refs))
 	for i, r := range refs {
 		segs[i] = segment{

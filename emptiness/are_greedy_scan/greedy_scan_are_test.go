@@ -1,42 +1,38 @@
 package are_greedy_scan
 
 import (
-	"Thesis/bits"
 	"Thesis/testutils"
 	"math/rand"
 	"sort"
 	"testing"
 )
 
-func sortedTrieBS(raw []uint64) []bits.BitString {
-	sort.Slice(raw, func(i, j int) bool { return raw[i] < raw[j] })
-	bs := make([]bits.BitString, len(raw))
-	for i, v := range raw {
-		bs[i] = testutils.TrieBS(v)
-	}
-	return bs
+func sortedUint64(raw []uint64) []uint64 {
+	cp := append([]uint64(nil), raw...)
+	sort.Slice(cp, func(i, j int) bool { return cp[i] < cp[j] })
+	return cp
 }
 
 func TestGreedyScan_Empty(t *testing.T) {
-	g, err := NewGreedyScanARE(nil, 100, 0.01)
+	g, err := NewGreedyScanARE(nil, 60, Config{RangeLen: 100, Eps: 0.01})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !g.IsEmpty(testutils.TrieBS(0), testutils.TrieBS(100)) {
+	if !g.IsEmpty(0, 100) {
 		t.Error("expected empty result for nil keys")
 	}
 }
 
 func TestGreedyScan_SingleKey(t *testing.T) {
-	bs := []bits.BitString{testutils.TrieBS(500)}
-	g, err := NewGreedyScanARE(bs, 10, 0.01)
+	keys := []uint64{500}
+	g, err := NewGreedyScanARE(keys, 60, Config{RangeLen: 10, Eps: 0.01})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.IsEmpty(testutils.TrieBS(495), testutils.TrieBS(505)) {
+	if g.IsEmpty(495, 505) {
 		t.Error("query containing the single key should be non-empty")
 	}
-	if !g.IsEmpty(testutils.TrieBS(0), testutils.TrieBS(10)) {
+	if !g.IsEmpty(0, 10) {
 		t.Error("query far from key should be empty")
 	}
 }
@@ -57,18 +53,16 @@ func TestGreedyScan_NoFN(t *testing.T) {
 					}
 				}
 			}
-			keys := sortedTrieBS(rawKeys)
+			keys := sortedUint64(rawKeys)
 
 			var rangeLen uint64 = 128
-			g, err := NewGreedyScanARE(keys, rangeLen, 0.01)
+			g, err := NewGreedyScanARE(keys, 60, Config{RangeLen: float64(rangeLen), Eps: 0.01})
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			for _, k := range rawKeys {
-				a := testutils.TrieBS(k)
-				b := testutils.TrieBS(k + rangeLen)
-				if g.IsEmpty(a, b) {
+				if g.IsEmpty(k, k+rangeLen) {
 					t.Fatalf("false negative: key %d in [%d, %d]", k, k, k+rangeLen)
 				}
 			}
@@ -79,9 +73,9 @@ func TestGreedyScan_NoFN(t *testing.T) {
 func TestGreedyScan_Stats(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 	raw, _ := testutils.GenerateClusterDistribution(10000, 5, 0.15, rng)
-	keys := sortedTrieBS(raw)
+	keys := sortedUint64(raw)
 
-	g, err := NewGreedyScanAREFromK(keys, 128, 20)
+	g, err := NewGreedyScanAREFromK(keys, 60, ConfigFromK{RangeLen: 128, K: 20})
 	if err != nil {
 		t.Fatal(err)
 	}
