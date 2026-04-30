@@ -24,13 +24,27 @@ __pycache__/
 
 # Proj temp output dirs
 /text/out/
-/text/**/**.pdf
-/text/*.aux
-/text/*.log
-/text/*.toc
-/text/*.bbl
-/text/*.blg
-/text/*.out
+/text/**/*.pdf
+# LaTeX build artifacts (recursive to cover defence/slides/)
+/text/**/*.aux
+/text/**/*.log
+/text/**/*.toc
+/text/**/*.bbl
+/text/**/*.blg
+/text/**/*.out
+/text/**/*.fdb_latexmk
+/text/**/*.fls
+/text/**/*.synctex.gz
+# Beamer
+/text/**/*.nav
+/text/**/*.snm
+/text/**/*.vrb
+# biblatex
+/text/**/*.bcf
+/text/**/*.run.xml
+
+# OS noise
+.DS_Store
 /locators/benchmarks_parsed.csv
 bench_results/raw/
 /mmph/lemonhash/build
