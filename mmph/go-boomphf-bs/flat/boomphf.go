@@ -3,7 +3,7 @@
 package flat
 
 import (
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"math/bits"
 
 	tbits "Thesis/bits"

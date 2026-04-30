@@ -2,7 +2,7 @@ package azft
 
 import (
 	"Thesis/bits"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/utils"
 	"math/rand"

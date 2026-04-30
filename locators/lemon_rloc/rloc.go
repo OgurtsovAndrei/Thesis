@@ -3,7 +3,7 @@ package lemon_rloc
 import (
 	"Thesis/bits"
 	"Thesis/bits/maps"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/mmph/lemonhash"
 	"Thesis/trie/zft"
 	"Thesis/utils"

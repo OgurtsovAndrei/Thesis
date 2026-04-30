@@ -2,7 +2,7 @@ package bucket
 
 import (
 	"Thesis/bits"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/mmph/go-boomphf-bs/inline-uint64"
 	"Thesis/trie/azft"
 	"Thesis/trie/zft"

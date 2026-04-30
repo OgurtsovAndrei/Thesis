@@ -3,7 +3,7 @@ package are_adaptive
 import (
 	"Thesis/emptiness/exact/ere_one_d"
 	internalhash "Thesis/emptiness/internal/hash"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"fmt"
 	"math"
 	mbits "math/bits"

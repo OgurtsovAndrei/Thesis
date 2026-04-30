@@ -1,7 +1,7 @@
 package bucket
 
 import (
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/mmph/go-boomphf-bs/inline-uint64"
 	"fmt"
 	"math"

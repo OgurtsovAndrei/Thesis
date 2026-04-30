@@ -3,7 +3,7 @@ package azft
 import (
 	"Thesis/trie/zft"
 	"Thesis/bits"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"math/rand"
 	"testing"
 	"time"

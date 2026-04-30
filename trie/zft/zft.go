@@ -3,7 +3,7 @@ package zft
 import (
 	"Thesis/bits"
 	"Thesis/bits/maps"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"fmt"
 	"log"
 	"strings"

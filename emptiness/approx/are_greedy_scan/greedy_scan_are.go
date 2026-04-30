@@ -3,7 +3,7 @@ package are_greedy_scan
 import (
 	"Thesis/emptiness/approx/are_adaptive"
 	"Thesis/emptiness/approx/are_trunc"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"fmt"
 	"math"
 	mbits "math/bits"

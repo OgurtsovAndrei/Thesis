@@ -9,7 +9,7 @@ package lemonhash
 import "C"
 import (
 	"Thesis/bits"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	mathbits "math/bits"
 	"runtime"
 	"unsafe"

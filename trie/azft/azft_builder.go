@@ -3,7 +3,7 @@ package azft
 import (
 	"Thesis/bits"
 	"Thesis/bits/maps"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	boomphf "Thesis/mmph/go-boomphf-bs"
 	"Thesis/trie/zft"
 	"sort"

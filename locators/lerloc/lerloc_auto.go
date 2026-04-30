@@ -2,7 +2,7 @@ package lerloc
 
 import (
 	"Thesis/bits"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/locators/rloc"
 	"Thesis/trie/hzft"
 	"Thesis/trie/shzft"

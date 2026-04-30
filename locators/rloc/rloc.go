@@ -3,7 +3,7 @@ package rloc
 import (
 	"Thesis/bits"
 	"Thesis/bits/maps"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	bucket "Thesis/mmph/relative_trie"
 	"Thesis/trie/zft"
 	"Thesis/utils"

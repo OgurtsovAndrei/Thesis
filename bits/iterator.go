@@ -1,6 +1,6 @@
 package bits
 
-import "Thesis/errutil"
+import "Thesis/utils/errutil"
 
 // BitStringIterator iterates over a sequence of BitStrings.
 type BitStringIterator interface {

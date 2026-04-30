@@ -1,7 +1,7 @@
 package paramselect
 
 import (
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"math"
 )
 

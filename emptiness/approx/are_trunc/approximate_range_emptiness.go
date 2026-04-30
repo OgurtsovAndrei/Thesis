@@ -2,7 +2,7 @@ package are_trunc
 
 import (
 	"Thesis/emptiness/exact/ere_one_d"
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/utils"
 	"fmt"
 	"math"

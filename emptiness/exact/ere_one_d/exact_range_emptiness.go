@@ -1,7 +1,7 @@
 package ere_one_d
 
 import (
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/utils"
 	"fmt"
 	"math"

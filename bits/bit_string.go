@@ -1,7 +1,7 @@
 package bits
 
 import (
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"encoding/binary"
 	"fmt"
 	"math/bits"

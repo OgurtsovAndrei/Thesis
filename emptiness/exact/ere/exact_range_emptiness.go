@@ -5,7 +5,7 @@ import (
 	"math"
 	"unsafe"
 
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/succinct_bit_vector/rsdic"
 	"Thesis/utils"
 )

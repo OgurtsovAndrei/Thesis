@@ -1,7 +1,7 @@
 package rloc
 
 import (
-	"Thesis/errutil"
+	"Thesis/utils/errutil"
 	"Thesis/mmph/paramselect"
 	"Thesis/trie/zft"
 	"fmt"
