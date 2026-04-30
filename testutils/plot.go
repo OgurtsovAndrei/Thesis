@@ -15,6 +15,12 @@ type SeriesData struct {
 	Marker string // "circle", "square", "diamond", "triangle", "star"
 	Points []Point
 
+	// NoLine, when true, suppresses the connecting polyline so the series
+	// renders as a marker-only point cloud. Use for families whose points
+	// span a 2D parameter space and so cannot be meaningfully ordered along
+	// a single curve (e.g. SuRF across (suffixType, bitCount)).
+	NoLine bool
+
 	// EndStop, when true, replaces the last marker with a small X (cross)
 	// signalling that the series terminates here for an external reason
 	// (e.g. an underlying library cannot operate beyond this point) rather
@@ -370,8 +376,10 @@ func drawSeriesLines(sb *strings.Builder, series []SeriesData, toX, toY func(flo
 		if s.Dashed {
 			dash = ` stroke-dasharray="8,5"`
 		}
-		sb.WriteString(fmt.Sprintf(`<polyline fill="none" stroke="%s" stroke-width="2"%s points="%s"/>`+"\n",
-			s.Color, dash, strings.Join(pts, " ")))
+		if !s.NoLine {
+			sb.WriteString(fmt.Sprintf(`<polyline fill="none" stroke="%s" stroke-width="2"%s points="%s"/>`+"\n",
+				s.Color, dash, strings.Join(pts, " ")))
+		}
 		marker := s.Marker
 		if marker == "" {
 			marker = "circle"
@@ -417,8 +425,10 @@ func drawLegend(sb *strings.Builder, series []SeriesData, mL, mT, plotW float64)
 		if s.Dashed {
 			dash = ` stroke-dasharray="8,5"`
 		}
-		sb.WriteString(fmt.Sprintf(`<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="2"%s/>`+"\n",
-			lx, ly, lx+16, ly, s.Color, dash))
+		if !s.NoLine {
+			sb.WriteString(fmt.Sprintf(`<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="2"%s/>`+"\n",
+				lx, ly, lx+16, ly, s.Color, dash))
+		}
 		marker := s.Marker
 		if marker == "" {
 			marker = "circle"
