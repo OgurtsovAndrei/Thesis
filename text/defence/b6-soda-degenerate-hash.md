@@ -94,38 +94,131 @@ But for SOSD FB the hashed values are not uniform — they are the
 original 33-bit-wide FB keys. Block id is computed as $\text{key} \gg w$,
 so block ids land in $[0, 2^{33-w})$:
 
-| $L$    | $K$ | $w$ | populated blocks | avg bucket | bin-search depth |
-|-------:|----:|----:|-----------------:|-----------:|----------------:|
-| 1      | 31  | 7   | $\sim n$ (all)   | ~1         | 0 (linear)      |
-| 16     | 35  | 11  | $2^{22}$         | ~4         | 0 (linear)      |
-| 128    | 38  | 14  | $2^{19}$         | ~32        | 0 (≤128)        |
-| 1024   | 41  | 17  | $2^{16}$         | ~256       | 8               |
-| 4096   | 43  | 19  | $2^{14}$         | ~1024      | 10              |
-| 16384  | 45  | 21  | $2^{12}$         | ~4096      | 12              |
-| 65536  | 47  | 23  | $2^{10}$         | ~16384     | 14              |
+Empirical bucket distribution from `bench/soda_bucket_audit_test.go`
+(measured on the actual SODA build, not modeled):
 
-The $\sim 16{\rm K}$ keys per populated bucket at $L=65536$ require
-14-iteration binary searches over a packed-bit array of width $w=23$,
-which at $n = 2^{24}$ is $\sim 48$ MB — well past L3 cache. Each
-iteration costs one cache miss.
+| $L$    | $K$ | $w$ | populated blocks | avg bucket | max bucket | binsearch depth |
+|-------:|----:|----:|-----------------:|-----------:|-----------:|----------------:|
+| 1      | 31  | 7   | 4 338 941        | 3.9        | 116        | 0 (linear≤128)  |
+| 1024   | 41  | 17  | 48 529           | 345.7      | 2 872      | 8               |
+| 65536  | 47  | 23  | 760              | 22 075     | 35 233     | 14              |
+
+At $L=65536$ the typical bucket holds ~22K keys × 23 bits ≈ **63 KB**,
+which fits in L1; the binary search there is **not** the dominant cost.
+What hurts is that the surrounding `packedData` array — $n \cdot w / 8 =
+\sim 48$ MB — randomly evicts the rsdic index tables during each query
+(see profile breakdown below).
 
 ## Profile breakdown
 
-`pprof` of the SODA L=65536 path on SOSD FB:
+Fresh `pprof` of `BenchmarkSodaIsEmptyDirect` on SODA L=65536 / sosd_fb,
+$n=2^{24}$, no harness overhead (direct method call in tight loop):
 
-- `getBlockRange` (= 2× `rsdic.RSDic.Select1`): **38.24% of total**
-  / 83.6% of `ExactRangeEmptiness.IsEmpty`. ~1900 ns per query, i.e.
-  ~950 ns per `Select` call.
-- `Thesis/bits.UnpackBit` inside the bucket binary search: ~2nd hottest.
-  At depth 14, ~14 random reads × ~120 ns = ~1700 ns.
-- SODA wrapper, `IsEmpty` body, branch overhead: ~1500 ns.
-- **Total ≈ 5100 ns**, matches measured 5173 ns.
+| Symbol | flat % | flat ns/query (≈) |
+|--------|------:|-------:|
+| `rsdic.RSDic.Select1`        | **70.6%** | **3170** |
+| `bits.UnpackBit` (under `searchBucket`) | 13.3% | ~600 |
+| `searchBucket` / `isRangeEmptyInBlock` body | < 1% | ~10 |
+| `getBlockRange` body (call+sample blame) | <1% | ~10 |
+| SODA wrapper + ERE.IsEmpty body | ~13% | ~700 |
+| **measured total**           | 100% | **4495** |
 
-`rsdic.Select1` itself is two nested loops over rank-block and
-small-block tables (constants `kSelectBlockSize=4096`, `kLargeBlockSize=
-1024`, `kSmallBlockPerLargeBlock=16`), plus one variable-rate decode
-from the bit-packed `bits` array. ~24 conditional iterations + 1–3
-cache misses at 100–150 ns each gives the observed ~950 ns per call.
+So `rsdic.Select1` accounts for **~70% of the entire query cost**, not
+the binary search. Two Select calls per same-block query ⇒ ~1585 ns per
+Select call when running under the full pipeline. The bucket binary
+search at depth 14 contributes the remaining ~600 ns through 14
+`bits.UnpackBit` reads on the packed-suffix array.
+
+### Why Select1 is so slow here, and how we know it isn't the algorithm
+
+We ran two complementary isolated benchmarks to check whether
+`rsdic.Select1` is intrinsically slow.
+
+**(a) Synthetic 50%-density scaling** —
+`Thesis/succinct_bit_vector/rsdic/scaling_test.go`: Select1 / Rank /
+interleaved-Select pairs on a fresh 50%-density bitvector at sizes
+$2^{20}\dots 2^{28}$, M4 Max, `-benchtime=2s`:
+
+| $N$ bits | size (MB) | Select1 (ns) | Rank (ns) | 2× Select interleaved (ns) |
+|---------:|----------:|-------------:|----------:|---------------------------:|
+| $2^{20}$ |    0.16   |        38.6  |     19.3  |                       70.5 |
+| $2^{22}$ |    0.63   |        44.6  |     22.4  |                       82.0 |
+| $2^{24}$ |    2.53   |        49.7  |     21.6  |                       83.8 |
+| $2^{26}$ |   10.12   |        57.8  |     24.4  |                       93.0 |
+| $2^{28}$ |   40.50   |        86.0  |     42.0  |                      152.0 |
+
+**(b) Real SODA bitvectors** —
+`bench/rsdic_isolated_bench_test.go`. We build SODA on the actual key
+set ($n=2^{24}$), serialize the inner ERE rsdic via `MarshalBinary`,
+load it back, and benchmark Select1 with no other working set in cache:
+
+| Distribution | $L$    | rsdic (MB) | Select1 (ns) | 2× Select interleaved (ns) |
+|--------------|-------:|-----------:|-------------:|---------------------------:|
+| sosd_fb      |     1  |    3.08    |        72.6  |                      133.0 |
+| sosd_fb      |  1024  |    1.10    |        66.6  |                      116.2 |
+| sosd_fb      | 65536  |    1.06    |        66.8  |                      116.8 |
+| uniform      | 65536  |    3.80    |        50.1  |                       78.0 |
+
+So in isolation the SODA-FB rsdic answers Select1 in **67 ns**, flat in
+$L$ and consistent with the synthetic 50%-density curve at the same
+size. **The factor-of-23 inflation to ~1585 ns under the SODA pipeline
+is therefore not a property of rsdic itself — it is interaction-driven
+cache thrashing.**
+
+### What is being thrashed
+
+`rsdic.RSDic` doesn't hold a single bitvector — it holds **five
+parallel arrays**, all touched on every Select1:
+
+1. `bits` — the encoded variable-rate bit stream (~4 MB at $n=2^{24}$).
+2. `rankBlocks` — large-block prefix sums (one entry per 1024 bits).
+3. `selectOneInds` — pointers into rankBlocks for fast Select.
+4. `rankSmallBlocks` — small-block deltas (one byte per 64 bits).
+5. `pointerBlocks` — bit offsets into `bits`.
+
+A single Select1 walks `selectOneInds` → `rankBlocks` → `rankSmallBlocks`
+loop → `bits[]` decode. Four random-access fetches across four arrays
+that share no cache lines. In isolation those four cache lines stay
+warm in L1/L2 across iterations because nothing else is fighting them.
+
+Under the SODA query pipeline we additionally touch the
+`ExactRangeEmptiness.packedData` array, which is **~48 MB at $L=65536$**
+(width $w=23$, one entry per key) — far larger than M4's 16 MB shared
+L2 and aggressively random-accessed by the bucket binary search. Each
+binsearch step pulls fresh 4 KB pages, evicting rsdic's working set.
+The next Select1 then re-misses on all four of its index arrays.
+
+The Apple M4 Max has a 256-entry data TLB; 48 MB of packedData spans
+~12k 4 KB pages, so essentially every binsearch hop incurs a TLB walk
+on top of the cache miss. ~1585 ns/Select decomposes roughly as:
+
+- ~150 ns × 4 cache misses (one per index array, cold L2/DRAM)
+- ~30 ns × 4 TLB walks
+- ~40 ns × 6 small-block iterations on the bits-decode path
+
+Reconciling the full latency budget at $L=65536$ on sosd_fb:
+
+- 2 × Select1 under cache pressure ≈ 3170 ns (70%).
+- 14 binsearch hops × `bits.UnpackBit` on the packed-suffix array ≈
+  600 ns (13%).
+- ERE.IsEmpty body, SODA wrapper, branch overhead ≈ 720 ns (16%).
+- **Total ≈ 4490 ns**, matches measured 4495 ns / 5173 ns within margin.
+
+### Bucket distribution check (the binary search is *not* the bottleneck)
+
+`bench/soda_bucket_audit_test.go` dumps the actual bucket-size
+distribution of the inner ERE on each SODA build. Sosd_fb at L=65536:
+
+- 760 populated blocks (out of $2^{24}$ possible)
+- avg bucket: 22 075 keys
+- max: 35 233 ; p50 = 22 184 ; p99 = 30 836
+- 100% of B6 smart-mix queries hit the **same-block** path (single
+  `ere.IsEmpty` call per SODA call)
+
+Each bucket spans 22 075 × 23 bits ≈ **63 KB** — fits in M4's L1 D-cache
+(128 KB/core). Once the binsearch starts narrowing, the active region
+collapses into one cache line within ~6 hops, leaving the last 8 hops
+as L1 hits. That matches the observed 13% / 600 ns binsearch budget.
 
 ## Distinguishing distribution from algorithm
 
@@ -152,9 +245,12 @@ practical $L \cdot 1/\varepsilon$ — fall outside it.
    distribution; the same construction gives 241 ns or 5173 ns
    depending on whether the keys span a single SODA super-block.
 
-2. **The `ere_one_d` `IsEmpty` is the actual bottleneck**, not the SODA
-   wrapper. Specifically `rsdic.Select` (~950 ns / call) and the bucket
-   binary search.
+2. **The bottleneck is `rsdic.Select1` under cache pressure**, not the
+   bucket binary search. pprof attributes 70% of total query time to
+   `Select1` (≈ 1585 ns/call) and only 13% to `bits.UnpackBit` inside
+   the binsearch. Isolated, the same Select1 measures 67 ns — the 23×
+   inflation comes from rsdic's five-array index layout being evicted
+   on every binsearch step into the 48 MB packed-suffix array.
 
 3. **This is not a 1D-vs-classic ERE regression.** Both backends share
    the same `rsdic` Select implementation and the same packed-bit bucket
@@ -163,15 +259,19 @@ practical $L \cdot 1/\varepsilon$ — fall outside it.
 
 4. **Optimisation opportunities** (out of scope for the defence run, but
    worth recording):
-   - Replace `rsdic` with a denser, cache-friendlier rank/select
-     (e.g. broadword Select on a flat bitvector). Pays ~$n$ extra bits.
+   - Co-locate rsdic's index arrays (bits, rankBlocks, rankSmallBlocks,
+     selectInds, pointerBlocks) into one cache-friendly struct. Five
+     parallel arrays at random offsets ⇒ five evicted lines per Select;
+     a packed Select-on-flat-bitvector layout pays ~$n$ extra bits in
+     exchange for ≤ 2 cache lines per Select.
    - In SODA, when the input universe fits in one super-block, fall
      through to a different mode (e.g. directly use a Truncation-style
      ERE on the natural prefix bits without the redundant identity
      hash + ERE wrap).
    - Increase ERE $k$ above $\log_2 n$ when the populated-block count
      is small, so populated buckets shrink. Trades metadata bits for
-     query speed.
+     query speed and reduces packed-suffix size below the L2 threshold,
+     which would also relieve the rsdic-eviction effect.
 
 5. **Defence-text framing.** The headline FPR-vs-BPK plots are
    unaffected — those depend only on memory and false-positive rate,

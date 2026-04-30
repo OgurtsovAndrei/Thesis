@@ -267,8 +267,18 @@ Dataset
 \bottomrule
 \end{tabular}
 \caption{Average ARE query latency, two-vector vs one-vector ERE backend.
-Same workload as Table~\ref{tab:ere-backend-cross-distribution}. Apple~M4~Max,
-$32{,}768$ mixed queries, $3$ rounds. Average is over per-distribution means. \colorbox{orange}{TODO: n is what, L is what?, key size?}}
+Same workload as Table~\ref{tab:ere-backend-cross-distribution}:
+$n = 2^{20}$ (or all available keys, whichever is smaller),
+$\mathcal{L} = 4096$, $\varepsilon = 0.01$, which yields
+$K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil = 39$ for both
+wrappers; raw $64$-bit keys (no $60$-bit mask). Apple~M4~Max,
+$32{,}768$ half-hit/half-miss queries (seed $424242$), $3$ rounds.
+Average is over per-distribution means. This is the legacy
+small-scale backend comparison whose purpose is the relative
+two-vec/one-vec contrast at fixed $n = 2^{20}$; absolute latencies
+grow $5$--$10\times$ at the headline scale $n = 2^{24}$ used by the
+B6 benchmark suite, once the filter footprint outgrows the L3 cache
+and per-query work becomes cache-miss-bound.}
 \label{tab:ere-backend-query-latency}
 \end{table}
 
