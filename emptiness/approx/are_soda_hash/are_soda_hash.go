@@ -9,18 +9,18 @@ import (
 )
 
 type SodaARE struct {
-	ere      *ere_one_d.ExactRangeEmptiness
-	K        uint32
-	RangeLen uint64
-	n        int
-	hashA    uint64
-	hashB    uint64
+	ere   *ere_one_d.ExactRangeEmptiness
+	K     uint32
+	Seed  int64
+	n     int
+	hashA uint64
+	hashB uint64
 }
 
 func NewSodaARE(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
+		return &SodaARE{n: 0}, nil
 	}
 
 	rTarget := float64(n) * float64(rangeLen) / epsilon
@@ -29,19 +29,22 @@ func NewSodaARE(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE, erro
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
 	}
 
-	return NewSodaAREFromK(keys, rangeLen, K)
+	return NewSodaAREFromK(keys, K, int64(rangeLen))
 }
 
-func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error) {
+// NewSodaAREFromK builds SODA with K (codomain bit-width) directly. The
+// caller supplies the seed used to draw the pairwise hash coefficients.
+// Same seed + same keys + same K ⇒ identical structure.
+func NewSodaAREFromK(keys []uint64, K uint32, seed int64) (*SodaARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
+		return &SodaARE{n: 0, Seed: seed}, nil
 	}
 	if K > 64 {
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
 	}
 
-	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()
 
@@ -69,12 +72,12 @@ func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error)
 	}
 
 	return &SodaARE{
-		ere:      ereFilter,
-		K:        K,
-		RangeLen: rangeLen,
-		n:        n,
-		hashA:    hashA,
-		hashB:    hashB,
+		ere:   ereFilter,
+		K:     K,
+		Seed:  seed,
+		n:     n,
+		hashA: hashA,
+		hashB: hashB,
 	}, nil
 }
 
@@ -83,8 +86,9 @@ func NewSodaAREFromK(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error)
 // NewSodaARE: input keys are not mutated.
 func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE, error) {
 	n := len(keys)
+	seed := int64(rangeLen)
 	if n == 0 {
-		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
+		return &SodaARE{n: 0, Seed: seed}, nil
 	}
 
 	rTarget := float64(n) * float64(rangeLen) / epsilon
@@ -93,7 +97,7 @@ func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
 	}
 
-	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()
 
@@ -120,12 +124,12 @@ func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE
 	}
 
 	return &SodaARE{
-		ere:      ereFilter,
-		K:        K,
-		RangeLen: rangeLen,
-		n:        n,
-		hashA:    hashA,
-		hashB:    hashB,
+		ere:   ereFilter,
+		K:     K,
+		Seed:  seed,
+		n:     n,
+		hashA: hashA,
+		hashB: hashB,
 	}, nil
 }
 
@@ -135,18 +139,18 @@ func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE
 // and mutated; callers must not rely on its post-call contents (neither
 // values nor length-versus-capacity). This is the lowest-memory build path.
 //
-// Unlike NewSodaARE, K is supplied directly rather than derived from epsilon,
-// matching NewSodaAREFromK.
-func NewSodaAREUint64InPlace(keys []uint64, rangeLen uint64, K uint32) (*SodaARE, error) {
+// K is supplied directly. seed selects the pairwise-hash coefficients;
+// same seed + same keys + same K ⇒ identical structure.
+func NewSodaAREUint64InPlace(keys []uint64, K uint32, seed int64) (*SodaARE, error) {
 	n := len(keys)
 	if n == 0 {
-		return &SodaARE{n: 0, RangeLen: rangeLen}, nil
+		return &SodaARE{n: 0, Seed: seed}, nil
 	}
 	if K > 64 {
 		return nil, fmt.Errorf("K exceeds 64 bits: %d", K)
 	}
 
-	rng := rand.New(rand.NewSource(int64(n) ^ int64(rangeLen)))
+	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()
 
@@ -172,12 +176,12 @@ func NewSodaAREUint64InPlace(keys []uint64, rangeLen uint64, K uint32) (*SodaARE
 	}
 
 	return &SodaARE{
-		ere:      ereFilter,
-		K:        K,
-		RangeLen: rangeLen,
-		n:        n,
-		hashA:    hashA,
-		hashB:    hashB,
+		ere:   ereFilter,
+		K:     K,
+		Seed:  seed,
+		n:     n,
+		hashA: hashA,
+		hashB: hashB,
 	}, nil
 }
 

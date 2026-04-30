@@ -72,7 +72,7 @@ func TestSodaARE_Uint64FastPath_InPlace_DoesNotChangeAnswers(t *testing.T) {
 	keysCopy := make([]uint64, len(keys))
 	copy(keysCopy, keys)
 
-	fast, err := NewSodaAREUint64InPlace(keysCopy, fastPathRangeLen, ref.K)
+	fast, err := NewSodaAREUint64InPlace(keysCopy, ref.K, int64(fastPathRangeLen))
 	require.NoError(t, err)
 
 	require.Equal(t, ref.K, fast.K, "K should match between paths")

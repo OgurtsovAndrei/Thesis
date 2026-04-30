@@ -78,7 +78,7 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 			tasks = append(tasks, task{"Truncation", K, bpk,
 				func(a, b uint64) bool { return f.IsEmpty(a, b) }})
 		}
-		if f, err := are_soda_hash.NewSodaAREFromK(keys, rangeLen, K); err == nil {
+		if f, err := are_soda_hash.NewSodaAREFromK(keys, K, int64(rangeLen)); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
 			f := f
 			tasks = append(tasks, task{"SODA", K, bpk,
