@@ -46,6 +46,7 @@ __pycache__/
 # OS noise
 .DS_Store
 /locators/benchmarks_parsed.csv
-bench_results/raw/
 /mmph/lemonhash/build
-bench_results/plots/ere_comparison/
+
+# Benchmark outputs (regenerable)
+bench_results/
