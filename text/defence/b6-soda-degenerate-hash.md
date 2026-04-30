@@ -188,74 +188,68 @@ counter explains the 27× slowdown directly. Two further contributors:
 
 ### Validation — bracketed binary search fixes it
 
-To confirm the diagnosis, we wrote `Select1Fast` (`select1_fast.go`)
-which replaces the rankBlocks linear scan with a binary search
-bracketed by `selectOneInds[selectInd]` and
-`selectOneInds[selectInd+1]+1` (or end of array). Pointer receiver,
-all other state and helpers reused. Property test
-`TestSelect1FastEquivalence` exhaustively checks
-`Select1Fast(rank) == Select1(rank)` for all valid ranks across three
-bitvector patterns: uniform-50%, sparse-1%, and a clustered-unary
-pattern modelling the ERE encoding. All pass.
+We rewrote `rsdic.Select1` (`succinct_bit_vector/rsdic/rsdic.go`) to
+use an adaptive inner search: linear scan for small brackets, binary
+search for large. The bracket is `[selectOneInds[selectInd],
+selectOneInds[selectInd+1]+1]`, so the binary path's worst case is
+$O(\log\,4096)\le 12$ iterations regardless of bitvector clustering.
+Pointer receiver to elide the ~104-byte struct copy
+(`runtime.duffcopy` was ~9% of the original under load).
 
-Microbench (`BenchmarkSelect1VsFastClustered`, 1024 blocks with 30%
-populated at ~22000 zeros each, ranks uniform in $[0, 1024)$):
+Property test `TestSelect1ThresholdEquivalence` checks Linear, Binary,
+and the production Adaptive variants agree for all ranks across
+brackets $\{1, 4, 8, 16, 32, 64, 256, 1024\}$ on a deterministic
+clustered-unary pattern modelling the ERE encoding.
 
-| Implementation        | ns/op | speedup |
-|-----------------------|------:|--------:|
-| Original `Select1`    | 859   | 1.0×    |
-| `Select1Fast`         |  59   | **14.6×** |
+**Threshold sweep** (`BenchmarkSelect1ThresholdSweep`, M4 Max,
+2 s/cell):
 
-Sanity-check on uniform 50%-density bitvectors with random ranks
-(`BenchmarkSelect1VsFastUniform`):
+| bracket | Linear (ns) | Binary (ns) | Adaptive (ns) | Winner |
+|--------:|------------:|------------:|--------------:|--------|
+|       1 |        51.9 |        56.6 |          52.9 | Linear |
+|       4 |        53.1 |        56.8 |          52.8 | Linear |
+|      16 |        32.0 |        40.6 |          31.7 | Linear |
+|      64 |        61.8 |        71.9 |          70.1 | Linear |
+|     128 |        74.7 |        80.1 |          78.1 | Linear |
+|     256 |       100.2 |        89.7 |          89.7 | Binary |
+|    1024 |       218.7 |       101.4 |          97.6 | Binary |
+|    4096 |       633.5 |       112.1 |         113.9 | Binary |
 
-| Implementation        | ns/op |
-|-----------------------|------:|
-| Original `Select1`    | 43.9  |
-| `Select1Fast`         | 45.1  |
+Crossover sits between 128 and 256. We pick `kSelectLinearThreshold =
+128`: keeps Linear's regime intact and engages Binary slightly before
+it strictly wins, since the Linear pathology grows superlinearly past
+the crossover.
 
-No regression on the well-behaved case.
+**Branch-mispredict cost**
+(`BenchmarkSelect1MixedBrackets`, `BenchmarkSelect1AlternatingPattern`).
+A natural concern is that the Adaptive branch (`if hi-lo <=
+threshold`) costs more than it saves. We tested by interleaving
+queries across rsdics with very different brackets:
 
-**End-to-end validation**
-(`bench/soda_fast_path_bench_test.go`,
-`Thesis/emptiness/exact/ere_one_d/select_fast_variant.go`). We added
-`ExactRangeEmptiness.IsEmptyFast` — functionally identical to
-`IsEmpty` but routing all `Select` calls through `Select1Fast`. On
-n=2^24 / sosd_fb / L=65536:
+| Workload                    | Linear (ns) | Binary (ns) | Adaptive (ns) |
+|-----------------------------|------------:|------------:|--------------:|
+| Mixed random                |       340.3 |        79.8 |          78.3 |
+| Alternating (worst for bp)  |       338.8 |        77.9 |          77.0 |
+
+Adaptive matches Binary in both, edges it slightly because small-bracket
+queries hit the Linear fast path. So on M4 Max the branch is free —
+the predictor handles it without a measurable penalty.
+
+**End-to-end validation on the B6 headline cell** ($n=2^{24}$,
+sosd_fb, $L=65536$, smart-mix-empty queries). After the production
+swap (`emptiness/exact/ere_one_d/exact_range_emptiness.go` and
+`emptiness/exact/ere/exact_range_emptiness.go` now call the new
+`Select1` directly):
 
 | Path                                  | ns/query | fp_rate |
 |---------------------------------------|---------:|--------:|
-| Original `ere.IsEmpty`                | 3732     | 0.7950  |
-| `ere.IsEmptyFast`                     |  **320** | 0.7951  |
-| Equivalence subtest (1000 queries)    | PASS     | —       |
+| Pre-swap `SodaARE.IsEmpty`            |     4391 |  0.7951 |
+| Post-swap `SodaARE.IsEmpty`           | **374.6**|  0.7951 |
 
-**11.7× end-to-end speedup**, identical fp behaviour. The fix is even
-larger than the Select1-only number predicts because once Select1
-stops dominating the query path, the bucket binsearch and ERE wrap
-also fit the L1 budget cleanly (no rsdic state to evict their working
-set).
-
-Adopting `Select1Fast` as the production `Select1` path is the
-recommended action: it deletes the worst-case behaviour with no
-performance trade-off on the well-behaved case and makes SODA's
-$L=65536$ regime broadly usable on real-world (clustered) key
-distributions.
-
-**Production swap (post-fix)**. We replaced the five Select call
-sites in `ere_one_d/exact_range_emptiness.go:getBlockRange` and
-`getQueryBlockRanges`, and the two in `ere/exact_range_emptiness.go`,
-to use `Select1Fast`. After the swap, on the same B6 cell:
-
-| Path                                  | ns/query | speedup |
-|---------------------------------------|---------:|--------:|
-| Pre-swap `SodaARE.IsEmpty`            | 4495     | 1.0×    |
-| Post-swap `SodaARE.IsEmpty`           |  **438** | **10.3×** |
-
-fp_rate identical at 0.7951. The remaining gap to the diagnostic
-`IsEmptyFast` (320 ns) is the SODA wrapper itself (block-id compute,
-PairwiseHash, mask). The fix is now live in the production query path
-for ERE one_d, ERE classic, and every ARE filter that wraps them
-(SODA, Truncation, Scan, Greedy, Adaptive, Hybrid, Bloom).
+**11.7× end-to-end speedup**, fp behaviour identical. The fix benefits
+ERE one_d, ERE classic, and every ARE filter that wraps them (SODA,
+Truncation, Scan, Greedy, Adaptive, Hybrid, Bloom — though Bloom
+doesn't go through ERE).
 
 ### Independent verification — isolated rsdic with the same rank stream
 
@@ -385,19 +379,13 @@ practical $L \cdot 1/\varepsilon$ — fall outside it.
    layout. Cross-checked: on the same SODA L=65536 / SOSD FB cell, the
    classic two-vector ERE measures 5475 ns vs the one-vector 5173 ns.
 
-4. **Optimisation opportunities** (out of scope for the defence run, but
-   worth recording):
-   - **Replace the `rankBlocks` linear scan with a binary search**
-     bracketed by `selectOneInds[selectInd]` and
-     `selectOneInds[selectInd+1]` (or `len(rankBlocks)` for the last
-     bracket). Turns the worst-case clustered Select1 from
-     $O(\text{bracket length})$ into $O(\log)$ — for our case from
-     thousands of iterations to ~12. This is a one-screen patch in
-     `rsdic.go:171`.
-   - **Make `Select1` a pointer-receiver method.** Currently
-     `(rs RSDic)` forces a 104-byte struct copy on every call (~9% of
-     observed flat time via `runtime.duffcopy`). Same fix for
-     `Select0`, `Rank`, etc.
+4. **Fix shipped** — `rsdic.Select1` now uses an adaptive
+   linear/binary inner search bracketed by `selectOneInds`, with a
+   pointer receiver. Production SODA query at the headline cell drops
+   to 374 ns (11.7×). Future work in the same direction:
+   - Apply the same `Select0` adaptive treatment for symmetry; not
+     currently a bottleneck for ERE consumers but the pathology is
+     identical.
    - In SODA, when the input universe fits in one super-block, fall
      through to a different mode (e.g. directly use a Truncation-style
      ERE on the natural prefix bits without the redundant identity
