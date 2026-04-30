@@ -1,13 +1,12 @@
 package are_hybrid_scan
 
 import (
-	"Thesis/bits"
 	"math/rand"
 	"sort"
 )
 
 type clusterSegment struct {
-	keys   []bits.BitString
+	keys   []uint64
 	minKey uint64
 	maxKey uint64
 }
@@ -26,22 +25,17 @@ type clusterSegment struct {
 //
 // minPts is the DBSCAN core threshold (typically 5-10).
 // minClusterSize is the post-filter: clusters below this size go to fallback.
-func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClusterSize int) ([]clusterSegment, []bits.BitString) {
+func detectClustersDBSCAN(keys []uint64, eps uint64, minPts int, minClusterSize int) ([]clusterSegment, []uint64) {
 	n := len(keys)
 	if n < 2 {
-		return nil, append([]bits.BitString{}, keys...)
-	}
-
-	keys64 := make([]uint64, n)
-	for i, k := range keys {
-		keys64[i] = k.TrieUint64()
+		return nil, append([]uint64(nil), keys...)
 	}
 
 	// Phase 1: identify core points via two-pointer sweep.
 	isCore := make([]bool, n)
 	left := 0
 	for right := 0; right < n; right++ {
-		for keys64[right]-keys64[left] > eps {
+		for keys[right]-keys[left] > eps {
 			left++
 		}
 		if right-left+1 >= minPts {
@@ -52,7 +46,7 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClus
 	// dense window. We need a backward pass to mark leftward core points too.
 	right := n - 1
 	for left := n - 1; left >= 0; left-- {
-		for keys64[right]-keys64[left] > eps {
+		for keys[right]-keys[left] > eps {
 			right--
 		}
 		if right-left+1 >= minPts {
@@ -74,7 +68,7 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClus
 			continue
 		}
 		start := i
-		for i+1 < n && isCore[i+1] && keys64[i+1]-keys64[i] <= eps {
+		for i+1 < n && isCore[i+1] && keys[i+1]-keys[i] <= eps {
 			i++
 		}
 		runs = append(runs, coreRun{start, i})
@@ -84,7 +78,7 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClus
 	// Merge runs that are within eps of each other (connected via border points).
 	merged := make([]coreRun, 0, len(runs))
 	for _, r := range runs {
-		if len(merged) > 0 && keys64[r.start]-keys64[merged[len(merged)-1].end] <= eps {
+		if len(merged) > 0 && keys[r.start]-keys[merged[len(merged)-1].end] <= eps {
 			merged[len(merged)-1].end = r.end
 		} else {
 			merged = append(merged, r)
@@ -96,18 +90,18 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClus
 	var clusters []clusterSegment
 	for _, r := range merged {
 		lo := r.start
-		for lo > 0 && keys64[r.start]-keys64[lo-1] <= eps {
+		for lo > 0 && keys[r.start]-keys[lo-1] <= eps {
 			lo--
 		}
 		hi := r.end
-		for hi < n-1 && keys64[hi+1]-keys64[r.end] <= eps {
+		for hi < n-1 && keys[hi+1]-keys[r.end] <= eps {
 			hi++
 		}
 
 		clusters = append(clusters, clusterSegment{
 			keys:   keys[lo : hi+1],
-			minKey: keys64[lo],
-			maxKey: keys64[hi],
+			minKey: keys[lo],
+			maxKey: keys[hi],
 		})
 		for j := lo; j <= hi; j++ {
 			assigned[j] = true
@@ -126,14 +120,14 @@ func detectClustersDBSCAN(keys []bits.BitString, eps uint64, minPts int, minClus
 		}
 		filtered = append(filtered, c)
 		// Find index range via binary search on minKey.
-		lo := sort.Search(n, func(j int) bool { return keys64[j] >= c.minKey })
-		for j := lo; j < n && keys64[j] <= c.maxKey; j++ {
+		lo := sort.Search(n, func(j int) bool { return keys[j] >= c.minKey })
+		for j := lo; j < n && keys[j] <= c.maxKey; j++ {
 			assigned[j] = true
 		}
 	}
 
 	// Phase 5: collect noise + dissolved small clusters (fallback).
-	var fallback []bits.BitString
+	var fallback []uint64
 	for i := 0; i < n; i++ {
 		if !assigned[i] {
 			fallback = append(fallback, keys[i])

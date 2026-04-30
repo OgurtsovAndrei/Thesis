@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"Thesis/bits"
-	"Thesis/emptiness/are_hybrid"
 	"Thesis/testutils"
 )
 
@@ -30,15 +28,6 @@ var benchEpsilons = []float64{0.1, 0.01, 0.001}
 type keyDataset struct {
 	keys     []uint64
 	clusters []testutils.ClusterInfo
-}
-
-// makeBSSlice converts a sorted uint64 slice to a []bits.BitString using 64-bit trie encoding.
-func makeBSSlice(keys []uint64) []bits.BitString {
-	bs := make([]bits.BitString, len(keys))
-	for i, k := range keys {
-		bs[i] = testutils.TrieBS(k)
-	}
-	return bs
 }
 
 // medianDuration returns the median of a slice of durations.
@@ -139,7 +128,6 @@ func loadSOSD(path string, maxKeys int) ([]uint64, error) {
 	}
 	sort.Slice(raw, func(i, j int) bool { return raw[i] < raw[j] })
 
-	// Deduplicate in place.
 	j := 0
 	for i := 1; i < len(raw); i++ {
 		if raw[i] != raw[j] {
@@ -150,8 +138,8 @@ func loadSOSD(path string, maxKeys int) ([]uint64, error) {
 	return raw[:j+1], nil
 }
 
-// generateUniformQueries returns queryCount uniform random queries of width rangeLen.
-func generateUniformQueries(queryCount int, rangeLen uint64, rng *rand.Rand) [][2]uint64 {
+// generateBenchQueries returns queryCount uniform random queries of width rangeLen.
+func generateBenchQueries(queryCount int, rangeLen uint64, rng *rand.Rand) [][2]uint64 {
 	queries := make([][2]uint64, queryCount)
 	for i := range queries {
 		a := rng.Uint64() & mask60bits
@@ -164,26 +152,6 @@ func generateUniformQueries(queryCount int, rangeLen uint64, rng *rand.Rand) [][
 	return queries
 }
 
-// measureBuildHybrid builds are_hybrid.HybridARE benchBuildRuns times and returns
-// the built filter plus median build throughput in Mkeys/s.
-func measureBuildHybrid(keys []uint64, rangeLen uint64, eps float64) (*are_hybrid.HybridARE, float64, error) {
-	n := len(keys)
-	durations := make([]time.Duration, benchBuildRuns)
-	var last *are_hybrid.HybridARE
-	for r := 0; r < benchBuildRuns; r++ {
-		bs := makeBSSlice(keys)
-		start := time.Now()
-		f, err := are_hybrid.NewHybridARE(bs, rangeLen, eps)
-		durations[r] = time.Since(start)
-		if err != nil {
-			return nil, 0, err
-		}
-		last = f
-	}
-	med := medianDuration(durations)
-	return last, float64(n) / med.Seconds() / 1e6, nil
-}
-
 // measureBuildHybridScan builds HybridScanARE benchBuildRuns times and returns
 // the built filter plus median build throughput in Mkeys/s.
 func measureBuildHybridScan(keys []uint64, rangeLen uint64, eps float64) (*HybridScanARE, float64, error) {
@@ -191,9 +159,8 @@ func measureBuildHybridScan(keys []uint64, rangeLen uint64, eps float64) (*Hybri
 	durations := make([]time.Duration, benchBuildRuns)
 	var last *HybridScanARE
 	for r := 0; r < benchBuildRuns; r++ {
-		bs := makeBSSlice(keys)
 		start := time.Now()
-		f, err := NewHybridScanARE(bs, rangeLen, eps)
+		f, err := NewHybridScanARE(keys, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
 		durations[r] = time.Since(start)
 		if err != nil {
 			return nil, 0, err
@@ -202,21 +169,6 @@ func measureBuildHybridScan(keys []uint64, rangeLen uint64, eps float64) (*Hybri
 	}
 	med := medianDuration(durations)
 	return last, float64(n) / med.Seconds() / 1e6, nil
-}
-
-// measureQueryHybrid runs benchQueryRuns rounds of queryCount IsEmpty calls on
-// hybridFilter, returns median query throughput in Mqueries/s.
-func measureQueryHybrid(filter *are_hybrid.HybridARE, queries [][2]uint64) float64 {
-	queryCount := len(queries)
-	durations := make([]time.Duration, benchQueryRuns)
-	for r := 0; r < benchQueryRuns; r++ {
-		start := time.Now()
-		for _, q := range queries {
-			filter.IsEmpty(testutils.TrieBS(q[0]), testutils.TrieBS(q[1]))
-		}
-		durations[r] = time.Since(start)
-	}
-	return float64(queryCount) / medianDuration(durations).Seconds() / 1e6
 }
 
 // measureQueryHybridScan runs benchQueryRuns rounds of queryCount IsEmpty calls on
@@ -227,15 +179,15 @@ func measureQueryHybridScan(filter *HybridScanARE, queries [][2]uint64) float64 
 	for r := 0; r < benchQueryRuns; r++ {
 		start := time.Now()
 		for _, q := range queries {
-			filter.IsEmpty(testutils.TrieBS(q[0]), testutils.TrieBS(q[1]))
+			filter.IsEmpty(q[0], q[1])
 		}
 		durations[r] = time.Since(start)
 	}
 	return float64(queryCount) / medianDuration(durations).Seconds() / 1e6
 }
 
-// runComparison executes one (distribution × epsilon) comparison and prints a side-by-side table.
-func runComparison(t *testing.T, distName string, ds keyDataset, eps float64) {
+// runBench executes one (distribution × epsilon) benchmark and prints results.
+func runBench(t *testing.T, distName string, ds keyDataset, eps float64) {
 	t.Helper()
 	keys := ds.keys
 	n := len(keys)
@@ -249,45 +201,27 @@ func runComparison(t *testing.T, distName string, ds keyDataset, eps float64) {
 	if ds.clusters != nil {
 		queries = testutils.GenerateClusterQueries(benchQueryCount, ds.clusters, 0.15, benchRangeLen, qrng)
 	} else {
-		queries = generateUniformQueries(benchQueryCount, benchRangeLen, qrng)
+		queries = generateBenchQueries(benchQueryCount, benchRangeLen, qrng)
 	}
 
-	hybridFilter, hybridBuildMkps, err := measureBuildHybrid(keys, benchRangeLen, eps)
-	if err != nil {
-		t.Errorf("[%s eps=%.3f] HybridARE build: %v", distName, eps, err)
-		return
-	}
-
-	hybridScanFilter, hybridScanBuildMkps, err := measureBuildHybridScan(keys, benchRangeLen, eps)
+	filter, buildMkps, err := measureBuildHybridScan(keys, benchRangeLen, eps)
 	if err != nil {
 		t.Errorf("[%s eps=%.3f] HybridScanARE build: %v", distName, eps, err)
 		return
 	}
 
-	hybridFPR := testutils.MeasureFPR(keys, queries, func(a, b uint64) bool {
-		return hybridFilter.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b))
-	})
-	hybridScanFPR := testutils.MeasureFPR(keys, queries, func(a, b uint64) bool {
-		return hybridScanFilter.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b))
-	})
-
-	hybridBPK := float64(hybridFilter.SizeInBits()) / float64(n)
-	hybridScanBPK := float64(hybridScanFilter.SizeInBits()) / float64(n)
-
-	hybridQueryMqps := measureQueryHybrid(hybridFilter, queries)
-	hybridScanQueryMqps := measureQueryHybridScan(hybridScanFilter, queries)
-
-	hNC, hNF, _ := hybridFilter.Stats()
-	hsNC, hsNF, _ := hybridScanFilter.Stats()
+	fpr := testutils.MeasureFPR(keys, queries, filter.IsEmpty)
+	bpk := float64(filter.SizeInBits()) / float64(n)
+	queryMqps := measureQueryHybridScan(filter, queries)
+	nc, nf, _ := filter.Stats()
 
 	fmt.Printf("\nDistribution: %s, eps=%.3f, N=%d\n", distName, eps, n)
-	fmt.Printf("%-24s  %12s  %12s\n", "", "Hybrid", "HybridScan")
-	fmt.Printf("%-24s  %12.5f  %12.5f\n", "FPR:", hybridFPR, hybridScanFPR)
-	fmt.Printf("%-24s  %12.2f  %12.2f\n", "BPK:", hybridBPK, hybridScanBPK)
-	fmt.Printf("%-24s  %12.2f  %12.2f\n", "Build (Mkeys/s):", hybridBuildMkps, hybridScanBuildMkps)
-	fmt.Printf("%-24s  %12.2f  %12.2f\n", "Query (Mq/s):", hybridQueryMqps, hybridScanQueryMqps)
-	fmt.Printf("%-24s  %12d  %12d\n", "Clusters:", hNC, hsNC)
-	fmt.Printf("%-24s  %12d  %12d\n", "Fallback keys:", hNF, hsNF)
+	fmt.Printf("%-24s  %12.5f\n", "FPR:", fpr)
+	fmt.Printf("%-24s  %12.2f\n", "BPK:", bpk)
+	fmt.Printf("%-24s  %12.2f\n", "Build (Mkeys/s):", buildMkps)
+	fmt.Printf("%-24s  %12.2f\n", "Query (Mq/s):", queryMqps)
+	fmt.Printf("%-24s  %12d\n", "Clusters:", nc)
+	fmt.Printf("%-24s  %12d\n", "Fallback keys:", nf)
 }
 
 func TestBenchComparison(t *testing.T) {
@@ -367,7 +301,7 @@ func TestBenchComparison(t *testing.T) {
 			for _, eps := range benchEpsilons {
 				eps := eps
 				t.Run(fmt.Sprintf("eps=%.3f", eps), func(t *testing.T) {
-					runComparison(t, dist.name, ds, eps)
+					runBench(t, dist.name, ds, eps)
 				})
 			}
 		})

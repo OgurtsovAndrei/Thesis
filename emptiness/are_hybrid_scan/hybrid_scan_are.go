@@ -1,9 +1,9 @@
 package are_hybrid_scan
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/are_adaptive"
 	"Thesis/emptiness/are_trunc"
+	"Thesis/errutil"
 	"fmt"
 	"math"
 	"sort"
@@ -16,18 +16,18 @@ const (
 )
 
 type clusterFilter struct {
-	filter *are_adaptive.AdaptiveApproximateRangeEmptiness
+	filter *are_adaptive.AdaptiveARE
 	minKey uint64
 	maxKey uint64
 }
 
 type fallbackFilter struct {
 	trunc    *are_trunc.TruncARE
-	adaptive *are_adaptive.AdaptiveApproximateRangeEmptiness
+	adaptive *are_adaptive.AdaptiveARE
 	n        int
 }
 
-func (f *fallbackFilter) IsEmpty(a, b bits.BitString) bool {
+func (f *fallbackFilter) IsEmpty(a, b uint64) bool {
 	if f.trunc != nil {
 		return f.trunc.IsEmpty(a, b)
 	}
@@ -57,51 +57,83 @@ type HybridScanARE struct {
 	n         int
 }
 
+// Config holds construction parameters for NewHybridScanARE.
+type Config struct {
+	RangeLen float64
+	Eps      float64
+}
+
+// ConfigFromK holds construction parameters for NewHybridScanAREFromK.
+type ConfigFromK struct {
+	RangeLen float64
+	K        uint32
+}
+
+// ConfigWithPolicy holds construction parameters for NewHybridScanAREWithPolicy.
+type ConfigWithPolicy struct {
+	RangeLen float64
+	K        uint32
+	Policy   FallbackPolicy
+}
+
+// ConfigFromBPK holds construction parameters for NewHybridScanAREFromBPK.
+type ConfigFromBPK struct {
+	RangeLen float64
+	BPK      float64
+}
+
 // --- public constructors ---
 
-func NewHybridScanARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*HybridScanARE, error) {
+func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	n := len(keys)
 	if n == 0 {
 		return &HybridScanARE{n: 0}, nil
 	}
 
+	rangeLen := uint64(cfg.RangeLen)
 	effectiveRangeLen := rangeLen + 1
-	rTarget := float64(n) * float64(effectiveRangeLen) / epsilon
+	rTarget := float64(n) * float64(effectiveRangeLen) / cfg.Eps
 	K := uint32(math.Ceil(math.Log2(rTarget)))
 	if K > 64 {
 		K = 64
 	}
 
-	dbscanEps := uint64(float64(rangeLen) / epsilon * epsMultiplier)
-	return newHybridScanARE(keys, rangeLen, K, dbscanEps, FallbackAuto{})
+	dbscanEps := uint64(cfg.RangeLen / cfg.Eps * epsMultiplier)
+	return newHybridScanARE(keys, keyBits, rangeLen, K, dbscanEps, FallbackAuto{})
 }
 
-func NewHybridScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*HybridScanARE, error) {
+func NewHybridScanAREFromK(keys []uint64, keyBits uint32, cfg ConfigFromK) (*HybridScanARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	if len(keys) == 0 {
 		return &HybridScanARE{n: 0}, nil
 	}
-	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, K)
-	return newHybridScanARE(keys, rangeLen, K, dbscanEps, FallbackAuto{})
+	rangeLen := uint64(cfg.RangeLen)
+	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, cfg.K)
+	return newHybridScanARE(keys, keyBits, rangeLen, cfg.K, dbscanEps, FallbackAuto{})
 }
 
 // NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.
-func NewHybridScanAREWithPolicy(keys []bits.BitString, rangeLen uint64, K uint32, policy FallbackPolicy) (*HybridScanARE, error) {
+func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPolicy) (*HybridScanARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	if len(keys) == 0 {
 		return &HybridScanARE{n: 0}, nil
 	}
-	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, K)
-	return newHybridScanARE(keys, rangeLen, K, dbscanEps, policy)
+	rangeLen := uint64(cfg.RangeLen)
+	dbscanEps := dbscanEpsFromK(len(keys), rangeLen, cfg.K)
+	return newHybridScanARE(keys, keyBits, rangeLen, cfg.K, dbscanEps, cfg.Policy)
 }
 
-func NewHybridScanAREFromBPK(keys []bits.BitString, rangeLen uint64, targetBPK float64) (*HybridScanARE, error) {
-	K := uint32(math.Ceil(targetBPK))
+func NewHybridScanAREFromBPK(keys []uint64, keyBits uint32, cfg ConfigFromBPK) (*HybridScanARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	K := uint32(math.Ceil(cfg.BPK))
 	if K == 0 {
 		K = 1
 	}
 	if K > 64 {
 		K = 64
 	}
-	return NewHybridScanAREFromK(keys, rangeLen, K)
+	return NewHybridScanAREFromK(keys, keyBits, ConfigFromK{RangeLen: cfg.RangeLen, K: K})
 }
 
 func dbscanEpsFromK(n int, rangeLen uint64, K uint32) uint64 {
@@ -115,13 +147,13 @@ func dbscanEpsFromK(n int, rangeLen uint64, K uint32) uint64 {
 
 // --- core build ---
 
-func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
+func newHybridScanARE(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are_trunc.NewTruncAREFromK(keys, K)
+			fb, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -135,7 +167,7 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, dbscanEp
 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, rangeLen, K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, float64(rangeLen), K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -148,7 +180,7 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, dbscanEp
 	h.nClusters = len(h.clusters)
 
 	if len(fallbackKeys) > 0 {
-		fb, err := buildFallback(fallbackKeys, rangeLen, K, policy)
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, K, policy)
 		if err != nil {
 			return nil, err
 		}
@@ -159,16 +191,16 @@ func newHybridScanARE(keys []bits.BitString, rangeLen uint64, K uint32, dbscanEp
 	return h, nil
 }
 
-func buildFallback(keys []bits.BitString, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {
+func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {
 	if policy.useTrunc(keys, K, rangeLen) {
-		fb, err := are_trunc.NewTruncAREFromK(keys, K)
+		fb, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
 		if err != nil {
 			return nil, fmt.Errorf("fallback trunc build: %w", err)
 		}
 		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
 	}
 
-	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, rangeLen, K, 0)
+	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, keyBits, float64(rangeLen), K, 0)
 	if err != nil {
 		return nil, fmt.Errorf("fallback adaptive build: %w", err)
 	}
@@ -177,26 +209,23 @@ func buildFallback(keys []bits.BitString, rangeLen uint64, K uint32, policy Fall
 
 // --- query & metrics ---
 
-func (h *HybridScanARE) IsEmpty(a, b bits.BitString) bool {
+func (h *HybridScanARE) IsEmpty(lo, hi uint64) bool {
 	if h.n == 0 {
 		return true
 	}
 
-	aVal := a.TrieUint64()
-	bVal := b.TrieUint64()
-
-	lo := sort.Search(len(h.clusters), func(i int) bool {
-		return h.clusters[i].maxKey >= aVal
+	idx := sort.Search(len(h.clusters), func(i int) bool {
+		return h.clusters[i].maxKey >= lo
 	})
 
-	for i := lo; i < len(h.clusters) && h.clusters[i].minKey <= bVal; i++ {
-		if !h.clusters[i].filter.IsEmpty(a, b) {
+	for i := idx; i < len(h.clusters) && h.clusters[i].minKey <= hi; i++ {
+		if !h.clusters[i].filter.IsEmpty(lo, hi) {
 			return false
 		}
 	}
 
 	if h.fallback != nil {
-		if !h.fallback.IsEmpty(a, b) {
+		if !h.fallback.IsEmpty(lo, hi) {
 			return false
 		}
 	}

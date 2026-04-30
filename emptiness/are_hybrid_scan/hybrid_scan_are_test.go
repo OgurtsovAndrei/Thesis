@@ -12,19 +12,19 @@ import (
 )
 
 func TestHybridScanARE_Empty(t *testing.T) {
-	h, err := NewHybridScanARE(nil, 100, 0.01)
+	h, err := NewHybridScanARE(nil, 64, Config{RangeLen: 100, Eps: 0.01})
 	require.NoError(t, err)
-	if !h.IsEmpty(trieBS(0), trieBS(1000)) {
+	if !h.IsEmpty(0, 1000) {
 		t.Error("empty filter should return true for any query")
 	}
 }
 
 func TestHybridScanARE_SingleKey(t *testing.T) {
-	bs := makeSortedBS([]uint64{42})
-	h, err := NewHybridScanARE(bs, 100, 0.01)
+	keys := []uint64{42}
+	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
 	require.NoError(t, err)
 
-	if h.IsEmpty(trieBS(42), trieBS(42)) {
+	if h.IsEmpty(42, 42) {
 		t.Error("false negative on single key")
 	}
 }
@@ -33,16 +33,14 @@ func TestHybridScanARE_NoFalseNegatives(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 	keys := generateTestClusterKeys(5000, 5, 0.15, rng)
 
-	bs := makeSortedBS(keys)
-	h, err := NewHybridScanARE(bs, 100, 0.01)
+	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
 	require.NoError(t, err)
 
 	nc, nf, nt := h.Stats()
 	t.Logf("Stats: %d clusters, %d fallback, %d total", nc, nf, nt)
 
 	for i, k := range keys {
-		a := trieBS(k)
-		if h.IsEmpty(a, a) {
+		if h.IsEmpty(k, k) {
 			t.Fatalf("false negative at key index %d (val=%d)", i, k)
 		}
 	}
@@ -55,16 +53,14 @@ func TestHybridScanARE_NoFalseNegatives_Sequential(t *testing.T) {
 		keys[i] = 1000 + uint64(i)*100
 	}
 
-	bs := makeSortedBS(keys)
-	h, err := NewHybridScanARE(bs, 100, 0.01)
+	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
 	require.NoError(t, err)
 
 	nc, nf, nt := h.Stats()
 	t.Logf("Stats: %d clusters, %d fallback, %d total", nc, nf, nt)
 
 	for i, k := range keys {
-		a := trieBS(k)
-		if h.IsEmpty(a, a) {
+		if h.IsEmpty(k, k) {
 			t.Fatalf("false negative at key index %d (val=%d)", i, k)
 		}
 	}
@@ -81,8 +77,7 @@ func TestHybridScanARE_FPR_Bounded(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 	keys := generateTestClusterKeys(n, 5, 0.15, rng)
 
-	bs := makeSortedBS(keys)
-	h, err := NewHybridScanARE(bs, rangeLen, eps)
+	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
 	require.NoError(t, err)
 
 	nc, nf, nt := h.Stats()
@@ -101,7 +96,7 @@ func TestHybridScanARE_FPR_Bounded(t *testing.T) {
 			continue
 		}
 		total++
-		if !h.IsEmpty(trieBS(a), trieBS(b)) {
+		if !h.IsEmpty(a, b) {
 			fp++
 		}
 	}
@@ -145,8 +140,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 					}
 					sort.Slice(sortedU64, func(i, j int) bool { return sortedU64[i] < sortedU64[j] })
 
-					bsSlice := makeSortedBS(sortedU64)
-					filter, err := NewHybridScanARE(bsSlice, rangeLen, eps)
+					filter, err := NewHybridScanARE(sortedU64, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
 					require.NoError(t, err)
 
 					qrng := rand.New(rand.NewSource(123))
@@ -156,10 +150,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 						queries[i] = [2]uint64{a, a + rangeLen - 1}
 					}
 
-					isEmpty := func(a, b uint64) bool {
-						return filter.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b))
-					}
-					fpr := testutils.MeasureFPR(sortedU64, queries, isEmpty)
+					fpr := testutils.MeasureFPR(sortedU64, queries, filter.IsEmpty)
 					t.Logf("uniform: FPR=%.5f (eps=%.4f, L=%d)", fpr, eps, rangeLen)
 					require.Less(t, fpr, eps*3, "HybridScan FPR too high for uniform distribution")
 				})
@@ -191,8 +182,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 					}
 					sort.Slice(sortedU64, func(i, j int) bool { return sortedU64[i] < sortedU64[j] })
 
-					bsSlice := makeSortedBS(sortedU64)
-					filter, err := NewHybridScanARE(bsSlice, rangeLen, eps)
+					filter, err := NewHybridScanARE(sortedU64, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
 					require.NoError(t, err)
 
 					nc, nf, _ := filter.Stats()
@@ -205,10 +195,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 						queries[i] = [2]uint64{a, a + rangeLen - 1}
 					}
 
-					isEmpty := func(a, b uint64) bool {
-						return filter.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b))
-					}
-					fpr := testutils.MeasureFPR(sortedU64, queries, isEmpty)
+					fpr := testutils.MeasureFPR(sortedU64, queries, filter.IsEmpty)
 					t.Logf("tight_clustered: FPR=%.5f (eps=%.4f, L=%d)", fpr, eps, rangeLen)
 					require.Less(t, fpr, eps*3, "HybridScan FPR too high for tight clustered distribution")
 				})
@@ -228,8 +215,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 						sortedU64[i] = base + uint64(i)*gap
 					}
 
-					bsSlice := makeSortedBS(sortedU64)
-					filter, err := NewHybridScanARE(bsSlice, rangeLen, eps)
+					filter, err := NewHybridScanARE(sortedU64, 64, Config{RangeLen: float64(rangeLen), Eps: eps})
 					require.NoError(t, err)
 
 					nc, nf, _ := filter.Stats()
@@ -242,10 +228,7 @@ func TestHybridScanARE_FPR_Accuracy(t *testing.T) {
 						queries[i] = [2]uint64{a, a + rangeLen - 1}
 					}
 
-					isEmpty := func(a, b uint64) bool {
-						return filter.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b))
-					}
-					fpr := testutils.MeasureFPR(sortedU64, queries, isEmpty)
+					fpr := testutils.MeasureFPR(sortedU64, queries, filter.IsEmpty)
 					t.Logf("sequential: FPR=%.5f (eps=%.4f, L=%d)", fpr, eps, rangeLen)
 					require.Less(t, fpr, eps*3, "HybridScan FPR too high for sequential distribution")
 				})
@@ -258,8 +241,7 @@ func TestHybridScanARE_SizeInBits(t *testing.T) {
 	rng := rand.New(rand.NewSource(42))
 	keys := generateTestClusterKeys(5000, 5, 0.15, rng)
 
-	bs := makeSortedBS(keys)
-	h, err := NewHybridScanARE(bs, 100, 0.01)
+	h, err := NewHybridScanARE(keys, 64, Config{RangeLen: 100, Eps: 0.01})
 	require.NoError(t, err)
 
 	sizeBits := h.SizeInBits()

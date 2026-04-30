@@ -1,7 +1,6 @@
 package are_hybrid_scan
 
 import (
-	"Thesis/bits"
 	"Thesis/testutils"
 	"fmt"
 	"math/rand"
@@ -17,32 +16,28 @@ const (
 	propRangeLen      = uint64(100)
 )
 
-func setupHybridScanData(rng *rand.Rand, n, bl int) ([]bits.BitString, *HybridScanARE, error) {
-	keySet := make(map[string]bool)
-	sortedKeys := make([]bits.BitString, 0, n)
+func setupHybridScanData(rng *rand.Rand, n int) ([]uint64, *HybridScanARE, error) {
+	seen := make(map[uint64]bool)
+	sortedKeys := make([]uint64, 0, n)
 	for len(sortedKeys) < n {
-		bs := randomBitString(rng, bl)
-		str := string(bs.Data())
-		if !keySet[str] {
-			keySet[str] = true
-			sortedKeys = append(sortedKeys, bs)
+		v := rng.Uint64()
+		if !seen[v] {
+			seen[v] = true
+			sortedKeys = append(sortedKeys, v)
 		}
 	}
-	sort.Slice(sortedKeys, func(i, j int) bool {
-		return sortedKeys[i].Compare(sortedKeys[j]) < 0
-	})
-
-	filter, err := NewHybridScanARE(sortedKeys, propRangeLen, propTargetEpsilon)
+	sort.Slice(sortedKeys, func(i, j int) bool { return sortedKeys[i] < sortedKeys[j] })
+	filter, err := NewHybridScanARE(sortedKeys, 64, Config{RangeLen: float64(propRangeLen), Eps: propTargetEpsilon})
 	return sortedKeys, filter, err
 }
 
 func TestHybridScanARE_Property_PointInclusion(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if filter.IsEmpty(key, key) {
-				t.Errorf("Key %v not found", key)
+				t.Errorf("Key %d not found", key)
 			}
 		}
 	})
@@ -50,19 +45,19 @@ func TestHybridScanARE_Property_PointInclusion(t *testing.T) {
 
 func TestHybridScanARE_Property_TightOverhang(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
-			if !key.IsAllZeros() {
-				prev := key.Predecessor()
+			if key > 0 {
+				prev := key - 1
 				if filter.IsEmpty(prev, key) {
-					t.Errorf("Range [%v, %v] failed", prev, key)
+					t.Errorf("Range [%d, %d] failed", prev, key)
 				}
 			}
-			if !key.IsAllOnes() {
-				next := key.Successor()
+			if key < ^uint64(0) {
+				next := key + 1
 				if filter.IsEmpty(key, next) {
-					t.Errorf("Range [%v, %v] failed", key, next)
+					t.Errorf("Range [%d, %d] failed", key, next)
 				}
 			}
 		}
@@ -71,14 +66,14 @@ func TestHybridScanARE_Property_TightOverhang(t *testing.T) {
 
 func TestHybridScanARE_Property_SpanningRanges(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		n := len(keys)
 		for j := 0; j < 10; j++ {
 			idx1 := rng.Intn(n - 5)
 			idx2 := idx1 + 1 + rng.Intn(minInt(n-idx1-1, 50))
 			a, b := keys[idx1], keys[idx2]
 			if filter.IsEmpty(a, b) {
-				t.Errorf("Spanning range [%v, %v] failed", a, b)
+				t.Errorf("Spanning range [%d, %d] failed", a, b)
 			}
 		}
 	})
@@ -86,22 +81,21 @@ func TestHybridScanARE_Property_SpanningRanges(t *testing.T) {
 
 func TestHybridScanARE_Property_MassiveSpan(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScan(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
 			t.Errorf("Massive span failed")
 		}
 	})
 }
 
-func runParallelHybridScan(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE)) {
-	bitLens := []int{64, 128, 256, 512}
+func runParallelHybridScan(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE)) {
 	for i := 0; i < propTestRuns; i++ {
 		i := i
-		bl := bitLens[i%len(bitLens)]
-		t.Run(fmt.Sprintf("BitLen%d/Iter%d", bl, i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Iter%d", i), func(t *testing.T) {
 			t.Parallel()
 			rng := rand.New(rand.NewSource(int64(i + 200)))
-			keys, filter, err := setupHybridScanData(rng, propMinN+rng.Intn(propMaxExtraN), bl)
+			n := propMinN + rng.Intn(propMaxExtraN)
+			keys, filter, err := setupHybridScanData(rng, n)
 			if err != nil {
 				t.Fatalf("Setup failed: %v", err)
 			}
@@ -110,17 +104,14 @@ func runParallelHybridScan(t *testing.T, testFn func(t *testing.T, rng *rand.Ran
 	}
 }
 
-func setupHybridScanDataClustered(rng *rand.Rand, n int) ([]bits.BitString, *HybridScanARE, error) {
+func setupHybridScanDataClustered(rng *rand.Rand, n int) ([]uint64, *HybridScanARE, error) {
 	keys64, _ := testutils.GenerateClusterDistribution(n, 5, 0.15, rng)
-	keysBS := make([]bits.BitString, len(keys64))
-	for i, k := range keys64 {
-		keysBS[i] = bits.NewFromTrieUint64(k, 64)
-	}
-	filter, err := NewHybridScanARE(keysBS, propRangeLen, propTargetEpsilon)
-	return keysBS, filter, err
+	sort.Slice(keys64, func(i, j int) bool { return keys64[i] < keys64[j] })
+	filter, err := NewHybridScanARE(keys64, 64, Config{RangeLen: float64(propRangeLen), Eps: propTargetEpsilon})
+	return keys64, filter, err
 }
 
-func runParallelHybridScanClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE)) {
+func runParallelHybridScanClustered(t *testing.T, testFn func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE)) {
 	const clusterTestRuns = 200
 	for i := 0; i < clusterTestRuns; i++ {
 		i := i
@@ -139,11 +130,11 @@ func runParallelHybridScanClustered(t *testing.T, testFn func(t *testing.T, rng 
 
 func TestHybridScanARE_Property_PointInclusion_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScanClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScanClustered(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		for j := 0; j < 20; j++ {
 			key := keys[rng.Intn(len(keys))]
 			if filter.IsEmpty(key, key) {
-				t.Errorf("Key %v not found", key)
+				t.Errorf("Key %d not found", key)
 			}
 		}
 	})
@@ -151,14 +142,14 @@ func TestHybridScanARE_Property_PointInclusion_Clustered(t *testing.T) {
 
 func TestHybridScanARE_Property_SpanningRanges_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScanClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScanClustered(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		n := len(keys)
 		for j := 0; j < 10; j++ {
 			idx1 := rng.Intn(n - 5)
 			idx2 := idx1 + 1 + rng.Intn(minInt(n-idx1-1, 50))
 			a, b := keys[idx1], keys[idx2]
 			if filter.IsEmpty(a, b) {
-				t.Errorf("Spanning range [%v, %v] failed", a, b)
+				t.Errorf("Spanning range [%d, %d] failed", a, b)
 			}
 		}
 	})
@@ -166,18 +157,11 @@ func TestHybridScanARE_Property_SpanningRanges_Clustered(t *testing.T) {
 
 func TestHybridScanARE_Property_MassiveSpan_Clustered(t *testing.T) {
 	t.Parallel()
-	runParallelHybridScanClustered(t, func(t *testing.T, rng *rand.Rand, keys []bits.BitString, filter *HybridScanARE) {
+	runParallelHybridScanClustered(t, func(t *testing.T, rng *rand.Rand, keys []uint64, filter *HybridScanARE) {
 		if filter.IsEmpty(keys[0], keys[len(keys)-1]) {
 			t.Errorf("Massive span failed")
 		}
 	})
-}
-
-func randomBitString(rng *rand.Rand, bitLen int) bits.BitString {
-	byteLen := (bitLen + 7) / 8
-	data := make([]byte, byteLen)
-	rng.Read(data)
-	return bits.NewFromDataAndSize(data, uint32(bitLen))
 }
 
 func minInt(a, b int) int {

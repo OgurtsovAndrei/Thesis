@@ -1,7 +1,6 @@
 package are_hybrid_scan
 
 import (
-	"Thesis/bits"
 	"math"
 	mbits "math/bits"
 )
@@ -9,43 +8,39 @@ import (
 // FallbackPolicy decides whether to use TruncARE or Adaptive/SODA for fallback keys.
 // The interface is sealed: only types defined in this package can implement it.
 type FallbackPolicy interface {
-	useTrunc(keys []bits.BitString, K uint32, rangeLen uint64) bool
+	useTrunc(keys []uint64, K uint32, rangeLen uint64) bool
 	String() string
 }
 
 // FallbackAuto uses the truncSafe heuristic (P5 gap vs phantom size).
 type FallbackAuto struct{}
 
-func (FallbackAuto) useTrunc(keys []bits.BitString, K uint32, _ uint64) bool {
+func (FallbackAuto) useTrunc(keys []uint64, K uint32, _ uint64) bool {
 	if len(keys) < 2 {
 		return true
 	}
-	keys64 := make([]uint64, len(keys))
-	for i, k := range keys {
-		keys64[i] = k.TrieUint64()
-	}
-	return truncSafe(keys64, K)
+	return truncSafe(keys, K)
 }
 func (FallbackAuto) String() string { return "Auto" }
 
 // FallbackAlwaysTrunc always uses TruncARE regardless of data distribution.
 type FallbackAlwaysTrunc struct{}
 
-func (FallbackAlwaysTrunc) useTrunc(_ []bits.BitString, _ uint32, _ uint64) bool { return true }
-func (FallbackAlwaysTrunc) String() string                                        { return "Trunc" }
+func (FallbackAlwaysTrunc) useTrunc(_ []uint64, _ uint32, _ uint64) bool { return true }
+func (FallbackAlwaysTrunc) String() string                                { return "Trunc" }
 
 // FallbackAlwaysSODA always uses Adaptive/SODA regardless of data distribution.
 type FallbackAlwaysSODA struct{}
 
-func (FallbackAlwaysSODA) useTrunc(_ []bits.BitString, _ uint32, _ uint64) bool { return false }
-func (FallbackAlwaysSODA) String() string                                        { return "SODA" }
+func (FallbackAlwaysSODA) useTrunc(_ []uint64, _ uint32, _ uint64) bool { return false }
+func (FallbackAlwaysSODA) String() string                                { return "SODA" }
 
 // FallbackEstimateFPR uses trunc when estimated FPR (n/2^K) ≤ Epsilon, else SODA.
 // Assumes keys are uniformly distributed in truncated space — works well on uniform data
 // but underestimates FPR on clustered distributions like OSM.
 type FallbackEstimateFPR struct{ Epsilon float64 }
 
-func (f FallbackEstimateFPR) useTrunc(keys []bits.BitString, K uint32, _ uint64) bool {
+func (f FallbackEstimateFPR) useTrunc(keys []uint64, K uint32, _ uint64) bool {
 	return float64(len(keys))/math.Pow(2, float64(K)) <= f.Epsilon
 }
 func (f FallbackEstimateFPR) String() string { return "EstFPR" }
@@ -57,18 +52,13 @@ func (f FallbackEstimateFPR) String() string { return "EstFPR" }
 // Works well for random queries but does not account for near-key query bias.
 type FallbackGapFraction struct{ Epsilon float64 }
 
-func (f FallbackGapFraction) useTrunc(keys []bits.BitString, K uint32, _ uint64) bool {
+func (f FallbackGapFraction) useTrunc(keys []uint64, K uint32, _ uint64) bool {
 	n := len(keys)
 	if n < 2 {
 		return true
 	}
 
-	keys64 := make([]uint64, n)
-	for i, k := range keys {
-		keys64[i] = k.TrieUint64()
-	}
-
-	spread := keys64[n-1] - keys64[0]
+	spread := keys[n-1] - keys[0]
 	if spread == 0 {
 		return true
 	}
@@ -85,7 +75,7 @@ func (f FallbackGapFraction) useTrunc(keys []bits.BitString, K uint32, _ uint64)
 
 	var smallSpan uint64
 	for i := 0; i < n-1; i++ {
-		g := keys64[i+1] - keys64[i]
+		g := keys[i+1] - keys[i]
 		if g <= phantomSize {
 			smallSpan += g
 		}
@@ -102,13 +92,13 @@ func (f FallbackGapFraction) String() string { return "GapFrac" }
 // than the query range.
 type FallbackPhantom struct{}
 
-func (FallbackPhantom) useTrunc(keys []bits.BitString, K uint32, rangeLen uint64) bool {
+func (FallbackPhantom) useTrunc(keys []uint64, K uint32, rangeLen uint64) bool {
 	n := len(keys)
 	if n < 2 {
 		return true
 	}
 
-	spread := keys[n-1].TrieUint64() - keys[0].TrieUint64()
+	spread := keys[n-1] - keys[0]
 	if spread == 0 {
 		return true
 	}

@@ -8,23 +8,9 @@ import (
 	"sort"
 	"testing"
 
-	"Thesis/bits"
 	are_trunc "Thesis/emptiness/are_trunc"
 	"Thesis/testutils"
 )
-
-// trieFirstSetBitDiag mimics the unexported trieFirstSetBit for diagnostic use.
-func trieFirstSetBitDiag(bs bits.BitString) uint32 {
-	W := bs.SizeBits()
-	numWords := (W + 63) / 64
-	for i := uint32(0); i < numWords; i++ {
-		w := bs.Word(i)
-		if w != 0 {
-			return i*64 + uint32(mbits.TrailingZeros64(w))
-		}
-	}
-	return W
-}
 
 // TestS5Diagnostic investigates why S5 (equidistant keys at gap = DBSCAN eps) produces FPR ~73%.
 //
@@ -34,11 +20,11 @@ func trieFirstSetBitDiag(bs bits.BitString) uint32 {
 //	keys[i] = base + i * gap
 func TestS5Diagnostic(t *testing.T) {
 	const (
-		rangeLen    = uint64(1000)
-		epsilon     = 0.01
-		N           = 100_000
-		queryCount  = 200_000
-		base        = uint64(1_000_000)
+		rangeLen   = uint64(1000)
+		epsilon    = 0.01
+		N          = 100_000
+		queryCount = 200_000
+		base       = uint64(1_000_000)
 	)
 
 	dbscanEpsF := float64(epsMultiplier) * float64(rangeLen) / epsilon
@@ -85,8 +71,7 @@ func TestS5Diagnostic(t *testing.T) {
 	t.Logf("DBSCAN eps=%d  key gap=%d  equal: %v", dbscanEps, gap, gap == dbscanEps)
 	t.Logf("With gap==eps each eps-window contains exactly 2 consecutive keys => only 1 neighbor => no core points (need %d)", dbscanMinPts)
 
-	bs := makeSortedBS(keys)
-	clusters, fallback := detectClustersDBSCAN(bs, dbscanEps, dbscanMinPts, minClusterSize)
+	clusters, fallback := detectClustersDBSCAN(keys, dbscanEps, dbscanMinPts, minClusterSize)
 	t.Logf("Result: %d clusters  %d fallback keys", len(clusters), len(fallback))
 
 	// truncSafe verdict.
@@ -95,62 +80,30 @@ func TestS5Diagnostic(t *testing.T) {
 	t.Logf("truncSafe(keys, K=%d) = %v  (expected true because gap=%d >> phantom_size=%d)", K, isSafe, gap, phantomSize)
 
 	// Build the trunc filter using the same fallback keys.
-	truncFilter, err := are_trunc.NewTruncAREFromK(fallback, K)
+	truncFilter, err := are_trunc.NewTruncAREFromK(fallback, 64, K)
 	if err != nil {
 		t.Fatalf("trunc build: %v", err)
 	}
 
-	// Expose normalization internals.
-	minBS := trieBS(minKey)
-	maxBS := trieBS(maxKey)
-	spreadBS := maxBS.Sub(minBS)
-	spreadStart := trieFirstSetBitDiag(spreadBS)
+	// Normalization internals (uint64 arithmetic).
+	// spreadStart = position of first set bit in spread (= bit length - 1, 0-indexed from LSB)
+	spreadStart := uint32(mbits.Len64(spread)) - 1
+	if spread == 0 {
+		spreadStart = 0
+	}
 
 	t.Log("\n=== NORMALIZATION INTERNALS ===")
-	t.Logf("spreadStart (storage bit index of first set bit in spread) = %d", spreadStart)
-	t.Logf("normalizeToK extracts bits [%d, %d) (K=%d bits) of (key - minKey)", spreadStart, spreadStart+K, K)
+	t.Logf("spread=0x%x  spreadStart=%d  (first significant bit position)", spread, spreadStart)
+	t.Logf("normalizeToK: extract K=%d bits from (key - minKey) >> spreadStart", K)
 
-	truncMaxKey := spreadBS.BitRange(spreadStart, K).TrieUint64()
-	t.Logf("truncated maxKey = %d  (should be ~2^K-1 = %d)", truncMaxKey, uint64(1)<<K-1)
-
-	// Show what normalizeToK produces for out-of-range queries.
+	// Show out-of-range key normalization.
 	t.Log("\n=== OUT-OF-RANGE KEY NORMALIZATION ===")
-	t.Logf("%-15s  %-22s  %-12s  %-12s  %-20s", "delta", "a = maxKey+delta", "offset", "truncA", "truncA < truncMaxKey?")
+	t.Logf("%-15s  %-22s  %-12s", "delta", "a = maxKey+delta", "offset")
 	for _, delta := range []uint64{1, gap / 4, gap / 2, gap, 2 * gap, 10 * gap, 1 << 20, 1 << 27, 1 << 30} {
 		a := maxKey + delta
-		aBS := trieBS(a)
-		off := aBS.Sub(minBS)
-		tA := off.BitRange(spreadStart, K).TrieUint64()
-		t.Logf("%-15d  %-22d  %-12d  %-12d  %v", delta, a, a-minKey, tA, tA < truncMaxKey)
+		offset := a - minKey
+		t.Logf("%-15d  %-22d  %-12d", delta, a, offset)
 	}
-
-	// Show what trunc.IsEmpty does for an out-of-range query.
-	// According to trunc.IsEmpty: if b < minKey -> return true (correct).
-	// If a > maxKey: b is also > maxKey (since b = a + L - 1 >= a > maxKey),
-	// so truncB is clamped to truncMaxKey. But truncA = normalizeToK(a) can wrap.
-	t.Log("\n=== IsEmpty BEHAVIOR FOR a > maxKey ===")
-	t.Log("When a > maxKey and b > maxKey:")
-	t.Log("  b.Compare(minKey) >= 0 => does NOT return true early")
-	t.Log("  truncB = normalizeToK(maxKey) = truncMaxKey (clamped)")
-	t.Log("  truncA = normalizeToK(a) — may wrap within K bits")
-	t.Log("  If truncA wraps to a small value: IsEmpty([small, truncMaxKey]) covers huge range => FP")
-
-	// Demonstrate with a concrete value.
-	aDemo := maxKey + gap // one gap past the end
-	aDemoBS := trieBS(aDemo)
-	tADemo := aDemoBS.Sub(minBS).BitRange(spreadStart, K).TrieUint64()
-	bDemo := aDemo + rangeLen - 1
-	bDemoBS := trieBS(bDemo)
-	var tBDemo uint64
-	if bDemoBS.Compare(maxBS) > 0 {
-		tBDemo = truncMaxKey
-	} else {
-		tBDemo = bDemoBS.Sub(minBS).BitRange(spreadStart, K).TrieUint64()
-	}
-	isFP := !truncFilter.IsEmpty(testutils.TrieBS(aDemo), testutils.TrieBS(bDemo))
-	t.Logf("\nConcrete demo: a = maxKey + gap = %d", aDemo)
-	t.Logf("  truncA=%d  truncB=%d (clamped to truncMaxKey)", tADemo, tBDemo)
-	t.Logf("  truncA < truncB? %v  =>  trunc.IsEmpty = %v  (FP: %v)", tADemo < tBDemo, !isFP, isFP)
 
 	// Measure FPR with the same queries as strategy5.
 	rng := rand.New(rand.NewSource(14142))
@@ -160,10 +113,7 @@ func TestS5Diagnostic(t *testing.T) {
 		queries[i] = [2]uint64{a, a + rangeLen - 1}
 	}
 
-	isEmptyTrunc := func(a, b uint64) bool {
-		return truncFilter.IsEmpty(testutils.TrieBS(a), testutils.TrieBS(b))
-	}
-	fprTrunc := testutils.MeasureFPR(keys, queries, isEmptyTrunc)
+	fprTrunc := testutils.MeasureFPR(keys, queries, truncFilter.IsEmpty)
 	t.Log("\n=== FPR MEASUREMENT ===")
 	t.Logf("Trunc FPR = %.5f  (target epsilon = %.4f, expected ~%.4f)", fprTrunc, epsilon, epsilon)
 
@@ -183,7 +133,7 @@ func TestS5Diagnostic(t *testing.T) {
 		} else {
 			emptyQ.inRange++
 		}
-		if !isEmptyTrunc(a, b) {
+		if !truncFilter.IsEmpty(a, b) {
 			fp.total++
 			if outside {
 				fp.outRange++
@@ -203,9 +153,9 @@ func TestS5Diagnostic(t *testing.T) {
 		t.Logf("FPR out-of-range: %.5f", float64(fp.outRange)/float64(emptyQ.outRange))
 	}
 
-	// Print a few out-of-range FP examples with full normalization trace.
+	// Print a few out-of-range FP examples.
 	t.Log("\n=== SAMPLE OUT-OF-RANGE FALSE POSITIVES ===")
-	header := fmt.Sprintf("%-22s %-22s %-8s %-8s %-8s %-8s", "a", "b", "side", "truncA", "truncB", "t<tMax?")
+	header := fmt.Sprintf("%-22s %-22s %-8s", "a", "b", "side")
 	t.Log(header)
 	printed := 0
 	for _, q := range queries {
@@ -217,25 +167,12 @@ func TestS5Diagnostic(t *testing.T) {
 		if idx < len(keys) && keys[idx] <= b {
 			continue
 		}
-		if !isEmptyTrunc(a, b) && (b < minKey || a > maxKey) {
-			aBS2 := trieBS(a)
-			bBS2 := trieBS(b)
-			var tA2, tB2 uint64
-			if aBS2.Compare(minBS) < 0 {
-				tA2 = 0
-			} else {
-				tA2 = aBS2.Sub(minBS).BitRange(spreadStart, K).TrieUint64()
-			}
-			if bBS2.Compare(maxBS) > 0 {
-				tB2 = truncMaxKey
-			} else {
-				tB2 = bBS2.Sub(minBS).BitRange(spreadStart, K).TrieUint64()
-			}
+		if !truncFilter.IsEmpty(a, b) && (b < minKey || a > maxKey) {
 			side := "a>max"
 			if b < minKey {
 				side = "b<min"
 			}
-			t.Logf("%-22d %-22d %-8s %-8d %-8d %v", a, b, side, tA2, tB2, tA2 < tB2)
+			t.Logf("%-22d %-22d %-8s", a, b, side)
 			printed++
 		}
 	}
@@ -245,9 +182,7 @@ func TestS5Diagnostic(t *testing.T) {
 	case fp.outRange > fp.inRange:
 		t.Logf("PRIMARY CAUSE: out-of-range queries dominate FP (%d/%d)", fp.outRange, fp.total)
 		t.Logf("When a > maxKey, trunc.IsEmpty does NOT return early.")
-		t.Logf("  truncB is clamped to truncMaxKey (~2^K - 1)")
-		t.Logf("  truncA = (a - minKey).BitRange(%d, %d) wraps within K=%d bits", spreadStart, K, K)
-		t.Logf("  Whenever truncA < truncMaxKey the ERE sees [truncA, truncMaxKey] = broad range => FP")
+		t.Logf("  Offset (a - minKey) wraps within K=%d bits → phantom overlap beyond key span", K)
 	case fp.inRange > fp.outRange:
 		t.Logf("PRIMARY CAUSE: in-range queries dominate FP (%d/%d) — phantom overlap in the key span", fp.inRange, fp.total)
 	default:

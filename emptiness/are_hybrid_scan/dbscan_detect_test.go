@@ -1,23 +1,10 @@
 package are_hybrid_scan
 
 import (
-	"Thesis/bits"
 	"math/rand"
 	"sort"
 	"testing"
 )
-
-func trieBS(val uint64) bits.BitString {
-	return bits.NewFromTrieUint64(val, 64)
-}
-
-func makeSortedBS(vals []uint64) []bits.BitString {
-	bs := make([]bits.BitString, len(vals))
-	for i, v := range vals {
-		bs[i] = trieBS(v)
-	}
-	return bs
-}
 
 func dedup(keys []uint64) []uint64 {
 	if len(keys) == 0 {
@@ -46,10 +33,9 @@ func TestDBSCAN_Sequential(t *testing.T) {
 		keys[i] = 1000 + uint64(i)*gap
 	}
 
-	bs := makeSortedBS(keys)
 	// rangeLen=100, epsilon=0.01 -> eps = 100/0.01*10 = 100_000
 	eps := testEps(100, 0.01)
-	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
+	clusters, fallback := detectClustersDBSCAN(keys, eps, 10, 256)
 
 	t.Logf("Sequential: eps=%d, %d clusters, %d fallback keys", eps, len(clusters), len(fallback))
 	for i, c := range clusters {
@@ -87,9 +73,8 @@ func TestDBSCAN_ClusteredData(t *testing.T) {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	keys = dedup(keys)
 
-	bs := makeSortedBS(keys)
 	eps := testEps(100, 0.01)
-	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
+	clusters, fallback := detectClustersDBSCAN(keys, eps, 10, 256)
 
 	t.Logf("Clustered: eps=%d, %d clusters, %d fallback keys (total %d)", eps, len(clusters), len(fallback), len(keys))
 	for i, c := range clusters {
@@ -124,11 +109,10 @@ func TestDBSCAN_UniformRandom(t *testing.T) {
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
-	bs := makeSortedBS(keys)
 	// eps = 100/0.01*10 = 100_000, avg gap for 1000 uniform uint64 keys ~ 2^47
 	// So no clusters should form — everything goes to fallback (trunc).
 	eps := testEps(100, 0.01)
-	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
+	clusters, fallback := detectClustersDBSCAN(keys, eps, 10, 256)
 
 	t.Logf("Uniform random: eps=%d, %d clusters, %d fallback keys", eps, len(clusters), len(fallback))
 
@@ -159,9 +143,8 @@ func TestDBSCAN_SingleClusterPlusScattered(t *testing.T) {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	keys = dedup(keys)
 
-	bs := makeSortedBS(keys)
 	eps := testEps(100, 0.01)
-	clusters, fallback := detectClustersDBSCAN(bs, eps, 10, 256)
+	clusters, fallback := detectClustersDBSCAN(keys, eps, 10, 256)
 
 	t.Logf("Single cluster + scattered: eps=%d, %d clusters, %d fallback keys (total %d)", eps, len(clusters), len(fallback), len(keys))
 	for i, c := range clusters {
@@ -191,8 +174,7 @@ func TestDBSCAN_SmallN_BelowMinPts(t *testing.T) {
 		keys[i] = uint64(i)
 	}
 
-	bs := makeSortedBS(keys)
-	clusters, fallback := detectClustersDBSCAN(bs, 10, 10, 256)
+	clusters, fallback := detectClustersDBSCAN(keys, 10, 10, 256)
 
 	if len(clusters) != 0 {
 		t.Errorf("expected 0 clusters for n < minPts, got %d", len(clusters))
@@ -202,7 +184,7 @@ func TestDBSCAN_SmallN_BelowMinPts(t *testing.T) {
 	}
 }
 
-func verifyTotalAssignment(t *testing.T, clusters []clusterSegment, fallback []bits.BitString, expectedTotal int) {
+func verifyTotalAssignment(t *testing.T, clusters []clusterSegment, fallback []uint64, expectedTotal int) {
 	t.Helper()
 	total := len(fallback)
 	for _, c := range clusters {
