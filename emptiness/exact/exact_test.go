@@ -1,32 +1,27 @@
 package exact
 
 import (
-	"Thesis/bits"
 	"testing"
 )
 
 func TestVariantsMatchOnBasicQueries(t *testing.T) {
-	keys := []bits.BitString{
-		bits.NewFromBinary("001"),
-		bits.NewFromBinary("011"),
-		bits.NewFromBinary("101"),
-	}
-	universe := bits.NewBitString(3)
+	keys := []uint64{1, 3, 5}
+	const keyBits uint32 = 3
 
-	classic, err := NewWithVariant(keys, universe, VariantClassic)
+	classic, err := NewUint64WithVariant(keys, keyBits, VariantClassic)
 	if err != nil {
 		t.Fatalf("classic build failed: %v", err)
 	}
-	oneD, err := NewWithVariant(keys, universe, VariantOneD)
+	oneD, err := NewUint64WithVariant(keys, keyBits, VariantOneD)
 	if err != nil {
 		t.Fatalf("one_d build failed: %v", err)
 	}
 
-	queries := [][2]bits.BitString{
-		{bits.NewFromBinary("001"), bits.NewFromBinary("001")},
-		{bits.NewFromBinary("010"), bits.NewFromBinary("010")},
-		{bits.NewFromBinary("001"), bits.NewFromBinary("011")},
-		{bits.NewFromBinary("100"), bits.NewFromBinary("111")},
+	queries := [][2]uint64{
+		{1, 1},
+		{2, 2},
+		{1, 3},
+		{4, 7},
 	}
 	for i, q := range queries {
 		gotClassic := classic.IsEmpty(q[0], q[1])

@@ -1,7 +1,6 @@
 package exact
 
 import (
-	"Thesis/bits"
 	"Thesis/emptiness/ere"
 	"Thesis/emptiness/ere_one_d"
 	"Thesis/utils"
@@ -11,7 +10,7 @@ import (
 )
 
 type Filter interface {
-	IsEmpty(a, b bits.BitString) bool
+	IsEmpty(a, b uint64) bool
 	SizeInBits() uint64
 	ByteSize() int
 	MemDetailed() utils.MemReport
@@ -75,7 +74,7 @@ func ParseVariant(s string) (Variant, error) {
 var defaultVariant atomic.Uint32
 
 func init() {
-	defaultVariant.Store(uint32(VariantClassic))
+	defaultVariant.Store(uint32(VariantOneD))
 }
 
 func SetVariant(v Variant) error {
@@ -100,43 +99,20 @@ func CurrentVariant() Variant {
 	return Variant(defaultVariant.Load())
 }
 
-func New(keys []bits.BitString, universe bits.BitString) (Filter, error) {
-	return NewWithVariant(keys, universe, CurrentVariant())
-}
-
 func NewUint64(keys []uint64, keyBits uint32) (Filter, error) {
 	return NewUint64WithVariant(keys, keyBits, CurrentVariant())
-}
-
-func NewWithVariant(keys []bits.BitString, universe bits.BitString, variant Variant) (Filter, error) {
-	switch variant {
-	case VariantClassic:
-		f, err := ere.NewExactRangeEmptiness(keys, universe)
-		if err != nil {
-			return nil, err
-		}
-		return classicFilter{f}, nil
-	case VariantOneD:
-		f, err := ere_one_d.NewExactRangeEmptiness(keys, universe)
-		if err != nil {
-			return nil, err
-		}
-		return oneDFilter{f}, nil
-	default:
-		return nil, fmt.Errorf("unsupported exact backend variant %v", variant)
-	}
 }
 
 func NewUint64WithVariant(keys []uint64, keyBits uint32, variant Variant) (Filter, error) {
 	switch variant {
 	case VariantClassic:
-		f, err := ere.NewExactRangeEmptinessUint64(keys, keyBits)
+		f, err := ere.NewExactRangeEmptiness(keys, keyBits)
 		if err != nil {
 			return nil, err
 		}
 		return classicFilter{f}, nil
 	case VariantOneD:
-		f, err := ere_one_d.NewExactRangeEmptinessUint64(keys, keyBits)
+		f, err := ere_one_d.NewExactRangeEmptiness(keys, keyBits)
 		if err != nil {
 			return nil, err
 		}
