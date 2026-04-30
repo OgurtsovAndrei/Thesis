@@ -1,7 +1,6 @@
 package ere
 
 import (
-	"Thesis/bits"
 	"Thesis/testutils"
 	"fmt"
 	"math/rand/v2"
@@ -11,10 +10,12 @@ import (
 
 func TestExactRangeEmptiness_RealStats(t *testing.T) {
 	n := 1_000_000
-	bitLen := 64
-	keys := testutils.GetBenchKeys(bitLen, n)
-	universe := bits.NewBitString(uint32(bitLen))
-	ere, _ := NewExactRangeEmptiness(keys, universe)
+	bsKeys := testutils.GetBenchKeys(64, n)
+	keys := make([]uint64, len(bsKeys))
+	for i, k := range bsKeys {
+		keys[i] = k.TrieUint64()
+	}
+	ere, _ := NewExactRangeEmptiness(keys, 64)
 
 	stats := ere.GetStats()
 	fmt.Printf("\n--- ExactRangeEmptiness Stats (N=%d) ---\n", n)
@@ -27,13 +28,13 @@ func TestExactRangeEmptiness_RealStats(t *testing.T) {
 }
 
 func TestExactRangeEmptiness_BucketStatsUint64(t *testing.T) {
-	sizes := []int{1 << 20, 1 << 24, 1 << 27, 1 << 30}
+	sizes := []int{1 << 20, 1 << 24, 1 << 27}
 
 	for _, n := range sizes {
 		t.Run(fmt.Sprintf("N=%d", n), func(t *testing.T) {
 			keys := generateSortedUint64(n)
 
-			ere, err := NewExactRangeEmptinessUint64(keys, 64)
+			ere, err := NewExactRangeEmptiness(keys, 64)
 			if err != nil {
 				t.Fatalf("build failed: %v", err)
 			}

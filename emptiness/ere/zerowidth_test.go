@@ -1,7 +1,6 @@
 package ere
 
 import (
-	"Thesis/bits"
 	"testing"
 )
 
@@ -12,15 +11,10 @@ import (
 // returns nil for bitWidth == 0. This test panicked before the fix and must
 // pass after.
 func TestZeroWidthSuffix(t *testing.T) {
-	// n = 4, k = floor(log2(4)) = 2, KeySize = 2 → w = 0
-	universe := bits.NewBitString(2)
-	keys := []bits.BitString{
-		bits.NewFromTrieUint64(0, 2),
-		bits.NewFromTrieUint64(1, 2),
-		bits.NewFromTrieUint64(2, 2),
-		bits.NewFromTrieUint64(3, 2),
-	}
-	e, err := NewExactRangeEmptiness(keys, universe)
+	// n = 4, k = floor(log2(4)) = 2, keyBits = 2 → w = 0
+	// 2-bit keys: 0, 1, 2, 3
+	keys := []uint64{0, 1, 2, 3}
+	e, err := NewExactRangeEmptiness(keys, 2)
 	if err != nil {
 		t.Fatalf("build failed: %v", err)
 	}
@@ -39,9 +33,7 @@ func TestZeroWidthSuffix(t *testing.T) {
 		{0, 3, false},
 	}
 	for _, tt := range tests {
-		a := bits.NewFromTrieUint64(tt.a, 2)
-		b := bits.NewFromTrieUint64(tt.b, 2)
-		got := e.IsEmpty(a, b)
+		got := e.IsEmpty(tt.a, tt.b)
 		if got != tt.expect {
 			t.Errorf("IsEmpty(%d,%d) = %v; want %v", tt.a, tt.b, got, tt.expect)
 		}
@@ -52,22 +44,17 @@ func TestZeroWidthSuffix(t *testing.T) {
 // that boundary queries hit blockA != blockB code paths and a wrapped suffix
 // search of [suffA, max] over the linear-scan fast path.
 func TestZeroWidthSuffix_Sparse(t *testing.T) {
-	// n = 2 → k = 1; KeySize = 1 → w = 0; numBlocks = 2.
-	universe := bits.NewBitString(1)
-	keys := []bits.BitString{
-		bits.NewFromTrieUint64(0, 1),
-		bits.NewFromTrieUint64(1, 1),
-	}
-	e, err := NewExactRangeEmptiness(keys, universe)
+	// n = 2 → k = 1; keyBits = 1 → w = 0; numBlocks = 2.
+	// 1-bit keys: 0, 1
+	keys := []uint64{0, 1}
+	e, err := NewExactRangeEmptiness(keys, 1)
 	if err != nil {
 		t.Fatalf("build failed: %v", err)
 	}
 	if e.w != 0 {
 		t.Fatalf("expected w=0, got w=%d", e.w)
 	}
-	a := bits.NewFromTrieUint64(0, 1)
-	b := bits.NewFromTrieUint64(1, 1)
-	if e.IsEmpty(a, b) {
+	if e.IsEmpty(0, 1) {
 		t.Errorf("expected non-empty range over both keys")
 	}
 }
