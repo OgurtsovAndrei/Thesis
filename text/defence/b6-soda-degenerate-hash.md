@@ -236,10 +236,26 @@ also fit the L1 budget cleanly (no rsdic state to evict their working
 set).
 
 Adopting `Select1Fast` as the production `Select1` path is the
-recommended action for a follow-up release: it deletes the worst-case
-behaviour with no performance trade-off on the well-behaved case and
-makes SODA's $L=65536$ regime broadly usable on real-world (clustered)
-key distributions.
+recommended action: it deletes the worst-case behaviour with no
+performance trade-off on the well-behaved case and makes SODA's
+$L=65536$ regime broadly usable on real-world (clustered) key
+distributions.
+
+**Production swap (post-fix)**. We replaced the five Select call
+sites in `ere_one_d/exact_range_emptiness.go:getBlockRange` and
+`getQueryBlockRanges`, and the two in `ere/exact_range_emptiness.go`,
+to use `Select1Fast`. After the swap, on the same B6 cell:
+
+| Path                                  | ns/query | speedup |
+|---------------------------------------|---------:|--------:|
+| Pre-swap `SodaARE.IsEmpty`            | 4495     | 1.0×    |
+| Post-swap `SodaARE.IsEmpty`           |  **438** | **10.3×** |
+
+fp_rate identical at 0.7951. The remaining gap to the diagnostic
+`IsEmptyFast` (320 ns) is the SODA wrapper itself (block-id compute,
+PairwiseHash, mask). The fix is now live in the production query path
+for ERE one_d, ERE classic, and every ARE filter that wraps them
+(SODA, Truncation, Scan, Greedy, Adaptive, Hybrid, Bloom).
 
 ### Independent verification — isolated rsdic with the same rank stream
 

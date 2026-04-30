@@ -205,8 +205,8 @@ func (ere *ExactRangeEmptiness) LinearIsEmpty(a, b uint64) bool {
 }
 
 func (ere *ExactRangeEmptiness) getBlockRange(blockIdx uint64) (int, int) {
-	posStart := ere.D.Select(blockIdx, true)
-	posEnd := ere.D.Select(blockIdx+1, true)
+	posStart := ere.D.Select1Fast(blockIdx)
+	posEnd := ere.D.Select1Fast(blockIdx + 1)
 	startIndex := int(posStart - blockIdx)
 	endIndex := int(posEnd - (blockIdx + 1))
 	return startIndex, endIndex
@@ -214,9 +214,9 @@ func (ere *ExactRangeEmptiness) getBlockRange(blockIdx uint64) (int, int) {
 
 func (ere *ExactRangeEmptiness) getQueryBlockRanges(blockA, blockB uint64) (int, int, int, int) {
 	if blockB == blockA+1 {
-		pos0 := ere.D.Select(blockA, true)
-		pos1 := ere.D.Select(blockA+1, true)
-		pos2 := ere.D.Select(blockA+2, true)
+		pos0 := ere.D.Select1Fast(blockA)
+		pos1 := ere.D.Select1Fast(blockA + 1)
+		pos2 := ere.D.Select1Fast(blockA + 2)
 		startA := int(pos0 - blockA)
 		endA := int(pos1 - (blockA + 1))
 		startB := endA
