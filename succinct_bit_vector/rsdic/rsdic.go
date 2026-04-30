@@ -168,7 +168,20 @@ func (rs RSDic) Select(rank uint64, bit bool) uint64 {
 	}
 }
 
-func (rs RSDic) Select1(rank uint64) uint64 {
+// kSelectLinearThreshold is the bracket size (in large blocks, between
+// two consecutive selectOneInds entries) below which Select1 walks
+// rankBlocks linearly. Above it, the inner search switches to a binary
+// search bracketed by selectOneInds[selectInd..selectInd+1]+1.
+//
+// The crossover point was measured by BenchmarkSelect1ThresholdSweep on
+// Apple M4 Max: Linear wins up to bracket=128 (~75 ns vs Binary ~80 ns)
+// and Binary takes over at bracket>=256 (~90 ns vs Linear ~100 ns).
+// 128 leaves Linear's regime intact and engages Binary slightly before
+// it strictly wins, which is a safe choice given that the Linear
+// pathology grows superlinearly (e.g. ~635 ns at bracket=4096).
+const kSelectLinearThreshold = 128
+
+func (rs *RSDic) Select1(rank uint64) uint64 {
 	if rank >= rs.oneNum {
 		return rs.num
 	} else if rank >= rs.oneNum-rs.lastOneNum {
@@ -176,13 +189,45 @@ func (rs RSDic) Select1(rank uint64) uint64 {
 		return rs.lastBlockInd() + uint64(selectRaw(rs.lastBlock, lastBlockRank+1))
 	}
 	selectInd := rank / kSelectBlockSize
-	lblock := rs.selectOneInds[selectInd]
-	for ; lblock < uint64(len(rs.rankBlocks)); lblock++ {
-		if rank < rs.rankBlocks[lblock] {
-			break
-		}
+	lo := rs.selectOneInds[selectInd]
+	var hi uint64
+	if selectInd+1 < uint64(len(rs.selectOneInds)) {
+		hi = rs.selectOneInds[selectInd+1] + 1
+	} else {
+		hi = uint64(len(rs.rankBlocks))
 	}
-	lblock--
+	if hi > uint64(len(rs.rankBlocks)) {
+		hi = uint64(len(rs.rankBlocks))
+	}
+
+	var lblock uint64
+	if hi-lo <= kSelectLinearThreshold {
+		// Small bracket: linear scan with sequential prefetch.
+		lblock = lo
+		for ; lblock < hi; lblock++ {
+			if rank < rs.rankBlocks[lblock] {
+				break
+			}
+		}
+		lblock--
+	} else {
+		// Large bracket (clustered bitvectors): binary search to avoid
+		// the worst-case where 4096 ones span millions of bits.
+		l, r := lo, hi
+		for l < r {
+			mid := l + (r-l)/2
+			if rs.rankBlocks[mid] <= rank {
+				l = mid + 1
+			} else {
+				r = mid
+			}
+		}
+		if l == 0 {
+			l = 1
+		}
+		lblock = l - 1
+	}
+
 	sblock := lblock * kSmallBlockPerLargeBlock
 	pointer := rs.pointerBlocks[lblock]
 	remain := rank - rs.rankBlocks[lblock] + 1

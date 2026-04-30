@@ -167,9 +167,9 @@ func (ere *ExactRangeEmptiness) IsEmpty(a, b uint64) bool {
 
 func (ere *ExactRangeEmptiness) getBlockRange(blockIdx uint64) (int, int) {
 	numNonEmptyBefore := int(ere.D1.Rank(blockIdx, true))
-	posInD2 := ere.D2.Select1Fast(uint64(numNonEmptyBefore))
+	posInD2 := ere.D2.Select1(uint64(numNonEmptyBefore))
 	startIndex := int(posInD2 - uint64(numNonEmptyBefore))
-	posEndInD2 := ere.D2.Select1Fast(uint64(numNonEmptyBefore + 1))
+	posEndInD2 := ere.D2.Select1(uint64(numNonEmptyBefore + 1))
 	endIndex := int(posEndInD2 - uint64(numNonEmptyBefore+1))
 	return startIndex, endIndex
 }
