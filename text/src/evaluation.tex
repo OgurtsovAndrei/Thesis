@@ -316,7 +316,7 @@ Dataset                 & $n$         & $\mathcal{L}$ & $w$  & $X_{50}$    & $X_
 \bottomrule
 \end{tabular}
 \caption{Bucket-size statistics for the inner ERE of SodaARE on the SOSD
-datasets, at $\varepsilon = 0.01$.
+datasets across three range lengths.
 $^{*}$\texttt{sosd\_wiki} effective $n$ after deduplication of repeated
 timestamps (Section~\ref{sec:sosd}).}
 \label{tab:eval-bucket-fill}
@@ -325,9 +325,8 @@ timestamps (Section~\ref{sec:sosd}).}
 \noindent\textbf{Columns.}
 \begin{description}[leftmargin=2.2cm, labelwidth=2cm, labelsep=0.2cm,
                     style=nextline, itemsep=2pt, topsep=4pt]
-\item[$w$] Suffix length in bits, $w = K - \lfloor \log_2 n \rfloor$,
-  with $K = \lceil \log_2(n \mathcal{L} / \varepsilon) \rceil$.
-  Physical block capacity is $2^w$ distinct $w$-bit suffixes.
+\item[$w$] Suffix length in bits, configured per row. Physical block
+  capacity is $2^w$ distinct $w$-bit suffixes.
 \item[$X_{50}$, $X_{90}$] Key-weighted CDF percentiles over non-empty
   buckets: the smallest bucket size such that buckets of size $\leq X_p$
   collectively hold at least $p \cdot n$ keys.
