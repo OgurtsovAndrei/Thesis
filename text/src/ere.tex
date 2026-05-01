@@ -299,7 +299,7 @@ the best of both branches: near-optimal in the common case and graceful
 degradation on adversarial distributions.
 
 For uniform 64-bit keys with non-empty queries, the total ERE query takes
-${\sim}33$--$36$~ns on Apple~M4~Max, stable across $n \in [2^{20},\, 2^{26}]$.
+${\sim}33$--$36$~ns on Apple~M4~Max, stable across $n \in [2^{20},\, 2^{28}]$.
 Bucket search contributes only ${\sim}3$~ns at the typical $k \approx 12$;
 the remainder is Rank/Select navigation on the metadata bit vectors.
 
@@ -411,8 +411,8 @@ suffix per key plus ${\sim}2.53$~BPK of metadata on the one-vector
 layout (single bit vector $D$ with rank/select indices,
 Section~\ref{subsec:ere-one-vector}; physical figure from
 Table~\ref{tab:ere-metadata-bpk}, stable across $n$).
-At $K = 64$ and $n = 2^{30}$ ($w = 34$) this gives ${\sim}37$~BPK total
---- a ${\sim}42\%$ reduction over honestly storing the full 64-bit keys
+At $K = 64$ and $n = 2^{28}$ ($w = 36$) this gives ${\sim}39$~BPK total
+--- a ${\sim}39\%$ reduction over honestly storing the full 64-bit keys
 ($64$~BPK), but still ${\sim}2.5\times$ above the $14$--$16$~BPK budget
 of industrial range filters
 (Table~\ref{tab:industry-bpk}, Chapter~\ref{chap:evaluation}).
