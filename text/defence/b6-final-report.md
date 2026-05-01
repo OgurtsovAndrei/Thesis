@@ -230,9 +230,26 @@ workload, where Truncation should shine). Lets the thesis show both
 "Truncation excels under uniform-uniform" *and* "Truncation degenerates
 under near-key adversarial" with the same primitive.
 
-Pinging here for your call — autonomous mode didn't take this action
-because it changes the workload definition for ~1/3 of the sweep, which
-is a thesis-narrative decision, not a bench-harness fix.
+### Empirical confirmation — `bench/trunc_uniform_smoke_test.go`
+
+One-off smoke at n=2²⁰ on `uniform_16M_uint64`, L=128, queryCount=2¹⁸,
+both strategies measured side-by-side:
+
+| K  | uniform-q FPR     | smart_mix FPR | BPK  |
+|---:|------------------:|--------------:|-----:|
+| 36 | **2.29e-5**       |     0.500     | 18.5 |
+| 44 | **0** (<4e-6)     |     0.484     | 26.0 |
+| 48 | **0** (<4e-6)     |     0.249     | 30.0 |
+
+Under uniform-random queries Truncation lands at ε ≈ n/2^K (theoretical
+prediction) and drops below the measurement floor for K≥44. The
+smart_mix plateau at ~0.5 is reproducible exactly — same filter,
+different workload.
+
+Span of the n=2²⁰ subset is 57 bits (not the full 60), so phantom at
+K=48 is 2⁹=512 and ±5L=±640 only partially overlaps it ⇒ smart_mix at
+this n shows 0.249, not 0.5. At full n=2²⁴ span widens to 60 bits,
+phantom 2¹²=4096 ≫ ±640, smart_mix saturates near 0.5 — matches B6.
 
 ---
 
