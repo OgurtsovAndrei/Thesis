@@ -202,46 +202,54 @@ Dataset
  & two-vec BPK & one-vec BPK & $\Delta$
  & two-vec BPK & one-vec BPK & $\Delta$ \\
 \midrule
-\texttt{uniform}    & $21.632$ & $21.000$ & $0.632$ & $21.632$ & $21.000$ & $0.632$ \\
-\texttt{clustered}  & $21.110$ & $21.000$ & $0.110$ & $17.201$ & $16.961$ & $0.240$ \\
-\texttt{sosd\_fb}   & $21.001$ & $21.000$ & $0.001$ & $11.232$ & $11.000$ & $0.232$ \\
-\texttt{sosd\_wiki} & $21.530$ & $21.530$ & $0.000$ & $9.708$  & $9.530$  & $0.177$ \\
-\texttt{sosd\_osm}  & $21.930$ & $21.500$ & $0.430$ & $32.817$ & $32.525$ & $0.293$ \\
-\texttt{sosd\_books}& $21.000$ & $21.000$ & $0.000$ & $4.517$  & $4.000$  & $0.517$ \\
+\texttt{uniform}    & $16.932$ & $16.499$ & $0.432$ & $16.932$ & $16.499$ & $0.433$ \\
+\texttt{clustered}  & $16.602$ & $16.500$ & $0.102$ & $12.759$ & $12.519$ & $0.240$ \\
+\texttt{sosd\_fb}   & $16.020$ & $16.000$ & $0.020$ & $11.232$ & $11.000$ & $0.232$ \\
+\texttt{sosd\_wiki} & $16.532$ & $16.530$ & $0.002$ & $9.708$  & $9.530$  & $0.177$ \\
+\texttt{sosd\_osm}  & $16.931$ & $16.499$ & $0.432$ & $26.678$ & $26.411$ & $0.268$ \\
+\texttt{sosd\_books}& $16.000$ & $16.000$ & $0.000$ & $4.517$  & $4.000$  & $0.517$ \\
 \midrule
-\textbf{Average}    & $21.367$ & $21.172$ & $0.196$ & $16.184$ & $15.836$ & $0.349$ \\
+\textbf{Average}    & $16.503$ & $16.338$ & $0.165$ & $13.638$ & $13.327$ & $0.311$ \\
 \bottomrule
 \end{tabular}
 \caption{Total ARE-level BPK with the two-vector $(D_1, D_2)$ ERE backend
 (Section~\ref{subsec:ere-original-structure}) versus the one-vector $D$
 backend (Section~\ref{subsec:ere-one-vector}). Workload: $n = 2^{20}$
-(or all available keys, whichever is smaller), $\mathcal{L} = 4096$,
-$\varepsilon = 0.01$.}
+(or all available keys, whichever is smaller), $K = 34$ — equivalent to
+$\mathcal{L} = 128$, $\varepsilon = 0.01$ via $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$
+for SODA; Greedy+Merge takes $K$ directly. SODA stays in the
+$14$--$16$~BPK headline window (Table~\ref{tab:industry-bpk}) on every
+distribution; Greedy+Merge ranges from $4.0$~BPK (\texttt{sosd\_books},
+single-cluster collapse) to $26.4$~BPK (\texttt{sosd\_osm}, many small
+clusters with per-cluster bookkeeping overhead).}
 \label{tab:ere-backend-cross-distribution}
 \end{table}
 
 \paragraph{Reading the table.}
 SODA's locality-preserving hash keeps clustered inputs clustered in the
 hashed universe, so the SOSD datasets leave most blocks empty under
-SODA ($\Delta \le 0.001$~BPK on \texttt{sosd\_fb}, \texttt{sosd\_wiki},
-\texttt{sosd\_books}); only \texttt{uniform} attains the Poisson value.
-Greedy+Merge isolates dense regions and builds a separate ERE per
-cluster; even within a cluster the keys retain sub-structure, so $M/B$
-stays well below $1$. Its absolute BPK is dominated by the wrapper
-rather than ERE, so even small $M/n$ values translate into a visible
-relative improvement (e.g.\ \texttt{sosd\_books} drops from $4.517$
-to $4.000$~BPK).
+SODA ($\Delta \le 0.020$~BPK on \texttt{sosd\_fb}, \texttt{sosd\_wiki},
+\texttt{sosd\_books}); \texttt{uniform} and \texttt{sosd\_osm} approach
+the Poisson value $1 - e^{-1} \approx 0.632$ from below at
+${\sim}0.43$~BPK (the gap reflects rsdic auxiliary-index packing at this
+$K$, not a deviation in $M/n$). Greedy+Merge isolates dense regions and
+builds a separate ERE per cluster; even within a cluster the keys
+retain sub-structure, so $M/B$ stays well below $1$. Its absolute BPK
+is dominated by the wrapper rather than ERE, so even small $M/n$
+values translate into a visible relative improvement (e.g.\
+\texttt{sosd\_books} drops from $4.517$ to $4.000$~BPK).
 
 \paragraph{Query latency.}
 Table~\ref{tab:ere-backend-query-latency} reports average ARE query
-latency on the same workload. SODA gains uniformly ($1.03$--$1.88\times$);
-Greedy+Merge regresses on \texttt{sosd\_fb} ($0.78\times$) and
-\texttt{sosd\_wiki} ($0.80\times$), where the input collapses into a
-single cluster and most queries short-circuit before reaching the
-bitvectors --- the one-vector overhead is paid without the cache-locality
-benefit. Both regressions are small in absolute terms ($\leq 70$~ns)
-and the cross-distribution average favours the one-vector backend in
-both wrappers.
+latency on the same workload. Both wrappers gain uniformly across all
+distributions: SODA $1.21$--$2.95\times$, Greedy+Merge $1.28$--$3.00\times$.
+The $\geq 2\times$ wins on \texttt{uniform} and \texttt{sosd\_osm} come
+from cache-friendly access at small suffix width ($w = K - \log_2 n = 14$):
+the contiguous $D$ vector keeps both \textsc{Select} calls hitting the
+same auxiliary-index pages, while the two-vector layout alternates
+between $D_1$ and $D_2$ and pays an extra cache miss per query. The
+one-vector backend wins the cross-distribution average by
+$1.59\times$ (SODA) and $1.63\times$ (Greedy+Merge).
 
 \begin{table}[h]
 \centering
@@ -255,30 +263,27 @@ Dataset
  & two-vec ns & one-vec ns & speedup
  & two-vec ns & one-vec ns & speedup \\
 \midrule
-\texttt{uniform}    & $156.2$ & $140.5$ & $1.11\times$ & $199.7$ & $170.0$ & $1.18\times$ \\
-\texttt{clustered}  & $370.0$ & $314.2$ & $1.18\times$ & $523.3$ & $389.8$ & $1.34\times$ \\
-\texttt{sosd\_fb}   & $703.0$ & $619.0$ & $1.14\times$ & $251.1$ & $322.7$ & $0.78\times$ \\
-\texttt{sosd\_wiki} & $562.6$ & $533.7$ & $1.05\times$ & $276.4$ & $346.9$ & $0.80\times$ \\
-\texttt{sosd\_osm}  & $306.2$ & $162.4$ & $1.88\times$ & $453.1$ & $427.9$ & $1.06\times$ \\
-\texttt{sosd\_books}& $656.7$ & $635.2$ & $1.03\times$ & $315.9$ & $209.0$ & $1.51\times$ \\
+\texttt{uniform}    & $220.5$ & $75.0$  & $2.94\times$ & $218.6$ & $72.9$  & $3.00\times$ \\
+\texttt{clustered}  & $253.9$ & $191.8$ & $1.32\times$ & $317.9$ & $198.3$ & $1.60\times$ \\
+\texttt{sosd\_fb}   & $309.2$ & $206.7$ & $1.50\times$ & $224.9$ & $158.0$ & $1.42\times$ \\
+\texttt{sosd\_wiki} & $266.7$ & $207.2$ & $1.29\times$ & $303.3$ & $206.5$ & $1.47\times$ \\
+\texttt{sosd\_osm}  & $242.2$ & $82.2$  & $2.95\times$ & $298.3$ & $232.6$ & $1.28\times$ \\
+\texttt{sosd\_books}& $263.3$ & $218.3$ & $1.21\times$ & $223.1$ & $104.7$ & $2.13\times$ \\
 \midrule
-\textbf{Average}    & $\mathbf{459.1}$ & $\mathbf{400.8}$ & $\mathbf{1.15\times}$
-                    & $\mathbf{336.6}$ & $\mathbf{311.0}$ & $\mathbf{1.08\times}$ \\
+\textbf{Average}    & $\mathbf{259.3}$ & $\mathbf{163.5}$ & $\mathbf{1.59\times}$
+                    & $\mathbf{264.3}$ & $\mathbf{162.2}$ & $\mathbf{1.63\times}$ \\
 \bottomrule
 \end{tabular}
 \caption{Average ARE query latency, two-vector vs one-vector ERE backend.
 Same workload as Table~\ref{tab:ere-backend-cross-distribution}:
-$n = 2^{20}$ (or all available keys, whichever is smaller),
-$\mathcal{L} = 4096$, $\varepsilon = 0.01$, which yields
-$K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil = 39$ for both
-wrappers; raw $64$-bit keys (no $60$-bit mask). Apple~M4~Max,
+$n = 2^{20}$ (or all available keys, whichever is smaller), $K = 34$;
+raw $64$-bit keys (no $60$-bit mask). Apple~M4~Max,
 $32{,}768$ half-hit/half-miss queries (seed $424242$), $3$ rounds.
-Average is over per-distribution means. This is the legacy
-small-scale backend comparison whose purpose is the relative
-two-vec/one-vec contrast at fixed $n = 2^{20}$; absolute latencies
-grow $5$--$10\times$ at the headline scale $n = 2^{24}$ used by the
-B6 benchmark suite, once the filter footprint outgrows the L3 cache
-and per-query work becomes cache-miss-bound.}
+Average is over per-distribution means. This is a small-scale backend
+comparison at fixed $n = 2^{20}$; absolute latencies grow $5$--$10\times$
+at the headline scale $n = 2^{24}$ used by the B6 benchmark suite, once
+the filter footprint outgrows the L3 cache and per-query work becomes
+cache-miss-bound.}
 \label{tab:ere-backend-query-latency}
 \end{table}
 

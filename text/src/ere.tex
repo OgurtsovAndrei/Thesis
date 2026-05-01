@@ -43,9 +43,11 @@ and up to two partially covered boundary blocks.
 The complete-block part is answered by the global succinct layer using $D_1$
 and $D_2$.
 The boundary parts are answered by locating the corresponding local
-structure in $A_{ds}$ via $D_1$ and $D_2$, and then querying that local
-structure inside the block; the local emptiness check itself reduces
-to two weak prefix queries (Section~\ref{sec:wps}).
+structure in $A_{ds}$ via $D_1$ and $D_2$, and then checking emptiness
+inside the block.
+The local check uses two weak prefix queries (Section~\ref{sec:wps})
+as an $O(1)$ index into the bucket's sorted suffix list; the stored
+suffixes themselves witness (non-)emptiness via a final comparison.
 \colorbox{orange}{TODO: btw i do not like forward refs, maybe I need to chenge order of sections?}
 
 \subsection{Local Search in Buckets}
@@ -93,7 +95,7 @@ Section~\ref{subsec:block-sizes-and-lookup-strategy}).
 The physical delta is ${\sim}0.80$~BPK, amplified by a constant
 ${\sim}26\%$ overhead from the rank/select index --- intrinsic to
 succinct bit vectors and required for the $O(1)$ navigation
-guarantees, not a Go allocation artefact.
+guarantees.
 Both deltas are stable across $n$.
 
 \begin{table}[h]
@@ -114,8 +116,8 @@ Both deltas are stable across $n$.
     \caption{Metadata BPK for the two-vector $(D_1, D_2)$ layout
         (Section~\ref{subsec:ere-original-structure}) versus the
         one-vector $D$ layout, on $n$ uniform 64-bit keys.
-        \emph{Num}: logical bitvector length ($D_1.\textsc{Num} + D_2.\textsc{Num}$
-        vs.\ $D.\textsc{Num}$); matches the analytic
+        \emph{Num}: logical bitvector length ($D_1.\textsc{num()} + D_2.\textsc{num()}$
+        vs.\ $D.\textsc{num()}$); matches the analytic
         $|D_1|+|D_2| = B + (n + M + 1)$ and $|D| = B + n + 1$ formulas above.
         \emph{Alloc}: physical RSDic footprint (bits plus pointer, rank, and
         select indices). The suffix array $A_{ds}$ is excluded --- identical
@@ -133,7 +135,7 @@ Chapter~\ref{chap:evaluation}
 (Table~\ref{tab:ere-backend-cross-distribution}).
 
 \paragraph{Effect on query operation count.}
-The single-vector layout does not strictly reduce the number of \textsc{Rank}/\textsc{Select} calls in every case: the original two-vector layout could short-circuit empty boundary blocks via a $D_1.\textsc{Bit}$ probe, while the new layout always pays at least two \textsc{Select}$(D)$ per boundary block.
+The single-vector layout does not strictly reduce the number of \textsc{Rank}/\textsc{Select} calls in every case: the original two-vector layout could short-circuit empty boundary blocks via a $D_1.\textsc{bit()}$ probe, while the new layout always pays at least two \textsc{Select}$(D)$ per boundary block.
 However, in the two most common ARE query patterns --- short ranges that hit a single non-empty block, or that span two adjacent non-empty blocks --- the new layout saves \emph{one} and \emph{three} \textsc{Rank}/\textsc{Select} calls per query, respectively, with long ranges that scan both boundary buckets saving up to four.
 The structural advantage is that every \textsc{Rank}/\textsc{Select} now hits one contiguous succinct bit vector $D$ instead of alternating between $D_1$ and $D_2$, so the auxiliary index pages and cache lines loaded by the first call are likely to serve subsequent calls in the same query.
 The full per-case breakdown is given in Table~\ref{tab:ere-rank-select};
@@ -352,7 +354,7 @@ compressed):
         \bottomrule
     \end{tabular}
     \caption{Three WPS variants: space and query latency on Apple~M4~Max,
-        $L = 64$, $n = 1024$--$32768$, 64-bit keys.
+        $K = 64$, $n = 1024$--$32768$, 64-bit keys.
         \colorbox{orange}{TODO: link to implementation details and full space breakdown.}}
     \label{tab:wps-cost}
 \end{table}
@@ -381,7 +383,7 @@ across representative bucket sizes.
         $2^{17}$ ($k \approx 131{,}000$) & ${\sim}60$       & $370$--$567$     & $6$--$9\times$     \\
         \bottomrule
     \end{tabular}
-    \caption{Bucket-search latency on Apple~M4~Max, $L = 64$, 64-bit keys.
+    \caption{Bucket-search latency on Apple~M4~Max, $K = 64$, 64-bit keys.
     WPS Compact numbers are from Table~\ref{tab:wps-cost}; binary search
     numbers are from the bucket-scan benchmark of
     Section~\ref{subsec:ere-local-search}. WPS pays a large per-call
