@@ -231,7 +231,7 @@ hashed universe, so the SOSD datasets leave most blocks empty under
 SODA ($\Delta \le 0.020$~BPK on \texttt{sosd\_fb}, \texttt{sosd\_wiki},
 \texttt{sosd\_books}); \texttt{uniform} and \texttt{sosd\_osm} approach
 the Poisson value $1 - e^{-1} \approx 0.632$ from below at
-${\sim}0.43$~BPK (the gap reflects rsdic auxiliary-index packing at this
+${\sim}0.43$~BPK (the gap reflects succinct-bit-vector auxiliary-index packing at this
 $K$, not a deviation in $M/n$). Greedy+Merge isolates dense regions and
 builds a separate ERE per cluster; even within a cluster the keys
 retain sub-structure, so $M/B$ stays well below $1$. Its absolute BPK
@@ -278,12 +278,11 @@ Dataset
 Same workload as Table~\ref{tab:ere-backend-cross-distribution}:
 $n = 2^{20}$ (or all available keys, whichever is smaller), $K = 34$;
 raw $64$-bit keys (no $60$-bit mask). Apple~M4~Max,
-$32{,}768$ half-hit/half-miss queries (seed $424242$), $3$ rounds.
+$32{,}768$ half-hit/half-miss queries, $3$ rounds.
 Average is over per-distribution means. This is a small-scale backend
 comparison at fixed $n = 2^{20}$; absolute latencies grow $5$--$10\times$
-at the headline scale $n = 2^{24}$ used by the B6 benchmark suite, once
-the filter footprint outgrows the L3 cache and per-query work becomes
-cache-miss-bound.}
+at the headline scale $n = 2^{24}$ once the filter footprint outgrows
+the L3 cache and per-query work becomes cache-miss-bound.}
 \label{tab:ere-backend-query-latency}
 \end{table}
 
@@ -315,8 +314,8 @@ Dataset                 & $n$         & $\mathcal{L}$ & $w$  & $X_{50}$    & $X_
 \texttt{sosd\_osm}      & $2^{29}$    & 4096          & $19$ & $3$         & $5$         & $502$        & $1.2$~KB   & $0.1\%$ \\
 \bottomrule
 \end{tabular}
-\caption{Bucket-size statistics for the inner ERE of SodaARE on the SOSD
-datasets across three range lengths.
+\caption{Bucket-size statistics for the inner ERE of the SODA-hashed ARE
+filter on the SOSD datasets across three range lengths.
 $^{*}$\texttt{sosd\_wiki} effective $n$ after deduplication of repeated
 timestamps (Section~\ref{sec:sosd}).}
 \label{tab:eval-bucket-fill}

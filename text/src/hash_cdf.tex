@@ -64,7 +64,7 @@ the data distribution.
     an approximate CDF.
   \item Fix monotonicity (PGM positions may be non-monotone due to float64 rounding)
     via running max.
-  \item Sample CDF control points every $\texttt{pgmEpsilon}$ keys $\Rightarrow$
+  \item Sample CDF control points every $\varepsilon_{\text{PGM}}$ keys $\Rightarrow$
     piecewise-linear model.
   \item Compute $L_\text{eff}$: the effective range length after CDF distortion.
     A query of length $\mathcal{L}$ maps to a range of variable width depending on
@@ -76,7 +76,7 @@ the data distribution.
 \end{enumerate}
 
 CDF model cost: each control point stores a (key, rank) pair $= 128$ bits. With
-$\texttt{pgmEpsilon} = 128$: ${\approx} n/128$ points $\approx 1$ bit per key.
+$\varepsilon_{\text{PGM}} = 128$: ${\approx} n/128$ points $\approx 1$ bit per key.
 
 \subsection{Limitations}
 
