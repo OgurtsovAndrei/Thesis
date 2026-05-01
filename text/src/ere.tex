@@ -17,7 +17,7 @@ To achieve the information-theoretic minimum of $n \cdot (K - \log_2(n) + O(1)) 
 structure divides the universe $U'$ into $B = 2^{\lfloor \log_2 n \rfloor}$ equal-sized blocks.
 Conceptually, ERE has two levels: a succinct navigation layer over blocks, and a compact local representation of the keys.
 
-All keys inside one block have common $\log_2 B = \lfloor \log_2 n \rfloor$ bits prefix.
+All keys inside one block have a common $\log_2 B = \lfloor \log_2 n \rfloor$ bits prefix.
 Therefore, key suffixes can be stored in the array with $w = K - \lfloor \log_2 n \rfloor$ bits per key.
 The succinct navigation layer is used to determine block boundaries.
 
@@ -245,10 +245,12 @@ Real-world data is rarely uniform. The original ARE
 construction~\citep{goswami2015approximate} uses a \emph{locality-preserving}
 hash: consecutive input keys map to consecutive hashed values, so dense
 input regions stay dense in the hashed universe. On heavily clustered
-benchmarks the heaviest bucket reaches ${\sim}10^6$~keys, while median
-and P90 stay in the thousands (Table~\ref{tab:eval-bucket-fill},
-Chapter~\ref{chap:evaluation}). Worst-case footprint is $\leq 2$~MB ---
-cache-resident in L2.
+benchmarks the heaviest bucket reaches ${\sim}10^6$~keys. While median bucket
+sizes stay in the thousands for moderate ranges, degenerate distributions
+at large query ranges can push the median into the hundreds of thousands
+(Table~\ref{tab:eval-bucket-fill}, Chapter~\ref{chap:evaluation}).
+The worst-case footprint remains around ${\sim}2.5$~MB --- small enough
+to be cache-resident.
 
 Regardless of distribution, the bucket size is hard-bounded above by
 the block capacity $2^w$, where $w = K - \lfloor \log_2 n \rfloor$ is
@@ -313,7 +315,7 @@ returns the interval of ranks of points in $S'$ whose binary
 representation has $p$ as a prefix~\citep[\S 3.2]{goswami2015approximate}.
 If no such points exist, the answer is arbitrary --- hence
 \emph{weak}. The supporting index answers the query in $O(1)$
-time on the word-RAM model.
+time in the word-RAM model.
 
 \paragraph{Use in ERE.}
 Given a query range $[a, b]$ inside a single block, the original
@@ -324,9 +326,9 @@ most-significant-bit operation). Then $S' \cap [a, b] \neq \emptyset$
 iff at least one of the following holds:
 \begin{itemize}
     \item the largest point in $S'$ prefixed by $p \cdot 0$ exists
-          and is $\geq a$, or
+    and is $\geq a$, or
     \item the smallest point in $S'$ prefixed by $p \cdot 1$ exists
-          and is $\leq b$.
+    and is $\leq b$.
 \end{itemize}
 Each side is one WPS query plus a comparison, giving $O(1)$ local
 queries. The index is realised as a Z-Fast trie keyed by a Monotone
@@ -363,7 +365,7 @@ Even the most compact variant costs 59~BPK --- and this is an auxiliary
 index \emph{on top of} the packed suffix array, which WPS accelerates but
 does not replace. In our use case (ERE inside an ARE
 filter, Section~\ref{sec:soda}), the suffix width $w$ is typically
-$7$--$13$ bits per key, so WPS adds $5$--$8\times$ more space than the
+$7$--$13$ bits per key depending on the target query range length $\mathcal{L}$, so WPS adds $5$--$8\times$ more space than the
 suffix data it indexes.
 
 Query latency is equally problematic. WPS replaces only the local search
@@ -376,11 +378,11 @@ across representative bucket sizes.
     \centering
     \begin{tabular}{@{}lrrr@{}}
         \toprule
-        Bucket size $k$                & Binary search (ns) & WPS Compact (ns) & Speedup            \\
+        Bucket size $k$                  & Binary search (ns) & WPS Compact (ns) & Speedup           \\
         \midrule
-        ${\sim}12$ (typical, uniform)  & $5$--$9$           & $370$--$567$     & $40$--$110\times$  \\
-        $2^{12}$ ($k \approx 4{,}000$) & ${\sim}40$         & $370$--$567$     & $9$--$14\times$    \\
-        $2^{17}$ ($k \approx 131{,}000$) & ${\sim}60$       & $370$--$567$     & $6$--$9\times$     \\
+        ${\sim}12$ (typical, uniform)    & $5$--$9$           & $370$--$567$     & $40$--$110\times$ \\
+        $2^{12}$ ($k \approx 4{,}000$)   & ${\sim}40$         & $370$--$567$     & $9$--$14\times$   \\
+        $2^{17}$ ($k \approx 131{,}000$) & ${\sim}60$         & $370$--$567$     & $6$--$9\times$    \\
         \bottomrule
     \end{tabular}
     \caption{Bucket-search latency on Apple~M4~Max, $K = 64$, 64-bit keys.
@@ -389,7 +391,7 @@ across representative bucket sizes.
     Section~\ref{subsec:ere-local-search}. WPS pays a large per-call
     constant from trie pointer-chasing and hash probing that does not
     amortise with $k$, while binary search on packed suffixes scales as
-    $O(\log k)$ with small constants on contiguous memory.}
+        $O(\log k)$ with small constants on contiguous memory.}
     \label{tab:wps-vs-binsearch}
 \end{table}
 

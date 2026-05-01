@@ -1,4 +1,6 @@
 \FloatBarrier
+
+
 \section{Prefix Truncation}
 \label{sec:truncation}
 
@@ -9,22 +11,22 @@ top $K = L - t$ bits of each key.
 
 Properties of the hash:
 \begin{itemize}
-  \item \textbf{Locality-preserving:} truncation preserves order --- if $a < b$, then
+    \item \textbf{Locality-preserving:} truncation preserves order --- if $a < b$, then
     $h(a) \leq h(b)$. Intervals map to intervals.
-  \item \textbf{Contiguous phantoms:} the $2^t$ phantom points of each stored key $x$
-    form an interval of length~$2^t$ in the original universe --- all points
-    sharing the same $K$-bit prefix. This contrasts with the SODA hash, where phantoms
+    \item \textbf{Contiguous phantoms:} the phantom points of each stored key $x$
+    are confined to an interval of length~$2^t$ in the original universe --- all non-keys
+    sharing the same $K$-bit prefix as $x$. This contrasts with the SODA hash, where phantoms
     are scattered uniformly.
-  \item \textbf{$O(1)$ storage:} the hash is a bit-shift --- stores only the shift
+    \item \textbf{$O(1)$ storage:} the hash is a bit-shift --- stores only the shift
     amount~$t$.
 \end{itemize}
 
 \begin{figure}[h]
-  \centering
-  \includegraphics[width=0.85\textwidth]{phantom_comparison}
-  \caption{Phantom point distribution: random hash (SODA) scatters phantoms uniformly
+    \centering
+    \includegraphics[width=0.85\textwidth]{phantom_comparison}
+    \caption{Phantom point distribution: random hash (SODA) scatters phantoms uniformly
     across $U$; truncation concentrates them in a contiguous block adjacent to the key.}
-  \label{fig:phantom-comparison}
+    \label{fig:phantom-comparison}
 \end{figure}
 
 \subsection{ARE Construction With Truncation}
@@ -33,9 +35,9 @@ Combining truncation with ERE yields a filter where the contiguous phantom struc
 (Figure~\ref{fig:phantom-comparison}) changes the collision analysis:
 
 \begin{itemize}
-  \item \textbf{SODA hash:} phantoms scattered $\Rightarrow$ collision zone per key is
+    \item \textbf{SODA hash:} phantoms scattered $\Rightarrow$ collision zone per key is
     $\mathcal{L} \times 2^t$.
-  \item \textbf{Truncation:} phantoms contiguous $\Rightarrow$ collision zone per key is
+    \item \textbf{Truncation:} phantoms contiguous $\Rightarrow$ collision zone per key is
     $\mathcal{L} + 2^t$.
 \end{itemize}
 
@@ -43,36 +45,36 @@ The additive (rather than multiplicative) interaction eliminates the $\mathcal{L
 factor from the filter's space formula:
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}llll@{}}
-\toprule
-Hash & Collision zone & $K$ for FPR $\leq \varepsilon$ & Filter BPK \\
-\midrule
-Random (SODA)  & $\mathcal{L} \times 2^t$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
-  $\log_2(\mathcal{L}/\varepsilon) + O(1)$ \\
-Truncation     & $\mathcal{L} + 2^t$      & $\log_2(2n/\varepsilon)$ &
-  $\log_2(1/\varepsilon) + O(1)$ \\
-\bottomrule
-\end{tabular}
-\caption{Choosing truncation over the SODA hash reduces the resulting filter's BPK by
-  $\log_2(\mathcal{L})$. At $\mathcal{L} = 128$, this is a saving of 7~bits per key.}
-\label{tab:trunc-vs-soda}
+    \centering
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        Hash & Collision zone & $K$ for FPR $\leq \varepsilon$ & Filter BPK \\
+        \midrule
+        Random (SODA) & $\mathcal{L} \times 2^t$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
+        $\log_2(\mathcal{L}/\varepsilon) + O(1)$ \\
+        Truncation & $\mathcal{L} + 2^t$ & $\log_2(2n/\varepsilon)$ &
+        $\log_2(1/\varepsilon) + O(1)$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Choosing truncation over the SODA hash reduces the resulting filter's BPK by
+        $\log_2(\mathcal{L})$. At $\mathcal{L} = 128$, this is a saving of 7~bits per key.}
+    \label{tab:trunc-vs-soda}
 \end{table}
 
 \subsection{The Price of Contiguity}
 \label{sec:trunc-failure}
 
 The same property that reduces the filter's space is also the fundamental weakness: all
-false positives are concentrated near stored keys. For a stored key~$x$, its phantom
-block --- the $2^t$ consecutive points sharing the same $K$-bit prefix as~$x$ --- is the
-only region that can produce false positives.
+false positives are concentrated near stored keys. For a stored key~$x$, its phantoms
+are confined to the $2^t$ consecutive points sharing the same $K$-bit prefix as~$x$, making this
+the only region that can produce false positives.
 
 When inter-key gaps are smaller than the phantom size~$2^t$, phantom intervals of
 neighboring keys overlap and FPR approaches 100\%. This occurs with:
 \begin{itemize}
-  \item \textbf{Sequential keys} ($x, x{+}1, x{+}2, \ldots$): every gap is covered by
+    \item \textbf{Sequential keys} ($x, x{+}1, x{+}2, \ldots$): every gap is covered by
     phantoms from both sides.
-  \item \textbf{Clustered keys}: phantom intervals overlap, covering the cluster without gaps.
+    \item \textbf{Clustered keys}: phantom intervals overlap, covering the cluster without gaps.
 \end{itemize}
 
 Only uniformly spread keys with gaps $\gg 2^t$ achieve the theoretical FPR --- a narrow
@@ -82,15 +84,17 @@ any distribution, at the cost of $\log_2(\mathcal{L})$ extra bits per key in the
 resulting filter.
 
 \begin{figure}[h]
-  \centering
-  \includegraphics[width=0.85\textwidth]{trunc_tradeoff_uniform}
-  \caption{FPR vs BPK for truncation vs SODA on uniform keys ($n = 2^{18}$,
-    $\mathcal{L} = 128$). The SODA curve is shifted right by
-    ${\approx}\log_2(128) = 7$~BPK --- matching the theoretical prediction.}
-  \label{fig:trunc-uniform}
+    \centering
+    \includegraphics[width=0.85\textwidth]{trunc_tradeoff_uniform}
+    \caption{FPR vs BPK for truncation vs SODA on uniform keys ($n = 2^{18}$,
+        $\mathcal{L} = 128$). The SODA curve is shifted right by
+        ${\approx}\log_2(128) = 7$~BPK --- matching the theoretical prediction.}
+    \label{fig:trunc-uniform}
 \end{figure}
 
 \FloatBarrier
+
+
 \section{Adaptive Filter}
 \label{sec:adaptive}
 
@@ -99,14 +103,14 @@ The adaptive filter checks at build time whether hashing is necessary at all.
 \subsection{Exact Mode}
 
 \begin{enumerate}
-  \item \textbf{Normalize:} subtract $\min(S)$ from all keys, shifting the dataset to
+    \item \textbf{Normalize:} subtract $\min(S)$ from all keys, shifting the dataset to
     start at~0.
-  \item \textbf{Measure spread:} $M = \lceil \log_2(\max(S) - \min(S)) \rceil$.
-  \item \textbf{Decide:}
+    \item \textbf{Measure spread:} $M = \lceil \log_2(\max(S) - \min(S)) \rceil$.
+    \item \textbf{Decide:}
     \begin{itemize}
-      \item $M \leq K$: the entire dataset fits in $K$ bits $\Rightarrow$ \textbf{exact
+        \item $M \leq K$: the entire dataset fits in $K$ bits $\Rightarrow$ \textbf{exact
         mode}. Build ERE directly over normalized keys. No hash, FPR~$= 0$.
-      \item $M > K$: data too spread $\Rightarrow$ \textbf{SODA mode}. Apply
+        \item $M > K$: data too spread $\Rightarrow$ \textbf{SODA mode}. Apply
         pairwise-independent hash, same filter guarantees as Section~\ref{sec:soda}.
     \end{itemize}
 \end{enumerate}
@@ -116,28 +120,28 @@ The adaptive filter checks at build time whether hashing is necessary at all.
 Exact mode requires $\max(S) - \min(S) < 2^K = n\mathcal{L}/\varepsilon$.
 Rewriting in terms of density $\rho = (n - 1) / (\max(S) - \min(S))$:
 \begin{equation}
-  \rho > \frac{\varepsilon}{\mathcal{L}}
-  \label{eq:exact-threshold}
+    \rho > \frac{\varepsilon}{\mathcal{L}}
+    \label{eq:exact-threshold}
 \end{equation}
 or equivalently, the average gap
 $\bar{g} = (\max(S) - \min(S)) / (n - 1)$ must satisfy
 $\bar{g} < \mathcal{L}/\varepsilon$.
 
 \begin{table}[h]
-\centering
-\begin{tabular}{@{}llll@{}}
-\toprule
-$\mathcal{L}$ & $\varepsilon$ & Max avg gap & Min density \\
-\midrule
-128 & $10^{-3}$ & 128,000            & $7.8 \times 10^{-6}$ \\
-128 & $10^{-6}$ & $1.28 \times 10^8$ & $7.8 \times 10^{-9}$ \\
-16  & $10^{-3}$ & 16,000             & $6.25 \times 10^{-5}$ \\
-\bottomrule
-\end{tabular}
-\caption{Exact mode threshold for typical parameters. The density requirement is
-  extremely low --- exact mode fails only when keys are scattered across a universe
-  much wider than $n \cdot \mathcal{L} / \varepsilon$.}
-\label{tab:exact-threshold}
+    \centering
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        $\mathcal{L}$ & $\varepsilon$ & Max avg gap        & Min density           \\
+        \midrule
+        128           & $10^{-3}$     & 128,000            & $7.8 \times 10^{-6}$  \\
+        128           & $10^{-6}$     & $1.28 \times 10^8$ & $7.8 \times 10^{-9}$  \\
+        16            & $10^{-3}$     & 16,000             & $6.25 \times 10^{-5}$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Exact mode threshold for typical parameters. The density requirement is
+    extremely low --- exact mode fails only when keys are scattered across a universe
+    much wider than $n \cdot \mathcal{L} / \varepsilon$.}
+    \label{tab:exact-threshold}
 \end{table}
 
 This becomes especially powerful in combination with hybrid segmentation
