@@ -40,6 +40,8 @@
 # biblatex
 /text/**/*.bcf
 /text/**/*.run.xml
+# latexmk aux directories
+/text/**/build/
 
 # OS noise
 .DS_Store

@@ -33,5 +33,4 @@ watch:
 
 clean:
 	latexmk -C
-	rm -f *.aux *.log *.nav *.out *.snm *.toc *.vrb *.fdb_latexmk *.fls
-	rm -rf $(FIG_DIR)
+	rm -rf build $(FIG_DIR) $(DECK).pdf
