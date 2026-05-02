@@ -1,0 +1,25 @@
+\begin{frame}{Layer 2 — Hash Design (Truncation + Adaptive)}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.50\textwidth}
+    \textbf{Truncation hash.}
+    Drop the bottom $t$ bits before fingerprinting; one stored fingerprint covers a $2^t$-wide phantom interval.
+    \vspace{0.3em}
+    \begin{itemize}
+      \item Saves $\log_2 \mathcal{L}$ BPK at large $\mathcal{L}$.
+      \item Cost: phantom intervals leak between buckets at high density.
+    \end{itemize}
+    \vspace{0.5em}
+    \textbf{Adaptive switch.}
+    When key density $\rho > \varepsilon / \mathcal{L}$, the truncation collapses
+    to \textbf{exact} mode — \textbf{FPR = 0}.
+    \[
+      \rho \,>\, \varepsilon / \mathcal{L}
+      \;\;\Longrightarrow\;\;
+      \text{phantom intervals tile the bucket}
+    \]
+
+    \column{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{../../figures/phantom_comparison.pdf}
+  \end{columns}
+\end{frame}

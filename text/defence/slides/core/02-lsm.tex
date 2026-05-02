@@ -1,0 +1,17 @@
+\begin{frame}{Log-Structured Merge-Tree (LSM Tree)}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.50\textwidth}
+    \begin{itemize}
+      \item \textbf{Write-optimized} storage structure
+      \item Data is stored in immutable sorted files (\textbf{SSTables})
+      \item SSTables are organized into multiple \textbf{levels}
+      \item Widely used \\ \emph{(RocksDB, LevelDB, Cassandra, HBase)}
+      \item A point lookup may require touching \textbf{every level}
+    \end{itemize}
+
+    \column{0.48\textwidth}
+    \centering
+    \LSMfiltersfalse
+    \scalebox{0.95}{\LSMtree}
+  \end{columns}
+\end{frame}

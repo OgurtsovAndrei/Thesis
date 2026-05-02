@@ -1,0 +1,25 @@
+\begin{frame}{Layer 1 — Succinct Backend (ERE)}
+    \textbf{The exact range emptiness backend underneath every ARE filter.}
+    \vspace{0.5em}
+    \begin{table}
+        \centering
+        \small
+        \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcc@{}}
+            \toprule
+            & \textbf{Goswami baseline}          & \textbf{Ours}                            \\
+            \midrule
+            Navigation      & 2 bitvectors $(D_1, D_2)$          & \textbf{1 bitvector} $D$                 \\
+            Metadata BPK    & $B + n + M + 1$                    & $B + n + 1$                              \\
+            Bucket search   & Weak-Prefix-Search ($O(1)$ amort.) & \textbf{Binary search} on $\sim 12$ keys \\
+            Latency receipt & ---                                & \textbf{6--110$\times$} faster           \\
+            \bottomrule
+        \end{tabular*}\label{tab:ere-table}
+    \end{table}
+    \vspace{0.5em}
+    \begin{itemize}
+        \item \textbf{Asymptotically worse, yet faster in practice.}
+        $O(\log k)$ beats WPS's $O(1)$ on real LSM data --- that constant hides a chain of hash probes plus trie traversal.
+        \item One-vector cuts metadata by \textbf{$\sim 24\%$} (Poisson $1 - e^{-1}$ at $\lambda = 1$).
+        \item Small-bucket binary search is more cache-friendly than rank/select on a trie.
+    \end{itemize}
+\end{frame}

@@ -1,0 +1,80 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usetheme{metropolis}
+\usepackage{appendixnumberbeamer}
+
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, fit, backgrounds, calc, shadows,
+    decorations.pathreplacing, arrows.meta}
+
+\usepackage[backend=biber, style=numeric]{biblatex}
+\addbibresource{../../refs.bib}
+
+% Figure macros
+\input{figures/lsm-tree.tex}
+\input{figures/pipeline.tex}
+
+% --- Color palette: matches benchmark plots
+\definecolor{thScanARE}{HTML}{D946EF}    % magenta — Scan-ARE
+\definecolor{thRosetta}{HTML}{12FC21}    % neon green — Rosetta
+\definecolor{thSNARF}{HTML}{1E3A8A}      % deep blue
+\definecolor{thGrafite}{HTML}{0F766E}    % teal
+\definecolor{thAccent1}{HTML}{0F766E}    % teal accent
+\definecolor{thAccent2}{HTML}{EA580C}    % orange accent
+
+\setbeamercolor{progress bar}{fg=thAccent1}
+\setbeamercolor{title separator}{fg=thAccent2}
+\setbeamercolor{frametitle}{bg=black!5, fg=black}
+\setbeamerfont{frametitle}{family=\sffamily, series=\bfseries, size=\Large}
+
+% --- Title block
+\title{Practical Range Emptiness Filters}
+\subtitle{Non-Asymptotic Optimizations on Three Layers}
+\author{Andrei Ogurtsov}
+\institute{Bachelor's Thesis Defence}
+\date{2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Talk in One Sentence}
+  \vspace{1em}
+  \begin{center}
+    \large
+    Non-asymptotic optimizations on three layers $-$\\[0.4em]
+    Layer 3 produces a result \textbf{beyond the original scope}.
+  \end{center}
+  \vspace{1em}
+  \begin{itemize}
+    \item \textbf{Layer 1} $-$ succinct backend (one-vector ERE; WPS $\to$ binary search)
+    \item \textbf{Layer 2} $-$ hash design (truncation + adaptive)
+    \item \textbf{Layer 3} $-$ Scan-ARE (1D-DBSCAN over sorted keys)
+  \end{itemize}
+\end{frame}
+
+% Core slides — all in core/
+\input{core/02-lsm}
+\input{core/03-filters}
+\input{core/04-problem}
+\input{core/05-layer1}
+\input{core/06-layer2}
+\input{core/07-layer3}
+\input{core/08-headline}
+\input{core/09-limitations}
+\input{core/10-conclusion}
+
+\appendix
+% DLC modules — load conditionally
+% \input{dlc/M1-onevector}
+% \input{dlc/M2-adaptive}
+% \input{dlc/M3-lsm-context}
+% \input{dlc/M4-industry-comparison}
+
+% Backup slides — Q&A
+% \input{backup/B-headline-books}
+
+\end{document}

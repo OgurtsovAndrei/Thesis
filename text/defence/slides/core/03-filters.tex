@@ -1,0 +1,17 @@
+\begin{frame}{Reducing Disk I/O with Filters}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.50\textwidth}
+    Approximate membership filters cut down disk lookups:
+    \begin{itemize}
+      \item Filters live in SSTable \textbf{metadata}
+      \item Filters use \textbf{small memory} compared to the SSTable itself (10 --- 20 bit per key)
+      \item Point queries --- bloom filters
+      \item Range queries --- range filters
+    \end{itemize}
+
+    \column{0.48\textwidth}
+    \centering
+    \LSMfilterstrue
+    \scalebox{0.95}{\LSMtree}
+  \end{columns}
+\end{frame}

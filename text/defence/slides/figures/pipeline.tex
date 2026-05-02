@@ -1,0 +1,15 @@
+% Hash → ERE pipeline diagram (compact vertical layout for half-slide column).
+\newcommand{\HashEREpipeline}{%
+\begin{tikzpicture}[
+    box/.style={draw, rounded corners=3pt, fill=black!4, minimum width=3.4cm,
+                minimum height=0.9cm, font=\small, align=center, inner sep=3pt},
+    arr/.style={->, >=stealth, line width=0.7pt},
+    label/.style={font=\scriptsize, text=black!70},
+]
+\node[box] (keys) {Sorted keys $S$, $|S| = n$};
+\node[box, below=0.5cm of keys, fill=thAccent1!15] (hash) {Locality-preserving hash $h$};
+\node[box, below=0.5cm of hash, fill=thAccent2!15] (ere)  {Exact range emptiness (ERE)};
+\draw[arr] (keys) -- (hash);
+\draw[arr] (hash) -- node[label, right=0.05cm] {fingerprints} (ere);
+\end{tikzpicture}%
+}

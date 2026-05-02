@@ -124,6 +124,7 @@ single slide; aim for a 30-second answer using the slide as anchor.
 | **B8** | CDF-ARE as a documented negative result | New slide — short summary of why it didn't work |
 | **B9** | Future work expanded: dynamic updates, n = 2²⁷, RocksDB integration | New slide |
 | **B10** | Codebase scale: 6 ARE variants, CGo wrappers, test count | New slide |
+| **B11** | Goswami bound decomposition + LPH construction sketch | New slide — `log₂(nL/ε)/n = log₂(L/ε)/n + log₂(n)/n` (LPH cost + ERE cost); block-decomposition idea behind the hash; cite Goswami SODA'15. Triggered if asked "where do the bits come from?" or "how does that hash work?" |
 
 B6 is the only backup that requires fresh measurements. Everything else
 reuses material that already exists in the thesis text or in

@@ -1,0 +1,18 @@
+\begin{frame}{Limitations — Uniform, $\mathcal{L} = 1$, $n = 2^{24}$}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.55\textwidth}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{figures/limitations_uniform_L1.pdf}
+
+    \column{0.42\textwidth}
+    \textbf{Where we lose.}
+    \begin{itemize}
+      \item No clusters $\Rightarrow$ segmentation gives no advantage.
+      \item No range $\Rightarrow$ truncation gives no advantage.
+      \item \textbf{\textcolor{thGrafite}{Grafite}}, designed for adversarial point queries, hits 0-FP at $\sim 19$ BPK.
+      \item \textbf{\textcolor{thScanARE}{Scan-ARE}} pays segmentation overhead with nothing to segment.
+    \end{itemize}
+    \vspace{0.4em}
+    \emph{Honest reading:} on uniform + point queries, the industry baseline wins. Our gain lives where real data lives.
+  \end{columns}
+\end{frame}

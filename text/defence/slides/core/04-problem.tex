@@ -1,0 +1,33 @@
+\begin{frame}{Problem and Goswami Baseline}
+  \textbf{Approximate Range Emptiness (ARE).}
+  Given a sorted set $S \subseteq [r]$ and query interval $[a, b]$,
+  answer ``$S \cap [a, b] = \emptyset$?'' with one-sided error $\varepsilon$:
+  no false negatives, $\Pr[\text{false positive}] \leq \varepsilon$.
+  \vspace{0.4em}
+
+  \begin{columns}[c,onlytextwidth]
+    \column{0.60\textwidth}
+    \textbf{Lower bound (Goswami, SODA'15):}
+    \[
+      \mathrm{BPK} \;\geq\; \log_2\!\left(\frac{n\,\mathcal{L}}{\varepsilon}\right)\Big/\,n
+    \]
+    Their construction reaches it via:
+    \begin{itemize}
+      \item \textbf{Locality-preserving hash $h$} --- maps key ranges to
+            fingerprint ranges, shrinking the universe to
+            $O(n\mathcal{L}/\varepsilon)$.
+      \item \textbf{Exact range emptiness (ERE)} --- answers
+            ``$S' \cap [a,b] = \emptyset$?'' exactly (no false positives) on
+            that small universe.
+    \end{itemize}
+
+    \column{0.38\textwidth}
+    \centering
+    \scalebox{0.85}{\HashEREpipeline}
+  \end{columns}
+
+  \vspace{0.6em}
+  \begin{center}
+    \textit{Asymptotically optimal --- but the constants are large in practice.}
+  \end{center}
+\end{frame}

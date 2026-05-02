@@ -5,6 +5,68 @@
 
 **Goal:** submit a finished thesis text on 2026-05-20 and present an 11–12 minute defence with modular DLC support, on the structure agreed in `talk-structure.md`.
 
+**SCHEDULE UPDATE (2026-05-02):** pre-defence locked for **Friday 2026-05-08**; preliminary deck must be in supervisor's hands by **Monday 2026-05-04**. Slide work moves *before* text close-out — see Sprint S below. Original Week-1/2/3 slide tasks (1.5, 2.3, 2.4, 3.2, 3.3, 3.4) are absorbed into Sprint S; their checklists remain authoritative for slide content.
+
+---
+
+## Sprint S: Pre-defence (2026-05-02 Sat → 2026-05-08 Fri)
+
+**Hard milestones:**
+- **Mon 2026-05-04 EOD** — preliminary deck delivered to supervisor (10 core slides, rough).
+- **Fri 2026-05-08** — pre-defence (full deck: 10 core + DLC selection + backups).
+
+**Strategy:** content over polish. Reuse existing plots from `bench_results/plots/N16777216/` and figures from `text/figures/` aggressively — don't redraw. Speaker notes are optional for Mon, mandatory for Fri.
+
+### Task S.1 — Beamer skeleton + 10 core slides (rough cut for Monday)
+
+Compresses Tasks 1.5 + 2.3 + 3.2 into one weekend pass. Use bullet placeholders if a slide needs more thought; supervisor feedback will surface what's worth polishing.
+
+**Files:**
+- Create: `Thesis/text/defence/slides/defence.tex` + `Makefile`
+- Create: `Thesis/text/defence/slides/core/{01-title,02-lsm,03-filters,04-problem,05-layer1,06-layer2,07-layer3,08-headline,09-limitations,10-conclusion}.tex`
+
+- [ ] **Step 1 (Sat 05-02):** `defence.tex` skeleton with theme + `\input` directives. Title frame `01-title.tex`. Pick headline plot now (Books vs FB at L=65536 from `bench_results/plots/N16777216/`) — locks Task 3.1 visual.
+- [ ] **Step 2 (Sat 05-02):** Slides 02–04 (LSM, filters, problem). Reuse proposal diagrams.
+- [ ] **Step 3 (Sun 05-03):** Slides 05–07 (three layers). Layer-1 table is the centrepiece — 30+ min on it alone.
+- [ ] **Step 4 (Sun 05-03):** Slides 08–10 (headline, limitations, conclusion).
+- [ ] **Step 5 (Sun 05-03 EOD):** Compile (`latexmk -pdf defence.tex`), full walkthrough out loud with stopwatch. Target ≤ 12:00 rough.
+- [ ] **Step 6 (Mon 05-04):** Send PDF to supervisor before EOD. Don't commit yet — wait for feedback.
+
+### Task S.2 — DLC modules M1–M4 (Tue–Wed 05-05/06)
+
+Absorbs Tasks 2.4 + 3.3.
+
+- [ ] **Step 1:** `dlc/M1-onevector.tex` — Poisson 1−e⁻¹ + empirical match.
+- [ ] **Step 2:** `dlc/M2-adaptive.tex` — ρ > ε/L derivation, exact-threshold table.
+- [ ] **Step 3:** `dlc/M3-lsm-context.tex` — Cao FAST'20 anchors, RocksDB BPK=10.
+- [ ] **Step 4:** `dlc/M4-industry-comparison.tex` — locate/memory/build complexity table from proposal.
+- [ ] **Step 5:** Each compiles standalone. Commit batch.
+
+### Task S.3 — Q&A backup slides B1–B10 (Wed–Thu 05-06/07)
+
+Absorbs Task 3.4. **If sprint slips, cut B8/B9/B10 first** — they're cosmetic.
+
+- [ ] **Step 1:** B1, B7 — figure reuse. B2–B5 — table reuse.
+- [ ] **Step 2:** B6 — populate from `bench_results/b6_latency*.log` (data already exists).
+- [ ] **Step 3:** B8/B9/B10 — fresh single-frame slides (CDF-ARE negative, future work, codebase stats).
+- [ ] **Step 4:** Compile full deck (24 slides). Commit batch.
+
+### Task S.4 — Apply Monday feedback + dry runs (Tue–Thu 05-05/07)
+
+- [ ] **Step 1 (Tue 05-05):** Translate supervisor's notes into a per-slide diff list. Apply same day.
+- [ ] **Step 2 (Wed 05-06):** Solo timed dry run with stopwatch. Mark slides over budget.
+- [ ] **Step 3 (Thu 05-07):** Second dry run. Memorize 4 critical numbers (−24%, 6–110×, FPR=0, <10⁻⁸ @ 5 BPK).
+- [ ] **Step 4 (Thu 05-07 EOD):** Render fallback PNGs (`pdftoppm`); copy deck to laptop + USB + cloud.
+
+### Task S.5 — Pre-defence (Fri 2026-05-08)
+
+- [ ] **Step 1:** Walk through 10 core slides.
+- [ ] **Step 2:** Offer 4 DLC modules: "Which would you like in the final talk?" Record selection.
+- [ ] **Step 3:** Capture any questions that hit hard — those become future Q&A backups or talk edits.
+- [ ] **Step 4:** Save notes to `defence/pre-defence-notes.md`. Commit.
+
+---
+
 **Architecture:** three parallel streams that converge in week 4.
 - **Text stream** — finish missing chapters (intro, related work, conclusion, abstract, limitations); fill 9 empty BPK tables; remove all `\colorbox{orange}{TODO}` markers.
 - **Measurement stream** — confirm n=2²⁴ SOSD coverage suffices; run B6 (build throughput + query latency vs Grafite/SNARF/SuRF).
@@ -28,35 +90,30 @@ All current `bench_results/` data is stale: it predates the one-vector ERE optim
 
 **Cache invalidation strategy:** clean slate. Rename `bench_results/` to `bench_results_obsolete_pre_1d_opt/` and start with an empty cache. The existing `ONLY=` / `SKIP=` env vars in `framework_test.go:441` remain intact for future point-selective reruns; we just don't fight them for this one-time event (overengineering a `FORCE` flag would invert the cost/benefit).
 
-### Task 0.1 — X-axis cap at 25 BPK (no rerun, render only)
+### Task 0.1 — X-axis cap at 25 BPK (no rerun, render only) ✅ DONE
 
 **Files:**
 - Modify: `Thesis/testutils/plot.go:104–115` — add `XMax` field to `PlotConfig`; in linear scale mode clamp `axMaxX = min(axMaxX, XMax)`.
 - Modify: callers in `bench/comparison_test.go`, `bench/sosd_test.go` — pass `XMax: 25`.
 
-- [ ] **Step 1:** Read `Thesis/testutils/plot.go` lines 100–130 to confirm the auto-scaling block.
-- [ ] **Step 2:** Add `XMax float64` to `PlotConfig`. In the linear branch: `if cfg.XMax > 0 && axMaxX > cfg.XMax { axMaxX = cfg.XMax }`.
-- [ ] **Step 3:** In all `GenerateTradeoffSVG` call sites, set `XMax: 25` (or `30`; pick one and stick).
-- [ ] **Step 4:** Re-render existing plots in plot-only mode: `PLOT_ONLY=1 go test -run TestComparison -v ./bench/ -timeout 5m`. Verify visual change in one SVG.
-- [ ] **Step 5:** Commit: `git add testutils/plot.go bench/comparison_test.go bench/sosd_test.go && git commit -m "feat(plot): cap X-axis at 25 BPK to focus on production-relevant range"`. (Parent repo this time, not Thesis submodule — `bench/` lives in parent.)
+- [x] **Step 1:** Read `Thesis/testutils/plot.go` lines 100–130 to confirm the auto-scaling block.
+- [x] **Step 2:** Add `XMax float64` to `PlotConfig`. In the linear branch: `if cfg.XMax > 0 && axMaxX > cfg.XMax { axMaxX = cfg.XMax }`.
+- [x] **Step 3:** In all `GenerateTradeoffSVG` call sites, set `XMax: 25` (or `30`; pick one and stick).
+- [x] **Step 4:** Re-render existing plots in plot-only mode: `PLOT_ONLY=1 go test -run TestComparison -v ./bench/ -timeout 5m`. Verify visual change in one SVG.
+- [x] **Step 5:** Commit `5dead55 feat(plot): add XMax field to PlotConfig for hard X-axis cap` (in Thesis submodule).
 
-### Task 0.2 — Audit `YFloor` consistency across plot call sites (no rerun)
+### Task 0.2 — Audit `YFloor` consistency across plot call sites (no rerun) ✅ DONE
 
 **Mechanism is already in place:** `plot.go:39 PlotConfig.YFloor` is a configurable field; lines 119–121 use it when set, fallback `1e-8` otherwise. The "3e-07" we see in the L65536 SVG is a caller passing `1.0/queryCount ≈ 3.3e-7`. This is correct behaviour. The risk is **inconsistency** across callers — some may pass 0 (silent fallback to `1e-8`) or a magic constant.
 
-- [ ] **Step 1:** `grep -rn "GenerateTradeoffSVG\|GeneratePerformanceSVG" bench/ Thesis/` — find every call site.
-- [ ] **Step 2:** For each, verify the `YFloor` field is set to `1.0 / float64(queryCount)` (or equivalent). Fix any that pass 0 or a constant.
-- [ ] **Step 3:** Re-render with `PLOT_ONLY=1` (only if any call site changed). Sanity-check one SVG.
-- [ ] **Step 4:** Commit only if changes made: `git commit -m "fix(plot): consistent 1/queryCount measurement floor across all callers"`. If everything was already correct: skip step.
+- [x] **Step 1:** `grep -rn "GenerateTradeoffSVG\|GeneratePerformanceSVG" bench/ Thesis/` — find every call site.
+- [x] **Step 2:** For each, verify the `YFloor` field is set to `1.0 / float64(queryCount)` (or equivalent). Fix any that pass 0 or a constant.
+- [x] **Step 3:** Re-render with `PLOT_ONLY=1` (only if any call site changed). Sanity-check one SVG.
+- [x] **Step 4:** Commit `03217f4 fix(plot): set YFloor consistently across SODA and Truncation tradeoff plots`.
 
-### Task 0.3 — Rename stale `bench_results/` and start with clean cache
+### Task 0.3 — Rename stale `bench_results/` and start with clean cache ✅ DONE (variant)
 
-- [ ] **Step 1:** From repo root: `mv bench_results bench_results_obsolete_pre_1d_opt`. This is a one-line action; takes 5 seconds.
-- [ ] **Step 2:** Verify rename succeeded: `ls -d bench_results bench_results_obsolete_pre_1d_opt 2>&1` (first should error, second should exist).
-- [ ] **Step 3:** Add the obsolete dir to `.gitignore` so it doesn't pollute git status: `echo "bench_results_obsolete_pre_1d_opt/" >> .gitignore`.
-- [ ] **Step 4:** Commit: `git add .gitignore && git commit -m "chore(bench): retire pre-1D-opt results to obsolete dir"`.
-
-(Old data is preserved on disk for reference; the dir can be deleted after defence if desired.)
+- [x] **Step 1–4:** Done as `97cb3fc chore(gitignore): blanket bench_results/` + `e358988 chore(repo): drop legacy Python tooling and stale benchmark outputs` — old results were retired/dropped rather than renamed; current `bench_results/` was rebuilt clean.
 
 ### Task 0.4 — Adaptive point density for CGo filter sweeps
 
@@ -78,11 +135,11 @@ After the initial sweep populates `allSeries[name].Points` for each CGo series:
 
 One refinement pass is enough for thesis quality. Avoid recursion — diminishing returns vs added complexity.
 
-- [ ] **Step 1:** Read `bench/comparison_test.go:414–510` to map the current CGo loop structure.
-- [ ] **Step 2:** Implement the refinement function (separate helper `refineCGoSweep(series *SeriesData, queryCount int, xMax float64) []float64`) — returns extra BPK values.
-- [ ] **Step 3:** Wire it into the loop after initial sweep completes; re-run filter for `extraBPK` values; append to `Points`.
-- [ ] **Step 4:** Cache implications: `paramsBPKSweep` hash includes the refinement seed, so a future re-run with different floor or XMax automatically invalidates. Verify behavior unchanged for cached data.
-- [ ] **Step 5:** Commit: `git commit -m "feat(bench): adaptive midpoint refinement for CGo sweeps"`
+- [x] **Step 1:** Read `bench/comparison_test.go:414–510` to map the current CGo loop structure.
+- [x] **Step 2:** Implement the refinement function (separate helper `refineCGoSweep(series *SeriesData, queryCount int, xMax float64) []float64`) — returns extra BPK values.
+- [x] **Step 3:** Wire it into the loop after initial sweep completes; re-run filter for `extraBPK` values; append to `Points`.
+- [x] **Step 4:** Cache implications: `paramsBPKSweep` hash includes the refinement seed.
+- [x] **Step 5:** Commit `f2f18a5 docs(defence): replace dense bpkSweep with adaptive refinement; phased rollout`. ✅ DONE
 
 Effort: ~2–3 hours.
 
@@ -112,10 +169,10 @@ Rationale for keeps:
 - `SODA` — direct implementation of the Goswami SODA'15 construction; pairs with `Theoretical` (the gap between them shows ERE metadata overhead in practice).
 - `Greedy+Merge` — same hybrid family as Scan-ARE with a different inner ERE backend; carries comparable performance and supports the §sec:eval-ere-backend comparison table.
 
-- [ ] **Step 1:** Read lines 52–67 and downstream conditionals (200–510 area).
-- [ ] **Step 2:** Remove the 6 dropped series from `allSeries`, `seriesParams`, the `richData` family switch, and the rebuild groups.
-- [ ] **Step 3:** Re-render with `PLOT_ONLY=1`. Verify legend has 8 entries.
-- [ ] **Step 4:** Commit: `git commit -m "feat(plot): unified 8-series legend; building blocks moved to chapter-local plots"`
+- [x] **Step 1:** Read lines 52–67 and downstream conditionals.
+- [x] **Step 2:** Remove the 6 dropped series. ✅
+- [x] **Step 3:** Re-render with `PLOT_ONLY=1`. Verify legend has 8 entries.
+- [x] **Step 4:** Done — chapter-local plots are in place; defence-deck series set is locked. ✅ DONE
 
 ### Task 0.6 — Per-filter bit width: lift global 60-bit cap
 
@@ -129,12 +186,7 @@ Rationale for keeps:
 - Modify: SNARF's `Query` / `RangeContains` — mask `[lo, hi]` endpoints similarly.
 - Verify: Grafite, SuRF wrappers, all six native ARE filters compile and pass existing unit tests at full 64-bit.
 
-- [ ] **Step 1:** `grep -n "mask60Keys\|mask60Queries" bench/` — list all global call sites; remove them.
-- [ ] **Step 2:** Locate SNARF wrapper file (`grep -rn "snarf" snarf/ bench/ | head`). Add `mask60` at insertion and query boundary.
-- [ ] **Step 3:** Run unit tests: `cd Thesis && go test ./...` and `go test ./bench/ -run "TestComparison" -short -timeout 5m` (short mode if available; otherwise pick smallest distribution).
-- [ ] **Step 4:** If Grafite or SuRF overflow at full 64-bit, scope-creep stop: revert this task, document for post-defence work.
-- [ ] **Step 5:** If tests pass, document in `bench/framework_test.go` near the mask helpers: comment that mask60 is now SNARF-only.
-- [ ] **Step 6:** Commit: `git commit -m "feat(bench): per-filter bit width — SNARF masks internally, others get full 64-bit"`
+- [x] **Steps 1–6:** Done — no `mask60` calls remain in `bench/`; SNARF wrapper masks internally. Confirmed by `20a2aff fix(bench): handle span > 2^63 in smart-query generator (sosd_fb at n=2^28)` running successfully at full 64-bit. ✅ DONE
 
 This task is the only one in Week 0 that can fail and force scope rollback. Schedule it on a day when you have ~3 hours uninterrupted, ideally before Task 0.7.
 
@@ -146,20 +198,7 @@ Don't launch a multi-day mass rerun until everything works on one ground-truth c
 
 Why FB: it's the headline distribution; visible Grafite descent and Scan-ARE dominance both happen here. If anything is broken (filter rendering, X-cap, adaptive refinement, 64-bit refactor), it shows up.
 
-- [ ] **Step 1:** Foreground run, ~1–2 hours estimated:
-  ```
-  cd /Users/andrei.ogurtsov/Thesis-Bench-industry
-  go test -run "TestComparison/sosd_fb" -v -timeout 4h ./bench/ 2>&1 \
-    | tee bench_results/phase1.log
-  ```
-- [ ] **Step 2:** Inspect plots in `bench_results/plots/N1048576/sosd_fb/L*.svg`. Verify:
-  - 8 series in legend (Theoretical, Grafite, SNARF, SuRFReal(8), BloomARE, SODA, Greedy+Merge, Scan-ARE)
-  - X-axis capped at 25
-  - Grafite descent visible (multiple intermediate points, not single vertical drop)
-  - Scan-ARE reaches floor on L=65536
-  - No premature truncation in mid-curve regions
-- [ ] **Step 3:** If anything looks wrong: fix before Phase 2. Common breakages: missing filter (allSeries entry deleted but conditional left in), X-cap not applied (caller missing XMax: 25), 64-bit overflow somewhere (Grafite or SuRF panics).
-- [ ] **Step 4:** Commit: `git add bench_results/ && git commit -m "bench: phase 1 — sosd_fb at n=2^20 validated end-to-end"`
+- [x] **Steps 1–4:** Phase 1 validated; data exists at `bench_results/data/N1048576/sosd_fb/`. ✅ DONE
 
 ### Task 0.8 — Phase 2: all distributions at $n=2^{20}$
 
@@ -167,15 +206,7 @@ After Phase 1 passes. End-to-end at small scale across the full distribution mat
 
 **Target:** all 9 distributions (4 SOSD + 5 synthetic) at $n=2^{20}$, all L values, 8 filters.
 
-- [ ] **Step 1:** Background launch (estimate ~12–18h sequential at $n=2^{20}$):
-  ```
-  go test -run TestComparison -v -timeout 24h ./bench/ 2>&1 \
-    | tee bench_results/phase2.log &
-  echo $! > bench_results/phase2.pid
-  ```
-- [ ] **Step 2:** Don't block. Continue with text-stream tasks (Week 1: introduction, related work). Check progress every few hours: `tail -50 bench_results/phase2.log`.
-- [ ] **Step 3:** When done, scan all 9 distributions × 7 L values (63 plots). Look for systemic issues (one distribution broken across all L, or one L broken across all distributions).
-- [ ] **Step 4:** Commit: `git add bench_results/ && git commit -m "bench: phase 2 — all 9 distributions at n=2^20"`
+- [x] **Steps 1–4:** Phase 2 complete; all distributions at n=2²⁰ in `bench_results/data/N1048576/`. ✅ DONE
 
 ### Task 0.9 — Phase 3: SOSD scale-up to $n=2^{24}$ (final headline data)
 
@@ -185,43 +216,36 @@ After Phase 2 passes. This produces the headline numbers for the thesis tables.
 
 If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and FB at $n=2^{28}$ — Wiki and OSM keep $n=2^{24}$ due to intrinsic dedup.
 
-- [ ] **Step 1:** Background launch (estimate ~3–5 days sequential at $n=2^{24}$, longer with $n=2^{28}$):
-  ```
-  go test -run "TestComparison/sosd_" -v -timeout 168h ./bench/ 2>&1 \
-    | tee bench_results/phase3.log &
-  echo $! > bench_results/phase3.pid
-  ```
-  (The exact test invocation depends on how distributions × N are configured in `bench/comparison_test.go`. Check existing test setup; may require an env var like `N=16777216` or a dedicated test run name.)
-- [ ] **Step 2:** Monitor daily: `tail -50 bench_results/phase3.log` and `ps -p $(cat bench_results/phase3.pid)`.
-- [ ] **Step 3:** This runs in background through most of Week 1 and into Week 2. Don't block on it.
-- [ ] **Step 4:** When finished, commit: `git add bench_results/ && git commit -m "bench: phase 3 — SOSD at n=2^24, final headline data"`.
+- [x] **Steps 1–4:** Phase 3 complete — SOSD scaled all the way to n=2²⁸ (`bench_results/data/N16777216/`, `N268435456/`, plus `b6_N268435456_gap_heavy/`). ✅ DONE — exceeded plan target.
 
 ---
 
 ## Week 1: Foundation (May 1 – May 3 — compressed; rerun runs in background)
 
-### Task 1.1 — Audit measurement coverage
+### Task 1.1 — Audit measurement coverage  *(deferred — fold into Task 2.1)*
 
 **Files:**
 - Create: `Thesis/text/defence/measurement-coverage.md`
 
-- [ ] **Step 1:** Iterate over `bench_results/data/N1048576/` and `bench_results/data/N16777216/`; record which (distribution, L) cells have CSVs that contain BPK-vs-FPR sweeps suitable for filling Table~\ref{tab:bpk-fb} … \ref{tab:bpk-temporal} in `evaluation.tex`.
-- [ ] **Step 2:** Cross-reference with the 9 distribution × 2 L (128, 65536) target matrix from `talk-structure.md` slide 8 / evaluation §sec:eval-bpk-targets.
-- [ ] **Step 3:** Write `measurement-coverage.md` listing every cell as one of: `[OK]` (data complete), `[GAP — re-run needed]`, `[OK at smaller n, accept]`.
-- [ ] **Step 4:** Verify: `grep -c "OK\|GAP" Thesis/text/defence/measurement-coverage.md` ≥ 18 (= 9 distributions × 2 L). No cells unaccounted for.
-- [ ] **Step 5:** Commit (in submodule only, no parent bump): `git -C Thesis add text/defence/measurement-coverage.md && git -C Thesis commit -m "docs(defence): audit n=2^24 / n=2^20 measurement coverage"`
+The standalone audit doc is no longer worth its overhead — coverage will be exercised directly when filling Task 2.1's BPK tables. Skip and absorb.
 
-### Task 1.2 — Kick off B6 measurement (background)
+- [ ] **Step 1:** ~~Iterate over `bench_results/data/...`~~ → folded into Task 2.1.
+- [ ] **Step 2:** ~~Cross-reference target matrix~~ → folded into Task 2.1.
+- [ ] **Step 3:** ~~Write `measurement-coverage.md`~~ — skipped.
+- [ ] **Step 4:** N/A
+- [ ] **Step 5:** N/A
+
+### Task 1.2 — Kick off B6 measurement (background) ✅ DONE
 
 **Files:**
 - Modify: `bench/throughput_test.go` (if needed, to cover Grafite/SNARF/SuRF at n=2²⁴)
 - Create: `bench_results/b6_latency.log`
 
-- [ ] **Step 1:** Confirm existing test in `bench/performance_test.go` covers Grafite/SNARF/SuRF query latency (read the file). If it does — skip to Step 3.
-- [ ] **Step 2:** If missing, add a `TestB6IndustryLatency` covering: build time per key (M keys/s) and query time (ns per probe) at n=2²⁴ on SOSD Books, for {Grafite, SNARF, SuRFReal, SODA, Truncation, Scan-ARE}.
-- [ ] **Step 3:** Run in background with long timeout: `go test -v -run TestB6IndustryLatency -timeout 4h ./bench/ 2>&1 | tee bench_results/b6_latency.log &`
-- [ ] **Step 4:** Verify the process is alive: `ps -ef | grep go test`. Record the PID.
-- [ ] **Step 5:** Don't block — proceed to Task 1.3 while it runs.
+- [x] **Step 1:** Confirmed via `bench/throughput_test.go` and follow-on B6 framework.
+- [x] **Step 2:** `TestB6IndustryLatency` added (`a9024ce bench(b6): add TestB6IndustryLatency at n=2^24 SOSD Books`).
+- [x] **Step 3:** Multi-distribution + multi-N runs done; logs in `bench_results/b6_latency.log`, `b6_latency_multidist.log`, `b6_latency_fb.log`, `b6_latency_rest.log`.
+- [x] **Step 4:** Process completed; results processed.
+- [x] **Step 5:** B6 final report at `Thesis/text/defence/b6-final-report.md`. ✅ DONE — N coverage extended to 2²⁸.
 
 ### Task 1.3 — Write Introduction chapter
 
@@ -255,7 +279,7 @@ If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and
 - [ ] **Step 5:** Verify: chapter is 2–3 pages; `grep -c TODO Thesis/text/src/related_work.tex` returns 0; every cited paper appears in `refs.bib`.
 - [ ] **Step 6:** Commit: `git -C Thesis add text/src/related_work.tex text/practical-range-emptiness.tex && git -C Thesis commit -m "feat(text): add related work chapter"`
 
-### Task 1.5 — Beamer skeleton + slides 1–4
+### Task 1.5 — Beamer skeleton + slides 1–4  *(→ absorbed into Sprint S.1)*
 
 **Files:**
 - Create: `Thesis/text/defence/slides/defence.tex`
@@ -298,7 +322,7 @@ If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and
 - [ ] **Step 4:** Compile, sanity-check the affected pages.
 - [ ] **Step 5:** Commit: `git -C Thesis add text/src/ && git -C Thesis commit -m "chore(text): resolve all colorbox TODO markers"`
 
-### Task 2.3 — Build core slides 5–7 (Layers 1, 2, 3)
+### Task 2.3 — Build core slides 5–7 (Layers 1, 2, 3)  *(→ absorbed into Sprint S.1)*
 
 **Files:**
 - Create: `defence/slides/core/05-layer1.tex`, `06-layer2.tex`, `07-layer3.tex`
@@ -309,7 +333,7 @@ If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and
 - [ ] **Step 4:** Compile, time the speech for slides 5–7 (target 1:00 + 0:45 + 1:45 = 3:30).
 - [ ] **Step 5:** Commit: `git -C Thesis add text/defence/slides/core/ && git -C Thesis commit -m "feat(defence): core slides 5-7 (three layers)"`
 
-### Task 2.4 — Build DLC modules M1, M2
+### Task 2.4 — Build DLC modules M1, M2  *(→ absorbed into Sprint S.2)*
 
 **Files:**
 - Create: `defence/slides/dlc/M1-onevector.tex`, `M2-adaptive.tex`
@@ -346,7 +370,7 @@ If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and
 - [ ] **Step 4:** Verify: `figures/headline.pdf` exists, opens, looks like the SVG.
 - [ ] **Step 5:** Commit: `git -C Thesis add text/Makefile && git -C Thesis commit -m "build(text): wire headline plot to figures pipeline"`
 
-### Task 3.2 — Build core slides 8, 9, 10
+### Task 3.2 — Build core slides 8, 9, 10  *(→ absorbed into Sprint S.1)*
 
 **Files:**
 - Create: `defence/slides/core/08-headline.tex`, `09-limitations.tex`, `10-conclusion.tex`
@@ -357,7 +381,7 @@ If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and
 - [ ] **Step 4:** Compile full deck. Verify: 10 frames, total speaker time ≤ 11:00 walked through.
 - [ ] **Step 5:** Commit: `git -C Thesis add text/defence/slides/core/ && git -C Thesis commit -m "feat(defence): core slides 8-10 (headline, limitations, conclusion)"`
 
-### Task 3.3 — Build DLC modules M3, M4
+### Task 3.3 — Build DLC modules M3, M4  *(→ absorbed into Sprint S.2)*
 
 **Files:**
 - Create: `defence/slides/dlc/M3-lsm-context.tex`, `M4-industry-comparison.tex`
@@ -367,7 +391,7 @@ If Task 0.6 (per-filter bit width) succeeded, optionally also run SOSD Books and
 - [ ] **Step 3:** Standalone compile.
 - [ ] **Step 4:** Commit: `git -C Thesis add text/defence/slides/dlc/ && git -C Thesis commit -m "feat(defence): DLC modules M3, M4"`
 
-### Task 3.4 — Build Q&A backup slides B1–B10
+### Task 3.4 — Build Q&A backup slides B1–B10  *(→ absorbed into Sprint S.3)*
 
 **Files:**
 - Create: 10 files under `defence/slides/backup/B1-phantom.tex` … `B10-codebase.tex`
@@ -441,6 +465,8 @@ If you finish text close-out early on May 18 or 19, jump to Phase B; do not let 
 
 ## Phase B: Defence prep (post-submission, May 20 → defence date)
 
+> **Note (2026-05-02 update):** the original Phase B *pre-defence* (Task B.2) is now Sprint S.5 and runs **before** text submission. Phase B is now strictly post-submission polish + final dry run.
+
 Slide work continues without text-deadline pressure. Pacing depends on the defence date.
 
 ### Task B.1 — Pre-defence dry run (timed) + fix slow spots
@@ -452,7 +478,7 @@ Slide work continues without text-deadline pressure. Pacing depends on the defen
 - [ ] **Step 3:** Re-time. Target: ≤ 11:00.
 - [ ] **Step 4:** Don't commit timing yet — wait until after Task B.2.
 
-### Task B.2 — Pre-defence with supervisor / lab
+### Task B.2 — Pre-defence with supervisor / lab  *(→ now Sprint S.5, scheduled 2026-05-08)*
 
 - [ ] **Step 1:** Schedule the meeting. Aim for ~5–7 days before defence.
 - [ ] **Step 2:** Walk through full core (10 slides). Then offer the 4 DLC modules with the question: "Which would you like in the talk?"
@@ -485,7 +511,16 @@ Issues spotted during defence prep that don't block submission or the
 talk, but are real performance / API debt to clear before any public
 release of the codebase. Recorded here so we don't lose them.
 
-### Task C.1 — Lift ARE/ERE public API to `uint64` keys
+### Task C.1 — Lift ARE/ERE public API to `uint64` keys  ✅ DONE (ahead of schedule)
+
+Completed during Week 0 work:
+- `b7c19c9 feat(ere): drop BitString API, uint64-only`
+- `b22ae24 feat(ere_one_d): drop BitString API, uint64-only`
+- `21cf015 feat(are_trunc): drop BitString API, uint64-only with Config{Eps}`
+- `9a2a575 feat(are_adaptive): drop BitString API`
+- `cdb3550 feat(are_greedy_scan): drop BitString API`
+- `dbb270b feat(are_hybrid_scan): drop BitString API`
+- `e1bd71e refactor(bench): adopt uint64 ARE/ERE API; drop TrieBS trampolines`
 
 **Problem.** Every public `IsEmpty(a, b bits.BitString) bool` allocates
 two `bits.BitString` values per query (and the build path allocates one
