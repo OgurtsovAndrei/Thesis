@@ -21,7 +21,6 @@
 .idea/
 
 # Proj temp output dirs
-/text/out/
 /text/**/*.pdf
 # LaTeX build artifacts (recursive to cover defence/slides/)
 /text/**/*.aux

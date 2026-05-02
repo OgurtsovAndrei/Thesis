@@ -2,7 +2,7 @@
 
 MAIN = practical-range-emptiness
 PROPOSAL = proposal
-OUT_DIR = out
+OUT_DIR = build
 FIG_DIR = figures
 THESIS_ROOT = ..
 BENCH_ROOT = ../..
@@ -43,25 +43,17 @@ figures:
 all: thesis proposal
 
 thesis: figures
-	mkdir -p $(OUT_DIR)
-	latexmk -pdf -interaction=nonstopmode -outdir=$(OUT_DIR) $(MAIN).tex
-	cp $(OUT_DIR)/$(MAIN).pdf .
+	latexmk -pdf -interaction=nonstopmode $(MAIN).tex
 
 proposal:
-	mkdir -p $(OUT_DIR)
-	latexmk -pdf -interaction=nonstopmode -outdir=$(OUT_DIR) $(PROPOSAL).tex
-	cp $(OUT_DIR)/$(PROPOSAL).pdf .
+	latexmk -pdf -interaction=nonstopmode $(PROPOSAL).tex
 
 clean:
-	latexmk -C -outdir=$(OUT_DIR)
-	rm -rf $(OUT_DIR)
-	rm -f $(MAIN).pdf $(PROPOSAL).pdf
+	latexmk -C
+	rm -rf $(OUT_DIR) $(MAIN).pdf $(PROPOSAL).pdf
 
 watch:
-	mkdir -p $(OUT_DIR)
-	latexmk -pvc -pdf -interaction=nonstopmode -outdir=$(OUT_DIR) $(MAIN).tex
+	latexmk -pvc -pdf -interaction=nonstopmode $(MAIN).tex
 
 force: figures
-	mkdir -p $(OUT_DIR)
-	latexmk -pdf -g -interaction=nonstopmode -outdir=$(OUT_DIR) $(MAIN).tex
-	cp $(OUT_DIR)/$(MAIN).pdf .
+	latexmk -pdf -g -interaction=nonstopmode $(MAIN).tex
