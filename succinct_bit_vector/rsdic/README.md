@@ -159,6 +159,122 @@ ERE `IsEmpty()` calls per query:
 With D2.Select going from ~110 ns to ~47 ns, the two Select calls save ~126 ns per query.
 For a typical ERE query at ~200 ns, this is a significant fraction.
 
+### Optimization 4: `Select1` inner loop — adaptive linear/binary scan (`rsdic.go`)
+
+**Before (upstream `Select1`, the inner loop):**
+
+```go
+selectInd := rank / kSelectBlockSize          // kSelectBlockSize = 4096
+lblock := rs.selectOneInds[selectInd]
+for ; lblock < uint64(len(rs.rankBlocks)); lblock++ {
+    if rank < rs.rankBlocks[lblock] {
+        break
+    }
+}
+lblock--
+```
+
+`selectOneInds[selectInd]` is a hint pointing to the large block that
+contains the $(\textsf{selectInd} \cdot 4096)$-th 1-bit. The loop walks
+`rankBlocks` forward from that hint until the running 1-count first
+exceeds `rank`. The implicit "O(1) iterations" promise assumes 1-bits
+are spread roughly uniformly across the bitvector, so 4096 ones span
+~8192 bits ≈ 8 large blocks.
+
+**The pathology.** On clustered bitvectors — e.g. an encoding of the
+form $0^{|B_0|} 1\, 0^{|B_1|} 1\, \dots\, 0^{|B_{N-1}|} 1$ where most
+$|B_i|=0$ but a small fraction of $|B_i|$ are very large — 1-bits
+cluster into long runs separated by long 0-runs. Two consecutive
+select-hints (4096 ones apart) can then sit *millions of bits* away
+from each other, so the inner scan visits thousands of large blocks
+instead of a handful. Empirically: on a workload that produced one
+hint-bracket spanning ~$10^6$ large blocks, the original `Select1`
+measured **1825 ns/call** versus 67 ns on the same rsdic with
+uniform-rank queries — a 27× slowdown driven entirely by the
+linear scan.
+
+A second, smaller contribution: `Select1` had a **value receiver**
+(`func (rs RSDic) Select1(...)`), which copied a ~104-byte struct
+(5 slice headers + 7 scalars) on every call. Under load this showed up
+as `runtime.duffcopy` taking ~9% of total time.
+
+**After:**
+
+The inner search is bracketed by `selectOneInds[selectInd]` and
+`selectOneInds[selectInd+1]+1`. Below a threshold the bracket is
+walked linearly (preserving upstream behaviour on the typical case);
+above it, a binary search bounds the worst case at $O(\log\,4096) \le
+12$ iterations regardless of clustering. Receiver changed to pointer.
+
+```go
+const kSelectLinearThreshold = 128
+
+func (rs *RSDic) Select1(rank uint64) uint64 {
+    ...
+    selectInd := rank / kSelectBlockSize
+    lo := rs.selectOneInds[selectInd]
+    hi := /* selectOneInds[selectInd+1]+1, clamped */
+
+    if hi-lo <= kSelectLinearThreshold {
+        // small bracket: linear scan, branch predictor friendly
+        for lblock = lo; lblock < hi; lblock++ {
+            if rank < rs.rankBlocks[lblock] { break }
+        }
+        lblock--
+    } else {
+        // large bracket: binary search bounds the worst case
+        l, r := lo, hi
+        for l < r {
+            mid := l + (r-l)/2
+            if rs.rankBlocks[mid] <= rank { l = mid + 1 } else { r = mid }
+        }
+        lblock = l - 1
+    }
+    ...
+}
+```
+
+**Picking the threshold.** A `BenchmarkSelect1ThresholdSweep` (Apple
+M4 Max, 2 s/cell) compared Linear, Binary, and Adaptive across
+brackets $\{1, 4, 16, 64, 128, 256, 1024, 4096\}$ on a deterministic
+clustered-unary pattern:
+
+| bracket | Linear (ns) | Binary (ns) | Adaptive (ns) | Winner |
+|--------:|------------:|------------:|--------------:|--------|
+|       1 |        51.9 |        56.6 |          52.9 | Linear |
+|      16 |        32.0 |        40.6 |          31.7 | Linear |
+|     128 |        74.7 |        80.1 |          78.1 | Linear |
+|     256 |       100.2 |        89.7 |          89.7 | Binary |
+|    1024 |       218.7 |       101.4 |          97.6 | Binary |
+|    4096 |       633.5 |       112.1 |         113.9 | Binary |
+
+Crossover sits between 128 and 256. We pick `kSelectLinearThreshold =
+128` — keeps the upstream regime intact and engages Binary slightly
+before it strictly wins, since the Linear pathology grows
+superlinearly past the crossover.
+
+A separate `BenchmarkSelect1MixedBrackets` / `…AlternatingPattern`
+checks that the `if hi-lo <= threshold` branch is well predicted when
+queries interleave small- and large-bracket rsdics; on M4 Max the
+branch is free.
+
+**Correctness.** `TestSelect1ThresholdEquivalence` cross-checks the
+Linear, Binary, and production Adaptive variants for full agreement
+across all ranks, on both uniform-density and clustered-unary
+patterns, for thresholds $\{1, 4, 8, 16, 32, 64, 256, 1024\}$.
+
+**Measured impact.**
+
+- Microbench, single Select on a clustered bitvector, replaying a
+  real small-rank stream that exercised the worst case:
+  **1825 ns → ~80 ns** (~23×).
+- A consumer of this rsdic that issues two `Select1` calls per query
+  on such a bitvector dropped from 4391 ns/op to 374 ns/op end-to-end
+  (~11.7×), with no change in any other behaviour.
+- No regression on the uniform-density baseline used in §"Benchmark
+  results" above: bracket sizes there sit in the small-bracket regime
+  and take the linear path.
+
 ### Optimization 3: `runZerosRaw` → `bits.TrailingZeros64` (`enumCode.go`)
 
 **Before:**
