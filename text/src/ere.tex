@@ -347,19 +347,25 @@ compressed):
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{@{}lrr@{}}
+    \begin{tabular}{@{}lrrrrrr@{}}
         \toprule
-        Variant                                 & Space (bits/key) & Query (ns) \\
+                                                & Space   & \multicolumn{5}{c}{Query latency (ns) at $n =$} \\
+        \cmidrule(lr){3-7}
+        Variant                                 & (bits/key) & $2^{10}$ & $2^{13}$ & $2^{15}$ & $2^{18}$ & $2^{20}$ \\
         \midrule
-        Baseline (standard trie + fast MMPHF)   & 179              & 1095--1466 \\
-        Compact (succinct trie + fast MMPHF)    & 151              & 372--567   \\
-        Learned (succinct trie + learned MMPHF) & 59               & 537--762   \\
+        Baseline (standard trie + fast MMPHF)   & 179        & 307      & 515      & 557      & 580      & 575      \\
+        Compact (succinct trie + fast MMPHF)    & 151        & 490      & 681      & 712      & 751      & 812      \\
+        Learned (succinct trie + learned MMPHF) & 59         & 544      & 683      & 758      & 787      & 889      \\
         \bottomrule
     \end{tabular}
-    \caption{Three WPS variants: space and query latency on Apple~M4~Max,
-        $K = 64$, $n = 1024$--$32768$, 64-bit keys.
-        \colorbox{orange}{TODO: link to implementation details and full space breakdown.}
-        \colorbox{orange}{TODO: write - why ranges 372--567 - because of n, more nodes to traverse on trie}}
+    \caption{Three WPS variants on Apple~M4~Max, $K = 64$, 64-bit keys.
+        Query latency generally rises with $n$ because the trie deepens,
+        so each query traverses more levels and pays one
+        hash-probe-and-pointer-chase per level. Raw bench output:
+        \texttt{research/wps/locators/wps\_query\_latency\_2026-05-03.txt}.
+        \colorbox{orange}{TODO: double-check before submission. The Space~(bits/key)
+            figures predate the current code; the Baseline plateau after
+            $n = 2^{15}$ also wants a re-measurement.}}
     \label{tab:wps-cost}
 \end{table}
 
@@ -380,24 +386,27 @@ across representative bucket sizes.
     \centering
     \begin{tabular}{@{}lrrr@{}}
         \toprule
-        Bucket size $k$                  & Binary search (ns) & WPS Compact (ns) & Speedup           \\
+        Bucket size $k$                  & Binary search (ns) & WPS Compact (ns) & Speedup            \\
         \midrule
-        ${\sim}12$ (typical, uniform)    & $5$--$9$           & $370$--$567$     & $40$--$110\times$ \\
-        $2^{12}$ ($k \approx 4{,}000$)   & ${\sim}40$         & $370$--$567$     & $9$--$14\times$   \\
-        $2^{17}$ ($k \approx 131{,}000$) & ${\sim}60$         & $370$--$567$     & $6$--$9\times$    \\
+        ${\sim}12$ (typical, uniform)    & $5$--$9$           & $490$--$812$     & $54$--$160\times$  \\
+        $2^{12}$ ($k \approx 4{,}000$)   & ${\sim}40$         & $490$--$812$     & $12$--$20\times$   \\
+        $2^{17}$ ($k \approx 131{,}000$) & ${\sim}60$         & $490$--$812$     & $8$--$14\times$    \\
         \bottomrule
     \end{tabular}
     \caption{Bucket-search latency on Apple~M4~Max, $K = 64$, 64-bit keys.
-    WPS Compact numbers are from Table~\ref{tab:wps-cost}; binary search
-    numbers are from the bucket-scan benchmark of
-    Section~\ref{subsec:ere-local-search}. WPS pays a large per-call
-    constant from trie pointer-chasing and hash probing that does not
-    amortise with $k$, while binary search on packed suffixes scales as
-        $O(\log k)$ with small constants on contiguous memory.}
+    WPS Compact numbers are the full range over $n \in \{2^{10}, \ldots, 2^{20}\}$
+    from Table~\ref{tab:wps-cost}; binary search numbers are from the
+    bucket-scan benchmark of Section~\ref{subsec:ere-local-search}.
+    WPS pays a large per-call constant from trie pointer-chasing and hash
+    probing that does not amortise with $k$, while binary search on packed
+    suffixes scales as $O(\log k)$ with small constants on contiguous memory.
+    \colorbox{orange}{TODO: double-check together with Table~\ref{tab:wps-cost}
+        before submission --- the bucket-size axis here is conceptually
+        independent of the $n$ axis used to derive the WPS Compact range.}}
     \label{tab:wps-vs-binsearch}
 \end{table}
 
-Even on adversarial bucket sizes WPS stays at least $6\times$ slower for
+Even on adversarial bucket sizes WPS stays at least $8\times$ slower for
 the operation it replaces.
 
 The root cause is that the $O(1)$ theoretical guarantee hides large constants:
