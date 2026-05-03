@@ -56,8 +56,8 @@ several reasons listed below.
     level: a single connection to S3 sustains ${\sim}55$--$95$~MiB/s
     end-to-end~\citep{durner2023cloud}, so a multi-gigabyte file
     streamed to a remote VM takes tens of seconds.
-    Multipart parallelism scales aggregate throughput further but competes with the foreground
-    service for network bandwidth and CPU.
+    Splitting an object across parallel uploads scales aggregate throughput
+    further but competes with the live database for network bandwidth and CPU.
     \item \textbf{Blast radius.} Corruption of one SSTable file or one
     object loses exactly the keys in that file. Smaller files bound the blast.
     \item \textbf{Sharding.} Multiple smaller SSTables can be queried in
@@ -76,7 +76,7 @@ at $n \in [2^{19},\ 2^{21}]$.
 
 Two production cases push $n$ higher. Secondary-index and counter
 column families (CFs --- RocksDB's per-table partitioning, with
-independent memtables and SSTables) store all information in the
+independent in-memory write buffers (memtables) and SSTables) store all information in the
 key and use the value as a placeholder: in Facebook's social-graph
 workload (UDB), the \texttt{Assoc\_count} CF has $20$-byte bigint
 keys with values
@@ -93,7 +93,7 @@ papers~\citep{zhang2018surf,luo2020rosetta,vaidya2022snarf,eslami2024memento,gra
 report headline numbers at $n \in [2^{24},\ 2^{28}]$, but this is a
 single-filter microbenchmark convention rather than a deployment
 claim: SuRF, SNARF, and Rosetta integrate per-SSTable into RocksDB;
-Memento targets B-Trees (WiredTiger); Grafite is presented as a
+Memento targets B-Trees (WiredTiger, MongoDB's storage engine); Grafite is presented as a
 stand-alone structure. The SOSD benchmark~\citep{kipf2019sosd}
 provides datasets at this same scale ($200$M keys $\approx 2^{27.6}$).
 
@@ -114,7 +114,7 @@ model.
 The query-side argument is also weaker than it first looks. Within a
 level (L1+), RocksDB stores SSTables as a non-overlapping
 \emph{sorted run}: each file carries $[\textit{smallest},
-\textit{largest}]$ key metadata in the MANIFEST, and a query does an
+\textit{largest}]$ key metadata in the MANIFEST (RocksDB's global level-metadata file), and a query does an
 $O(\log\#\textit{files})$ binary search on this metadata to identify
 only the SSTables whose key range overlaps the query, then probes
 their per-file filters~\citep{rocksdb-leveled}.
@@ -170,15 +170,15 @@ headline numbers around $10^{-2}$ to $10^{-3}$, while modern optimal
 filters~\citep{vaidya2022snarf,grafite2024,eslami2024memento} sweep
 deeper. They also align with the LSM point-filter convention:
 Cassandra's default \texttt{bloom\_filter\_fp\_chance} is $0.01$ for
-all compaction strategies except LCS~\citep{cassandra-bloom}.
+all compaction strategies except Leveled Compaction Strategy (LCS)~\citep{cassandra-bloom}.
 
 \paragraph{Query range length $\mathcal{L}$.}
 We sweep $\mathcal{L} \in \{1, 16, 128, 1024, 4096, 16384, 65536\}$.
 The lower half is production-aligned:
 in Facebook's UDB workload, more than $60\%$ of iterator operations
 read exactly one key, the P90 is below $100$ keys, and scans above
-$10{,}000$ are very rare~\citep{cao2020facebook}; YCSB Workload E
-caps short-range scans at $100$. Range filter
+$10{,}000$ are very rare~\citep{cao2020facebook}; the Yahoo! Cloud Serving
+Benchmark (YCSB) Workload~E caps short-range scans at $100$. Range filter
 papers~\citep{vaidya2022snarf,luo2020rosetta,grafite2024,eslami2024memento}
 report headline FPR in this same window: SNARF at
 $\mathcal{L} = 256$, Rosetta at $\mathcal{L} = 64$, Grafite and
