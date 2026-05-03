@@ -13,8 +13,8 @@ and a set $S' \subseteq U'$ of $n$ keys, it answers
 \subsection{High-Level Structure}
 \label{subsec:ere-high-level-structure}
 
-To achieve the information-theoretic minimum of $n \cdot (K - \log_2(n) + O(1)) = n \log_2(\frac{r}{n}) + O(n)$ bits, the
-structure divides the universe $U'$ into $B = 2^{\lfloor \log_2 n \rfloor}$ equal-sized blocks.
+To achieve $n \cdot (K - \log_2(n) + O(1)) = n \log_2(r/n) + O(n)$ bits~\citep{goswami2015approximate},
+the structure divides the universe $U'$ into $B = 2^{\lfloor \log_2 n \rfloor}$ equal-sized blocks.
 Conceptually, ERE has two levels: a succinct navigation layer over blocks, and a compact local representation of the keys.
 
 All keys inside one block have a common $\log_2 B = \lfloor \log_2 n \rfloor$ bits prefix.
@@ -40,8 +40,7 @@ It consists of the following parts:
 
 A query range is split into at most three parts: a sequence of complete blocks
 and up to two partially covered boundary blocks.
-The complete-block part is answered by the global succinct layer using $D_1$
-and $D_2$.
+The complete-block part is answered by the global succinct layer using $D_1$.
 The boundary parts are answered by locating the corresponding local
 structure in $A_{ds}$ via $D_1$ and $D_2$, and then checking emptiness
 inside the block.
@@ -53,13 +52,17 @@ suffixes themselves witness (non-)emptiness via a final comparison.
 \subsection{Local Search in Buckets}
 \label{subsec:ere-local-search}
 
-The original paper~\citep{goswami2015approximate} suggests a Weak Prefix Search structure
-(Hollow Z-Fast Trie) for $O(1)$ worst-case local queries.
-We use binary search on bit-packed suffixes, with an adaptive fallback to linear scan for small buckets instead.
-The reason is practical.
-Binary search and linear scan are faster in practice than
-accessing an additional $O(1)$ indexing structure with a big hidden constant, while also avoiding its
-memory overhead.
+The original paper~\citep{goswami2015approximate} suggests a Weak Prefix Search
+(WPS)~\citep{belazzougui2010fast} structure based on a Hollow Z-Fast Trie
+(ZFT)~\citep{belazzougui2009monotone} for $O(1)$ worst-case local queries.
+We use binary search on bit-packed suffixes, with an adaptive fallback to linear scan for small buckets, instead.
+At the bucket sizes that occur in practice, binary search --- or even
+linear scan on the smallest buckets --- is faster than an $O(1)$ ZFT
+lookup, whose hidden constant factor is large, and additionally avoids
+the ZFT's metadata overhead.
+Even the worst-case bucket of $k^*$ keys takes ${\sim}50$--$55$~bytes
+at $K = 64$ (Table~\ref{tab:ere-bucket-stats}), fitting in a single
+cache line, so a linear scan reduces to one sequential memory access.
 Details are given in Section~\ref{sec:wps}.
 
 \subsection{One-Vector Optimization}
@@ -89,7 +92,7 @@ and $D_2$ is replaced by direct navigation via \textsc{Select} on $D$.
 Table~\ref{tab:ere-metadata-bpk} reports the metadata BPK on $n$
 uniform 64-bit keys for $n \in \{2^{20},\ 2^{24},\ 2^{28}\}$.
 The information-theoretic delta is ${\sim}0.63$~BPK, matching the
-analytic prediction $M/n \to 1 - e^{-1} \approx 0.632$ at $\lambda = 1$
+analytic prediction $M/n \to 1 - e^{-1} \approx 0.632$
 (each block is independently empty with probability $e^{-1}$,
 Section~\ref{subsec:block-sizes-and-lookup-strategy}).
 The physical delta is ${\sim}0.80$~BPK, amplified by a constant
@@ -168,6 +171,8 @@ Chapter~\ref{chap:evaluation}
     \label{tab:ere-rank-select}
 \end{table}
 
+\colorbox{orange}{TODO: write about better mem layout}
+
 \subsection{Block sizes and Lookup strategy}
 \label{subsec:block-sizes-and-lookup-strategy}
 
@@ -181,8 +186,16 @@ Each key falls into a uniformly random block, so the occupancy of a fixed block
 follows $\mathrm{Bin}(n,\,1/B)$, which converges to $\mathrm{Poisson}(\lambda)$
 as $n \to \infty$~\citep[Ch.~5]{mitzenmacher2017probability}.
 
-For $\lambda = 1$, the fraction of empty blocks converges to $e^{-1} \approx 36.8\%$,
-and the mean occupancy among non-empty blocks to $1/(1 - e^{-1}) \approx 1.58$.
+For $\lambda = 1$, $36.8\%$ of blocks are empty. Among non-empty blocks,
+the size distribution is sharply concentrated on the smallest values:
+\begin{itemize}
+    \item $\Pr[X = 1 \mid X \geq 1] = e^{-1}/(1 - e^{-1}) \approx 58.2\%$
+        (median of $1$ key);
+    \item $\Pr[X \leq 2 \mid X \geq 1] \approx 87.3\%$;
+    \item $\Pr[X \leq 3 \mid X \geq 1] \approx 97.0\%$ ($P_{90} = 3$).
+\end{itemize}
+That is, the local lookup is at most a $3$-element scan in $97\%$ of
+non-empty buckets, with $58\%$ degenerating to a single comparison.
 
 The classical balls-into-bins analysis~\citep[Lemma~5.1]{mitzenmacher2017probability}
 bounds the maximum load by $3\ln n / \ln\ln n$ with probability $\geq 1 - 1/n$.
@@ -195,44 +208,31 @@ random 64-bit keys, taken across all $B$ blocks.
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{@{}rrrrrr@{}}
+    \begin{tabular}{@{}rrrrrrr@{}}
         \toprule
-        $n$ & empty (\%) & avg load\textsuperscript{*} & observed max &
-        $k^*$ & $B \cdot \Pr[X \geq k^*]$ \\
+        $n$ & empty (\%) & observed max & $k^*$ & $B \cdot \Pr[X \geq k^*]$ & $w$ & $k^*$-bucket footprint (B) \\
         \midrule
-        $2^{20}$ & 36.75 & 1.58 & 9  & 10 & 0.12 \\
-        $2^{24}$ & 36.79 & 1.58 & 9  & 11 & 0.17 \\
-        $2^{27}$ & 36.79 & 1.58 & 10 & 12 & 0.11 \\
-        $2^{30}$ & 36.79 & 1.58 & 13 & 12 & 0.89 \\
+        $2^{20}$ & 36.75 & 9  & 10 & 0.12 & 44 & 55 \\
+        $2^{24}$ & 36.79 & 9  & 11 & 0.17 & 40 & 55 \\
+        $2^{27}$ & 36.79 & 10 & 12 & 0.11 & 37 & 56 \\
+        $2^{30}$ & 36.79 & 13 & 12 & 0.89 & 34 & 51 \\
         \bottomrule
     \end{tabular}
-    \caption{Bucket statistics for $n$ keys in $B = n$ bins ($\lambda = 1$).
-    \textsuperscript{*}Averaged over non-empty bins.
-        $k^*$: smallest $k$ with $B \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.}
+    \caption{Bucket statistics for $n$ keys in $B = n$ bins ($\lambda = 1$),
+        assuming a full $64$-bit universe ($K = 64$).
+        $k^*$: smallest $k$ with $B \cdot \Pr[\mathrm{Poisson}(1) \geq k] < 1$.
+        $w = K - \lfloor \log_2 n \rfloor$ is the suffix width.
+        The last column gives the bit-packed size of a bucket of $k^*$ keys
+        ($k^* w / 8$ bytes, rounded up). In ARE deployments, $K$ and hence
+        $w$ are typically smaller, so the resulting buckets are even more
+        compact.}
     \label{tab:ere-bucket-stats}
 \end{table}
 
-Table~\ref{tab:ere-poisson-tail} shows how rapidly the Poisson tail drops with $k$:
-even at $B = 2^{30}$, the expected number of blocks with $\geq 20$ keys is below
-$10^{-10}$, making buckets larger than ${\sim}20$ keys virtually impossible for
-uniform data.
-
-\begin{table}[h]
-    \centering
-    \begin{tabular}{@{}rrr@{}}
-        \toprule
-        $k$ & $\Pr[\mathrm{Poisson}(1) \geq k]$ & expected bins                  \\
-        \midrule
-        10  & $1.1 \times 10^{-7}$              & $1.2 \times 10^{2\phantom{0}}$ \\
-        13  & $6.4 \times 10^{-11}$             & $6.8 \times 10^{-2}$           \\
-        15  & $3.0 \times 10^{-13}$             & $3.2 \times 10^{-4}$           \\
-        20  & $1.6 \times 10^{-19}$             & $1.7 \times 10^{-10}$          \\
-        25  & $2.5 \times 10^{-26}$             & $2.6 \times 10^{-17}$          \\
-        \bottomrule
-    \end{tabular}
-    \caption{Poisson tail for bucket occupancy ($\lambda = 1$), $n = B = 2^{30}$.}
-    \label{tab:ere-poisson-tail}
-\end{table}
+The Poisson PMF $\Pr[X = k] = e^{-\lambda}\lambda^k/k!$~\citep[eq.~(6.1)]{feller1968introduction}
+makes the tail decay like $1/k!$: even at $B = 2^{30}$, the expected number of
+blocks with $\geq 20$ keys is ${\sim}1.7 \times 10^{-10}$, making buckets larger
+than ${\sim}20$ keys virtually impossible for uniform data.
 
 \paragraph{Non-uniform distributions and worst-case bounds}
 
@@ -241,16 +241,17 @@ concentrate around $\lambda = 1$: empirical maxima stay below
 ${\sim}13$ keys even at $n = 2^{30}$
 (Table~\ref{tab:ere-bucket-stats}), regardless of $n$.
 
-Real-world data is rarely uniform. The original ARE
-construction~\citep{goswami2015approximate} uses a \emph{locality-preserving}
+Real-world data is rarely uniform.
+The original ARE construction~\citep{goswami2015approximate} uses a \emph{locality-preserving}
 hash: consecutive input keys map to consecutive hashed values, so dense
-input regions stay dense in the hashed universe. On heavily clustered
-benchmarks the heaviest bucket reaches ${\sim}10^6$~keys. While median bucket
-sizes stay in the thousands for moderate ranges, degenerate distributions
-at large query ranges can push the median into the hundreds of thousands
+input regions stay dense in the hashed universe.
+On heavily clustered benchmarks the heaviest bucket reaches ${\sim}6 \times 10^4$~keys.
+At the typical Facebook UDB range ($\mathcal{L} = 16$), median bucket
+sizes stay in the low thousands; near production P90 ($\mathcal{L} = 256$)
+they grow into the tens of thousands
 (Table~\ref{tab:eval-bucket-fill}, Chapter~\ref{chap:evaluation}).
-The worst-case footprint remains around ${\sim}2.5$~MB --- small enough
-to be cache-resident.
+The worst-case footprint stays at ${\sim}120$~KB --- comfortably
+L2-cache-resident.
 
 Regardless of distribution, the bucket size is hard-bounded above by
 the block capacity $2^w$, where $w = K - \lfloor \log_2 n \rfloor$ is
@@ -274,7 +275,7 @@ lanes for vector-friendly comparisons.
 At $w = 15$ the hard upper bound is $2^{15} = 32\,768$~keys per bucket.
 On a fully packed bucket of $2^w$ keys binary search terminates in at most
 $\log_2(2^w) = w$ iterations --- and at $w = 15$ this still costs only
-${\sim}48$~ns, comparable to a single Rank/Select on the metadata bit
+${\sim}48$~ns on Apple~M4~Max, comparable to a single Rank/Select on the metadata bit
 vector.
 The bound is distribution-independent and depends only on $w$,
 not on $n$.
@@ -357,7 +358,8 @@ compressed):
     \end{tabular}
     \caption{Three WPS variants: space and query latency on Apple~M4~Max,
         $K = 64$, $n = 1024$--$32768$, 64-bit keys.
-        \colorbox{orange}{TODO: link to implementation details and full space breakdown.}}
+        \colorbox{orange}{TODO: link to implementation details and full space breakdown.}
+        \colorbox{orange}{TODO: write - why ranges 372--567 - because of n, more nodes to traverse on trie}}
     \label{tab:wps-cost}
 \end{table}
 
@@ -399,12 +401,14 @@ Even on adversarial bucket sizes WPS stays at least $6\times$ slower for
 the operation it replaces.
 
 The root cause is that the $O(1)$ theoretical guarantee hides large constants:
-each ``constant-time'' trie step involves hashing a variable-length prefix,
-probing a hash table, and following a pointer --- operations that are
-individually cheap but accumulate over several hash probes per query.
-For the small buckets that arise in practice (${\leq}13$ keys for uniform
-data, ${\leq}2^w$ in general), binary search on packed suffixes is both
-faster and requires no additional space.
+each ``constant-time'' trie step hashes a variable-length prefix, probes a
+hash table, and chases a pointer. The probe and the pointer chase are random
+memory accesses. A WPS query traverses several trie levels and pays this
+cost on each, whereas a linear scan over a ${\leq}13$-element bucket
+(${\leq}55$~B at $K = 64$, Table~\ref{tab:ere-bucket-stats}) touches a
+single cache line. Binary search on packed suffixes also requires
+no auxiliary index, whereas the most compact WPS variant adds $59$~BPK on
+top of the suffix data.
 
 \subsection{Space Analysis}
 
