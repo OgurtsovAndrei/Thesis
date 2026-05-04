@@ -8,7 +8,8 @@ BENCH_ROOT = ../../../..
 SVG_MAP = \
 	$(BENCH_ROOT)/bench_results/plots/b6_N16777216/tradeoff_per_L/sosd_fb/L128.svg:headline_fb_L128 \
 	$(BENCH_ROOT)/bench_results/plots/b6_N16777216_gap_heavy/tradeoff_per_L/uniform/L1.svg:limitations_uniform_L1 \
-	$(BENCH_ROOT)/bench_results/plots/b6_N16777216/tradeoff_per_L/sosd_books/L128.svg:backup_books_L128
+	$(BENCH_ROOT)/bench_results/plots/b6_N16777216/tradeoff_per_L/sosd_books/L128.svg:backup_books_L128 \
+	$(FIG_DIR)/latency_fb_gap_heavy.svg:latency_fb_gap_heavy
 
 all: figures $(DECK).pdf
 
@@ -33,4 +34,8 @@ watch:
 
 clean:
 	latexmk -C
-	rm -rf build $(FIG_DIR) $(DECK).pdf
+	rm -rf build $(DECK).pdf
+	@for entry in $(SVG_MAP); do \
+		name=$${entry##*:}; \
+		rm -f $(FIG_DIR)/$$name.pdf; \
+	done

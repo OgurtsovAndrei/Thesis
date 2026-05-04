@@ -1,0 +1,23 @@
+\begin{frame}{Dense Clusters: Compress Down to Exact}
+  \textbf{Real keys live in a slice of $2^{\mathcal{L}}$.}
+  Subtract $k_{\min}$ --- the same $n$ keys now sit in
+  $U' = \max{-}\min \;\ll\; 2^{\mathcal{L}}$.
+  \medskip
+
+  \textbf{What did the smaller universe buy us?}
+  \begin{itemize}\setlength{\itemsep}{0.4em}
+    \item ARE size (Goswami lower bound):
+      $\;n \log_2(\mathcal{L}/\varepsilon)\;$ bits --- \textbf{independent of $U$}.
+    \item ERE size:
+      $\;n \log_2(U'/n) + O(n)\;$ bits --- \textbf{shrinks with $U'$}.
+  \end{itemize}
+  \medskip
+
+  \textbf{Crossover.} At small enough $U'$, ERE is cheaper than ARE
+  \emph{and} gives false-positive rate (FPR) $= 0$:
+  \[
+    \boxed{\;U' \le n\mathcal{L}/\varepsilon\;}
+    \quad\Longrightarrow\quad
+    \text{exact mode}
+  \]
+\end{frame}

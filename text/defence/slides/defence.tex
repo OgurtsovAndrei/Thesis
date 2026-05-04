@@ -41,31 +41,33 @@
 
 \maketitle
 
-\begin{frame}{Talk in One Sentence}
-  \vspace{1em}
-  \begin{center}
-    \large
-    Non-asymptotic optimizations on three layers $-$\\[0.4em]
-    Layer 3 produces a result \textbf{beyond the original scope}.
-  \end{center}
-  \vspace{1em}
-  \begin{itemize}
-    \item \textbf{Layer 1} $-$ succinct backend (one-vector ERE; WPS $\to$ binary search)
-    \item \textbf{Layer 2} $-$ hash design (truncation + adaptive)
-    \item \textbf{Layer 3} $-$ Scan-ARE (1D-DBSCAN over sorted keys)
-  \end{itemize}
-\end{frame}
+%\begin{frame}{Talk in One Sentence}
+%  \vspace{1em}
+%  \begin{center}
+%    \large
+%    Non-asymptotic optimizations on three layers $-$\\[0.4em]
+%    Layer 3 produces a result \textbf{beyond the original scope}.
+%  \end{center}
+%  \vspace{1em}
+%  \begin{itemize}
+%    \item \textbf{Layer 1} $-$ succinct backend (one-vector ERE; WPS $\to$ binary search)
+%    \item \textbf{Layer 2} $-$ hash design (truncation + adaptive)
+%    \item \textbf{Layer 3} $-$ Scan-ARE (1D-DBSCAN over sorted keys)
+%  \end{itemize}
+%\end{frame}
 
 % Core slides — all in core/
 \input{core/02-lsm}
 \input{core/03-filters}
 \input{core/04-problem}
 \input{core/05-layer1}
-\input{core/06-layer2}
-\input{core/07-layer3}
-\input{core/08-headline}
-\input{core/09-limitations}
-\input{core/10-conclusion}
+\input{core/06-distributions}
+\input{core/07-clusters}
+\input{core/08-sparse}
+\input{core/09-detection}
+\input{core/10-headline}
+\input{core/11-limitations}
+\input{core/12-conclusion}
 
 \appendix
 % DLC modules — load conditionally
@@ -75,6 +77,6 @@
 % \input{dlc/M4-industry-comparison}
 
 % Backup slides — Q&A
-% \input{backup/B-headline-books}
+\input{backup/B12-query-latency}
 
 \end{document}

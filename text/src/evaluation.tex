@@ -198,8 +198,8 @@ The analytic prediction from
 Section~\ref{subsec:ere-one-vector} is $\Delta = M/n$~BPK, where $M$ is
 the number of non-empty blocks; the maximum is $B/n = 1$~BPK and the
 Poisson middle for uniform input at $\lambda = 1$ is
-$1 - e^{-1} \approx 0.632$~BPK. The cross-distribution numbers below
-confirm the prediction end-to-end.
+$1 - e^{-1} \approx 0.632$~BPK. The numbers below confirm the prediction
+end-to-end.
 
 \begin{table}[h]
     \centering
@@ -219,8 +219,6 @@ confirm the prediction end-to-end.
         \texttt{sosd\_wiki}  & $16.532$ & $16.530$ & $0.002$ & $9.708$  & $9.530$  & $0.178$ \\
         \texttt{sosd\_osm}   & $16.931$ & $16.499$ & $0.432$ & $26.678$ & $26.411$ & $0.267$ \\
         \texttt{sosd\_books} & $16.000$ & $16.000$ & $0.000$ & $4.517$  & $4.000$  & $0.517$ \\
-        \midrule
-        \textbf{Average}     & $16.503$ & $16.338$ & $0.165$ & $13.638$ & $13.327$ & $0.311$ \\
         \bottomrule
     \end{tabular}
     \caption{Total ARE-level BPK with the two-vector $(D_1, D_2)$ ERE backend
@@ -236,13 +234,12 @@ confirm the prediction end-to-end.
     \label{tab:ere-backend-cross-distribution}
 \end{table}
 
-\paragraph{Reading the table.}
 SODA's locality-preserving hash keeps clustered inputs clustered in the
 hashed universe, so the SOSD datasets leave most blocks empty under
 SODA ($\Delta \le 0.020$~BPK on \texttt{sosd\_fb}, \texttt{sosd\_wiki},
-\texttt{sosd\_books}); \texttt{uniform} and \texttt{sosd\_osm} approach
-the Poisson value $\frac{1}{2}(1 - e^{-2}) \approx 0.432$ from below at
-${\sim}0.43$~BPK (because the benchmark evaluates at exactly $n = 2^{20}$,
+\texttt{sosd\_books}); \texttt{uniform} and \texttt{sosd\_osm} approach the analytic prediction
+(Section~\ref{subsec:block-sizes-and-lookup-strategy}) at ${\sim}0.43$~BPK
+(because the benchmark evaluates at exactly $n = 2^{20}$,
 SODA hash collisions drop the unique fingerprint count slightly below the power-of-two threshold;
 this halves the ERE block count $B$ to $2^{19}$, shifting the load factor to $\lambda \approx 2$;
 the reported ARE BPK is logical, so it perfectly matches the analytic $M/n$ prediction without physical succinct-index overheads).
@@ -250,7 +247,7 @@ Greedy+Merge isolates dense regions and
 builds a separate ERE per cluster; even within a cluster the keys
 retain sub-structure, so $M/B$ stays well below $1$. Its absolute BPK
 is dominated by the wrapper rather than ERE, so even small $M/n$
-values translate into a visible relative improvement (e.g.\
+values translate into a noticeable relative improvement (e.g.\
 \texttt{sosd\_books} drops from $4.517$ to $4.000$~BPK).
 
 \paragraph{Query latency.}
@@ -261,9 +258,7 @@ The $\geq 2\times$ wins on \texttt{uniform} and \texttt{sosd\_osm} come
 from cache-friendly access at small suffix width ($w = K - \log_2 n = 14$):
 the contiguous $D$ vector keeps both \textsc{Select} calls hitting the
 same auxiliary-index pages, while the two-vector layout alternates
-between $D_1$ and $D_2$ and pays an extra cache miss per query. The
-one-vector backend wins the cross-distribution average by
-$1.59\times$ (SODA) and $1.63\times$ (Greedy+Merge).
+between $D_1$ and $D_2$ and pays an extra cache miss per query.
 
 \begin{table}[h]
     \centering
@@ -283,9 +278,6 @@ $1.59\times$ (SODA) and $1.63\times$ (Greedy+Merge).
         \texttt{sosd\_wiki}  & $266.7$ & $207.2$ & $1.29\times$ & $303.3$ & $206.5$ & $1.47\times$ \\
         \texttt{sosd\_osm}   & $242.2$ & $82.2$  & $2.95\times$ & $298.3$ & $232.6$ & $1.28\times$ \\
         \texttt{sosd\_books} & $263.3$ & $218.3$ & $1.21\times$ & $223.1$ & $104.7$ & $2.13\times$ \\
-        \midrule
-        \textbf{Average} & $\mathbf{259.3}$ & $\mathbf{163.5}$ & $\mathbf{1.59\times}$
-        & $\mathbf{264.3}$ & $\mathbf{162.2}$ & $\mathbf{1.63\times}$ \\
         \bottomrule
     \end{tabular}
     \caption{Average ARE query latency, two-vector vs one-vector ERE backend.
@@ -293,7 +285,7 @@ $1.59\times$ (SODA) and $1.63\times$ (Greedy+Merge).
         $n = 2^{20}$ (or all available keys, whichever is smaller), $K = 34$;
         raw $64$-bit keys (no $60$-bit mask). Apple~M4~Max,
         $32{,}768$ half-hit/half-miss queries, $3$ rounds.
-        Average is over per-distribution means. This is a small-scale backend
+        This is a small-scale backend
         comparison at fixed $n = 2^{20}$; absolute latencies grow $5$--$10\times$
         at the headline scale $n = 2^{24}$ once the filter footprint outgrows
         the L3 cache and per-query work becomes cache-miss-bound.}
@@ -317,8 +309,8 @@ SOSD dataset across three range lengths.
         \midrule
         \texttt{sosd\_fb}    & $2^{27}$    & 16            & $11$ & $27$        & $103$       & $463$        & $637$~B   & $22.6\%$          \\
         \texttt{sosd\_fb}    & $2^{27}$    & 256           & $15$ & $208$       & $545$       & $1{,}589$    & $2.9$~KB  & $4.9\%$           \\
-        \texttt{sosd\_wiki}  & $65$M$^{*}$ & 16            & $12$ & $3{,}240$   & $3{,}843$   & $4{,}054$    & $5.9$~KB  & $\mathbf{99.0\%}$ \\
-        \texttt{sosd\_wiki}  & $65$M$^{*}$ & 256           & $16$ & $52{,}565$  & $58{,}855$  & $62{,}037$   & $121$~KB   & $\mathbf{94.7\%}$ \\
+        \texttt{sosd\_wiki}  & ${\sim}2^{26}{}^{*}$ & 16            & $12$ & $3{,}240$   & $3{,}843$   & $4{,}054$    & $5.9$~KB  & $\mathbf{99.0\%}$ \\
+        \texttt{sosd\_wiki}  & ${\sim}2^{26}{}^{*}$ & 256           & $16$ & $52{,}565$  & $58{,}855$  & $62{,}037$   & $121$~KB   & $\mathbf{94.7\%}$ \\
         \texttt{sosd\_books} & $2^{27}$    & 16            & $11$ & $812$       & $875$       & $978$        & $1.3$~KB  & $47.8\%$          \\
         \texttt{sosd\_books} & $2^{27}$    & 256           & $15$ & $13{,}215$  & $13{,}670$  & $14{,}039$   & $25.7$~KB  & $42.8\%$ \\
         \texttt{sosd\_osm}   & $2^{29}$    & 16            & $11$ & $3$         & $5$         & $35$         & $48$~B    & $1.7\%$           \\
@@ -329,8 +321,9 @@ SOSD dataset across three range lengths.
     filter on the SOSD datasets across two range lengths covering the
     typical Facebook UDB range ($\mathcal{L} = 16$) and its P90
     ($\mathcal{L} = 256$).
-        $^{*}$\texttt{sosd\_wiki} effective $n$ after deduplication of repeated
-        timestamps (Section~\ref{sec:sosd}).}
+        $^{*}$\texttt{sosd\_wiki} effective $n \approx 65 \times 10^{6}$ after
+        deduplication of repeated timestamps (Section~\ref{sec:sosd}); reported
+        as ${\sim}2^{26}$ for visual consistency with the other rows.}
     \label{tab:eval-bucket-fill}
 
     \medskip
@@ -354,7 +347,9 @@ saturation against physical capacity.
 \texttt{sosd\_fb} and \texttt{sosd\_osm} stay well below saturation at
 every $\mathcal{L}$. \texttt{sosd\_books} runs at ${\sim}42\%$ across
 $\mathcal{L}$. \texttt{sosd\_wiki} fully saturates at $\mathcal{L} = 16$
-($99\%$). All footprints fit L2 cache; the lighter cases fit L1.
+($99\%$).
+In all cases except \texttt{sosd\_wiki} at $\mathcal{L}=256$, bucket footprints fit L1d on modern x86 servers, typically $32$--$48$~KB.
+The saturated wiki bucket ($121$~KB) fits L2.
 
 When fill approaches $100\%$, the SODA hash has run out of resolution:
 every key in a dense input region collapses into a single ARE block, and

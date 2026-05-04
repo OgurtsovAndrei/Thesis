@@ -1,0 +1,25 @@
+\begin{frame}{Detection: 1D-DBSCAN over Sorted Keys}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.60\textwidth}
+    \textbf{Goal:} find segments dense enough to fit exact mode
+    at fingerprint width $K$
+    \medskip
+
+    \begin{itemize}\setlength{\itemsep}{0.3em}
+      \item One-pass scan over sorted keys, $O(n)$.
+      \item DBSCAN density predicate, radius derived from $K$.
+      \item Span $\le 2^K \Rightarrow$ exact ERE (FPR $= 0$);
+      else $\to$ fallback.
+    \end{itemize}
+
+    \column{0.40\textwidth}
+    \vspace*{3em}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{../../figures/segmentation}
+    \vspace*{\fill}
+  \end{columns}
+
+  \centering
+  \vspace{0.8em}
+  \emph{All thresholds derived from problem geometry.}
+\end{frame}

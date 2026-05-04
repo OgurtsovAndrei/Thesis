@@ -23,12 +23,12 @@ Compresses Tasks 1.5 + 2.3 + 3.2 into one weekend pass. Use bullet placeholders 
 
 **Files:**
 - Create: `Thesis/text/defence/slides/defence.tex` + `Makefile`
-- Create: `Thesis/text/defence/slides/core/{01-title,02-lsm,03-filters,04-problem,05-layer1,06-layer2,07-layer3,08-headline,09-limitations,10-conclusion}.tex`
+- Create: `Thesis/text/defence/slides/core/{02-lsm,03-filters,04-problem,05-layer1,06-distributions,07-clusters,08-sparse,09-detection,10-headline,11-limitations,12-conclusion}.tex` (title slide rendered via `\maketitle`)
 
 - [ ] **Step 1 (Sat 05-02):** `defence.tex` skeleton with theme + `\input` directives. Title frame `01-title.tex`. Pick headline plot now (Books vs FB at L=65536 from `bench_results/plots/N16777216/`) — locks Task 3.1 visual.
 - [ ] **Step 2 (Sat 05-02):** Slides 02–04 (LSM, filters, problem). Reuse proposal diagrams.
-- [ ] **Step 3 (Sun 05-03):** Slides 05–07 (three layers). Layer-1 table is the centrepiece — 30+ min on it alone.
-- [ ] **Step 4 (Sun 05-03):** Slides 08–10 (headline, limitations, conclusion).
+- [ ] **Step 3 (Sun 05-03):** Slides 05–09 (Layer-1 backend + clusters/sparse/detection trichotomy + bridge 06). Layer-1 table is the centrepiece — 30+ min on it alone.
+- [ ] **Step 4 (Sun 05-03):** Slides 10–12 (headline, limitations, conclusion).
 - [ ] **Step 5 (Sun 05-03 EOD):** Compile (`latexmk -pdf defence.tex`), full walkthrough out loud with stopwatch. Target ≤ 12:00 rough.
 - [ ] **Step 6 (Mon 05-04):** Send PDF to supervisor before EOD. Don't commit yet — wait for feedback.
 
@@ -325,13 +325,15 @@ The standalone audit doc is no longer worth its overhead — coverage will be ex
 ### Task 2.3 — Build core slides 5–7 (Layers 1, 2, 3)  *(→ absorbed into Sprint S.1)*
 
 **Files:**
-- Create: `defence/slides/core/05-layer1.tex`, `06-layer2.tex`, `07-layer3.tex`
+- Create: `defence/slides/core/05-layer1.tex`, `06-distributions.tex`, `07-clusters.tex`, `08-sparse.tex`, `09-detection.tex`
 
 - [ ] **Step 1:** `05-layer1.tex` — table with two rows (Goswami baseline / Ours), two columns (Navigation / Bucket search). Receipts: −24% metadata; 6–110× faster than O(1) WPS. **This is the centrepiece — design it carefully.**
-- [ ] **Step 2:** `06-layer2.tex` — phantom comparison figure (reuse `figures/phantom_comparison.pdf`) + density-threshold bullet. Receipts: −log₂L BPK; FPR=0 when ρ > ε/L.
-- [ ] **Step 3:** `07-layer3.tex` — segmentation diagram (reuse `figures/segmentation.pdf`). Three-bullet structure: "1D-DBSCAN over sorted keys, O(n)" / "Dense → exact, FPR=0" / "Sparse → truncation fallback". Boxed formula `δ = c · L/ε`.
-- [ ] **Step 4:** Compile, time the speech for slides 5–7 (target 1:00 + 0:45 + 1:45 = 3:30).
-- [ ] **Step 5:** Commit: `git -C Thesis add text/defence/slides/core/ && git -C Thesis commit -m "feat(defence): core slides 5-7 (three layers)"`
+- [ ] **Step 2:** `06-distributions.tex` — bridge slide. Goswami's bound is worst-case; real LSM keys cluster. Setup for the next three slides.
+- [ ] **Step 3:** `07-clusters.tex` — Dense clusters → exact. Subtract `k_min` → small `U'`; ARE size U-independent vs ERE size shrinks with `U'`. Boxed crossover `U' ≤ nL/ε`.
+- [ ] **Step 4:** `08-sparse.tex` — Sparse tail → truncation. Phantom-comparison figure (reuse `figures/phantom_comparison.pdf`). Collision zone `L·2^t` → `L+2^t` ⇒ −log₂L BPK.
+- [ ] **Step 5:** `09-detection.tex` — 1D-DBSCAN. Segmentation diagram (reuse `figures/segmentation.pdf`). Boxed formula `δ = c · L/ε`.
+- [ ] **Step 6:** Compile, time the speech for slides 5–9 (target 1:00 + 0:50 + 0:50 + 0:45 + 0:45 = 4:10).
+- [ ] **Step 7:** Commit: `git -C Thesis add text/defence/slides/core/ && git -C Thesis commit -m "feat(defence): core slides 5-9 (backend + cluster-aware compression)"`
 
 ### Task 2.4 — Build DLC modules M1, M2  *(→ absorbed into Sprint S.2)*
 

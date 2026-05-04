@@ -1,0 +1,36 @@
+\begin{frame}{Sparse Tail: Truncate Low Bits}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.50\textwidth}
+        \textbf{Random hash (SODA).}
+        Phantoms scattered uniformly across $U$:
+        \[
+            \text{collision zone per key} \;=\; \mathcal{L} \cdot 2^t
+        \]
+        \vspace{-0.2em}
+
+        \textbf{Truncation hash} ($h(x) = \lfloor x / 2^t \rfloor$).
+        All phantoms of one key confined to a single block of width $2^t$ next to it:
+        \[
+            \text{collision zone per key} \;=\; \mathcal{L} + 2^t
+        \]
+
+        \column{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth, keepaspectratio]{../../figures/phantom_comparison}
+    \end{columns}
+
+    \begin{center}
+        \fbox{\begin{minipage}{0.95\linewidth}
+                  \centering
+                  $\;\text{BPK:}\;\log_2(\mathcal{L}/\varepsilon)
+                    \;\to\; \log_2(1/\varepsilon)\;$
+        \end{minipage}}
+    \end{center}
+
+    \centering
+
+    {
+        \footnotesize\emph{Cost:} all phantoms are near keys. Requests close to the real key will cause False Positives.
+        \\ On dense data all responses will be `non-empty` and FPR $\to 1$ --- so truncation only on \textbf{sparse} regions
+    }
+\end{frame}
