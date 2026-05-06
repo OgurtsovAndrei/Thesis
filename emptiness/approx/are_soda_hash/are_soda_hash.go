@@ -64,7 +64,7 @@ func NewSodaAREFromK(keys []uint64, K uint32, seed int64) (*SodaARE, error) {
 		hashed[i] = hx
 	}
 
-	uniqueHashed := internalhash.SortAndDedupUint64(hashed)
+	uniqueHashed := internalhash.SortAndDedupUint64Adaptive(hashed, K)
 
 	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, K)
 	if err != nil {
@@ -116,7 +116,7 @@ func NewSodaAREUint64(keys []uint64, rangeLen uint64, epsilon float64) (*SodaARE
 		hashed[i] = (ux + x) & rMask
 	}
 
-	uniqueHashed := internalhash.SortAndDedupUint64(hashed)
+	uniqueHashed := internalhash.SortAndDedupUint64Adaptive(hashed, K)
 
 	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, K)
 	if err != nil {
@@ -168,7 +168,7 @@ func NewSodaAREUint64InPlace(keys []uint64, K uint32, seed int64) (*SodaARE, err
 		keys[i] = (ux + x) & rMask
 	}
 
-	uniqueHashed := internalhash.SortAndDedupUint64(keys)
+	uniqueHashed := internalhash.SortAndDedupUint64Adaptive(keys, K)
 
 	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, K)
 	if err != nil {

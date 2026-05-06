@@ -146,7 +146,7 @@ func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, K uint32, t uint32
 		}
 	}
 
-	uniqueHashed := internalhash.SortAndDedupUint64(hashedKeys)
+	uniqueHashed := internalhash.SortAndDedupUint64Adaptive(hashedKeys, finalUniverseBits)
 
 	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, finalUniverseBits)
 	if err != nil {
