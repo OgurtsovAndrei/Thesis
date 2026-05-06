@@ -11,7 +11,7 @@ import (
 const (
 	dbscanMinPts   = 10  // DBSCAN core threshold: neighbors in eps-window
 	minClusterSize = 256 // post-filter: clusters smaller than this → fallback
-	epsMultiplier  = 10
+	epsMultiplier  = 1   // density window scaling factor (see dbscanEpsFromK)
 )
 
 type clusterFilter struct {
@@ -98,21 +98,28 @@ func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 }
 
 // dbscanEpsFromK returns the DBSCAN density window in key-space units.
-// Derivation: the legacy formula was rangeLen / eps * epsMultiplier with
-// eps = n * (L+1) / 2^K. Substituting gives 2^K * L / (n*(L+1)) * epsMultiplier
-// → epsMultiplier * 2^K / n in the L >> 1 limit. We use this L-independent form
-// since K already encodes the desired density.
-func dbscanEpsFromK(n int, K uint32) uint64 {
-	if n == 0 {
-		return 0
-	}
+//
+// We want DBSCAN to detect any cluster that is exact-mode-eligible: spread
+// ≤ 2^K and size ≥ minClusterSize. Inside such a cluster the average gap is
+// at most 2^K / minClusterSize. For DBSCAN core (dbscanMinPts neighbours in
+// the eps-window), eps must be ≥ dbscanMinPts · avg_gap, i.e.
+//
+//   eps ≥ dbscanMinPts · 2^K / minClusterSize.
+//
+// The legacy formula (epsMultiplier · 2^K / n) used n in the denominator,
+// which only matches when the cluster covers the whole dataset (size = n).
+// On wide-spread real data (OSM, books_u64) it makes eps n/minClusterSize ×
+// too small so DBSCAN detects 0 clusters and Hybrid-Scan collapses to plain
+// fallback. The eps depends only on the smallest cluster we agree to track,
+// not on n.
+func dbscanEpsFromK(_ int, K uint32) uint64 {
 	var pow float64
 	if K >= 64 {
 		pow = float64(^uint64(0)) + 1
 	} else {
 		pow = float64(uint64(1) << K)
 	}
-	v := float64(epsMultiplier) * pow / float64(n)
+	v := float64(epsMultiplier) * float64(dbscanMinPts) * pow / float64(minClusterSize)
 	if v < 1 {
 		return 1
 	}
