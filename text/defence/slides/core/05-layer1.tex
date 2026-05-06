@@ -1,4 +1,4 @@
-\begin{frame}[c]{Layer 1 — Succinct Backend}
+\begin{frame}[c]{Succinct Backend}
     \textbf{The Exact Range Emptiness (ERE) backend underneath every Approximate Range filter.}
     \medskip
     \begin{table}
@@ -12,6 +12,7 @@
             Navigation      & 2 bitvectors $(D_1, D_2)$          & 1 bitvector $D$                       & $1.21$--$3.00\times$ faster \\
             Metadata size    & $3.33$ bits/key                    & $2.53$ bits/key                       & $-0.80$ bits/key ($\sim 24\%$)            \\
             Bucket search   & Weak Prefix Search (WPS) & Binary / linear search & $8$--$160\times$ faster     \\
+            Bucket index    & $\ge 59$ BPK auxiliary index & None --- in-place scan & $\ge 59$ BPK saved          \\
             \bottomrule
         \end{tabular*}\label{tab:ere-table}
     \end{table}

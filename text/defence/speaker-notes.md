@@ -16,15 +16,15 @@ Conventions per slide:
 
 **Key points:**
 - Title, name, supervisor, programme.
-- One-sentence promise: non-asymptotic optimizations on three layers;
-  Layer 3 produces a result beyond the original scope.
+- One-sentence promise: Succinct Backend + Scan-ARE, a data-aware filter
+  that goes beyond the original scope.
 
 **Sample prose (~25s):**
 > "The title of my thesis is Practical Range Emptiness Filters. The work
-> splits into three layers of non-asymptotic optimization. Two of them
-> improve constants in known structures; the third produces a filter
-> that reaches a regime no industry baseline currently reaches on real
-> data."
+> splits into two buckets of non-asymptotic optimization: a Succinct
+> Backend that improves constants in the known ERE structure, and
+> Scan-ARE, a data-aware filter that reaches a regime no industry
+> baseline currently reaches on real data."
 
 ---
 
@@ -54,14 +54,19 @@ Conventions per slide:
 **Key points:**
 - Filters live in SSTable metadata.
 - Memory budget: 10–20 bits per key.
+- Filters answer "Maybe Contains?" with one-sided error — false positives
+  allowed — cutting down disk lookups.
 - Bloom filters → point queries; range filters → range queries.
 
 **Sample prose (~60s):**
 > "The filter is a small in-memory structure that summarizes which keys
-> an SSTable contains. Bloom filters serve point queries: 'is key K in
-> this SSTable?'. For range queries — 'does any key in [a,b] live
-> here?' — Bloom doesn't suffice; we need a range filter. That's the
-> structure my thesis builds."
+> an SSTable contains. It answers 'Maybe Contains?' queries with
+> one-sided error: false positives are allowed, false negatives are not.
+> That one-sided guarantee is enough to cut most disk lookups.
+> Bloom filters serve point queries: 'is key K in this SSTable?'. For
+> range queries — 'does any key in [a,b] live here?' — Bloom doesn't
+> suffice; we need a range filter. That's the structure my thesis
+> builds."
 
 ---
 
@@ -70,20 +75,20 @@ Conventions per slide:
 **Key points:**
 - Define ARE: sorted set, query interval, one-sided ε error, no false
   negatives.
-- Goswami SODA'15 lower bound: BPK ≥ log₂(n·𝓛/ε) / n.
+- Goswami SODA'15 lower bound: BPK ≥ log₂(𝓛/ε).
 - Their construction reaches it via locality-preserving hash + ERE on
   the shrunk universe.
 - Asymptotically optimal — but the constants are large in practice.
 
 **Numbers to nail:**
-- Lower bound: log₂(n·𝓛/ε) / n bits per key.
+- Lower bound: log₂(𝓛/ε) bits per key.
 
 **Sample prose (~75s):**
 > "The problem: given a sorted set S in a universe of L-bit keys and a
 > maximum query range length 𝓛, build a structure that answers 'is
 > [a,b] empty in S?' with a one-sided error ε. No false negatives,
 > false positive rate at most ε. Goswami in SODA 2015 proved the
-> information-theoretic lower bound for any S — log₂(n·𝓛/ε) bits per
+> information-theoretic lower bound for any S — log₂(𝓛/ε) bits per
 > key. Their construction reaches it: hash the universe down with a
 > locality-preserving hash, then run exact range emptiness on the
 > shrunk universe. Asymptotically optimal — but the constants behind
@@ -91,12 +96,12 @@ Conventions per slide:
 
 **Anticipated Q&A:**
 - *Where do those bits come from in the bound?* — backup B11.
-  log₂(n·𝓛/ε)/n = log₂(𝓛/ε)/n + log₂(n)/n; first term is the LPH cost,
-  second is ERE indexing.
+  BPK ≥ log₂(𝓛/ε) is the per-key form of the total lower bound
+  n·log₂(𝓛/ε) bits; O(1) constant factors are absorbed into the bound.
 
 ---
 
-## Slide 5 — Layer 1: Succinct Backend (1:00) — centrepiece
+## Slide 5 — Succinct Backend (1:00) — centrepiece
 
 **Key points:**
 - Goswami's ERE backend uses two bitvectors (D₁, D₂) and a Weak Prefix
@@ -106,11 +111,14 @@ Conventions per slide:
 - Both changes are non-asymptotic. The WPS replacement trades worse
   asymptotics (O(log k) instead of O(1) amortized) for better constants
   on small buckets.
+- Bucket index: WPS adds ≥59 BPK of auxiliary index — even the most
+  compact variant doesn't fit in the 14–16 BPK industrial budget.
 
 **Numbers to nail:**
 - 3.33 BPK (Goswami) → 2.53 BPK (ours) = −0.80 BPK (~24%).
 - 1.21–3.00× faster navigation.
 - 8–160× faster bucket-internal search.
+- ≥59 BPK saved by removing the WPS auxiliary index.
 
 **Sample prose (~55s):**
 > "Goswami's structure has two parts that both come with asymptotic
@@ -179,9 +187,11 @@ Conventions per slide:
 ## Slide 7 — Dense Clusters: Compress Down to Exact (~0:50)
 
 **Key points:**
-- Real keys don't fill 2^𝓛. Verbal example: every DB timestamp shares
-  the top bits up to the millennium — the rest of the universe is empty.
-- Subtract k_min: same n keys, but now in U' = max − min, far less than 2^𝓛.
+- Real keys occupy a narrow window of [0, 2^L) — they cluster, not fill.
+  Verbal example: every DB timestamp shares the top bits up to the
+  millennium; the rest of the universe is empty.
+- Subtract k_min: the same n keys live in [0, U'), where
+  U' = k_max − k_min ≪ 2^L.
 - ARE size (Goswami lower bound): n · log₂(𝓛/ε) bits — **independent of U**.
 - ERE size: n · log₂(U'/n) + O(n) bits — **shrinks with U'**.
 - Crossover at U' ≤ n𝓛/ε: ERE is cheaper than any ARE *and* gives FPR = 0
@@ -193,11 +203,11 @@ Conventions per slide:
 - Crossover threshold: U' ≤ n𝓛/ε.
 
 **Sample prose (~50s):**
-> "Real keys don't fill the universe. Take any database — every
-> timestamp shares the top bits up to the millennium; the rest of the
-> universe is empty. So before building any filter, subtract the
-> minimum key. The same n keys now sit in a much smaller spread
-> U-prime, far less than 2 to the 𝓛.
+> "Real keys occupy a narrow window of the universe. Take any
+> database — every timestamp shares the top bits up to the millennium;
+> the rest is empty. So before building any filter, subtract the
+> minimum key. The same n keys now live in [0, U-prime), where U-prime
+> equals k-max minus k-min — far less than 2 to the L.
 >
 > What did the smaller universe buy us? Two formulas, side by side.
 > Goswami's lower bound for any approximate filter is n times log of
@@ -265,8 +275,8 @@ Conventions per slide:
 - *In `𝓛 + 2ᵗ`, why does 𝓛 disappear from BPK and not 2ᵗ?* —
   asymmetry of choice. 2ᵗ is the parameter we *pick* (minimising
   K = 𝓛 − t means maximising t); 𝓛 is fixed by the problem.
-  In the optimal regime ε·2^𝓛/n ≫ 𝓛, the constraint
-  𝓛 + 2ᵗ ≤ ε·2^𝓛/n becomes 2ᵗ ≈ ε·2^𝓛/n with 𝓛 a negligible
+  In the optimal regime ε·2^L/n ≫ 𝓛, the constraint
+  𝓛 + 2ᵗ ≤ ε·2^L/n becomes 2ᵗ ≈ ε·2^L/n with 𝓛 a negligible
   additive correction — it falls into the O(1) of the log. In
   the multiplicative form 𝓛·2ᵗ, by contrast, 𝓛 *divides* the
   budget, forcing us to truncate log₂(𝓛) bits less. One-liner:
@@ -285,6 +295,7 @@ Conventions per slide:
 - One pass over sorted keys, O(n).
 - Gap ≤ δ ⇒ same cluster; gap > δ ⇒ cluster boundary.
 - δ = c · 𝓛/ε derived from problem parameters.
+- Fingerprint width K = ⌈log₂(n·𝓛/ε)⌉ — define K on first use.
 - Algebraically the same condition as the exact-mode crossover
   ρ > ε/𝓛, just rewritten in gap form.
 - No learning, no training data.
@@ -304,6 +315,10 @@ Conventions per slide:
 > and it is algebraically the same condition as the exact-mode
 > crossover from the clusters slide, just rewritten in gap form
 > instead of density form. The constant c we set empirically.
+>
+> Each segment that falls to the truncation path stores fingerprints
+> of width K = ⌈log₂(n·𝓛/ε)⌉ — K is the fingerprint width, set so
+> that the false-positive probability matches ε.
 >
 > Compared to learned filters like SNARF, this is a different bargain.
 > SNARF learns a CDF and uses it for layout; we use the structural
@@ -371,18 +386,19 @@ Conventions per slide:
 ## Slide 12 — Conclusion: Three Receipts (1:00)
 
 **Key points:**
-- Three numbers, one per layer: −24% metadata (L1), 8–160× WPS →
-  binsearch (L1), FPR < 10⁻⁸ at ~5 BPK on `sosd_books` (L3).
-- Arc closure: "promised non-asymptotic, delivered on three layers."
+- Three numbers matching the slide columns: −24% metadata (Backend —
+  one-vector ERE), 8–160× query latency improvement (Backend — query
+  latency), FPR < 10⁻⁸ at ~11 BPK on Facebook user IDs (Scan-ARE).
+- Arc closure: "Succinct backend, plus a data-aware Scan-ARE filter."
 - One-line hook to backup: end-to-end latency in appendix.
 
 **Sample prose (~50s):**
-> "Three receipts. Twenty-four percent fewer metadata bits — Layer 1,
-> one-vector backend. Eight to one-hundred-sixty times faster bucket
-> search — Layer 1 again, replacing weak prefix search with binary
-> search. FPR below ten to the minus eight at five bits per key on
-> SOSD Books — Layer 3, Scan-ARE. End-to-end query latency results
-> are in the appendix. Future work: dynamic updates, RocksDB
+> "Three receipts. Twenty-four percent fewer metadata bits — Backend,
+> one-vector ERE. Eight to one-hundred-sixty times faster query
+> latency — Backend again, replacing weak prefix search with binary
+> search. FPR below ten to the minus eight at around eleven bits per
+> key on Facebook user IDs — Scan-ARE. End-to-end query latency
+> results are in the appendix. Future work: dynamic updates, RocksDB
 > integration, larger n. Thank you."
 
 **Anticipated Q&A:**

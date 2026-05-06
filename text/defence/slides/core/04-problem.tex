@@ -1,8 +1,9 @@
 \begin{frame}{Problem and Goswami Baseline}
   \textbf{Approximate Range Emptiness (ARE).}
-  Given a sorted set $S \subseteq [0, 2^L)$ and query interval $[a, b]$,
-  answer ``$S \cap [a, b] = \emptyset$?'' with a one-sided error $\varepsilon$:
-  no false negatives, $\Pr[\text{false positive}] \leq \varepsilon$.
+  Given a sorted set $S \subseteq [0, 2^L)$ and query interval $[a, b]$
+  of length at most $\mathcal{L}$, answer ``$S \cap [a, b] = \emptyset$?''
+  with a one-sided error $\varepsilon$: no false negatives,
+  $\Pr[\text{false positive}] \leq \varepsilon$.
   \vspace{0.4em}
 
   \begin{columns}[c,onlytextwidth]
@@ -16,7 +17,7 @@
     \begin{itemize}
       \item \textbf{Locality-preserving hash $h$} --- maps key ranges to
             fingerprint ranges, shrinking the universe to
-            $O(n\mathcal{L}/\varepsilon)$.
+            $n\mathcal{L}/\varepsilon$.
       \item \textbf{Exact range emptiness (ERE)} --- answers
             ``$S' \cap [a,b] = \emptyset$?'' exactly (no false positives) on
             that small universe.

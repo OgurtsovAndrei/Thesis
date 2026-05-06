@@ -1,7 +1,7 @@
 \begin{frame}{Dense Clusters: Compress Down to Exact}
-  \textbf{Real keys live in a slice of $2^{\mathcal{L}}$.}
-  Subtract $k_{\min}$ --- the same $n$ keys now sit in
-  $U' = \max{-}\min \;\ll\; 2^{\mathcal{L}}$.
+  \textbf{Real keys occupy a narrow window of $[0, 2^L)$.}
+  Subtract $k_{\min}$: the same $n$ keys now live in $[0, U')$ with
+  $U' = k_{\max} - k_{\min} \;\ll\; 2^L$.
   \medskip
 
   \textbf{What did the smaller universe buy us?}
@@ -14,7 +14,7 @@
   \medskip
 
   \textbf{Crossover.} At small enough $U'$, ERE is cheaper than ARE
-  \emph{and} gives false-positive rate (FPR) $= 0$:
+  \emph{and} gives NO False-Positives:
   \[
     \boxed{\;U' \le n\mathcal{L}/\varepsilon\;}
     \quad\Longrightarrow\quad

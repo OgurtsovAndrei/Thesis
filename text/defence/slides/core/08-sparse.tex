@@ -1,18 +1,14 @@
-\begin{frame}{Sparse Tail: Truncate Low Bits}
+\begin{frame}{Sparse Tail: Truncate $t$ Low Bits}
     \begin{columns}[T,onlytextwidth]
         \column{0.50\textwidth}
         \textbf{Random hash (SODA).}
-        Phantoms scattered uniformly across $U$:
-        \[
-            \text{collision zone per key} \;=\; \mathcal{L} \cdot 2^t
-        \]
-        \vspace{-0.2em}
+        \emph{Phantoms} ($y \in U \setminus S$ with $h(y) \in h(S)$) ---
+        $2^t$ per key, scattered uniformly across $U$.
 
-        \textbf{Truncation hash} ($h(x) = \lfloor x / 2^t \rfloor$).
-        All phantoms of one key confined to a single block of width $2^t$ next to it:
-        \[
-            \text{collision zone per key} \;=\; \mathcal{L} + 2^t
-        \]
+        \medskip
+
+        \textbf{Truncation hash} $h(x) = \lfloor x / 2^t \rfloor$.
+        The $2^t$ phantoms of a key form a single contiguous block next to it.
 
         \column{0.48\textwidth}
         \centering

@@ -21,6 +21,15 @@ type ConfigRaw struct {
 	K uint32
 }
 
+// ConfigWithPolicy holds construction parameters for NewGreedyScanAREWithPolicy.
+// RangeLen is forwarded to RangeLen-aware policies (e.g. FallbackPhantom);
+// ignored otherwise.
+type ConfigWithPolicy struct {
+	K        uint32
+	RangeLen uint64
+	Policy   FallbackPolicy
+}
+
 type clusterFilter struct {
 	filter *are_adaptive.AdaptiveARE
 	minKey uint64
@@ -28,13 +37,17 @@ type clusterFilter struct {
 }
 
 type fallbackFilter struct {
-	trunc *are_trunc.TruncARE
-	n     int
+	trunc    *are_trunc.TruncARE
+	adaptive *are_adaptive.AdaptiveARE
+	n        int
 }
 
 func (f *fallbackFilter) isEmptyUint64(lo, hi uint64) bool {
 	if f.trunc != nil {
 		return f.trunc.IsEmpty(lo, hi)
+	}
+	if f.adaptive != nil {
+		return f.adaptive.IsEmpty(lo, hi)
 	}
 	return true
 }
@@ -42,6 +55,9 @@ func (f *fallbackFilter) isEmptyUint64(lo, hi uint64) bool {
 func (f *fallbackFilter) SizeInBits() uint64 {
 	if f.trunc != nil {
 		return f.trunc.SizeInBits()
+	}
+	if f.adaptive != nil {
+		return f.adaptive.SizeInBits()
 	}
 	return 0
 }
@@ -58,13 +74,26 @@ type GreedyScanARE struct {
 	n         int
 }
 
-// NewGreedyScanARE builds a GreedyScanARE from a copy of keys.
+// NewGreedyScanARE builds a GreedyScanARE with the default Trunc fallback.
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewGreedyScanARE(keys []uint64, keyBits uint32, cfg Config) (*GreedyScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, true)
+	return buildGreedy(cp, keyBits, cfg.K, 0, true, FallbackAlwaysTrunc{})
+}
+
+// NewGreedyScanAREWithPolicy builds a GreedyScanARE with an explicit fallback
+// policy. cfg.RangeLen is consulted only by RangeLen-aware policies.
+func NewGreedyScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPolicy) (*GreedyScanARE, error) {
+	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
+	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
+	cp := append([]uint64(nil), keys...)
+	policy := cfg.Policy
+	if policy == nil {
+		policy = FallbackAlwaysTrunc{}
+	}
+	return buildGreedy(cp, keyBits, cfg.K, cfg.RangeLen, true, policy)
 }
 
 // NewGreedyScanARERaw builds without merge and without fallback — pure greedy split only.
@@ -73,10 +102,10 @@ func NewGreedyScanARERaw(keys []uint64, keyBits uint32, cfg ConfigRaw) (*GreedyS
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, false)
+	return buildGreedy(cp, keyBits, cfg.K, 0, false, FallbackAlwaysTrunc{})
 }
 
-func buildGreedy(keys []uint64, keyBits uint32, K uint32, merge bool) (*GreedyScanARE, error) {
+func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge bool, policy FallbackPolicy) (*GreedyScanARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &GreedyScanARE{}, nil
@@ -90,7 +119,7 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, merge bool) (*GreedySc
 	}
 	segments := finalizeRefs(keys, refs)
 
-	// Split segments: exact-mode clusters vs SODA-mode → trunc fallback.
+	// Split segments: exact-mode clusters vs SODA-mode → fallback.
 	var exactSegs []segment
 	var fallbackKeys []uint64
 
@@ -124,17 +153,32 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, merge bool) (*GreedySc
 	}
 	g.nClusters = len(g.clusters)
 
-	// Build trunc fallback for SODA-mode segments.
+	// Build fallback filter (Trunc or SODA, per policy).
 	if len(fallbackKeys) > 0 {
-		fb, err := are_trunc.NewTruncAREFromK(fallbackKeys, keyBits, K)
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, K, policy)
 		if err != nil {
-			return nil, fmt.Errorf("fallback trunc build: %w", err)
+			return nil, err
 		}
-		g.fallback = &fallbackFilter{trunc: fb, n: len(fallbackKeys)}
+		g.fallback = fb
 		g.nFallback = len(fallbackKeys)
 	}
 
 	return g, nil
+}
+
+func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {
+	if policy.useTrunc(keys, K, rangeLen) {
+		fb, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
+		if err != nil {
+			return nil, fmt.Errorf("fallback trunc build: %w", err)
+		}
+		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
+	}
+	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, keyBits, K, 0)
+	if err != nil {
+		return nil, fmt.Errorf("fallback adaptive build: %w", err)
+	}
+	return &fallbackFilter{adaptive: fb, n: len(keys)}, nil
 }
 
 // IsEmpty reports whether [lo, hi] contains no stored key.
