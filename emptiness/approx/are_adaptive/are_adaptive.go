@@ -1,7 +1,7 @@
 package are_adaptive
 
 import (
-	"Thesis/emptiness/exact/ere_one_d"
+	"Thesis/emptiness/exact"
 	internalhash "Thesis/emptiness/internal/hash"
 	"Thesis/utils/errutil"
 	mbits "math/bits"
@@ -12,15 +12,35 @@ import (
 // Config holds the construction parameters for AdaptiveARE. K is the fingerprint
 // width in bits (the payload size per key, excluding metadata). Threshold is the
 // number of low-order bits to truncate from each key before hashing.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Use WithEREBackend to set it explicitly; the
+// default is exact.VariantAuto.
 type Config struct {
-	K         uint32
-	Threshold int
+	K          uint32
+	Threshold  int
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg Config) WithEREBackend(v exact.Variant) Config {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg Config) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 // AdaptiveARE is an approximate range emptiness filter that adaptively chooses
 // between exact mode (when the key spread fits in K bits) and SODA hashing mode.
 type AdaptiveARE struct {
-	ere          *ere_one_d.ExactRangeEmptiness
+	ere          exact.Filter
 	K            uint32
 	minKey       uint64
 	keyBits      uint32
@@ -71,13 +91,19 @@ func NewAdaptiveAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*Adaptive
 	}
 
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return newAdaptiveAREFromKSorted(keys, keyBits, cfg.K, uint32(cfg.Threshold))
+	return newAdaptiveAREFromKSorted(keys, keyBits, cfg.K, uint32(cfg.Threshold), cfg.backend())
 }
 
-// NewAdaptiveAREFromK builds an AdaptiveARE with an explicit fingerprint width K.
+// NewAdaptiveAREFromK builds an AdaptiveARE with an explicit fingerprint width K
+// using the default exact backend (VariantAuto).
 // keys need not be sorted; they are sorted in place. Used by other ARE packages
 // that already have K computed and want to skip Config wrapping.
 func NewAdaptiveAREFromK(keys []uint64, keyBits uint32, K uint32, threshold int) (*AdaptiveARE, error) {
+	return NewAdaptiveAREFromKWithBackend(keys, keyBits, K, threshold, exact.VariantAuto)
+}
+
+// NewAdaptiveAREFromKWithBackend is NewAdaptiveAREFromK with an explicit ERE backend.
+func NewAdaptiveAREFromKWithBackend(keys []uint64, keyBits uint32, K uint32, threshold int, backend exact.Variant) (*AdaptiveARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 
 	n := len(keys)
@@ -87,12 +113,12 @@ func NewAdaptiveAREFromK(keys []uint64, keyBits uint32, K uint32, threshold int)
 	errutil.BugOn(K == 0 || K > 64, "K must be in (0, 64], got %d", K)
 
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return newAdaptiveAREFromKSorted(keys, keyBits, K, uint32(threshold))
+	return newAdaptiveAREFromKSorted(keys, keyBits, K, uint32(threshold), backend)
 }
 
 // newAdaptiveAREFromKSorted is the shared build path.
 // keys must be sorted ascending.
-func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, K uint32, t uint32) (*AdaptiveARE, error) {
+func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, K uint32, t uint32, backend exact.Variant) (*AdaptiveARE, error) {
 	n := len(keys)
 
 	minKey := keys[0]
@@ -148,7 +174,7 @@ func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, K uint32, t uint32
 
 	uniqueHashed := internalhash.SortAndDedupUint64Adaptive(hashedKeys, finalUniverseBits)
 
-	ereFilter, err := ere_one_d.NewExactRangeEmptiness(uniqueHashed, finalUniverseBits)
+	ereFilter, err := exact.NewUint64WithVariant(uniqueHashed, finalUniverseBits, backend)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 package are_trunc
 
 import (
-	"Thesis/emptiness/exact/ere_one_d"
+	"Thesis/emptiness/exact"
 	"Thesis/utils"
 	"Thesis/utils/errutil"
 	"fmt"
@@ -12,8 +12,29 @@ import (
 // Config holds the construction parameters for TruncARE. K is the fingerprint
 // width in bits (the payload size per key, excluding metadata). Larger K → lower FPR,
 // higher BPK.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto. Use the
+// WithEREBackend option to set it explicitly without relying on the
+// zero-value alias.
 type Config struct {
-	K uint32
+	K          uint32
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg Config) WithEREBackend(v exact.Variant) Config {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg Config) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 // TruncARE is a probabilistic data structure that answers 1D range emptiness
@@ -22,7 +43,7 @@ type Config struct {
 // Uses prefix truncation with key normalization: keys are shifted relative to minKey so that
 // the spread occupies all K bits effectively (avoids all-zero-prefix collapse for small-valued keys).
 type TruncARE struct {
-	exact     *ere_one_d.ExactRangeEmptiness
+	exact     exact.Filter
 	K         uint32
 	keyBits   uint32
 	minKey    uint64
@@ -60,12 +81,18 @@ func NewTruncAREInPlace(keys []uint64, keyBits uint32, cfg Config) (*TruncARE, e
 	}
 	keys = out
 
-	return newTruncAREFromKSorted(keys, keyBits, cfg.K)
+	return newTruncAREFromKSorted(keys, keyBits, cfg.K, cfg.backend())
 }
 
-// NewTruncAREFromK builds a TruncARE with an explicit fingerprint width K.
+// NewTruncAREFromK builds a TruncARE with an explicit fingerprint width K
+// using the default exact backend (VariantAuto).
 // keys must be sorted in ascending order and deduplicated.
 func NewTruncAREFromK(keys []uint64, keyBits uint32, K uint32) (*TruncARE, error) {
+	return NewTruncAREFromKWithBackend(keys, keyBits, K, exact.VariantAuto)
+}
+
+// NewTruncAREFromKWithBackend is NewTruncAREFromK with an explicit ERE backend.
+func NewTruncAREFromKWithBackend(keys []uint64, keyBits uint32, K uint32, backend exact.Variant) (*TruncARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 
 	n := len(keys)
@@ -76,11 +103,11 @@ func NewTruncAREFromK(keys []uint64, keyBits uint32, K uint32) (*TruncARE, error
 		K = 1
 	}
 
-	return newTruncAREFromKSorted(keys, keyBits, K)
+	return newTruncAREFromKSorted(keys, keyBits, K, backend)
 }
 
 // newTruncAREFromKSorted is the shared build path. keys must be sorted ascending and deduplicated.
-func newTruncAREFromKSorted(keys []uint64, keyBits uint32, K uint32) (*TruncARE, error) {
+func newTruncAREFromKSorted(keys []uint64, keyBits uint32, K uint32, backend exact.Variant) (*TruncARE, error) {
 	n := len(keys)
 	minKey := keys[0]
 	maxKey := keys[n-1]
@@ -104,13 +131,13 @@ func newTruncAREFromKSorted(keys []uint64, keyBits uint32, K uint32) (*TruncARE,
 		}
 	}
 
-	exact, err := ere_one_d.NewExactRangeEmptiness(truncatedKeys, K)
+	exactFilter, err := exact.NewUint64WithVariant(truncatedKeys, K, backend)
 	if err != nil {
 		return nil, err
 	}
 
 	return &TruncARE{
-		exact:     exact,
+		exact:     exactFilter,
 		K:         K,
 		keyBits:   keyBits,
 		minKey:    minKey,

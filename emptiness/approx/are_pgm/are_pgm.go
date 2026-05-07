@@ -1,7 +1,7 @@
 package are_pgm
 
 import (
-	"Thesis/emptiness/exact/ere_one_d"
+	"Thesis/emptiness/exact"
 	"fmt"
 	"math"
 	"sort"
@@ -29,19 +29,20 @@ type CDFPoint struct {
 // Limitation: keys must fit in uint64; float64 conversion in PGM
 // loses precision for keys > 2^53.
 type PGMApproximateRangeEmptiness struct {
-	cdf       []CDFPoint
-	ere       *ere_one_d.ExactRangeEmptiness
-	K         uint32
-	n         int
-	minKey    uint64
-	maxKey    uint64
-	smoothing float64 // 0 = pure CDF, 1 = pure uniform
+	cdf        []CDFPoint
+	ere        exact.Filter
+	K          uint32
+	n          int
+	minKey     uint64
+	maxKey     uint64
+	smoothing  float64 // 0 = pure CDF, 1 = pure uniform
+	ereBackend exact.Variant
 }
 
 // NewPGMApproximateRangeEmptinessSmooth builds a CDF-mapped range emptiness filter
 // with adjustable smoothing (0 = pure CDF, 1 = pure uniform).
 func NewPGMApproximateRangeEmptinessSmooth(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
-	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, smoothing)
+	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, smoothing, exact.VariantAuto)
 }
 
 // NewPGMApproximateRangeEmptiness builds a CDF-mapped range emptiness filter.
@@ -53,10 +54,16 @@ func NewPGMApproximateRangeEmptinessSmooth(keys []uint64, rangeLen uint64, epsil
 //   - pgmEpsilon: PGM approximation error bound (controls CDF granularity;
 //     smaller = more CDF points = better approximation but more storage)
 func NewPGMApproximateRangeEmptiness(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int) (*PGMApproximateRangeEmptiness, error) {
-	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, 0)
+	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, 0, exact.VariantAuto)
 }
 
-func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64) (*PGMApproximateRangeEmptiness, error) {
+// NewPGMApproximateRangeEmptinessWithBackend is NewPGMApproximateRangeEmptiness
+// with an explicit ERE backend.
+func NewPGMApproximateRangeEmptinessWithBackend(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, backend exact.Variant) (*PGMApproximateRangeEmptiness, error) {
+	return newPGMARE(keys, rangeLen, epsilon, pgmEpsilon, 0, backend)
+}
+
+func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, smoothing float64, backend exact.Variant) (*PGMApproximateRangeEmptiness, error) {
 	const maxPGMKeys = 1 << 16
 	if len(keys) > maxPGMKeys {
 		return nil, fmt.Errorf("CDF-ARE: n=%d exceeds maximum %d (PGM build is O(n²))", len(keys), maxPGMKeys)
@@ -159,12 +166,13 @@ func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, 
 	}
 
 	filter := &PGMApproximateRangeEmptiness{
-		cdf:       cdf,
-		K:         K,
-		n:         n,
-		minKey:    sorted[0],
-		maxKey:    sorted[n-1],
-		smoothing: smoothing,
+		cdf:        cdf,
+		K:          K,
+		n:          n,
+		minKey:     sorted[0],
+		maxKey:     sorted[n-1],
+		smoothing:  smoothing,
+		ereBackend: backend,
 	}
 
 	// Map all keys through the same cdfMap used for queries (consistency!)
@@ -178,7 +186,7 @@ func newPGMARE(keys []uint64, rangeLen uint64, epsilon float64, pgmEpsilon int, 
 		}
 	}
 
-	ereFilter, err := ere_one_d.NewExactRangeEmptiness(mapped, K)
+	ereFilter, err := exact.NewUint64WithVariant(mapped, K, backend)
 	if err != nil {
 		return nil, err
 	}
