@@ -1,5 +1,7 @@
 package ere_pef
 
+import "fmt"
+
 // PISA-default partitioning parameters: fix_cost=64 bit, eps1=0.03,
 // eps2=0.3, eps3=0.01 (Ottaviano-Venturini SIGIR 2014 §4 / PISA's
 // partitioned_sequence::compute_partition).
@@ -9,6 +11,44 @@ const (
 	defaultEps2    = 0.3
 	defaultEps3    = 0.01
 )
+
+// PartitionConfig tunes the (1+ε)-approximate optimal-partition DP.
+// Larger Eps1/Eps2 ⇒ fewer cost windows ⇒ faster build, ~5%-tighter
+// partition. Smaller Eps3 ⇒ larger superblocks ⇒ better cross-block
+// optimization, more memory per worker. FixCost is the per-chunk
+// fixed cost in bits (DP penalty for splitting).
+type PartitionConfig struct {
+	Eps1    float64
+	Eps2    float64
+	Eps3    float64
+	FixCost uint64
+}
+
+// DefaultPartitionConfig returns the PISA-paper defaults.
+func DefaultPartitionConfig() PartitionConfig {
+	return PartitionConfig{
+		Eps1:    defaultEps1,
+		Eps2:    defaultEps2,
+		Eps3:    defaultEps3,
+		FixCost: defaultFixCost,
+	}
+}
+
+func (cfg PartitionConfig) validate() error {
+	if cfg.Eps1 < 0 || cfg.Eps1 >= 1 {
+		return fmt.Errorf("PartitionConfig.Eps1 must be in [0, 1), got %v", cfg.Eps1)
+	}
+	if cfg.Eps2 <= 0 {
+		return fmt.Errorf("PartitionConfig.Eps2 must be > 0, got %v", cfg.Eps2)
+	}
+	if cfg.Eps3 < 0 {
+		return fmt.Errorf("PartitionConfig.Eps3 must be >= 0, got %v", cfg.Eps3)
+	}
+	if cfg.FixCost == 0 {
+		return fmt.Errorf("PartitionConfig.FixCost must be > 0")
+	}
+	return nil
+}
 
 // superblockSize is the maximum number of keys passed to one DP call.
 // Larger superblocks pay quadratic-ish memory; PISA caps at fix_cost/eps3.

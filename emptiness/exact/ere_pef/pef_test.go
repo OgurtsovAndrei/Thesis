@@ -143,3 +143,54 @@ func TestPEFCrossSuperblock(t *testing.T) {
 		}
 	}
 }
+
+func TestNewPEFWithConfigRejectsBadConfig(t *testing.T) {
+	keys := []uint64{1, 2, 3}
+	cases := []PartitionConfig{
+		{Eps1: -0.1, Eps2: 0.3, Eps3: 0.01, FixCost: 64},
+		{Eps1: 1.0, Eps2: 0.3, Eps3: 0.01, FixCost: 64},
+		{Eps1: 0.03, Eps2: 0, Eps3: 0.01, FixCost: 64},
+		{Eps1: 0.03, Eps2: 0.3, Eps3: -0.1, FixCost: 64},
+		{Eps1: 0.03, Eps2: 0.3, Eps3: 0.01, FixCost: 0},
+	}
+	for i, cfg := range cases {
+		if _, err := NewPEFWithConfig(keys, 60, cfg); err == nil {
+			t.Errorf("case #%d: expected error for cfg=%+v", i, cfg)
+		}
+	}
+}
+
+func TestNewPEFWithConfigParityVsDefault(t *testing.T) {
+	// On the same input, NewPEF (defaults) and NewPEFWithConfig (looser
+	// eps) must produce IsEmpty answers that agree byte-for-byte. The
+	// looser cfg may yield a different partition (slightly more chunks
+	// or slightly worse BPK), but functional emptiness is preserved.
+	keys := make([]uint64, 0, 8192)
+	for i := uint64(0); i < 8192; i++ {
+		keys = append(keys, i*7+i*i)
+	}
+	def, err := NewPEF(keys, 60)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loose, err := NewPEFWithConfig(keys, 60, PartitionConfig{
+		Eps1: 0.1, Eps2: 0.5, Eps3: 0.01, FixCost: 64,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := uint64(0); i < 8192*8; i++ {
+		a := i * 13
+		b := a + 50
+		if def.IsEmpty(a, b) != loose.IsEmpty(a, b) {
+			t.Fatalf("divergence at (%d,%d): default=%v loose=%v",
+				a, b, def.IsEmpty(a, b), loose.IsEmpty(a, b))
+		}
+	}
+	// Parity sanity: both must report non-empty for every actual key.
+	for _, k := range keys {
+		if def.IsEmpty(k, k) || loose.IsEmpty(k, k) {
+			t.Fatalf("self-membership %d failed", k)
+		}
+	}
+}

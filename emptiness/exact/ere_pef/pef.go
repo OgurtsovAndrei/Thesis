@@ -88,12 +88,22 @@ type bmChunkMeta struct {
 }
 
 // NewPEF builds a Partitioned Elias-Fano range emptiness structure
-// from the given sorted key slice. Duplicate keys are silently
+// from the given sorted key slice using the PISA-paper default
+// hyperparameters (DefaultPartitionConfig). Duplicate keys are silently
 // deduplicated (set semantics is preserved for IsEmpty). keyBits is
 // the effective key width used by callers; queries with values
 // outside [0, 2^keyBits) are still defined (IsEmpty returns true for
 // queries that do not overlap any stored key).
 func NewPEF(keys []uint64, keyBits uint32) (*PEF, error) {
+	return NewPEFWithConfig(keys, keyBits, DefaultPartitionConfig())
+}
+
+// NewPEFWithConfig is NewPEF with explicit partitioning hyperparameters.
+// See PartitionConfig for the tuning levers.
+func NewPEFWithConfig(keys []uint64, keyBits uint32, cfg PartitionConfig) (*PEF, error) {
+	if err := cfg.validate(); err != nil {
+		return nil, err
+	}
 	if keyBits > 64 {
 		return nil, fmt.Errorf("keyBits must be <= 64, got %d", keyBits)
 	}
@@ -126,9 +136,9 @@ func NewPEF(keys []uint64, keyBits uint32) (*PEF, error) {
 	}
 
 	costFn := func(u, n uint64) uint64 {
-		return minCodecBitsize(u, n) + defaultFixCost
+		return minCodecBitsize(u, n) + cfg.FixCost
 	}
-	superSize := superblockSize(defaultFixCost, defaultEps3)
+	superSize := superblockSize(cfg.FixCost, cfg.Eps3)
 	inputUniverse := deduped[n-1] + 1
 
 	// Phase 0 — enumerate superblock jobs (sequential, cheap).
@@ -191,7 +201,7 @@ func NewPEF(keys []uint64, keyBits uint32) (*PEF, error) {
 				job := &jobs[i]
 				result, _ := scratch.compute(
 					job.keys, job.base, job.universe,
-					costFn, defaultEps1, defaultEps2, buf,
+					costFn, cfg.Eps1, cfg.Eps2, buf,
 				)
 				// Copy out — `result` aliases `buf`, which is reused on
 				// the next iteration in this worker.
