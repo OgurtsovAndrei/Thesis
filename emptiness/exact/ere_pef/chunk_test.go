@@ -14,18 +14,37 @@ func TestSelectCodec(t *testing.T) {
 	}
 }
 
+// makeChunk builds a single-chunk PEF in `p` with the supplied keys
+// (caller-relative to `base`) and returns the chunk index for use with
+// p.chunkIntersects. firstKey/lastKey are populated so chunkBaseAt
+// works as in the production builder.
+func appendChunk(p *PEF, base uint64, keys []uint64) int {
+	c := chunk{
+		last:  keys[len(keys)-1],
+		nKind: packNKind(uint32(len(keys)), 0),
+	}
+	if len(p.chunks) == 0 {
+		p.firstKey = base
+	}
+	p.writeChunk(&c, base, keys)
+	idx := len(p.chunks)
+	p.chunks = append(p.chunks, c)
+	p.lastKey = c.last
+	p.n += len(keys)
+	return idx
+}
+
 func TestChunkAllOnes(t *testing.T) {
 	keys := []uint64{5, 6, 7, 8}
 	p := &PEF{}
-	c := chunk{base: 5, last: 8, n: 4}
-	p.writeChunk(&c, keys)
-	if c.kind != kindAllOnes {
-		t.Fatalf("kind=%d, want allOnes", c.kind)
+	idx := appendChunk(p, 5, keys)
+	if p.chunks[idx].kind() != kindAllOnes {
+		t.Fatalf("kind=%d, want allOnes", p.chunks[idx].kind())
 	}
 	for _, q := range []struct{ a, b uint64 }{
 		{5, 5}, {7, 7}, {6, 7}, {5, 8},
 	} {
-		if !p.chunkIntersects(&c, q.a, q.b) {
+		if !p.chunkIntersects(idx, q.a, q.b) {
 			t.Errorf("intersects(%d,%d) = false, want true", q.a, q.b)
 		}
 	}
@@ -34,10 +53,9 @@ func TestChunkAllOnes(t *testing.T) {
 func TestChunkEF(t *testing.T) {
 	keys := []uint64{10, 30, 50}
 	p := &PEF{}
-	c := chunk{base: 10, last: 50, n: 3}
-	p.writeChunk(&c, keys)
-	if c.kind != kindEF {
-		t.Fatalf("kind=%d, want EF", c.kind)
+	idx := appendChunk(p, 10, keys)
+	if p.chunks[idx].kind() != kindEF {
+		t.Fatalf("kind=%d, want EF", p.chunks[idx].kind())
 	}
 	cases := []struct {
 		a, b uint64
@@ -55,7 +73,7 @@ func TestChunkEF(t *testing.T) {
 		{29, 29, false},
 	}
 	for _, tc := range cases {
-		got := p.chunkIntersects(&c, tc.a, tc.b)
+		got := p.chunkIntersects(idx, tc.a, tc.b)
 		if got != tc.want {
 			t.Errorf("intersects(%d,%d) = %v, want %v", tc.a, tc.b, got, tc.want)
 		}
@@ -66,13 +84,12 @@ func TestChunkEFAllSparse(t *testing.T) {
 	// EF with ell > 0 chosen, single key per bucket
 	keys := []uint64{0, 100, 200, 300}
 	p := &PEF{}
-	c := chunk{base: 0, last: 300, n: 4}
-	p.writeChunk(&c, keys)
-	if c.kind != kindEF {
-		t.Fatalf("kind=%d", c.kind)
+	idx := appendChunk(p, 0, keys)
+	if p.chunks[idx].kind() != kindEF {
+		t.Fatalf("kind=%d", p.chunks[idx].kind())
 	}
 	for _, k := range keys {
-		if !p.chunkIntersects(&c, k, k) {
+		if !p.chunkIntersects(idx, k, k) {
 			t.Errorf("self-membership %d failed", k)
 		}
 	}
@@ -80,7 +97,7 @@ func TestChunkEFAllSparse(t *testing.T) {
 	for _, q := range []struct{ a, b uint64 }{
 		{1, 99}, {101, 199}, {201, 299},
 	} {
-		if p.chunkIntersects(&c, q.a, q.b) {
+		if p.chunkIntersects(idx, q.a, q.b) {
 			t.Errorf("gap (%d,%d) reported non-empty", q.a, q.b)
 		}
 	}
@@ -89,10 +106,9 @@ func TestChunkEFAllSparse(t *testing.T) {
 func TestChunkBitmap(t *testing.T) {
 	keys := []uint64{0, 1, 3}
 	p := &PEF{}
-	c := chunk{base: 0, last: 3, n: 3}
-	p.writeChunk(&c, keys)
-	if c.kind != kindBitmap {
-		t.Fatalf("kind=%d, want bitmap", c.kind)
+	idx := appendChunk(p, 0, keys)
+	if p.chunks[idx].kind() != kindBitmap {
+		t.Fatalf("kind=%d, want bitmap", p.chunks[idx].kind())
 	}
 	cases := []struct {
 		a, b uint64
@@ -107,7 +123,7 @@ func TestChunkBitmap(t *testing.T) {
 		{0, 1, true},
 	}
 	for _, tc := range cases {
-		got := p.chunkIntersects(&c, tc.a, tc.b)
+		got := p.chunkIntersects(idx, tc.a, tc.b)
 		if got != tc.want {
 			t.Errorf("intersects(%d,%d) = %v, want %v", tc.a, tc.b, got, tc.want)
 		}
@@ -115,19 +131,18 @@ func TestChunkBitmap(t *testing.T) {
 }
 
 func TestChunkAcrossWordBoundary(t *testing.T) {
-	// Build two EF chunks back-to-back to exercise lowBits offsets across a 64-bit boundary
+	// Build two EF chunks back-to-back to exercise lowBits offsets across a 64-bit boundary.
+	// Cumulative base layout: chunk[i+1].base = chunk[i].last + 1.
 	p := &PEF{}
-	c1 := chunk{base: 10, last: 50, n: 3}
-	p.writeChunk(&c1, []uint64{10, 30, 50})
-	c2 := chunk{base: 100, last: 500, n: 5}
-	p.writeChunk(&c2, []uint64{100, 200, 300, 400, 500})
-	if !p.chunkIntersects(&c2, 200, 200) {
+	idx1 := appendChunk(p, 10, []uint64{10, 30, 50})
+	idx2 := appendChunk(p, 51, []uint64{100, 200, 300, 400, 500})
+	if !p.chunkIntersects(idx2, 200, 200) {
 		t.Error("c2 self-membership 200 failed")
 	}
-	if p.chunkIntersects(&c2, 201, 299) {
+	if p.chunkIntersects(idx2, 201, 299) {
 		t.Error("c2 gap (201,299) reported non-empty")
 	}
-	if !p.chunkIntersects(&c1, 30, 30) {
+	if !p.chunkIntersects(idx1, 30, 30) {
 		t.Error("c1 self-membership 30 failed (offset corruption?)")
 	}
 }

@@ -65,8 +65,8 @@ func TestPEFContiguousRun(t *testing.T) {
 	if len(p.chunks) != 1 {
 		t.Errorf("contiguous run should fit in one chunk, got %d", len(p.chunks))
 	}
-	if p.chunks[0].kind != kindAllOnes {
-		t.Errorf("contiguous run should pick all-ones, got kind=%d", p.chunks[0].kind)
+	if p.chunks[0].kind() != kindAllOnes {
+		t.Errorf("contiguous run should pick all-ones, got kind=%d", p.chunks[0].kind())
 	}
 	for _, k := range keys {
 		if p.IsEmpty(k, k) {

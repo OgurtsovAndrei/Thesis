@@ -2,8 +2,6 @@ package ere_pef
 
 import (
 	"math/bits"
-
-	"Thesis/succinct_bit_vector/rsdic"
 )
 
 // selectCodec picks the cheapest codec for a chunk over `universe`
@@ -23,27 +21,29 @@ func selectCodec(universe, n uint64) chunkKind {
 }
 
 // writeChunk dispatches the chunk to the right codec, mutating `p`
-// (appending rsdics / low bits) and `c` (populating kind, rsIdx,
-// efLowOff). `keys` are absolute and sorted; the caller guarantees
-// keys[0] == c.base, keys[len-1] == c.last, len(keys) == int(c.n),
-// and no duplicates.
-func (p *PEF) writeChunk(c *chunk, keys []uint64) {
-	universe := c.last - c.base + 1
-	n := uint64(c.n)
-	c.kind = selectCodec(universe, n)
-	switch c.kind {
+// (appending to shared rsdic / low bits / per-kind metadata) and `c`
+// (populating kind, metaIdx).
+//
+// `keys` are absolute and sorted; the caller guarantees keys[0] == base,
+// keys[len-1] == c.last, len(keys) == int(c.n()), and no duplicates.
+func (p *PEF) writeChunk(c *chunk, base uint64, keys []uint64) {
+	universe := c.last - base + 1
+	n := uint64(c.n())
+	k := selectCodec(universe, n)
+	c.nKind = packNKind(c.n(), k)
+	switch k {
 	case kindAllOnes:
 		// no payload — values reconstructable from base..last
 	case kindEF:
-		p.writeEFChunk(c, keys)
+		p.writeEFChunk(c, base, keys)
 	case kindBitmap:
-		p.writeBitmapChunk(c, keys)
+		p.writeBitmapChunk(c, base, keys)
 	}
 }
 
-func (p *PEF) writeEFChunk(c *chunk, keys []uint64) {
-	universe := c.last - c.base + 1
-	n := uint64(c.n)
+func (p *PEF) writeEFChunk(c *chunk, base uint64, keys []uint64) {
+	universe := c.last - base + 1
+	n := uint64(c.n())
 	var ell uint64
 	if universe > n {
 		ell = uint64(bits.Len64(universe/n) - 1)
@@ -52,15 +52,19 @@ func (p *PEF) writeEFChunk(c *chunk, keys []uint64) {
 	if ell > 0 {
 		mask = (uint64(1) << ell) - 1
 	}
-	c.efLowOff = p.lowBitsN
 
-	rs := rsdic.New()
+	meta := efChunkMeta{
+		lowOff:     p.lowBitsN,
+		globalOff:  p.rs.Num(),
+		onesBefore: p.rs.OneNum(),
+	}
+
 	keyIdx := 0
 	numBuckets := ((universe - 1) >> ell) + 1
 	for b := uint64(0); b < numBuckets; b++ {
-		rs.PushBack(true)
+		p.rs.PushBack(true)
 		for keyIdx < len(keys) {
-			kr := keys[keyIdx] - c.base
+			kr := keys[keyIdx] - base
 			if kr>>ell != b {
 				break
 			}
@@ -69,51 +73,54 @@ func (p *PEF) writeEFChunk(c *chunk, keys []uint64) {
 				writeBits(p.lowBits, p.lowBitsN, uint8(ell), kr&mask)
 				p.lowBitsN += ell
 			}
-			rs.PushBack(false)
+			p.rs.PushBack(false)
 			keyIdx++
 		}
 	}
-	rs.PushBack(true) // sentinel
+	p.rs.PushBack(true) // sentinel
 
-	c.rsIdx = uint32(len(p.rsdics))
-	p.rsdics = append(p.rsdics, *rs)
+	c.metaIdx = uint32(len(p.efMeta))
+	p.efMeta = append(p.efMeta, meta)
 }
 
-func (p *PEF) writeBitmapChunk(c *chunk, keys []uint64) {
-	universe := c.last - c.base + 1
-	rs := rsdic.New()
+func (p *PEF) writeBitmapChunk(c *chunk, base uint64, keys []uint64) {
+	universe := c.last - base + 1
+	meta := bmChunkMeta{globalOff: p.rs.Num()}
+
 	keyIdx := 0
 	for u := uint64(0); u < universe; u++ {
-		if keyIdx < len(keys) && keys[keyIdx]-c.base == u {
-			rs.PushBack(true)
+		if keyIdx < len(keys) && keys[keyIdx]-base == u {
+			p.rs.PushBack(true)
 			keyIdx++
 		} else {
-			rs.PushBack(false)
+			p.rs.PushBack(false)
 		}
 	}
-	c.rsIdx = uint32(len(p.rsdics))
-	p.rsdics = append(p.rsdics, *rs)
+
+	c.metaIdx = uint32(len(p.bmMeta))
+	p.bmMeta = append(p.bmMeta, meta)
 }
 
-// chunkIntersects returns true iff chunk c contains any key in [aAbs, bAbs].
-// Caller guarantees c.base <= aAbs <= bAbs <= c.last.
-func (p *PEF) chunkIntersects(c *chunk, aAbs, bAbs uint64) bool {
-	switch c.kind {
+// chunkIntersects returns true iff chunks[i] contains any key in [aAbs, bAbs].
+// Caller guarantees chunkBaseAt(i) <= aAbs <= bAbs <= chunks[i].last.
+func (p *PEF) chunkIntersects(i int, aAbs, bAbs uint64) bool {
+	c := &p.chunks[i]
+	switch c.kind() {
 	case kindAllOnes:
 		return true
 	case kindEF:
-		return p.efIntersects(c, aAbs, bAbs)
+		return p.efIntersects(c, p.chunkBaseAt(i), aAbs, bAbs)
 	case kindBitmap:
-		return p.bitmapIntersects(c, aAbs, bAbs)
+		return p.bitmapIntersects(c, p.chunkBaseAt(i), aAbs, bAbs)
 	}
 	return false
 }
 
-func (p *PEF) efIntersects(c *chunk, aAbs, bAbs uint64) bool {
-	aRel := aAbs - c.base
-	bRel := bAbs - c.base
-	universe := c.last - c.base + 1
-	n := uint64(c.n)
+func (p *PEF) efIntersects(c *chunk, base, aAbs, bAbs uint64) bool {
+	aRel := aAbs - base
+	bRel := bAbs - base
+	universe := c.last - base + 1
+	n := uint64(c.n())
 	var ell uint64
 	if universe > n {
 		ell = uint64(bits.Len64(universe/n) - 1)
@@ -122,7 +129,7 @@ func (p *PEF) efIntersects(c *chunk, aAbs, bAbs uint64) bool {
 	if ell > 0 {
 		mask = (uint64(1) << ell) - 1
 	}
-	rs := &p.rsdics[c.rsIdx]
+	meta := &p.efMeta[c.metaIdx]
 
 	highA := aRel >> ell
 	highB := bRel >> ell
@@ -133,27 +140,31 @@ func (p *PEF) efIntersects(c *chunk, aAbs, bAbs uint64) bool {
 	}
 
 	if highA == highB {
-		start, end := efBucketRange(rs, highA)
-		return p.efBucketHasLow(c.efLowOff, ell, start, end, lowA, lowB)
+		start, end := p.efBucketRange(meta, highA)
+		return p.efBucketHasLow(meta.lowOff, ell, start, end, lowA, lowB)
 	}
 
-	startA, endA := efBucketRange(rs, highA)
-	if p.efBucketHasLow(c.efLowOff, ell, startA, endA, lowA, mask) {
+	startA, endA := p.efBucketRange(meta, highA)
+	if p.efBucketHasLow(meta.lowOff, ell, startA, endA, lowA, mask) {
 		return true
 	}
-	startB, endB := efBucketRange(rs, highB)
+	startB, endB := p.efBucketRange(meta, highB)
 	if startB > endA {
 		return true
 	}
-	if p.efBucketHasLow(c.efLowOff, ell, startB, endB, 0, lowB) {
+	if p.efBucketHasLow(meta.lowOff, ell, startB, endB, 0, lowB) {
 		return true
 	}
 	return false
 }
 
-func efBucketRange(rs *rsdic.RSDic, b uint64) (start, end uint64) {
-	posStart := rs.Select1(b)
-	posEnd := rs.Select1(b + 1)
+// efBucketRange returns the suffix-array range [start, end) of low
+// values stored under bucket index `b` for the EF chunk described by
+// `meta`. Local Select1(k) is computed against the shared rsdic as
+// `rs.Select1(meta.onesBefore+k) - meta.globalOff`.
+func (p *PEF) efBucketRange(meta *efChunkMeta, b uint64) (start, end uint64) {
+	posStart := p.rs.Select1(meta.onesBefore+b) - meta.globalOff
+	posEnd := p.rs.Select1(meta.onesBefore+b+1) - meta.globalOff
 	return posStart - b, posEnd - (b + 1)
 }
 
@@ -182,9 +193,9 @@ func (p *PEF) efBucketHasLow(lowOff, ell, start, end, lowMin, lowMax uint64) boo
 	return false
 }
 
-func (p *PEF) bitmapIntersects(c *chunk, aAbs, bAbs uint64) bool {
-	aRel := aAbs - c.base
-	bRel := bAbs - c.base
-	rs := &p.rsdics[c.rsIdx]
-	return rs.Rank(bRel+1, true) > rs.Rank(aRel, true)
+func (p *PEF) bitmapIntersects(c *chunk, base, aAbs, bAbs uint64) bool {
+	aRel := aAbs - base
+	bRel := bAbs - base
+	off := p.bmMeta[c.metaIdx].globalOff
+	return p.rs.Rank(off+bRel+1, true) > p.rs.Rank(off+aRel, true)
 }
