@@ -122,6 +122,7 @@ func isTrulyEmptyUint64(keys []uint64, a, b uint64) bool {
 // TestARE_AdversarialTradeoff measures the FPR vs BPK tradeoff under multiple
 // data distributions and query strategies.
 func TestARE_AdversarialTradeoff(t *testing.T) {
+	if testing.Short() { t.Skip("adversarial K×scenario sweep") }
 	const (
 		N          = 200000
 		numQueries = 500000

@@ -65,7 +65,8 @@ func generateQueries(L uint64, rng *rand.Rand) ([]bits.BitString, []bits.BitStri
 
 type isEmptyFunc func(a, b bits.BitString) bool
 
-func TestEREComparison(t *testing.T) {
+// Driven by its own N×L sweep, not by b.N — invoke with -benchtime=1x.
+func BenchmarkEREComparison(b *testing.B) {
 	universe := bits.NewBitString(bitLen60)
 
 	type buildResult struct {
@@ -99,7 +100,7 @@ func TestEREComparison(t *testing.T) {
 				e, err := ere.NewExactRangeEmptiness(keysU64, bitLen60)
 				totalNs += time.Since(start).Nanoseconds()
 				if err != nil {
-					t.Fatalf("ERE build failed (N=%d): %v", n, err)
+					b.Fatalf("ERE build failed (N=%d): %v", n, err)
 				}
 				lastERE = e
 			}
@@ -118,7 +119,7 @@ func TestEREComparison(t *testing.T) {
 				e, err := NewTheoreticalExactRangeEmptiness(keysBS, universe)
 				totalNs += time.Since(start).Nanoseconds()
 				if err != nil {
-					t.Fatalf("TheoreticalERE build failed (N=%d): %v", n, err)
+					b.Fatalf("TheoreticalERE build failed (N=%d): %v", n, err)
 				}
 				lastTERE = e
 			}
@@ -137,7 +138,7 @@ func TestEREComparison(t *testing.T) {
 				e, err := ere_global.NewGlobalExactRangeEmptiness(keysBS, universe)
 				totalNs += time.Since(start).Nanoseconds()
 				if err != nil {
-					t.Fatalf("GlobalERE build failed (N=%d): %v", n, err)
+					b.Fatalf("GlobalERE build failed (N=%d): %v", n, err)
 				}
 				lastGERE = e
 			}

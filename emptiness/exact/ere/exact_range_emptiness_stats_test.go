@@ -28,6 +28,7 @@ func TestExactRangeEmptiness_RealStats(t *testing.T) {
 }
 
 func TestExactRangeEmptiness_BucketStatsUint64(t *testing.T) {
+	if testing.Short() { t.Skip("heavy stats sweep up to n=2^27; run without -short") }
 	sizes := []int{1 << 20, 1 << 24, 1 << 27}
 
 	for _, n := range sizes {

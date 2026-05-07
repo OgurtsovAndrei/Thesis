@@ -188,12 +188,12 @@ func measureQueryHybridScan(filter *HybridScanARE, queries [][2]uint64) float64 
 }
 
 // runBench executes one (distribution × epsilon) benchmark and prints results.
-func runBench(t *testing.T, distName string, ds keyDataset, eps float64) {
-	t.Helper()
+func runBench(b *testing.B, distName string, ds keyDataset, eps float64) {
+	b.Helper()
 	keys := ds.keys
 	n := len(keys)
 	if n == 0 {
-		t.Logf("[%s eps=%.3f] skipping: 0 keys after dedup+mask", distName, eps)
+		b.Logf("[%s eps=%.3f] skipping: 0 keys after dedup+mask", distName, eps)
 		return
 	}
 
@@ -207,7 +207,7 @@ func runBench(t *testing.T, distName string, ds keyDataset, eps float64) {
 
 	filter, buildMkps, err := measureBuildHybridScan(keys, benchRangeLen, eps)
 	if err != nil {
-		t.Errorf("[%s eps=%.3f] HybridScanARE build: %v", distName, eps, err)
+		b.Errorf("[%s eps=%.3f] HybridScanARE build: %v", distName, eps, err)
 		return
 	}
 
@@ -225,7 +225,8 @@ func runBench(t *testing.T, distName string, ds keyDataset, eps float64) {
 	fmt.Printf("%-24s  %12d\n", "Fallback keys:", nf)
 }
 
-func TestBenchComparison(t *testing.T) {
+// Driven by its own distribution×epsilon sweep, not by b.N — invoke with -benchtime=1x.
+func BenchmarkHybridScanComparison(b *testing.B) {
 	const sosdDir = "/Users/andrei.ogurtsov/Thesis-Bench-industry/bench/sosd_data"
 
 	type distEntry struct {
@@ -292,17 +293,17 @@ func TestBenchComparison(t *testing.T) {
 
 	for _, dist := range distributions {
 		dist := dist
-		t.Run(dist.name, func(t *testing.T) {
+		b.Run(dist.name, func(b *testing.B) {
 			ds, ok := dist.load()
 			if !ok {
-				t.Skipf("dataset %q not available (file missing or unreadable)", dist.name)
+				b.Skipf("dataset %q not available (file missing or unreadable)", dist.name)
 			}
-			t.Logf("Loaded %d keys for distribution %q", len(ds.keys), dist.name)
+			b.Logf("Loaded %d keys for distribution %q", len(ds.keys), dist.name)
 
 			for _, eps := range benchEpsilons {
 				eps := eps
-				t.Run(fmt.Sprintf("eps=%.3f", eps), func(t *testing.T) {
-					runBench(t, dist.name, ds, eps)
+				b.Run(fmt.Sprintf("eps=%.3f", eps), func(b *testing.B) {
+					runBench(b, dist.name, ds, eps)
 				})
 			}
 		})
