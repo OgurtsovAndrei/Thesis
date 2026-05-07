@@ -52,12 +52,12 @@ const codecTypeBits = 1
 // chunk of n keys over universe of size `universe`. Used as the
 // cost function inside optimal_partition's DP.
 func minCodecBitsize(universe, n uint64) uint64 {
-	best := allOnesBitsize(universe, n)
-	if ef := efBitsizePaper(universe, n) + codecTypeBits; ef < best {
-		best = ef
+	if universe == n {
+		return 0 // all-ones — guaranteed minimum, skip EF/bitmap evaluation
 	}
-	if bm := bitmapBitsizePaper(universe, n) + codecTypeBits; bm < best {
-		best = bm
+	ef := efBitsizePaper(universe, n) + codecTypeBits
+	if bm := bitmapBitsizePaper(universe, n) + codecTypeBits; bm < ef {
+		return bm
 	}
-	return best
+	return ef
 }
