@@ -2,7 +2,6 @@ package ere_pef
 
 import (
 	"fmt"
-	"runtime"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -178,7 +177,10 @@ func NewPEFWithConfig(keys []uint64, keyBits uint32, cfg PartitionConfig) (*PEF,
 	// partitionScratch + reusable `buf`. Results live in a fixed-index
 	// slice; no channel needed for ordering.
 	partitions := make([][]uint32, len(jobs))
-	numWorkers := runtime.NumCPU()
+	numWorkers := cfg.NumWorkers
+	if numWorkers <= 0 {
+		numWorkers = defaultNumWorkers
+	}
 	if numWorkers > len(jobs) {
 		numWorkers = len(jobs)
 	}

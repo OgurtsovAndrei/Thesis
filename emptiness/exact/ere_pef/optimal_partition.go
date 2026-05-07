@@ -12,25 +12,36 @@ const (
 	defaultEps3    = 0.01
 )
 
+// defaultNumWorkers caps the parallel-DP worker pool. Empirically (see
+// bench_results/ere_pef_scaling_report.md) 4 workers capture ~3× of
+// the speedup at 16 workers' ~4.5× — past 4, parallel scaling is
+// limited by Phase 2 (sequential chunk emission into shared rs/lowBits)
+// per Amdahl's law (effective parallel fraction ≈ 0.83-0.91).
+const defaultNumWorkers = 4
+
 // PartitionConfig tunes the (1+ε)-approximate optimal-partition DP.
 // Larger Eps1/Eps2 ⇒ fewer cost windows ⇒ faster build, ~5%-tighter
 // partition. Smaller Eps3 ⇒ larger superblocks ⇒ better cross-block
 // optimization, more memory per worker. FixCost is the per-chunk
-// fixed cost in bits (DP penalty for splitting).
+// fixed cost in bits (DP penalty for splitting). NumWorkers caps the
+// goroutine pool for Phase 1 DP (0 ⇒ defaultNumWorkers).
 type PartitionConfig struct {
-	Eps1    float64
-	Eps2    float64
-	Eps3    float64
-	FixCost uint64
+	Eps1       float64
+	Eps2       float64
+	Eps3       float64
+	FixCost    uint64
+	NumWorkers int
 }
 
-// DefaultPartitionConfig returns the PISA-paper defaults.
+// DefaultPartitionConfig returns the PISA-paper defaults +
+// defaultNumWorkers for Phase 1.
 func DefaultPartitionConfig() PartitionConfig {
 	return PartitionConfig{
-		Eps1:    defaultEps1,
-		Eps2:    defaultEps2,
-		Eps3:    defaultEps3,
-		FixCost: defaultFixCost,
+		Eps1:       defaultEps1,
+		Eps2:       defaultEps2,
+		Eps3:       defaultEps3,
+		FixCost:    defaultFixCost,
+		NumWorkers: defaultNumWorkers,
 	}
 }
 
@@ -46,6 +57,9 @@ func (cfg PartitionConfig) validate() error {
 	}
 	if cfg.FixCost == 0 {
 		return fmt.Errorf("PartitionConfig.FixCost must be > 0")
+	}
+	if cfg.NumWorkers < 0 {
+		return fmt.Errorf("PartitionConfig.NumWorkers must be >= 0, got %d", cfg.NumWorkers)
 	}
 	return nil
 }
