@@ -116,7 +116,7 @@ func (cfg ConfigWithPolicy) backend() exact.Variant {
 
 // --- public constructors ---
 
-// NewHybridScanARE builds Scan-ARE with the default Auto fallback policy.
+// NewHybridScanARE builds Scan-ARE with the default AlwaysSODA fallback policy.
 func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
@@ -124,7 +124,7 @@ func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE
 		return &HybridScanARE{n: 0}, nil
 	}
 	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
-	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAuto{}, cfg.backend())
+	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAlwaysSODA{}, cfg.backend())
 }
 
 // NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.

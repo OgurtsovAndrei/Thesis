@@ -134,13 +134,13 @@ type GreedyScanARE struct {
 	n         int
 }
 
-// NewGreedyScanARE builds a GreedyScanARE with the default Trunc fallback.
+// NewGreedyScanARE builds a GreedyScanARE with the default AlwaysSODA fallback.
 // keys must fit in keyBits bits (high bits above keyBits must be zero).
 func NewGreedyScanARE(keys []uint64, keyBits uint32, cfg Config) (*GreedyScanARE, error) {
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, 0, true, FallbackAlwaysTrunc{}, cfg.backend())
+	return buildGreedy(cp, keyBits, cfg.K, 0, true, FallbackAlwaysSODA{}, cfg.backend())
 }
 
 // NewGreedyScanAREWithPolicy builds a GreedyScanARE with an explicit fallback

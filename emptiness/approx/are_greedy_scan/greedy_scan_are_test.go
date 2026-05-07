@@ -120,3 +120,62 @@ func TestGreedyScan_EREBackendPEF(t *testing.T) {
 		}
 	}
 }
+
+// Wide-spread fallback: with the legacy FallbackAlwaysTrunc default any
+// near-key empty query collapses into the bucket of the nearest stored key,
+// pinning FPR. FallbackAlwaysSODA (now default) avoids the collapse via
+// SODA-hash fingerprints. Regression test for the OSM scan-ARE flatness
+// investigated 2026-05-04.
+func TestGreedyScan_NearKeyFallbackFPR_WideSpread(t *testing.T) {
+	const (
+		n        = 200
+		rangeLen = uint64(128)
+		K        = uint32(30) // phantomSize = 2^40 / 2^30 = 1024 ≫ rangeLen
+		base     = uint64(1_000_000)
+	)
+	spread := uint64(1) << 40
+	gap := spread / uint64(n-1)
+
+	keys := make([]uint64, n)
+	for i := 0; i < n; i++ {
+		keys[i] = base + uint64(i)*gap
+	}
+
+	gDefault, err := NewGreedyScanARE(keys, 64, Config{K: K})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fp := 0
+	for _, v := range keys {
+		lo := v + rangeLen + 1
+		hi := lo + rangeLen
+		if !gDefault.IsEmpty(lo, hi) {
+			fp++
+		}
+	}
+	fpr := float64(fp) / float64(n)
+	t.Logf("default (AlwaysSODA) near-key empty FPR=%.4f (fp=%d / n=%d)", fpr, fp, n)
+	if fpr >= 0.10 {
+		t.Fatalf("near-key empty FPR pinned high (%.4f) — fallback policy regressed?", fpr)
+	}
+
+	gTrunc, err := NewGreedyScanAREWithPolicy(keys, 64, ConfigWithPolicy{
+		K: K, RangeLen: rangeLen, Policy: FallbackAlwaysTrunc{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fpTrunc := 0
+	for _, v := range keys {
+		lo := v + rangeLen + 1
+		hi := lo + rangeLen
+		if !gTrunc.IsEmpty(lo, hi) {
+			fpTrunc++
+		}
+	}
+	fprTrunc := float64(fpTrunc) / float64(n)
+	t.Logf("AlwaysTrunc near-key empty FPR=%.4f (fp=%d / n=%d)", fprTrunc, fpTrunc, n)
+	if fprTrunc <= 0.50 {
+		t.Fatalf("AlwaysTrunc must reproduce the near-key collapse (got %.4f) — test design invalid", fprTrunc)
+	}
+}

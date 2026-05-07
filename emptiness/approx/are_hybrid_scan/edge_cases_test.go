@@ -367,3 +367,70 @@ func TestEdge_HighEpsilon(t *testing.T) {
 			"false negative for key %d at eps=0.99", v)
 	}
 }
+
+// ── edge case 13 ─────────────────────────────────────────────────────────────
+// Near-key fallback FPR: wide-universe input, all keys go to fallback (n <
+// minClusterSize), K chosen so that phantomSize = spread/2^K is well above
+// rangeLen. With the legacy FallbackAuto / FallbackAlwaysTrunc default any
+// empty query within phantomSize of a stored key collapses into that key's
+// K-bit bucket, pinning FPR near 1.0 on the near-key half of the workload.
+// FallbackAlwaysSODA (AdaptiveARE/SODA-hash) avoids this collapse.
+//
+// Regression test for the OSM scan-ARE flatness investigated 2026-05-04.
+
+func TestEdge_NearKeyFallbackFPR_WideSpread(t *testing.T) {
+	const (
+		n        = 200 // < minClusterSize → all keys take the fallback path
+		rangeLen = uint64(128)
+		K        = uint32(30) // phantomSize = 2^40 / 2^30 = 1024 ≫ rangeLen
+		base     = uint64(1_000_000)
+	)
+	spread := uint64(1) << 40
+	gap := spread / uint64(n-1)
+	require.Greater(t, gap, rangeLen, "test design: gap must exceed rangeLen so near-key queries are genuinely empty")
+
+	vals := make([]uint64, n)
+	for i := 0; i < n; i++ {
+		vals[i] = base + uint64(i)*gap
+	}
+
+	h := buildFromK(t, vals, rangeLen, K)
+	nc, nf, _ := h.Stats()
+	require.Equal(t, 0, nc, "all keys below minClusterSize → fallback only")
+	require.Equal(t, n, nf, "all keys must land in fallback")
+
+	// Near-key empty queries: window [key+rangeLen+1, key+2*rangeLen+1].
+	// With gap > 2*rangeLen these intervals contain no stored key.
+	fp := 0
+	for _, v := range vals {
+		lo := v + rangeLen + 1
+		hi := lo + rangeLen
+		if !h.IsEmpty(lo, hi) {
+			fp++
+		}
+	}
+	fpr := float64(fp) / float64(n)
+	t.Logf("default (AlwaysSODA) near-key empty FPR=%.4f (fp=%d / n=%d)", fpr, fp, n)
+	require.Less(t, fpr, 0.10,
+		"near-key empty FPR pinned high — fallback policy regressed to TruncARE?")
+
+	// Sanity: same build with FallbackAlwaysTrunc must reproduce the bug (FPR ≈ 1)
+	// — guards against the comparison being trivially satisfied (e.g. if the
+	// fallback path were optimized away).
+	hTrunc, err := NewHybridScanAREWithPolicy(vals, 64, ConfigWithPolicy{
+		K: K, RangeLen: rangeLen, Policy: FallbackAlwaysTrunc{},
+	})
+	require.NoError(t, err)
+	fpTrunc := 0
+	for _, v := range vals {
+		lo := v + rangeLen + 1
+		hi := lo + rangeLen
+		if !hTrunc.IsEmpty(lo, hi) {
+			fpTrunc++
+		}
+	}
+	fprTrunc := float64(fpTrunc) / float64(n)
+	t.Logf("AlwaysTrunc near-key empty FPR=%.4f (fp=%d / n=%d)", fprTrunc, fpTrunc, n)
+	require.Greater(t, fprTrunc, 0.50,
+		"AlwaysTrunc must reproduce the near-key collapse — test design invalid otherwise")
+}
