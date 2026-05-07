@@ -130,6 +130,34 @@ func TestChunkBitmap(t *testing.T) {
 	}
 }
 
+func TestChunkEFBinarySearchPath(t *testing.T) {
+	// Force a single EF bucket with > linearScanThreshold (=128) elements
+	// to exercise efBucketHasLow's binary-search branch. Natural NewPEF
+	// DP would split such a chunk; we use appendChunk to bypass it.
+	keys := make([]uint64, 0, 201)
+	for i := uint64(0); i < 200; i++ {
+		keys = append(keys, i)
+	}
+	keys = append(keys, 100000) // single outlier — forces ell=8 ⇒ bucket size 256
+	p := &PEF{}
+	idx := appendChunk(p, 0, keys)
+	if p.chunks[idx].kind() != kindEF {
+		t.Fatalf("kind=%d, want EF (chunk should not collapse to all-ones/bitmap)", p.chunks[idx].kind())
+	}
+	for _, k := range keys {
+		if !p.chunkIntersects(idx, k, k) {
+			t.Errorf("self-membership %d failed", k)
+		}
+	}
+	for _, q := range []struct{ a, b uint64 }{
+		{200, 99999}, {99999, 99999},
+	} {
+		if p.chunkIntersects(idx, q.a, q.b) {
+			t.Errorf("gap (%d,%d) reported non-empty", q.a, q.b)
+		}
+	}
+}
+
 func TestChunkAcrossWordBoundary(t *testing.T) {
 	// Build two EF chunks back-to-back to exercise lowBits offsets across a 64-bit boundary.
 	// Cumulative base layout: chunk[i+1].base = chunk[i].last + 1.

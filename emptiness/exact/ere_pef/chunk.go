@@ -168,9 +168,16 @@ func (p *PEF) efBucketRange(meta *efChunkMeta, b uint64) (start, end uint64) {
 	return posStart - b, posEnd - (b + 1)
 }
 
+// linearScanThreshold mirrors ere_one_d: for buckets up to this size,
+// sequential prefetch beats branchy binary search. Value taken from
+// BenchmarkBucketSearch_LinearVsBinary in ere_one_d (~128).
+const linearScanThreshold = 128
+
 // efBucketHasLow returns true iff any low value at suffix-array index
 // in [start, end) lies in [lowMin, lowMax]. For ell == 0 every stored
 // low is 0, so the predicate reduces to (start < end) && lowMin == 0.
+// For larger buckets (size > linearScanThreshold) switches to binary
+// search on lows for predecessor of lowMin, then a single bound check.
 func (p *PEF) efBucketHasLow(lowOff, ell, start, end, lowMin, lowMax uint64) bool {
 	if start >= end {
 		return false
@@ -179,18 +186,36 @@ func (p *PEF) efBucketHasLow(lowOff, ell, start, end, lowMin, lowMax uint64) boo
 		return lowMin == 0
 	}
 	width := uint8(ell)
-	bitPos := lowOff + start*ell
-	for i := start; i < end; i++ {
-		low := readBits(p.lowBits, bitPos, width)
-		if low > lowMax {
-			return false
+	if end-start <= linearScanThreshold {
+		bitPos := lowOff + start*ell
+		for i := start; i < end; i++ {
+			low := readBits(p.lowBits, bitPos, width)
+			if low > lowMax {
+				return false
+			}
+			if low >= lowMin {
+				return true
+			}
+			bitPos += ell
 		}
-		if low >= lowMin {
-			return true
-		}
-		bitPos += ell
+		return false
 	}
-	return false
+	// Binary search for the first idx with low >= lowMin; check it ≤ lowMax.
+	l, r := start, end
+	for l < r {
+		mid := l + (r-l)/2
+		low := readBits(p.lowBits, lowOff+mid*ell, width)
+		if low < lowMin {
+			l = mid + 1
+		} else {
+			r = mid
+		}
+	}
+	if l >= end {
+		return false
+	}
+	low := readBits(p.lowBits, lowOff+l*ell, width)
+	return low <= lowMax
 }
 
 func (p *PEF) bitmapIntersects(c *chunk, base, aAbs, bAbs uint64) bool {
