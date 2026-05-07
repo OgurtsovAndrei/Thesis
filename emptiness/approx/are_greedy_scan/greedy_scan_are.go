@@ -138,10 +138,12 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 
 	g := &GreedyScanARE{n: n}
 
-	// Build exact-mode cluster filters.
+	// Build exact-mode cluster filters with per-cluster K_local
+	// (K rescaled to the cluster's own size — see localK doc).
 	g.clusters = make([]clusterFilter, 0, len(exactSegs))
 	for _, seg := range exactSegs {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, K, 0)
+		Kc := localK(K, n, len(seg.keys))
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, Kc, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -153,9 +155,10 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 	}
 	g.nClusters = len(g.clusters)
 
-	// Build fallback filter (Trunc or SODA, per policy).
+	// Build fallback filter (Trunc or SODA, per policy) with per-fallback K.
 	if len(fallbackKeys) > 0 {
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, K, policy)
+		Kfb := localK(K, n, len(fallbackKeys))
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy)
 		if err != nil {
 			return nil, err
 		}
@@ -164,6 +167,23 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 	}
 
 	return g, nil
+}
+
+// localK rescales the global K (sized for n_total keys) to the smaller K
+// appropriate for a sub-filter holding only n_local keys. See doc on the
+// identical helper in are_hybrid_scan/hybrid_scan_are.go.
+func localK(K uint32, nTotal, nLocal int) uint32 {
+	if nLocal <= 0 || nTotal <= 0 || nLocal >= nTotal {
+		return K
+	}
+	delta := mbits.Len64(uint64(nTotal-1)) - mbits.Len64(uint64(nLocal-1))
+	if delta < 0 {
+		delta = 0
+	}
+	if uint32(delta) >= K {
+		return 1
+	}
+	return K - uint32(delta)
 }
 
 func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {

@@ -5,6 +5,7 @@ import (
 	"Thesis/emptiness/approx/are_trunc"
 	"Thesis/utils/errutil"
 	"fmt"
+	mbits "math/bits"
 	"sort"
 )
 
@@ -131,6 +132,36 @@ func dbscanEpsFromK(_ int, K uint32) uint64 {
 
 // --- core build ---
 
+// localK rescales the global K (sized for n_total keys) to the smaller K
+// appropriate for a sub-filter holding only n_local keys. The construction
+// pins log2(L/ε) — that part of K is independent of n — and replaces the
+// global log2(n_total) with log2(n_local):
+//
+//   K_global = ceil(log2(n_total · L / ε))
+//   K_local  = ceil(log2(n_local  · L / ε)) = K_global - log2(n_total) + log2(n_local)
+//
+// Each sub-filter (cluster ARE, fallback ARE) gets its own K matched to its
+// own key count, instead of paying the full global K that's sized for the
+// whole dataset. Per-key cost in succinct ERE/SODA is K - log2(n_local) + 2,
+// so per-cluster cost collapses from `log2(L/ε) + log2(n_total/n_local)` to
+// `log2(L/ε)` — the segmentation no longer leaks the n_total/n_local factor.
+func localK(K uint32, nTotal, nLocal int) uint32 {
+	if nLocal <= 0 || nTotal <= 0 {
+		return K
+	}
+	if nLocal >= nTotal {
+		return K
+	}
+	delta := mbits.Len64(uint64(nTotal-1)) - mbits.Len64(uint64(nLocal-1))
+	if delta < 0 {
+		delta = 0
+	}
+	if uint32(delta) >= K {
+		return 1
+	}
+	return K - uint32(delta)
+}
+
 func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
@@ -151,7 +182,8 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, K, 0)
+		Kc := localK(K, n, len(seg.keys))
+		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, Kc, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -164,7 +196,8 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 	h.nClusters = len(h.clusters)
 
 	if len(fallbackKeys) > 0 {
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, K, policy)
+		Kfb := localK(K, n, len(fallbackKeys))
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy)
 		if err != nil {
 			return nil, err
 		}
