@@ -3,6 +3,7 @@ package are_hybrid_scan
 import (
 	"Thesis/emptiness/approx/are_adaptive"
 	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/exact"
 	"Thesis/utils/errutil"
 	"fmt"
 	mbits "math/bits"
@@ -59,18 +60,58 @@ type HybridScanARE struct {
 
 // Config holds construction parameters for NewHybridScanARE. K is the
 // fingerprint width in bits; larger K → lower FPR, higher BPK.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto. Use the
+// WithEREBackend option to set it explicitly without relying on the
+// zero-value alias.
 type Config struct {
-	K uint32
+	K          uint32
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg Config) WithEREBackend(v exact.Variant) Config {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg Config) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 // ConfigWithPolicy holds construction parameters for NewHybridScanAREWithPolicy.
 // RangeLen is forwarded to the FallbackPolicy (e.g. FallbackPhantom uses it to
 // compare phantom region size against query length); it does not affect filter
 // construction otherwise.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto.
 type ConfigWithPolicy struct {
-	K        uint32
-	RangeLen uint64
-	Policy   FallbackPolicy
+	K          uint32
+	RangeLen   uint64
+	Policy     FallbackPolicy
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg ConfigWithPolicy) WithEREBackend(v exact.Variant) ConfigWithPolicy {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg ConfigWithPolicy) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 // --- public constructors ---
@@ -83,7 +124,7 @@ func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE
 		return &HybridScanARE{n: 0}, nil
 	}
 	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
-	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAuto{})
+	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAuto{}, cfg.backend())
 }
 
 // NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.
@@ -95,7 +136,7 @@ func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 		return &HybridScanARE{n: 0}, nil
 	}
 	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
-	return newHybridScanARE(keys, keyBits, cfg.K, cfg.RangeLen, dbscanEps, cfg.Policy)
+	return newHybridScanARE(keys, keyBits, cfg.K, cfg.RangeLen, dbscanEps, cfg.Policy, cfg.backend())
 }
 
 // dbscanEpsFromK returns the DBSCAN density window in key-space units.
@@ -162,13 +203,13 @@ func localK(K uint32, nTotal, nLocal int) uint32 {
 	return K - uint32(delta)
 }
 
-func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy) (*HybridScanARE, error) {
+func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy, backend exact.Variant) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
+			fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, backend)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -183,7 +224,7 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
 		Kc := localK(K, n, len(seg.keys))
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, Kc, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(seg.keys, keyBits, Kc, 0, backend)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -197,7 +238,7 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 
 	if len(fallbackKeys) > 0 {
 		Kfb := localK(K, n, len(fallbackKeys))
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy)
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, backend)
 		if err != nil {
 			return nil, err
 		}
@@ -208,16 +249,16 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 	return h, nil
 }
 
-func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {
+func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy, backend exact.Variant) (*fallbackFilter, error) {
 	if policy.useTrunc(keys, K, rangeLen) {
-		fb, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
+		fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, backend)
 		if err != nil {
 			return nil, fmt.Errorf("fallback trunc build: %w", err)
 		}
 		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
 	}
 
-	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, keyBits, K, 0)
+	fb, err := are_adaptive.NewAdaptiveAREFromKWithBackend(keys, keyBits, K, 0, backend)
 	if err != nil {
 		return nil, fmt.Errorf("fallback adaptive build: %w", err)
 	}

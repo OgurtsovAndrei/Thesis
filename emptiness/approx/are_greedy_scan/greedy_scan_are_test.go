@@ -1,6 +1,7 @@
 package are_greedy_scan
 
 import (
+	"Thesis/emptiness/exact"
 	"Thesis/testutils"
 	"math"
 	"math/rand"
@@ -100,5 +101,22 @@ func TestGreedyScan_Stats(t *testing.T) {
 	}
 	if totalKeys != len(keys) {
 		t.Errorf("totalKeys=%d, want %d", totalKeys, len(keys))
+	}
+}
+
+func TestGreedyScan_EREBackendPEF(t *testing.T) {
+	rng := rand.New(rand.NewSource(7))
+	raw, _ := testutils.GenerateClusterDistribution(1024, 4, 0.2, rng)
+	keys := sortedUint64(raw)
+
+	cfg := Config{K: 20}.WithEREBackend(exact.VariantPEF)
+	g, err := NewGreedyScanARE(keys, 60, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range keys {
+		if g.IsEmpty(k, k) {
+			t.Fatalf("false negative for stored key %d", k)
+		}
 	}
 }

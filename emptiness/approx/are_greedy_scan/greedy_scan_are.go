@@ -3,6 +3,7 @@ package are_greedy_scan
 import (
 	"Thesis/emptiness/approx/are_adaptive"
 	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/exact"
 	"Thesis/utils/errutil"
 	"fmt"
 	mbits "math/bits"
@@ -11,23 +12,82 @@ import (
 
 // Config holds construction parameters for GreedyScanARE. K is the fingerprint
 // width in bits; larger K → lower FPR, higher BPK.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto. Use the
+// WithEREBackend option to set it explicitly without relying on the
+// zero-value alias.
 type Config struct {
-	K uint32
+	K          uint32
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg Config) WithEREBackend(v exact.Variant) Config {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg Config) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 // ConfigRaw holds construction parameters for GreedyScanARE with no merge pass —
 // pure greedy split only, no hierarchical merge and no fallback.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto.
 type ConfigRaw struct {
-	K uint32
+	K          uint32
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg ConfigRaw) WithEREBackend(v exact.Variant) ConfigRaw {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg ConfigRaw) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 // ConfigWithPolicy holds construction parameters for NewGreedyScanAREWithPolicy.
 // RangeLen is forwarded to RangeLen-aware policies (e.g. FallbackPhantom);
 // ignored otherwise.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto.
 type ConfigWithPolicy struct {
-	K        uint32
-	RangeLen uint64
-	Policy   FallbackPolicy
+	K          uint32
+	RangeLen   uint64
+	Policy     FallbackPolicy
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg ConfigWithPolicy) WithEREBackend(v exact.Variant) ConfigWithPolicy {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg ConfigWithPolicy) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
 }
 
 type clusterFilter struct {
@@ -80,7 +140,7 @@ func NewGreedyScanARE(keys []uint64, keyBits uint32, cfg Config) (*GreedyScanARE
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, 0, true, FallbackAlwaysTrunc{})
+	return buildGreedy(cp, keyBits, cfg.K, 0, true, FallbackAlwaysTrunc{}, cfg.backend())
 }
 
 // NewGreedyScanAREWithPolicy builds a GreedyScanARE with an explicit fallback
@@ -93,7 +153,7 @@ func NewGreedyScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 	if policy == nil {
 		policy = FallbackAlwaysTrunc{}
 	}
-	return buildGreedy(cp, keyBits, cfg.K, cfg.RangeLen, true, policy)
+	return buildGreedy(cp, keyBits, cfg.K, cfg.RangeLen, true, policy, cfg.backend())
 }
 
 // NewGreedyScanARERaw builds without merge and without fallback — pure greedy split only.
@@ -102,10 +162,10 @@ func NewGreedyScanARERaw(keys []uint64, keyBits uint32, cfg ConfigRaw) (*GreedyS
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, 0, false, FallbackAlwaysTrunc{})
+	return buildGreedy(cp, keyBits, cfg.K, 0, false, FallbackAlwaysTrunc{}, cfg.backend())
 }
 
-func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge bool, policy FallbackPolicy) (*GreedyScanARE, error) {
+func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge bool, policy FallbackPolicy, backend exact.Variant) (*GreedyScanARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &GreedyScanARE{}, nil
@@ -143,7 +203,7 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 	g.clusters = make([]clusterFilter, 0, len(exactSegs))
 	for _, seg := range exactSegs {
 		Kc := localK(K, n, len(seg.keys))
-		f, err := are_adaptive.NewAdaptiveAREFromK(seg.keys, keyBits, Kc, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(seg.keys, keyBits, Kc, 0, backend)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -158,7 +218,7 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 	// Build fallback filter (Trunc or SODA, per policy) with per-fallback K.
 	if len(fallbackKeys) > 0 {
 		Kfb := localK(K, n, len(fallbackKeys))
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy)
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, backend)
 		if err != nil {
 			return nil, err
 		}
@@ -186,15 +246,15 @@ func localK(K uint32, nTotal, nLocal int) uint32 {
 	return K - uint32(delta)
 }
 
-func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy) (*fallbackFilter, error) {
+func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy, backend exact.Variant) (*fallbackFilter, error) {
 	if policy.useTrunc(keys, K, rangeLen) {
-		fb, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
+		fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, backend)
 		if err != nil {
 			return nil, fmt.Errorf("fallback trunc build: %w", err)
 		}
 		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
 	}
-	fb, err := are_adaptive.NewAdaptiveAREFromK(keys, keyBits, K, 0)
+	fb, err := are_adaptive.NewAdaptiveAREFromKWithBackend(keys, keyBits, K, 0, backend)
 	if err != nil {
 		return nil, fmt.Errorf("fallback adaptive build: %w", err)
 	}

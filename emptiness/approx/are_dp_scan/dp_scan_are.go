@@ -3,6 +3,7 @@ package are_dp_scan
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/approx/are_adaptive"
+	"Thesis/emptiness/exact"
 	"fmt"
 	"math"
 	"sort"
@@ -22,6 +23,32 @@ type DPScanARE struct {
 	n        int
 }
 
+// Config holds the construction parameters for DPScanARE.
+//
+// EREBackend selects the underlying exact range-emptiness implementation
+// (see package exact). Zero value defaults to exact.VariantAuto. Use the
+// WithEREBackend option to set it explicitly without relying on the
+// zero-value alias.
+type Config struct {
+	K          uint32
+	EREBackend exact.Variant
+	backendSet bool
+}
+
+// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+func (cfg Config) WithEREBackend(v exact.Variant) Config {
+	cfg.EREBackend = v
+	cfg.backendSet = true
+	return cfg
+}
+
+func (cfg Config) backend() exact.Variant {
+	if cfg.backendSet {
+		return cfg.EREBackend
+	}
+	return exact.VariantAuto
+}
+
 func NewDPScanARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*DPScanARE, error) {
 	n := len(keys)
 	if n == 0 {
@@ -39,9 +66,20 @@ func NewDPScanARE(keys []bits.BitString, rangeLen uint64, epsilon float64) (*DPS
 }
 
 func NewDPScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*DPScanARE, error) {
+	return NewDPScanAREWithConfig(keys, rangeLen, Config{K: K})
+}
+
+// NewDPScanAREWithConfig builds a DPScanARE using the provided Config.
+// This is the canonical constructor; legacy constructors delegate here.
+func NewDPScanAREWithConfig(keys []bits.BitString, rangeLen uint64, cfg Config) (*DPScanARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &DPScanARE{}, nil
+	}
+
+	K := cfg.K
+	if K == 0 {
+		K = 1
 	}
 
 	segments := segmentDP(keys, K)
@@ -53,7 +91,7 @@ func NewDPScanAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*DPSca
 		if len(seg.keys) > 0 {
 			keyBits = seg.keys[0].SizeBits()
 		}
-		f, err := are_adaptive.NewAdaptiveAREFromK(keys64, keyBits, K, 0)
+		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(keys64, keyBits, K, 0, cfg.backend())
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}

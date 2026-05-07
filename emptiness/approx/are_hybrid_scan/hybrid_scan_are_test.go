@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"Thesis/emptiness/exact"
 	"Thesis/testutils"
 )
 
@@ -314,4 +315,21 @@ func generateTestClusterKeys(n int, numClusters int, unifFrac float64, rng *rand
 
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
+}
+
+func TestHybridScanARE_EREBackendPEF(t *testing.T) {
+	rng := rand.New(rand.NewSource(7))
+	raw, _ := testutils.GenerateClusterDistribution(1024, 4, 0.2, rng)
+	sort.Slice(raw, func(i, j int) bool { return raw[i] < raw[j] })
+
+	cfg := Config{K: 20}.WithEREBackend(exact.VariantPEF)
+	h, err := NewHybridScanARE(raw, 60, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range raw {
+		if h.IsEmpty(k, k) {
+			t.Fatalf("false negative for stored key %d", k)
+		}
+	}
 }

@@ -2,6 +2,7 @@ package are_dp_scan
 
 import (
 	"Thesis/bits"
+	"Thesis/emptiness/exact"
 	"Thesis/testutils"
 	"math/rand"
 	"sort"
@@ -94,5 +95,23 @@ func TestDPScan_Stats(t *testing.T) {
 	}
 	if totalKeys != len(keys) {
 		t.Errorf("totalKeys=%d, want %d", totalKeys, len(keys))
+	}
+}
+
+func TestDPScan_EREBackendPEF(t *testing.T) {
+	rng := rand.New(rand.NewSource(7))
+	raw, _ := testutils.GenerateClusterDistribution(1024, 4, 0.2, rng)
+	keys := sortedTrieBS(raw)
+
+	cfg := Config{K: 20}.WithEREBackend(exact.VariantPEF)
+	d, err := NewDPScanAREWithConfig(keys, 128, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range raw {
+		a := testutils.TrieBS(k)
+		if d.IsEmpty(a, a) {
+			t.Fatalf("false negative for stored key %d", k)
+		}
 	}
 }
