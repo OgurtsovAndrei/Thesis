@@ -1,0 +1,32 @@
+\begin{frame}[c]{Succinct Backend}
+    \textbf{Two improvements to the ERE backend.}
+    \medskip
+
+    \begin{columns}[T,onlytextwidth]
+        \column{0.44\textwidth}
+        \begin{itemize}
+            \setlength{\itemsep}{0.7em}
+            \item \textbf{Navigation:} $D_1 + D_2\ \to$ one vector $D$\\
+                  $-0.80$ bits/key metadata ($\sim\!24\%$)\\
+                  $1.1$--$1.9\times$ faster queries
+
+            \item \textbf{Bucket search:} WPS $\to$ binary/linear\\
+                  ${\ge}\,59$ BPK auxiliary index saved\\
+                  \textbf{Speedup: $13$--$30\times$}
+        \end{itemize}
+
+        \column{0.54\textwidth}
+        \centering
+        \footnotesize
+        \begin{tabular}{@{}lrrr@{}}
+            \toprule
+            Dataset & binary & WPS & $\times$ \\
+            \midrule
+            FB median ($k\!=\!27$)      & $10$~ns  & $307$~ns & $30\times$ \\
+            FB max ($k\!=\!1{,}589$)    & $33$~ns  & $514$~ns & $16\times$ \\
+            Books med ($k\!=\!812$)     & $20$~ns  & $514$~ns & $26\times$ \\
+            Books max ($k\!=\!14{,}039$)& $43$~ns  & $556$~ns & $13\times$ \\
+            \bottomrule
+        \end{tabular}
+    \end{columns}
+\end{frame}

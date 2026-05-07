@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 55 720 410" font-family="sans-serif" font-size="13">
+
+  <!-- U' axis (shared reference) -->
+  <line x1="60" y1="85" x2="680" y2="85" stroke="#333" stroke-width="2"/>
+  <circle cx="360" cy="85" r="6" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/>
+  <text x="360" y="75" text-anchor="middle" font-size="13" font-weight="bold" fill="#e65100">x'</text>
+  <text x="50" y="89" text-anchor="end" font-size="12" fill="#888">U'</text>
+
+  <!-- ======================== -->
+  <!-- RANDOM HASH (top half)   -->
+  <!-- ======================== -->
+  <text x="20" y="130" font-weight="bold" font-size="13">Random hash (SODA)</text>
+
+  <!-- U axis -->
+  <line x1="60" y1="190" x2="680" y2="190" stroke="#333" stroke-width="1.5"/>
+  <text x="50" y="194" text-anchor="end" font-size="12" fill="#666">U</text>
+
+  <!-- phantom 1 -->
+  <rect x="80" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="150" cy="190" r="5" fill="#d32f2f"/>
+  <text x="115" y="225" text-anchor="middle" font-size="12" fill="#d32f2f">L</text>
+
+  <!-- phantom 2 -->
+  <rect x="190" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="260" cy="190" r="5" fill="#d32f2f"/>
+  <text x="225" y="225" text-anchor="middle" font-size="12" fill="#d32f2f">L</text>
+
+  <!-- phantom 3 -->
+  <rect x="310" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="380" cy="190" r="5" fill="#d32f2f"/>
+  <text x="345" y="225" text-anchor="middle" font-size="12" fill="#d32f2f">L</text>
+
+  <!-- phantom 4 -->
+  <rect x="430" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="500" cy="190" r="5" fill="#d32f2f"/>
+  <text x="465" y="225" text-anchor="middle" font-size="12" fill="#d32f2f">L</text>
+
+  <!-- phantom 5 -->
+  <rect x="540" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
+  <circle cx="610" cy="190" r="5" fill="#d32f2f"/>
+  <text x="575" y="225" text-anchor="middle" font-size="12" fill="#d32f2f">L</text>
+
+  <!-- arrows from phantoms to x' -->
+  <line x1="150" y1="170" x2="358" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="260" y1="170" x2="359" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="380" y1="170" x2="360" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="500" y1="170" x2="361" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="610" y1="170" x2="362" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- collision zone label -->
+  <text x="370" y="248" text-anchor="middle" font-size="12" fill="#d32f2f">
+    Collision zone &#x2248; L &#xD7; 2&#x1D57;
+  </text>
+
+  <!-- divider -->
+  <line x1="40" y1="265" x2="700" y2="265" stroke="#ccc" stroke-width="1" stroke-dasharray="6,4"/>
+
+  <!-- ======================== -->
+  <!-- TRUNCATION (bottom half) -->
+  <!-- ======================== -->
+  <text x="20" y="292" font-weight="bold" font-size="13">Truncation hash</text>
+
+  <!-- U axis -->
+  <line x1="60" y1="350" x2="680" y2="350" stroke="#333" stroke-width="1.5"/>
+  <text x="50" y="354" text-anchor="end" font-size="12" fill="#666">U</text>
+
+  <!-- contiguous phantom block -->
+  <rect x="310" y="338" width="100" height="24" fill="#2a7fff" opacity="0.35" rx="2"/>
+  <circle cx="320" cy="350" r="4" fill="#1565c0"/>
+  <circle cx="340" cy="350" r="4" fill="#1565c0"/>
+  <circle cx="360" cy="350" r="4" fill="#1565c0"/>
+  <circle cx="380" cy="350" r="4" fill="#1565c0"/>
+  <circle cx="400" cy="350" r="4" fill="#1565c0"/>
+
+  <!-- arrows from block to x' -->
+  <line x1="320" y1="338" x2="358" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="360" y1="338" x2="360" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="400" y1="338" x2="362" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- 2^t bracket -->
+  <line x1="310" y1="368" x2="410" y2="368" stroke="#1565c0" stroke-width="1.5"/>
+  <line x1="310" y1="364" x2="310" y2="372" stroke="#1565c0" stroke-width="1.5"/>
+  <line x1="410" y1="364" x2="410" y2="372" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="360" y="383" text-anchor="middle" font-size="12" fill="#1565c0">2&#x1D57;</text>
+
+  <!-- single collision zone -->
+  <rect x="240" y="330" width="170" height="40" fill="#4caf50" opacity="0.18" rx="2" stroke="#4caf50" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- L bracket -->
+  <line x1="240" y1="396" x2="310" y2="396" stroke="#4caf50" stroke-width="1.5"/>
+  <line x1="240" y1="392" x2="240" y2="400" stroke="#4caf50" stroke-width="1.5"/>
+  <line x1="310" y1="392" x2="310" y2="400" stroke="#4caf50" stroke-width="1.5"/>
+  <text x="275" y="412" text-anchor="middle" font-size="12" fill="#388e3c">L</text>
+
+  <!-- total bracket -->
+  <line x1="240" y1="425" x2="410" y2="425" stroke="#333" stroke-width="1"/>
+  <line x1="240" y1="421" x2="240" y2="429" stroke="#333" stroke-width="1"/>
+  <line x1="410" y1="421" x2="410" y2="429" stroke="#333" stroke-width="1"/>
+  <text x="325" y="445" text-anchor="middle" font-size="12" fill="#333">Collision zone &#x2248; L + 2&#x1D57;</text>
+
+</svg>
