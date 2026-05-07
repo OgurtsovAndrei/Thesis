@@ -2,7 +2,10 @@ package ere_pef
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
+	"sync"
+	"sync/atomic"
 	"unsafe"
 
 	"Thesis/succinct_bit_vector/rsdic"
@@ -126,40 +129,90 @@ func NewPEF(keys []uint64, keyBits uint32) (*PEF, error) {
 		return minCodecBitsize(u, n) + defaultFixCost
 	}
 	superSize := superblockSize(defaultFixCost, defaultEps3)
-	scratch := &partitionScratch{}
-	var partitionBuf []uint32
-
 	inputUniverse := deduped[n-1] + 1
+
+	// Phase 0 — enumerate superblock jobs (sequential, cheap).
+	type superJob struct {
+		keys     []uint64
+		base     uint64
+		universe uint64
+	}
+	var jobs []superJob
+	{
+		superPos := 0
+		superBase := deduped[0]
+		for superPos < n {
+			sz := superSize
+			if sz > n-superPos {
+				sz = n - superPos
+			}
+			// Merge a tiny tail into current superblock so no superblock is
+			// shorter than `superSize` (mirrors PISA compute_partition).
+			if rem := n - (superPos + sz); rem > 0 && rem < superSize {
+				sz = n - superPos
+			}
+			superKeys := deduped[superPos : superPos+sz]
+			var superUniverse uint64
+			if superPos+sz == n {
+				superUniverse = inputUniverse
+			} else {
+				superUniverse = deduped[superPos+sz-1] + 1
+			}
+			jobs = append(jobs, superJob{keys: superKeys, base: superBase, universe: superUniverse})
+			superPos += sz
+			superBase = superUniverse
+		}
+	}
+
+	// Phase 1 — parallel DP per superblock. Each worker has its own
+	// partitionScratch + reusable `buf`. Results live in a fixed-index
+	// slice; no channel needed for ordering.
+	partitions := make([][]uint32, len(jobs))
+	numWorkers := runtime.NumCPU()
+	if numWorkers > len(jobs) {
+		numWorkers = len(jobs)
+	}
+	if numWorkers < 1 {
+		numWorkers = 1
+	}
+	var idx int64
+	var wg sync.WaitGroup
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			scratch := &partitionScratch{}
+			var buf []uint32
+			for {
+				i := atomic.AddInt64(&idx, 1) - 1
+				if i >= int64(len(jobs)) {
+					return
+				}
+				job := &jobs[i]
+				result, _ := scratch.compute(
+					job.keys, job.base, job.universe,
+					costFn, defaultEps1, defaultEps2, buf,
+				)
+				// Copy out — `result` aliases `buf`, which is reused on
+				// the next iteration in this worker.
+				out := make([]uint32, len(result))
+				copy(out, result)
+				partitions[i] = out
+				buf = result[:0]
+			}
+		}()
+	}
+	wg.Wait()
+
+	// Phase 2 — sequential chunk emission. Must be sequential because
+	// writeChunk captures p.rs.Num() / p.rs.OneNum() / p.lowBitsN at the
+	// start of each chunk; concurrent writes would interleave offsets.
 	chunkBase := deduped[0]
-	superPos := 0
-	superBase := deduped[0]
-
-	for superPos < n {
-		sz := superSize
-		if sz > n-superPos {
-			sz = n - superPos
-		}
-		// Merge a tiny tail into current superblock so no superblock is
-		// shorter than `superSize` (mirrors PISA compute_partition).
-		if rem := n - (superPos + sz); rem > 0 && rem < superSize {
-			sz = n - superPos
-		}
-		superKeys := deduped[superPos : superPos+sz]
-		var superUniverse uint64
-		if superPos+sz == n {
-			superUniverse = inputUniverse
-		} else {
-			superUniverse = deduped[superPos+sz-1] + 1
-		}
-
-		partition, _ := scratch.compute(
-			superKeys, superBase, superUniverse,
-			costFn, defaultEps1, defaultEps2, partitionBuf,
-		)
-
+	for i := range jobs {
+		job := &jobs[i]
 		prevEnd := uint32(0)
-		for _, end := range partition {
-			ks := superKeys[prevEnd:end]
+		for _, end := range partitions[i] {
+			ks := job.keys[prevEnd:end]
 			c := chunk{
 				last:  ks[len(ks)-1],
 				nKind: packNKind(uint32(len(ks)), 0), // kind set inside writeChunk
@@ -169,10 +222,6 @@ func NewPEF(keys []uint64, keyBits uint32) (*PEF, error) {
 			chunkBase = c.last + 1
 			prevEnd = end
 		}
-		partitionBuf = partition[:0]
-
-		superPos += sz
-		superBase = superUniverse
 	}
 
 	return p, nil
