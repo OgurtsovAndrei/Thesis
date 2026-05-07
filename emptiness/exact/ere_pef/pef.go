@@ -191,6 +191,16 @@ func (p *PEF) SizeInBits() uint64 {
 	return b
 }
 
+// NumChunks returns the number of chunks the input was partitioned
+// into. Useful as a sanity-check / characterization metric in
+// benchmarks (more chunks ⇒ DP found a less-uniform-density input).
+func (p *PEF) NumChunks() int {
+	if p == nil {
+		return 0
+	}
+	return len(p.chunks)
+}
+
 // MetadataAllocBits returns the rank/select dictionary backing
 // allocation in bits — the structural metadata that supports O(1) rank
 // and select. EF low bits are excluded (those are payload).
