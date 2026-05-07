@@ -6,8 +6,8 @@ BENCH_ROOT = ../../../..
 
 # Headline + limitations SVGs → PDF
 SVG_MAP = \
-	$(BENCH_ROOT)/bench_results/plots/b6_N16777216/tradeoff_per_L/sosd_fb/L128.svg:headline_fb_L128 \
-	$(BENCH_ROOT)/bench_results/plots/b6_N16777216_gap_heavy/tradeoff_per_L/uniform/L1.svg:limitations_uniform_L1 \
+	$(FIG_DIR)/headline_fb_L128.svg:headline_fb_L128 \
+	$(FIG_DIR)/limitations_uniform_L1.svg:limitations_uniform_L1 \
 	$(BENCH_ROOT)/bench_results/plots/b6_N16777216/tradeoff_per_L/sosd_books/L128.svg:backup_books_L128 \
 	$(FIG_DIR)/latency_fb_gap_heavy.svg:latency_fb_gap_heavy \
 	$(FIG_DIR)/ere_structure_v3.svg:ere_structure_v3
@@ -27,7 +27,7 @@ figures:
 		fi; \
 	done
 
-$(DECK).pdf: $(DECK).tex core/*.tex
+$(DECK).pdf: $(DECK).tex core/*.tex backup/*.tex $(FIG_DIR)/*.pdf
 	latexmk -pdf -interaction=nonstopmode $(DECK).tex
 
 watch:

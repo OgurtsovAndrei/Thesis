@@ -1,7 +1,7 @@
 \begin{frame}{Two Regimes: Dense Clusters and Sparse Tails}
     \begin{columns}[T,onlytextwidth]
         \column{0.48\textwidth}
-        \textbf{Dense cluster} ($U' = k_{\max} - k_{\min} \ll 2^L$)
+        \textbf{Dense cluster} ($U' = k_{\max} - k_{\min} < \frac{n \mathcal{L}}{\varepsilon}$)
         \smallskip
         \begin{itemize}\setlength{\itemsep}{0.35em}
             \item ARE (Goswami): $\;n\log_2(\mathcal{L}/\varepsilon)\;$ bits
@@ -12,7 +12,8 @@
         \medskip
         \begin{center}
             \fbox{$\;U' \le n\mathcal{L}/\varepsilon
-                    \;\Longrightarrow\; \text{exact mode,}\ \mathrm{FPR} = 0\;$}
+                    \;\Longrightarrow\; \text{exact mode,}\ \mathrm{FPR} = 0\;$}\\[0.3em]
+            {\footnotesize (FPR --- false-positive rate)}
         \end{center}
 
         \column{0.48\textwidth}
@@ -22,7 +23,7 @@
             \includegraphics[width=0.92\linewidth, keepaspectratio]{../../figures/phantom_comparison_slide}
         \end{center}
         \begin{itemize}\setlength{\itemsep}{0.2em}
-            \item SODA hash:\quad $\log_2(\mathcal{L}/\varepsilon)$ BPK
+            \item LP hash:\quad $\log_2(\mathcal{L}/\varepsilon)$ BPK
             \item Truncation:\quad $\log_2(1/\varepsilon)$ BPK
         \end{itemize}
     \end{columns}
