@@ -106,6 +106,57 @@ func TestParityWithEREOneD(t *testing.T) {
 	}
 }
 
+// TestPEF_MaxUint64Universe is the regression test for the 2^64-universe
+// overflow bug: when keys span the full uint64 range, the old "+1" in
+// "inputUniverse = lastKey + 1" wrapped to 0, causing the DP to pick
+// kindAllOnes for all chunks and IsEmpty to return true for stored keys.
+func TestPEF_MaxUint64Universe(t *testing.T) {
+	const n = 300
+	maxUint64 := ^uint64(0)
+
+	// Generate n keys spread uniformly across [0, MaxUint64].
+	raw := make([]uint64, n)
+	for i := 0; i < n; i++ {
+		raw[i] = uint64(float64(i) / float64(n-1) * float64(maxUint64))
+	}
+	// Dedup (float rounding may produce collisions near the boundary).
+	sort.Slice(raw, func(i, j int) bool { return raw[i] < raw[j] })
+	keys := raw[:0]
+	for i, k := range raw {
+		if i == 0 || k != raw[i-1] {
+			keys = append(keys, k)
+		}
+	}
+
+	p, err := NewPEF(keys, 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// No false negatives: every stored key must be found.
+	for _, v := range keys {
+		if p.IsEmpty(v, v) {
+			t.Fatalf("false negative for stored key %d", v)
+		}
+	}
+
+	// At least one in-gap point between two consecutive keys must be
+	// reported empty (PEF is an exact filter).
+	foundGap := false
+	for i := 1; i < len(keys); i++ {
+		if keys[i] > keys[i-1]+1 {
+			mid := keys[i-1] + (keys[i]-keys[i-1])/2
+			if p.IsEmpty(mid, mid) {
+				foundGap = true
+				break
+			}
+		}
+	}
+	if !foundGap {
+		t.Error("no in-gap point was reported empty — PEF over-reports non-empty")
+	}
+}
+
 func TestParitySmallExhaustive(t *testing.T) {
 	// On a small universe, sweep ALL (a,b) pairs and confirm both
 	// implementations agree exactly. Catches off-by-ones in clamps,

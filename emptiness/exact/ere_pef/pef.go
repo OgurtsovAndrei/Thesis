@@ -134,17 +134,19 @@ func NewPEFWithConfig(keys []uint64, keyBits uint32, cfg PartitionConfig) (*PEF,
 		return p, nil
 	}
 
-	costFn := func(u, n uint64) uint64 {
-		return minCodecBitsize(u, n) + cfg.FixCost
+	costFn := func(lastRel, n uint64) uint64 {
+		return minCodecBitsize(lastRel, n) + cfg.FixCost
 	}
 	superSize := superblockSize(cfg.FixCost, cfg.Eps3)
-	inputUniverse := deduped[n-1] + 1
 
 	// Phase 0 — enumerate superblock jobs (sequential, cheap).
+	// superJob.lastKey is the inclusive upper bound of the superblock
+	// (the last key in that superblock's slice). Using an inclusive bound
+	// avoids lastKey+1 overflow when the final key is ^uint64(0).
 	type superJob struct {
-		keys     []uint64
-		base     uint64
-		universe uint64
+		keys    []uint64
+		base    uint64
+		lastKey uint64
 	}
 	var jobs []superJob
 	{
@@ -161,15 +163,13 @@ func NewPEFWithConfig(keys []uint64, keyBits uint32, cfg PartitionConfig) (*PEF,
 				sz = n - superPos
 			}
 			superKeys := deduped[superPos : superPos+sz]
-			var superUniverse uint64
-			if superPos+sz == n {
-				superUniverse = inputUniverse
-			} else {
-				superUniverse = deduped[superPos+sz-1] + 1
-			}
-			jobs = append(jobs, superJob{keys: superKeys, base: superBase, universe: superUniverse})
+			superLastKey := deduped[superPos+sz-1]
+			jobs = append(jobs, superJob{keys: superKeys, base: superBase, lastKey: superLastKey})
 			superPos += sz
-			superBase = superUniverse
+			// Next superblock starts just after this one's last key.
+			// If superLastKey == ^uint64(0) there is no next superblock
+			// (superPos == n), so the +1 wrap is never observed.
+			superBase = superLastKey + 1
 		}
 	}
 
@@ -202,7 +202,7 @@ func NewPEFWithConfig(keys []uint64, keyBits uint32, cfg PartitionConfig) (*PEF,
 				}
 				job := &jobs[i]
 				result, _ := scratch.compute(
-					job.keys, job.base, job.universe,
+					job.keys, job.base, job.lastKey,
 					costFn, cfg.Eps1, cfg.Eps2, buf,
 				)
 				// Copy out — `result` aliases `buf`, which is reused on
@@ -231,6 +231,9 @@ func NewPEFWithConfig(keys []uint64, keyBits uint32, cfg PartitionConfig) (*PEF,
 			}
 			p.writeChunk(&c, chunkBase, ks)
 			p.chunks = append(p.chunks, c)
+			// chunkBase for the next chunk: c.last+1 may wrap to 0 when
+			// c.last==^uint64(0), but in that case this is the final chunk
+			// (no key can exceed ^uint64(0)), so the value is never read.
 			chunkBase = c.last + 1
 			prevEnd = end
 		}

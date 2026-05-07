@@ -58,10 +58,10 @@ const (
 const AutoPEFThreshold = 1 << 24
 
 // AutoPEFMaxKeyBits is the inclusive upper bound on keyBits at which
-// VariantAuto considers PEF safe to dispatch. Above this width, the
-// PEF chunk codec degrades on extremely sparse universes (the upstream
-// parity tests cover up to 60-bit keys), so we fall back to OneD.
-const AutoPEFMaxKeyBits = 60
+// VariantAuto considers PEF safe to dispatch. PEF now handles the full
+// 2^64 universe without uint64 overflow (Strategy-B / inclusive-last
+// refactor), so this guard is raised to 64.
+const AutoPEFMaxKeyBits = 64
 
 func (v Variant) String() string {
 	switch v {

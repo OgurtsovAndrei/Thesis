@@ -82,15 +82,26 @@ func TestAutoSelectsPEFForSmallInputs(t *testing.T) {
 }
 
 func TestAutoFallsBackToOneDForWideKeys(t *testing.T) {
-	// Wide universes (keyBits > AutoPEFMaxKeyBits) trigger OneD even at
-	// small N: PEF's chunk codec has only been validated up to 60-bit keys.
+	// PEF now supports the full 2^64 universe (AutoPEFMaxKeyBits == 64),
+	// so keyBits=64 should use PEF for small inputs.
 	keys := []uint64{0, 1 << 60, 1 << 61, 1 << 62, 1 << 63}
 	f, err := NewUint64WithVariant(keys, 64, VariantAuto)
 	if err != nil {
 		t.Fatalf("auto build failed: %v", err)
 	}
-	if _, ok := f.(oneDFilter); !ok {
-		t.Fatalf("VariantAuto on keyBits=64 should pick OneD, got %T", f)
+	if _, ok := f.(pefFilter); !ok {
+		t.Fatalf("VariantAuto on keyBits=64 with small N should pick PEF, got %T", f)
+	}
+}
+
+func TestResolveAutoVariantLargeNPicksOneD(t *testing.T) {
+	// VariantAuto falls back to OneD when N > AutoPEFThreshold regardless
+	// of keyBits (OneD is 2-3× faster at query time for large inputs).
+	if got := resolveAutoVariant(AutoPEFThreshold+1, 64); got != VariantOneD {
+		t.Fatalf("N>AutoPEFThreshold should pick OneD, got %v", got)
+	}
+	if got := resolveAutoVariant(AutoPEFThreshold, 64); got != VariantPEF {
+		t.Fatalf("N==AutoPEFThreshold should pick PEF, got %v", got)
 	}
 }
 

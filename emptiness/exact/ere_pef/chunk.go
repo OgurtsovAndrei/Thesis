@@ -4,17 +4,19 @@ import (
 	"math/bits"
 )
 
-// selectCodec picks the cheapest codec for a chunk over `universe`
-// positions containing `n` keys. Mirrors indexed_sequence::write
-// dispatch (PISA).
-func selectCodec(universe, n uint64) chunkKind {
-	best := allOnesBitsize(universe, n)
+// selectCodec picks the cheapest codec for a chunk whose inclusive
+// relative range is [0, lastRel] and contains n keys.
+// Mirrors indexed_sequence::write dispatch (PISA).
+func selectCodec(lastRel, n uint64) chunkKind {
+	best := allOnesBitsize(lastRel, n)
 	kind := kindAllOnes
-	if ef := efBitsizePaper(universe, n) + codecTypeBits; ef < best {
+	if ef := efBitsizePaper(lastRel, n) + codecTypeBits; ef < best {
 		best = ef
 		kind = kindEF
 	}
-	if bm := bitmapBitsizePaper(universe, n) + codecTypeBits; bm < best {
+	bm := bitmapBitsizePaper(lastRel, n)
+	// Guard against overflow when bm == MaxUint64 (infinity sentinel).
+	if bm < ^uint64(0) && bm+codecTypeBits < best {
 		kind = kindBitmap
 	}
 	return kind
@@ -27,9 +29,9 @@ func selectCodec(universe, n uint64) chunkKind {
 // `keys` are absolute and sorted; the caller guarantees keys[0] == base,
 // keys[len-1] == c.last, len(keys) == int(c.n()), and no duplicates.
 func (p *PEF) writeChunk(c *chunk, base uint64, keys []uint64) {
-	universe := c.last - base + 1
+	lastRel := c.last - base
 	n := uint64(c.n())
-	k := selectCodec(universe, n)
+	k := selectCodec(lastRel, n)
 	c.nKind = packNKind(c.n(), k)
 	switch k {
 	case kindAllOnes:
@@ -42,11 +44,11 @@ func (p *PEF) writeChunk(c *chunk, base uint64, keys []uint64) {
 }
 
 func (p *PEF) writeEFChunk(c *chunk, base uint64, keys []uint64) {
-	universe := c.last - base + 1
+	lastRel := c.last - base
 	n := uint64(c.n())
 	var ell uint64
-	if universe > n {
-		ell = uint64(bits.Len64(universe/n) - 1)
+	if lastRel >= n {
+		ell = uint64(bits.Len64(lastRel/n) - 1)
 	}
 	var mask uint64
 	if ell > 0 {
@@ -60,7 +62,7 @@ func (p *PEF) writeEFChunk(c *chunk, base uint64, keys []uint64) {
 	}
 
 	keyIdx := 0
-	numBuckets := ((universe - 1) >> ell) + 1
+	numBuckets := (lastRel >> ell) + 1
 	for b := uint64(0); b < numBuckets; b++ {
 		p.rs.PushBack(true)
 		for keyIdx < len(keys) {
@@ -84,16 +86,21 @@ func (p *PEF) writeEFChunk(c *chunk, base uint64, keys []uint64) {
 }
 
 func (p *PEF) writeBitmapChunk(c *chunk, base uint64, keys []uint64) {
-	universe := c.last - base + 1
+	lastRel := c.last - base
 	meta := bmChunkMeta{globalOff: p.rs.Num()}
 
 	keyIdx := 0
-	for u := uint64(0); u < universe; u++ {
+	// Use a for-range loop over [0, lastRel] with an explicit break to
+	// avoid infinite iteration when lastRel == ^uint64(0).
+	for u := uint64(0); ; u++ {
 		if keyIdx < len(keys) && keys[keyIdx]-base == u {
 			p.rs.PushBack(true)
 			keyIdx++
 		} else {
 			p.rs.PushBack(false)
+		}
+		if u == lastRel {
+			break
 		}
 	}
 
@@ -119,11 +126,11 @@ func (p *PEF) chunkIntersects(i int, aAbs, bAbs uint64) bool {
 func (p *PEF) efIntersects(c *chunk, base, aAbs, bAbs uint64) bool {
 	aRel := aAbs - base
 	bRel := bAbs - base
-	universe := c.last - base + 1
+	lastRel := c.last - base
 	n := uint64(c.n())
 	var ell uint64
-	if universe > n {
-		ell = uint64(bits.Len64(universe/n) - 1)
+	if lastRel >= n {
+		ell = uint64(bits.Len64(lastRel/n) - 1)
 	}
 	var mask uint64
 	if ell > 0 {

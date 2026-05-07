@@ -2,15 +2,19 @@ package ere_pef
 
 import "testing"
 
+// selectCodec now takes (lastRel, n) where lastRel = last - base.
 func TestSelectCodec(t *testing.T) {
-	if got := selectCodec(8, 8); got != kindAllOnes {
-		t.Errorf("u=n=8: got %d, want allOnes", got)
+	// lastRel=7, n=8: 7 == n-1=7 → all-ones
+	if got := selectCodec(7, 8); got != kindAllOnes {
+		t.Errorf("lastRel=7 n=8: got %d, want allOnes", got)
 	}
-	if got := selectCodec(4, 3); got != kindBitmap {
-		t.Errorf("u=4 n=3: got %d, want bitmap", got)
+	// lastRel=3, n=3: 3 != n-1=2 → not all-ones; bitmap(4)<ef → bitmap
+	if got := selectCodec(3, 3); got != kindBitmap {
+		t.Errorf("lastRel=3 n=3: got %d, want bitmap", got)
 	}
-	if got := selectCodec(41, 3); got != kindEF {
-		t.Errorf("u=41 n=3: got %d, want EF", got)
+	// lastRel=40, n=3: sparse → EF
+	if got := selectCodec(40, 3); got != kindEF {
+		t.Errorf("lastRel=40 n=3: got %d, want EF", got)
 	}
 }
 

@@ -84,8 +84,11 @@ type costWindow struct {
 	costUpperBound uint64
 }
 
-func (w *costWindow) universe() uint64 { return w.maxP - w.minP + 1 }
-func (w *costWindow) size() uint32     { return w.end - w.start }
+// lastRel returns maxP - minP, the inclusive relative range of the window.
+// This is equivalent to the old universe()-1, but overflow-safe when
+// maxP == ^uint64(0) and minP == 0.
+func (w *costWindow) lastRel() uint64 { return w.maxP - w.minP }
+func (w *costWindow) size() uint32    { return w.end - w.start }
 
 func (w *costWindow) advanceStart() {
 	w.minP = w.keys[w.start] + 1
@@ -125,14 +128,14 @@ func (s *partitionScratch) reset(size uint32) {
 // k-th chunk is keys[partition[k-1]:partition[k]] with partition[-1] = 0).
 // The total cost in bits is also returned.
 //
-// `keys` must be sorted ascending; `base` is the universe lower bound
-// (typically keys[0] for the first superblock, prev_universe afterward),
-// `universe` is the upper bound exclusive (last key + 1, or the input
-// universe for the final superblock). `out` is appended to (truncated
-// first) so callers can pool the result slice.
+// `keys` must be sorted ascending; `base` is the absolute lower bound of
+// the superblock (typically keys[0] for the first superblock); `lastKey`
+// is the inclusive absolute upper bound (last key of the superblock, or
+// the last key of the entire input for the final superblock).
+// `out` is appended to (truncated first) so callers can pool the result slice.
 func (s *partitionScratch) compute(
 	keys []uint64,
-	base, universe uint64,
+	base, lastKey uint64,
 	costFn func(uint64, uint64) uint64,
 	eps1, eps2 float64,
 	out []uint32,
@@ -143,7 +146,8 @@ func (s *partitionScratch) compute(
 	}
 	s.reset(size)
 
-	singleBlockCost := costFn(universe-base, uint64(size))
+	// lastRel for the whole superblock: lastKey - base (overflow-safe)
+	singleBlockCost := costFn(lastKey-base, uint64(size))
 	for i := range s.minCost {
 		s.minCost[i] = singleBlockCost
 	}
@@ -176,7 +180,7 @@ func (s *partitionScratch) compute(
 				win.advanceEnd()
 			}
 			for {
-				wc := costFn(win.universe(), uint64(win.size()))
+				wc := costFn(win.lastRel(), uint64(win.size()))
 				if s.minCost[i]+wc < s.minCost[win.end] {
 					s.minCost[win.end] = s.minCost[i] + wc
 					s.path[win.end] = i
