@@ -43,20 +43,19 @@
 **Ключевые моменты:**
 
 **Пример текста (~75с):**
-> «Range filter — прямая аналогия для range queries. Вместо «входит ли элемент в множество?» — он отвечает:
-> «intercekt ли
-> множество with a range [a, b]?». Те же гарантии: нет false negative-ов, false positive rate не выше ε.
+> «Range filter is the structure for range queries. Instead of answering «does the set contains the key» — он отвечает:
+> «if a range [a, b] intercept the set?». Те же гарантии: нет false negative-ов, false positive rate не выше ε.
 > Именно такой фильтр я строю.
 >
 > Формально: дано множество S из n ключей, максимальная длина запроса 𝓛, целевой false positive rate ε.
 >
 > Госвами доказал информационно-теоретическую нижнюю границу для любого S — log₂(𝓛/ε) бит на ключ, и привел
 > конструкцию, которая достигает этой нижней границы с точностью до константы.
-> And constructed a DS which reaches this lower limit up to a constant. 
-> This DS answer the intersection queries in constant time.
+> And constructed a DS which reaches this lower limit up to a constant.
+> As for the computational complexity, this data structure answers intersection queries in constant time.
 > Их конструкция:
-> - locality-preserving hash сжимает universe, затем
-> - exact range emptiness структура (ERE) отвечает на запросы точно.
+> - locality-preserving hash that compresses the universe, and
+> - exact range emptiness filter (ERE filter) which answers intersection queries exactly.
     > Асимптотически оптимально — но именно константы за этой асимптотой я атакую в своей работе.»
 
 ---
@@ -66,7 +65,7 @@
 **Ключевые моменты:**
 
 **Пример текста (~55с):**
-> «Разберём ERE на примере. To keep things simple, we will consider the example.
+> «Разберём ERE на примере. To keep things simple, we will only consider an example on this slide.
 > Here we have 8 - 8 bit keys.
 > Делим каждый ключ на 3-битный префикс (log 8) и 5-битный суффикс — префикс определяет bucket, суффикс в нём хранится.
 > Все суффиксы лежат в packed массиве A, размер которого — K минус log n бит на ключ, где K - размер ключа.
@@ -74,34 +73,37 @@
 > Для навигации нужно знать, где начинается каждый бакет. Госвами хранил два вектора:
 > - D₁ — какие бакеты непустые,
 > - D₂ — размеры непустых бакетов в unary.
-> Навигация через D₁ и D₂ вместе.
-> Я заменил их на один лаконичный вектор D: кодируем размеры всех бакетов в unary — включая пустые.
-> Итого 2n+1 бит. Это Elias-Fano encoding отсортированного набора ключей.
+    > Навигация через D₁ и D₂ вместе.
+    > I replaced [Goswami's two vectors] with one succinct vector which encodes bucket
+    lengths [in unary encoding, including empty buckets].
+    > Result vector size is 2n+1 бит.
+    > This is Elias-Fano encoding for sorted set of keys.
 >
-> To answer the query we use 
-> Succinct vectors D support Select(D, i), which находит i-й бакет за O(1).
-> 
-> Задача пересечения отрезка с множиством ключей сводится к задаче пересечения отрезка с одним или друмя бакетами
-> внутри структуры,  я использую адаптивный line / bin search, Goswami uses the WPS.
+> To answer a query [a, b]:
+> The intersection of [a, b] with S reduces to checking at most two boundary buckets.
+> We navigate to them using Select(D, i) in O(1), then run adaptive binary/linear search
+> on packed suffixes inside each bucket.
+> Goswami uses Weak Prefix Search instead.
 
 ---
 
 ## Слайд 6 — Компактный бэкенд (1:00) — центральная часть
 
-**Пример текста (~55с):**
-> Заменив ERE на EF кодировку мы сделали два улучшения.
-> 
-> Первое замена D₁+D₂ → один вектор D. Это дало минус 24% метаданных, contiguous memory layout - более cache friendly.
+**Пример частей текста на английском / улучшения:**
+> "WPS is O(1), but this O(1) depends on two important factors when translated to nanoseconds on real hardware:
+> (1) working set size: — whether the WPS auxiliary structure fits in the CPU cache;
+> (2) memory access pattern of the algorithm: — sequential or random.
+> Structures with a small working set that fits in cache are faster. But more importantly,
+> sequential memory access patterns outperform random access on real hardware regardless of dataset size."
 >
-> Второе — поиск внутри бакета.
-> Госвами предложил Weak Prefix Search для O(1) lookup. 
-> TODO: Расскзать про: Но нак, эта O(1) пересчитывается в ns - зависит от того как струткра ложится в кеши и того, как мы ходим а память.
-> 
-> Но в этом O(1) константа настолько велика, что binary search или даже linear scan от 13 до 30 раз быстрее — числа в таблице справа.
-> Это ставит нас в конкурентный диапазон с индустриальными range filters.
-> Так же WPS требует ≥59 BPK вспомогательного индекса — это почти столько же, сколько хранить ключи as is.
+> "The first row [Facebook median, k=27] shows a case where the WPS structure fits in L1 cache;
+> the other three rows don't fit — and the gap is large.
+> The same large performance gap arises when we replace random memory accesses with sequential reads.
+> That is why replacing Goswami's two-level metadata with a single contiguous vector is a very important
+> hardware optimization — sequential accesses improve performance on structures of any size."
 >
-> Я заменил WPS на binary search / lin scan по packed суффиксам. Никакого индекса.»
+> "At practical dataset sizes — 2²⁴ to 2²⁸ keys — buckets are small enough that Binary or even linear search,
+> with their sequential memory access patterns, outperforms WPS, and do not require auxiliary index."
 
 ---
 
@@ -109,39 +111,37 @@
 
 **Пример текста (~40с):**
 
-> Perf of Are
-> On the pref slide I tell how to speedup ERE, now I will consider 
-> 
-> It works for any distribution of keys.
-> «Граница Госвами универсальна — log₂(ℒ/ε), никаких предположений об S. 
-> Но реальные ключи в LSM Often Happen To Be Clustered. [На гистограмму]
-> Файловые пути, urls, S2 Cell IDs.
-> 
-> Плотные кластеры чередуются с пустыми разреженными участками.
+> "The performance of approximate range filters depends on two aspects:
+> the performance of the ERE backend at the bottom level, and the choice of locality-preserving hash
+> that can reduce the approximate emptiness problem to multiple exact emptiness problems."
 >
-> Идея: lets device universe into parts — плотные и sparse gaps — и будем обрабатывать по-разному. Как именно —
-> сейчас.»
+> On the previous slide I did consider how to speed up Exact Range Empt Filter
+>
+> Now I will discuss how we can choose locality-preserving hashes in accordance with
+> the distribution of keys in our dataset.
+>
+> Goswami bound works for any distribution of keys.
+> Btw, in many practical workloads, keys tend to be clustered. [На гистограмму]
+> Dense clusters alternate with sparse regions.
+> For examples: Файловые пути, urls, S2 Cell IDs.
+>
+> So, let's divide the universe into parts — dense clusters and sparse gaps — will be handled differently.»
 
 ---
 
 ## Слайд 8 — Два режима: плотный кластер и разреженный хвост (~0:55)
 
-**Пример текста (~55с):**
-> «Два типа кусочков.
->
-> Пусть у нас есть плотный кластер — ключи занимают узкое окно U'.
-> Граница Госвами для любого ARE — n·log₂(ℒ/ε) — от U не зависит.
-> А вот ERE стоит n·log₂(U'/n) и уменьшается вместе с U'.
-> 
-> При NARROW WINDOW U' ≤ nℒ/ε ERE будет стоить дешевле любого приближённого фильтра — и при этом даёт FPR = 0. Это exact mode.
->
-> Если на входе разреженный участок — ключей мало, universe широкий, ERE дорогой.
-> Здесь вместо hash мы будем отбрасываем t нижних битов.
-> Тогда все прообразы точки лежат в одном блоке шириной 2ᵗ рядом с ключом, а не рассыпаны по всему universe как у pairwise independent hash.
-> Это уменьшает зону коллизии: ℒ·2ᵗ → ℒ+2ᵗ.
-> Что дает экономию в log₂(ℒ) бит на ключ.
-> In sparse regs, we can simply truncate lower bits to get locality preserving hash, and this still will have few collisions.
+**Пример частей текста на английском / улучшения:**
 
+> There are two different scenarios,
+>
+> We can have a dense cluster with many keys in a small window.  
+> Then, if the compressed universe in Goswami's hash is larger than the original cluster window,
+> we don't need a hash at all — we can build an exact range emptiness filter directly on the window.
+> It costs fewer bits per key and gives zero false positive rate.
+>
+> "In sparse regions where we have very few points, we can simply truncate some lower bits
+> to obtain our locality-preserving hash. And this hash will still have few collisions."
 
 ---
 
@@ -161,12 +161,12 @@
 
 **Пример текста (~55с):**
 > "Главный результат.
-> Здесь на графике представлена зависимость FPR от используемых структурой BPK.
-> Структуры были построены на ключах датастета SOSD (расшифровать) - IDs самых активных польозоватлей Facebook
-> n выбран - 2^24 — тот же масштаб, на котором SuRF и SNARF показывают свои основные цифры.
-> Scan-ARE (пурпурная линия) достигает уровня нулевых ошибок примерно на 11 битах на ключ.
-> SNARF — сильнейший обучаемый фильтр — насыщается на уровне 7*10^-4.
-> Сколько бы памяти вы ему ни дали, он не может опуститься ниже."
+> На графике — зависимость FPR от BPK.
+> SNARF, SuRF и Rosetta — другие решения той же задачи approximate range emptiness.
+> Структуры построены на Facebook user IDs из датасета SOSD (Search on Sorted Data).
+> n = 2²⁴ — тот же масштаб, на котором SuRF показывает свои лучшие результаты.
+> DB-scan Range Filter (пурпурная линия) достигает нулевого FPR на 11 битах на ключ.
+> SNARF насыщается на уровне 7×10⁻⁴ — сколько бы памяти ему ни дали, ниже не опускается."
 
 ## Слайд 11 — Ограничения: Равномерное распределение, 𝓛=1, n=2²⁴ (0:30)
 
@@ -183,7 +183,7 @@
 
 **Пример текста (~50с):**
 > "Три главных итога.
-> Мы сократили использование метаданных на 24% — засчет одно-векторного Elias Fani ERE.
-> Мы сократили query latency в 13–30 раз — из-за замены WPS на адаптиыный linear / бинарный поиск.
-> Мы достигли FPR 0 на 11 битах на ключ на Facebook user IDs засчет Scan-ARE.
-> Будущая работа: динамические обновления, Partial Elisa-Fano encoding, интеграция в RocksDB. Спасибо за внимание."
+> Мы сократили использование метаданных на 24% — за счёт одновекторного Elias-Fano ERE.
+> Мы сократили query latency в 13–30 раз — за счёт замены WPS на адаптивный linear / бинарный поиск.
+> Мы достигли FPR 0 на 11 битах на ключ на Facebook user IDs за счёт DB-scan Range Filter.
+> Будущая работа: динамические обновления, Partial Elias-Fano encoding, интеграция в RocksDB. Спасибо за внимание."
