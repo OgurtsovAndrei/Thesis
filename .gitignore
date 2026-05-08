@@ -42,6 +42,9 @@
 # latexmk aux directories
 /text/**/build/
 
+# custom files with notes
+/text/**/**.json
+
 # OS noise
 .DS_Store
 /locators/benchmarks_parsed.csv

@@ -15,17 +15,18 @@
                   \textbf{Speedup: $13$--$30\times$}
         \end{itemize}
 
-        \column{0.42\textwidth}
+        \column{0.5\textwidth}
         \centering
         \footnotesize
         \begin{tabular}{@{}lrrr@{}}
             \toprule
-            Dataset & binary & WPS & $\times$ \\
+            Dataset                        & adaptive & WPS      & $\times$   \\
+            & binary   &          &            \\
             \midrule
-            FB median ($k\!=\!27$)      & $10$~ns  & $307$~ns & $30\times$ \\
-            FB max ($k\!=\!1{,}589$)    & $33$~ns  & $514$~ns & $16\times$ \\
-            Books med ($k\!=\!812$)     & $20$~ns  & $514$~ns & $26\times$ \\
-            Books max ($k\!=\!14{,}039$)& $43$~ns  & $556$~ns & $13\times$ \\
+            Facebook median ($k\!=\!27$)   & $10$~ns  & $307$~ns & $30\times$ \\
+            Facebook max ($k\!=\!1{,}589$) & $33$~ns  & $514$~ns & $16\times$ \\
+            Books median ($k\!=\!812$)     & $20$~ns  & $514$~ns & $26\times$ \\
+            Books max ($k\!=\!14{,}039$)   & $43$~ns  & $556$~ns & $13\times$ \\
             \bottomrule
         \end{tabular}
     \end{columns}
