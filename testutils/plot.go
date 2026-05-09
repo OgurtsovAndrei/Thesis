@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -245,24 +246,61 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 			// (e.g. theoretical curves at high K with FPR ≈ 2^-K).
 			minY = floor
 		}
-		// Round down to the nearest power of 10 below minY. When a YFloor
-		// dashed line is present we subtract one extra decade so the line
-		// has breathing room above the X-axis; without a floor line the
-		// extra decade just wastes vertical space.
-		lMin := math.Floor(math.Log10(minY))
+		// Compute axis bounds.
+		//
+		// YFloor mode (FPR plots): snap to decade boundaries and give the
+		// floor dashed line one extra decade of breathing room.
+		//
+		// Normal mode (no floor): adapt both bounds to the actual data
+		// range so the series fill most of the plot area. Use 10 % of the
+		// log-span as padding on each side, with a floor of 0.15 decades
+		// so widely-separated points still have some breathing room.
+		var lMin, lMax float64
 		if cfg.YFloor > 0 {
-			lMin -= 1.0
+			lMin = math.Floor(math.Log10(minY)) - 1.0
+			lMax = math.Ceil(math.Log10(maxY)) + 0.5
+		} else {
+			logSpan := math.Log10(maxY) - math.Log10(minY)
+			pad := math.Max(0.15, logSpan*0.10)
+			lMin = math.Log10(minY) - pad
+			lMax = math.Log10(maxY) + pad
 		}
-		lMax := math.Ceil(math.Log10(maxY)) + 0.5
 		yToPlot = func(y float64) float64 {
 			if y <= 0 {
 				y = floor
 			}
 			return mT + plotH*(1-(math.Log10(y)-lMin)/(lMax-lMin))
 		}
-		for e := int(math.Ceil(lMin)); e <= int(math.Floor(lMax)); e++ {
-			yTicks = append(yTicks, math.Pow(10, float64(e)))
-			yTickLabels = append(yTickLabels, fmtPow10(e))
+		// Decade ticks always. When the visible range is narrow (< 2
+		// decades) also add 2× and 5× sub-decade labels so there are
+		// enough reference lines to read off values.
+		axLo := math.Pow(10, lMin)
+		axHi := math.Pow(10, lMax)
+		type yTick struct {
+			v     float64
+			label string
+		}
+		var rawTicks []yTick
+		eMin := int(math.Floor(lMin))
+		eMax := int(math.Ceil(lMax)) + 1
+		for e := eMin; e <= eMax; e++ {
+			base := math.Pow(10, float64(e))
+			if base >= axLo && base <= axHi {
+				rawTicks = append(rawTicks, yTick{base, fmtPow10(e)})
+			}
+			if lMax-lMin < 2.0 {
+				for _, mult := range []float64{2, 5} {
+					v := mult * math.Pow(10, float64(e))
+					if v > axLo && v < axHi {
+						rawTicks = append(rawTicks, yTick{v, fmtNum(v)})
+					}
+				}
+			}
+		}
+		sort.Slice(rawTicks, func(i, j int) bool { return rawTicks[i].v < rawTicks[j].v })
+		for _, tk := range rawTicks {
+			yTicks = append(yTicks, tk.v)
+			yTickLabels = append(yTickLabels, tk.label)
 		}
 	default:
 		axMinY := 0.0
