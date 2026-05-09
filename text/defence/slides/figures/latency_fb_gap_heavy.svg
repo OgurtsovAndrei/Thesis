@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1020" height="600" viewBox="0 0 1020 600">
 <defs><clipPath id="plot-region"><rect x="90.0" y="40.0" width="780.0" height="510.0"/></clipPath></defs>
-<style>text{font-family:Menlo,Monaco,monospace;font-size:12px;fill:#222} .axis{stroke:#333;stroke-width:1} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:11px;fill:#444}</style>
-<text x="510" y="28" text-anchor="middle" style="font-size:14px;font-weight:bold">Query latency on Facebook user IDs (n = 2²⁴, ε = 0.01)</text>
+<style>text{font-family:Menlo,Monaco,monospace;font-size:22px;fill:#222} .axis{stroke:#333;stroke-width:1.5} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:20px;fill:#444}</style>
+<text x="510" y="28" text-anchor="middle" style="font-size:24px;font-weight:bold">Query latency on Facebook user IDs (n = 2²⁴, ε = 0.01)</text>
 <line class="axis" x1="90.0" y1="550.0" x2="870.0" y2="550.0"/>
 <line class="axis" x1="90.0" y1="40.0" x2="90.0" y2="550.0"/>
 <line class="grid" x1="90.0" y1="550.0" x2="870.0" y2="550.0"/>
@@ -27,7 +27,7 @@
 <line class="grid" x1="714.0" y1="40.0" x2="714.0" y2="550.0"/>
 <text class="label" x="714.0" y="566.0" text-anchor="middle">10K</text>
 <g clip-path="url(#plot-region)">
-<polyline fill="none" stroke="#1e3a8a" stroke-width="2" points="90.0,279.7 277.8,282.1 418.7,284.8 559.6,286.3 653.5,288.1 747.4,288.8 841.4,293.8"/>
+<polyline fill="none" stroke="#1e3a8a" stroke-width="2.5" points="90.0,279.7 277.8,282.1 418.7,284.8 559.6,286.3 653.5,288.1 747.4,288.8 841.4,293.8"/>
 <polygon points="90.0,275.7 94.0,279.7 90.0,283.7 86.0,279.7" fill="#1e3a8a"/>
 <polygon points="277.8,278.1 281.8,282.1 277.8,286.1 273.8,282.1" fill="#1e3a8a"/>
 <polygon points="418.7,280.8 422.7,284.8 418.7,288.8 414.7,284.8" fill="#1e3a8a"/>
@@ -35,15 +35,15 @@
 <polygon points="653.5,284.1 657.5,288.1 653.5,292.1 649.5,288.1" fill="#1e3a8a"/>
 <polygon points="747.4,284.8 751.4,288.8 747.4,292.8 743.4,288.8" fill="#1e3a8a"/>
 <polygon points="841.4,289.8 845.4,293.8 841.4,297.8 837.4,293.8" fill="#1e3a8a"/>
-<polyline fill="none" stroke="#0f172a" stroke-width="2" points="90.0,331.1 277.8,328.5 418.7,328.2 559.6,327.6 653.5,326.5 747.4,327.0 841.4,326.8"/>
-<polygon points="559.6,323.6 563.6,327.6 559.6,331.6 555.6,327.6" fill="#0f172a"/>
-<polyline fill="none" stroke="#12fc21" stroke-width="2" points="90.0,371.9 277.8,270.6 418.7,245.4 559.6,232.7 747.4,231.6"/>
-<polygon points="90.0,367.9 94.0,371.9 90.0,375.9 86.0,371.9" fill="#12fc21"/>
-<polygon points="277.8,266.6 281.8,270.6 277.8,274.6 273.8,270.6" fill="#12fc21"/>
-<polygon points="418.7,241.4 422.7,245.4 418.7,249.4 414.7,245.4" fill="#12fc21"/>
-<polygon points="559.6,228.7 563.6,232.7 559.6,236.7 555.6,232.7" fill="#12fc21"/>
-<polygon points="747.4,227.6 751.4,231.6 747.4,235.6 743.4,231.6" fill="#12fc21"/>
-<polyline fill="none" stroke="#d946ef" stroke-width="2" points="90.0,387.8 277.8,364.7 418.7,364.5 559.6,364.4 653.5,364.1 747.4,356.6 841.4,361.9"/>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="90.0,331.1 277.8,328.5 418.7,328.2 559.6,327.6 653.5,326.5 747.4,327.0 841.4,326.8"/>
+<polygon points="559.6,323.6 563.6,327.6 559.6,331.6 555.6,327.6" fill="#dc2626"/>
+<polyline fill="none" stroke="#15803d" stroke-width="2.5" points="90.0,371.9 277.8,270.6 418.7,245.4 559.6,232.7 747.4,231.6"/>
+<polygon points="90.0,367.9 94.0,371.9 90.0,375.9 86.0,371.9" fill="#15803d"/>
+<polygon points="277.8,266.6 281.8,270.6 277.8,274.6 273.8,270.6" fill="#15803d"/>
+<polygon points="418.7,241.4 422.7,245.4 418.7,249.4 414.7,245.4" fill="#15803d"/>
+<polygon points="559.6,228.7 563.6,232.7 559.6,236.7 555.6,232.7" fill="#15803d"/>
+<polygon points="747.4,227.6 751.4,231.6 747.4,235.6 743.4,231.6" fill="#15803d"/>
+<polyline fill="none" stroke="#d946ef" stroke-width="2.5" points="90.0,387.8 277.8,364.7 418.7,364.5 559.6,364.4 653.5,364.1 747.4,356.6 841.4,361.9"/>
 <circle cx="90.0" cy="387.8" r="3" fill="#d946ef"/>
 <circle cx="277.8" cy="364.7" r="3" fill="#d946ef"/>
 <circle cx="418.7" cy="364.5" r="3" fill="#d946ef"/>
@@ -52,16 +52,16 @@
 <circle cx="747.4" cy="356.6" r="3" fill="#d946ef"/>
 <circle cx="841.4" cy="361.9" r="3" fill="#d946ef"/>
 </g>
-<line x1="886" y1="78" x2="902" y2="78" stroke="#1e3a8a" stroke-width="2"/>
+<line x1="886" y1="78" x2="902" y2="78" stroke="#1e3a8a" stroke-width="2.5"/>
 <polygon points="894.0,74.0 898.0,78.0 894.0,82.0 890.0,78.0" fill="#1e3a8a"/>
 <text class="label" x="908" y="82">SNARF</text>
-<line x1="886" y1="96" x2="902" y2="96" stroke="#0f172a" stroke-width="2"/>
-<polygon points="894.0,92.0 898.0,96.0 894.0,100.0 890.0,96.0" fill="#0f172a"/>
+<line x1="886" y1="96" x2="902" y2="96" stroke="#dc2626" stroke-width="2.5"/>
+<polygon points="894.0,92.0 898.0,96.0 894.0,100.0 890.0,96.0" fill="#dc2626"/>
 <text class="label" x="908" y="100">SuRF</text>
-<line x1="886" y1="114" x2="902" y2="114" stroke="#12fc21" stroke-width="2"/>
-<polygon points="894.0,110.0 898.0,114.0 894.0,118.0 890.0,114.0" fill="#12fc21"/>
+<line x1="886" y1="114" x2="902" y2="114" stroke="#15803d" stroke-width="2.5"/>
+<polygon points="894.0,110.0 898.0,114.0 894.0,118.0 890.0,114.0" fill="#15803d"/>
 <text class="label" x="908" y="118">Rosetta</text>
-<line x1="886" y1="150" x2="902" y2="150" stroke="#d946ef" stroke-width="2"/>
+<line x1="886" y1="150" x2="902" y2="150" stroke="#d946ef" stroke-width="2.5"/>
 <circle cx="894.0" cy="150.0" r="3" fill="#d946ef"/>
 <text class="label" x="908" y="154">DB-scan Filter</text>
 <text x="480" y="578" text-anchor="middle">Range Length (L)</text>

@@ -1,6 +1,7 @@
 \documentclass[aspectratio=169,10pt]{beamer}
 
 \usetheme{metropolis}
+\metroset{numbering=fraction}
 \usepackage{appendixnumberbeamer}
 
 \usepackage{booktabs}
@@ -18,10 +19,11 @@
 \input{figures/pipeline.tex}
 
 % --- Color palette: matches benchmark plots
-\definecolor{thScanARE}{HTML}{D946EF}    % magenta — Scan-ARE
-\definecolor{thRosetta}{HTML}{12FC21}    % neon green — Rosetta
-\definecolor{thSNARF}{HTML}{1E3A8A}      % deep blue
-\definecolor{thGrafite}{HTML}{0F766E}    % teal
+\definecolor{thScanARE}{HTML}{D946EF}    % magenta — Scan-ARE (DB-scan filter)
+\definecolor{thRosetta}{HTML}{15803D}    % dark green (Tailwind green-700) — Rosetta
+\definecolor{thSNARF}{HTML}{1E3A8A}      % deep blue — SNARF
+\definecolor{thSuRF}{HTML}{DC2626}       % red — SuRF (was near-black, indistinguishable from SNARF)
+\definecolor{thGrafite}{HTML}{0F766E}    % teal — Grafite
 \definecolor{thAccent1}{HTML}{0F766E}    % teal accent
 \definecolor{thAccent2}{HTML}{EA580C}    % orange accent
 
