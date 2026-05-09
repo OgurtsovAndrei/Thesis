@@ -49,6 +49,6 @@ This document outlines the coding standards, benchmarking protocols, and workflo
 - **Key Counts (N)**: Strictly use $N \in \{2^{20}, 2^{24}, 2^{28}\}$ for all comparative studies. Avoid smaller counts like $2^{16}$ or intermediate values unless debugging specific issues.
 - **Distributions**: Use `uniform`, `clustered`, and SOSD set (`fb`, `wiki`, `osm`, `books`). **DO NOT** use `spread` distribution (redundant/long).
 - **Latency Measurement**: Always use the **FPR-gated selector** for plotting. Measure query latency at the minimum BPK/K required to achieve $FPR \le 0.01$ (or target $\epsilon$). Avoid using fixed "Headline" values (e.g., $BPK=10$) for performance charts as they may not reflect the filter's working regime.
-- **Memory Tracking**: Use `utils.MemoryMonitor` to capture Peak RSS during build. Final filter size (BPK) is not enough; we must report the construction overhead.
+- **Memory Tracking**: Use `utils.MemoryMonitor` to capture Peak RSS during build. Set `B6_MEM=1` to enable this monitoring (includes a mandatory `ForceGC` and RSS polling overhead). Final filter size (BPK) is reported by default.
 - **Git State**: Always maintain `b6SchemaVersion` consistency. If the result JSON format changes, increment the version in `b6_cache_test.go`.
 
