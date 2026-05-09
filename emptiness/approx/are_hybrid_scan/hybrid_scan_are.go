@@ -90,20 +90,36 @@ func (cfg Config) backend() exact.Variant {
 // compare phantom region size against query length); it does not affect filter
 // construction otherwise.
 //
-// EREBackend selects the underlying exact range-emptiness implementation
-// (see package exact). Zero value defaults to exact.VariantAuto.
+// EREBackend selects the ERE backend for cluster sub-filters. Zero value
+// defaults to exact.VariantAuto. Use WithEREBackend to set explicitly.
+//
+// FallbackEREBackend selects the ERE backend for the fallback filter. If not
+// set via WithFallbackEREBackend, it inherits EREBackend. This allows mixing
+// backends: e.g. OneD for small dense clusters and PEF for the large sparse
+// fallback.
 type ConfigWithPolicy struct {
-	K          uint32
-	RangeLen   uint64
-	Policy     FallbackPolicy
-	EREBackend exact.Variant
-	backendSet bool
+	K                  uint32
+	RangeLen           uint64
+	Policy             FallbackPolicy
+	EREBackend         exact.Variant
+	backendSet         bool
+	FallbackEREBackend exact.Variant
+	fallbackBackendSet bool
 }
 
-// WithEREBackend returns a copy of cfg with the chosen ERE backend.
+// WithEREBackend returns a copy of cfg with the chosen ERE backend for
+// cluster sub-filters.
 func (cfg ConfigWithPolicy) WithEREBackend(v exact.Variant) ConfigWithPolicy {
 	cfg.EREBackend = v
 	cfg.backendSet = true
+	return cfg
+}
+
+// WithFallbackEREBackend returns a copy of cfg with the chosen ERE backend
+// for the fallback filter only. Cluster sub-filters keep cfg.EREBackend.
+func (cfg ConfigWithPolicy) WithFallbackEREBackend(v exact.Variant) ConfigWithPolicy {
+	cfg.FallbackEREBackend = v
+	cfg.fallbackBackendSet = true
 	return cfg
 }
 
@@ -112,6 +128,13 @@ func (cfg ConfigWithPolicy) backend() exact.Variant {
 		return cfg.EREBackend
 	}
 	return exact.VariantAuto
+}
+
+func (cfg ConfigWithPolicy) fallbackBackend() exact.Variant {
+	if cfg.fallbackBackendSet {
+		return cfg.FallbackEREBackend
+	}
+	return cfg.backend()
 }
 
 // --- public constructors ---
@@ -124,7 +147,8 @@ func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE
 		return &HybridScanARE{n: 0}, nil
 	}
 	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
-	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAlwaysSODA{}, cfg.backend())
+	b := cfg.backend()
+	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAlwaysSODA{}, b, b)
 }
 
 // NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.
@@ -136,7 +160,7 @@ func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 		return &HybridScanARE{n: 0}, nil
 	}
 	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
-	return newHybridScanARE(keys, keyBits, cfg.K, cfg.RangeLen, dbscanEps, cfg.Policy, cfg.backend())
+	return newHybridScanARE(keys, keyBits, cfg.K, cfg.RangeLen, dbscanEps, cfg.Policy, cfg.backend(), cfg.fallbackBackend())
 }
 
 // dbscanEpsFromK returns the DBSCAN density window in key-space units.
@@ -146,7 +170,7 @@ func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 // at most 2^K / minClusterSize. For DBSCAN core (dbscanMinPts neighbours in
 // the eps-window), eps must be ≥ dbscanMinPts · avg_gap, i.e.
 //
-//   eps ≥ dbscanMinPts · 2^K / minClusterSize.
+//	eps ≥ dbscanMinPts · 2^K / minClusterSize.
 //
 // The legacy formula (epsMultiplier · 2^K / n) used n in the denominator,
 // which only matches when the cluster covers the whole dataset (size = n).
@@ -178,8 +202,8 @@ func dbscanEpsFromK(_ int, K uint32) uint64 {
 // pins log2(L/ε) — that part of K is independent of n — and replaces the
 // global log2(n_total) with log2(n_local):
 //
-//   K_global = ceil(log2(n_total · L / ε))
-//   K_local  = ceil(log2(n_local  · L / ε)) = K_global - log2(n_total) + log2(n_local)
+//	K_global = ceil(log2(n_total · L / ε))
+//	K_local  = ceil(log2(n_local  · L / ε)) = K_global - log2(n_total) + log2(n_local)
 //
 // Each sub-filter (cluster ARE, fallback ARE) gets its own K matched to its
 // own key count, instead of paying the full global K that's sized for the
@@ -203,13 +227,16 @@ func localK(K uint32, nTotal, nLocal int) uint32 {
 	return K - uint32(delta)
 }
 
-func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy, backend exact.Variant) (*HybridScanARE, error) {
+// clusterBackend is used for each dense cluster sub-filter;
+// fallbackBackend is used for the sparse fallback filter.
+// Pass the same value for both to apply one backend everywhere.
+func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy, clusterBackend, fallbackBackend exact.Variant) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
 
 	if n < 2 {
 		if n > 0 {
-			fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, backend)
+			fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, fallbackBackend)
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
@@ -224,7 +251,7 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 	h.clusters = make([]clusterFilter, 0, len(segments))
 	for _, seg := range segments {
 		Kc := localK(K, n, len(seg.keys))
-		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(seg.keys, keyBits, Kc, 0, backend)
+		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(seg.keys, keyBits, Kc, 0, clusterBackend)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
@@ -238,7 +265,7 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 
 	if len(fallbackKeys) > 0 {
 		Kfb := localK(K, n, len(fallbackKeys))
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, backend)
+		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, fallbackBackend)
 		if err != nil {
 			return nil, err
 		}
