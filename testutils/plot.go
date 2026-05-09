@@ -136,6 +136,7 @@ type PlotConfig struct {
 	XScale   AxisScale
 	YScale   AxisScale
 	YFloor   float64 // if >0 and YScale==Log10, draws a measurement floor line at this value
+	YCeil    float64 // if >0 and YScale==Log10, hard-cap the upper axis at this value (clips data above)
 	XMax     float64 // if >0 and using linear X-scale, hard-cap the X-axis at this value
 	Theme    Theme   // zero value uses DefaultTheme()
 }
@@ -245,6 +246,9 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 			// doesn't extend into orders of magnitude with no plotted data
 			// (e.g. theoretical curves at high K with FPR ≈ 2^-K).
 			minY = floor
+		}
+		if cfg.YCeil > 0 && maxY > cfg.YCeil {
+			maxY = cfg.YCeil
 		}
 		// Compute axis bounds.
 		//
