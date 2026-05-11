@@ -137,8 +137,9 @@ type PlotConfig struct {
 	YScale   AxisScale
 	YFloor   float64 // if >0 and YScale==Log10, draws a measurement floor line at this value
 	YCeil    float64 // if >0 and YScale==Log10, hard-cap the upper axis at this value (clips data above)
-	XMax     float64 // if >0 and using linear X-scale, hard-cap the X-axis at this value
-	Theme    Theme   // zero value uses DefaultTheme()
+	XMax          float64 // if >0 and using linear X-scale, hard-cap the X-axis at this value
+	KeepAllPoints bool    // if true, suppress the log-scale trim-on-second-floor-hit (use for histograms)
+	Theme         Theme   // zero value uses DefaultTheme()
 }
 
 // GeneratePerformanceSVG creates an SVG plot with configurable axis scales.
@@ -232,8 +233,10 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 			for j := range series[i].Points {
 				if series[i].Points[j].Y <= floor {
 					series[i].Points[j].Y = floor
-					if hitFloor {
-						// Trim: keep only first floor point
+					if hitFloor && !cfg.KeepAllPoints {
+						// Trim: keep only first floor point.
+						// Skipped when KeepAllPoints is set (e.g. density histograms
+						// where zero bins appear between non-zero bins).
 						series[i].Points = series[i].Points[:j]
 						break
 					}

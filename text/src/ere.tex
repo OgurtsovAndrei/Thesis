@@ -101,7 +101,7 @@ succinct bit vectors and required for the $O(1)$ navigation
 guarantees.
 Both deltas are stable across $n$.
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}rcc@{\hskip 24pt}cc@{}}
         \toprule
@@ -146,7 +146,7 @@ end-to-end query latency on uniform and clustered data is reported in
 Chapter~\ref{chap:evaluation}
 (Table~\ref{tab:ere-backend-query-latency}).
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lccrl@{}}
         \toprule
@@ -206,7 +206,7 @@ all measured maxima are well below the Lemma~5.1 bound.
 Each observed max is the largest bucket over a single realisation of $n$ uniform
 random 64-bit keys, taken across all $B$ blocks.
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}rrrrrrr@{}}
         \toprule
@@ -229,7 +229,7 @@ random 64-bit keys, taken across all $B$ blocks.
     \label{tab:ere-bucket-stats}
 \end{table}
 
-The Poisson PMF $\Pr[X = k] = e^{-\lambda}\lambda^k/k!$~\citep[eq.~(6.1)]{feller1968introduction}
+The Poisson probability mass function $\Pr[X = k] = e^{-\lambda}\lambda^k/k!$~\citep[eq.~(6.1)]{feller1968introduction}
 makes the tail decay like $1/k!$: even at $B = 2^{30}$, the expected number of
 blocks with $\geq 20$ keys is ${\sim}1.7 \times 10^{-10}$, making buckets larger
 than ${\sim}20$ keys virtually impossible for uniform data.
@@ -345,7 +345,7 @@ We implemented three WPS variants, pairing a Z-Fast trie (standard or
 succinct) with a Monotone Minimal Perfect Hash Function (MMPHF; fast or
 compressed):
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrrrr@{}}
         \toprule
@@ -383,7 +383,7 @@ inside a bucket; Rank/Select navigation on the metadata bit vectors
 Table~\ref{tab:wps-vs-binsearch} compares the bucket-search step alone
 across representative bucket sizes.
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrr@{}}
         \toprule

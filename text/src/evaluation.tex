@@ -138,7 +138,7 @@ ships Bloom filters at $10$~BPK by default~\citep{rocksdb-bloom},
 reported by~\citet{monkey2017} as the cross-system standard. We adopt
 the same target range.
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \small
     \setlength{\tabcolsep}{5pt}
@@ -201,7 +201,7 @@ Poisson middle for uniform input at $\lambda = 1$ is
 $1 - e^{-1} \approx 0.632$~BPK. The numbers below confirm the prediction
 end-to-end.
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \setlength{\tabcolsep}{5pt}
     \small
@@ -259,8 +259,11 @@ from cache-friendly access at small suffix width ($w = K - \log_2 n = 14$):
 the contiguous $D$ vector keeps both \textsc{Select} calls hitting the
 same auxiliary-index pages, while the two-vector layout alternates
 between $D_1$ and $D_2$ and pays an extra cache miss per query.
+\colorbox{orange}{TODO: measure cache hits \& misses}
+% TODO(linux): measure this claim with hardware performance counters (perf stat -e cache-misses)
+% on an x86 Linux machine; the architectural argument is sound but the miss count is not yet empirically confirmed.
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \setlength{\tabcolsep}{5pt}
     \small
@@ -436,7 +439,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
 
 \subsubsection*{SOSD Distributions}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -457,7 +460,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-fb}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -478,7 +481,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-books}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -499,7 +502,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-wiki}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -522,7 +525,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
 
 \subsubsection*{Synthetic Distributions}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -543,7 +546,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-clustered}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -564,7 +567,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-uniform}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -585,7 +588,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-spread}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -606,7 +609,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     \label{tab:bpk-zipfian}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
@@ -630,7 +633,7 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
 
 \section{Summary of Results}
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{@{}llll@{}}
         \toprule

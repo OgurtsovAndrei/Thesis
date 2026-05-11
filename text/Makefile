@@ -22,10 +22,10 @@ SVG_MAP = \
 	$(THESIS_ROOT)/emptiness/are_hybrid_scan/universe_comparison.svg:universe_comparison \
 	$(THESIS_ROOT)/emptiness/are_hybrid_scan/fpr_bpk_books_L65536.svg:fpr_bpk_books_L65536 \
 	$(THESIS_ROOT)/emptiness/are_hybrid_scan/fpr_bpk_wiki_L65536.svg:fpr_bpk_wiki_L65536 \
-	$(BENCH_ROOT)/bench_results/plots/distributions/hist_sosd_fb.svg:hist_sosd_fb \
-	$(BENCH_ROOT)/bench_results/plots/distributions/hist_sosd_books.svg:hist_sosd_books \
-	$(BENCH_ROOT)/bench_results/plots/distributions/hist_sosd_wiki.svg:hist_sosd_wiki \
-	$(BENCH_ROOT)/bench_results/plots/distributions/hist_sosd_osm.svg:hist_sosd_osm
+	plots/distributions/hist_sosd_fb.svg:hist_sosd_fb \
+	plots/distributions/hist_sosd_books.svg:hist_sosd_books \
+	plots/distributions/hist_sosd_wiki.svg:hist_sosd_wiki \
+	plots/distributions/hist_sosd_osm.svg:hist_sosd_osm
 
 figures:
 	mkdir -p $(FIG_DIR)
