@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1020" height="600" viewBox="0 0 1020 600">
 <defs><clipPath id="plot-region"><rect x="90.0" y="40.0" width="770.0" height="510.0"/></clipPath></defs>
 <style>text{font-family:Menlo,Monaco,monospace;font-size:22px;fill:#222} .axis{stroke:#333;stroke-width:1.5} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:20px;fill:#444}</style>
-<text x="510" y="30" text-anchor="middle" style="font-size:24px;font-weight:bold">Key Density — sosd_osm (n=800000000, 1000 bins)</text>
+<text x="510" y="30" text-anchor="middle" style="font-size:24px;font-weight:bold">OSM</text>
 <line class="axis" x1="90.0" y1="550.0" x2="860.0" y2="550.0"/>
 <line class="axis" x1="90.0" y1="40.0" x2="90.0" y2="550.0"/>
 <line class="grid" x1="90.0" y1="507.5" x2="860.0" y2="507.5"/>
@@ -49,7 +49,7 @@
 </g>
 <line x1="876" y1="60" x2="896" y2="60" stroke="#27ae60" stroke-width="2.5"/>
 <circle cx="886.0" cy="60.0" r="3.6" fill="#27ae60"/>
-<text class="label" x="902" y="64">sosd_osm</text>
+<text class="label" x="902" y="64">OSM</text>
 <text x="475" y="600" text-anchor="middle" style="font-size:22px">Normalized Key Position</text>
 <text transform="translate(22,295) rotate(-90)" text-anchor="middle" style="font-size:22px">Relative Density</text>
 </svg>

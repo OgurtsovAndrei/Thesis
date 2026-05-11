@@ -3,7 +3,7 @@
 
 The theoretical bounds of Section~\ref{sec:bounds} hold for any key set.
 In practice, keys in storage systems follow distributions shaped
-by the application domain, which tend to have some patterns.
+by the application domain.
 
 \subsection{Common Industrial Distributions}
 \label{subsec:common-industrial-distributions}
@@ -14,17 +14,20 @@ Keys in LSM-tree storage systems typically exhibit one or more of the following 
 Auto-incrementing primary keys, monotonic timestamps, log sequence numbers. Keys are
 approximately evenly spaced with small gaps.
 The key space is dense – the spread is much smaller than the universe.
+Among the Search on Sorted Data (SOSD)~\citep{kipf2019sosd} datasets, Facebook (user IDs), Books (popularity keys), and Wiki
+(edit timestamps) all fall into this category.
 
 \paragraph{Clustered.}
 Keys concentrate in a few dense regions separated by large gaps.
 Event logs keyed by user ID prefix + timestamp cluster around active users; inactive users leave gaps.
 Geospatial keys such as S2 cell IDs~\citep{s2geometry} cluster around populated areas, with sparse rural regions.
+OpenStreetMap (OSM) cell IDs are a representative example: they span nearly the full 64-bit space,
+yet most keys concentrate in a small fraction of it.
 
 \paragraph{Uniform-like.}
 UUIDs, cryptographic hashes, randomly generated tokens.
 Keys are spread across the full key space with no exploitable structure.
-This is the hardest case for distribution-aware
-optimizations.
+This is the hardest case for distribution-aware optimizations.
 
 \subsection{SOSD Benchmark Datasets}
 \label{sec:sosd}
@@ -39,24 +42,16 @@ Data) benchmark~\citep{kipf2019sosd}:
         Dataset & $n$ (full) & Character \\
         \midrule
         \textbf{Facebook} & 200M &
-        User IDs (uint64).
-        Highly clustered --- dense regions of
-        sequential IDs with large gaps between ID ranges. \\
+        User IDs from Facebook's social graph (uint64). \\
         \textbf{Books} & 200M &
-        ISBN sequences (uint32).
-        Clustered by publisher prefix,
-        near-sequential within each publisher. \\
+        Amazon book popularity keys (uint32). \\
         \textbf{Wiki} & 200M &
-        Wikipedia edit timestamps (uint64).
-        Moderately clustered ---
-        bursts of activity during events, quieter periods between. \\
+        Unix timestamps of Wikipedia article edits (uint64). \\
         \textbf{OSM} & 800M &
-        OpenStreetMap cell IDs (uint64). Geospatially clustered ---
-        dense in populated areas, sparse in oceans and deserts. \\
+        Hierarchical cell IDs covering global OpenStreetMap data (uint64). \\
         \bottomrule
     \end{tabular}
     \caption{SOSD datasets used in our evaluation.
-    All exhibit clustering to varying degrees --- none are uniform.
     Benchmarks in Chapter~\ref{chap:evaluation} use
     subsets of these datasets (e.g.\ $n = 2^{24}$)}
     \label{tab:sosd}
@@ -68,8 +63,26 @@ Data) benchmark~\citep{kipf2019sosd}:
     is smaller than the requested raw count.
 \end{remark}
 
-% TODO: regenerate histograms with better binning (rank-based or adaptive)
-\begin{figure}[h]
+\begin{table}[H]
+    \centering
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrcrrrrr@{}}
+        \toprule
+        Dataset  & $n$                   & $U$ [bits]    & P10               & P50               & P90               & mean \\
+        \midrule
+        Facebook & ${\approx}200\text{M}$ & 37           & 2                 & 28                & 693               & 387 \\
+        Wiki     & ${\approx}90\text{M}$  & 29           & 1                 & 1                 & 3                 & 3 \\
+        Books    & ${\approx}200\text{M}$ & 31           & 1                 & 2                 & 9                 & 5 \\
+        OSM      & 800M                   & 64           & $1.6\times10^{6}$ & $4.5\times10^{7}$ & $1.7\times10^{9}$ & $1.7\times10^{10}$ \\
+        \bottomrule
+    \end{tabular*}
+    \caption{Consecutive-key gap statistics for SOSD datasets after sort and deduplication.
+        $n$: effective key count.
+        $U$: key range in bits ($\lfloor\log_2(\max-\min)\rfloor + 1$).
+        Gaps are differences between adjacent sorted keys.}
+    \label{tab:sosd-gaps}
+\end{table}
+
+\begin{figure}[H]
     \centering
     \begin{tabular}{@{}cc@{}}
         \includegraphics[width=0.48\textwidth]{hist_sosd_fb} &
@@ -77,10 +90,7 @@ Data) benchmark~\citep{kipf2019sosd}:
         \includegraphics[width=0.48\textwidth]{hist_sosd_wiki} &
         \includegraphics[width=0.48\textwidth]{hist_sosd_osm} \\
     \end{tabular}
-    \caption{Key density histograms for SOSD datasets (1000 bins, log-scale Y-axis).
-    Facebook and Books concentrate keys in a narrow region of the key space.
-    Wiki shows a smooth density gradient. OSM is geospatially clustered with many
-    empty regions.}
+    \caption{Key density histograms for SOSD datasets (1000 bins, log-scale Y-axis).}
     \label{fig:sosd-histograms}
 \end{figure}
 
@@ -94,15 +104,12 @@ key sets:
     \item \textbf{Uniform:} keys drawn uniformly from $[0, 2^{60})$.
     Average gap $\approx 2^{60}/n$.
     No clustering.
-    Baseline for truncation-friendly data.
     \item \textbf{Clustered:} a mixture of Gaussian clusters with controlled parameters
     (number of clusters, intra-cluster spread, inter-cluster gap).
-    Models the typical
-    industrial pattern.
 \end{itemize}
 
-Together, the SOSD and synthetic datasets span the spectrum from highly clustered
-(Facebook, Books) through moderately structured (Wiki, OSM) to structureless (uniform
+Together, the SOSD and synthetic datasets span the spectrum from near-sequential
+(Facebook, Books, Wiki) through clustered (OSM) to structureless (uniform
 random) --- allowing us to evaluate each filter design across the range of distributions
 it may encounter in practice.
 
@@ -112,23 +119,54 @@ it may encounter in practice.
 We assume that queries target regions of the key space where stored keys are dense,
 rather than arbitrary empty regions.
 
-\begin{remark}
-    This holds for most workloads, where queries reflect the application state and
-    therefore concentrate on regions that contain data.
-\end{remark}
+\begin{assumption}
+    Queries reflect the application state and therefore concentrate on
+    regions that contain data.
+\end{assumption}
 
-This assumption has two consequences:
-\begin{enumerate}
-    \item FPR in sparse regions of the key space matters less --- queries rarely land there.
-    \item Dense regions dominate the effective FPR experienced by the application.
-\end{enumerate}
+Consequently, FPR in sparse regions of the key space matters less --- dense regions
+dominate the effective FPR experienced by the application.
 
 The SODA hash (Section~\ref{sec:soda}) ignores this assumption entirely --- it provides
 worst-case guarantees for any distribution. The truncation hash
 (Section~\ref{sec:truncation}) performs well only under uniformity. The hybrid approaches
 (Chapter~\ref{chap:hybrid}) explicitly exploit it by isolating dense regions.
 
-\colorbox{orange}{TODO: we will use this Assumption to gen queries}
+Section~\ref{sec:query-distribution} operationalizes this assumption
+in the query workload.
 
-\section{How we generate queries}\label{sec:how-we-generate-queries}
-\colorbox{orange}{TODO}
+\section{Query generation}\label{sec:query-distribution}
+
+All benchmarks measure FPR on \emph{empty} queries --- range queries
+$[a, b]$ that contain no stored key, so every positive answer is a
+false positive by definition.
+
+Queries are drawn from a three-bucket mixture that reflects
+the assumption of Section~\ref{subsec:assumption}:
+
+\begin{itemize}
+    \item \textbf{50\% near-key.}
+    A random stored key $k$ is chosen; the query start is drawn
+    uniformly from $[k - 5L,\; k + 5L)$ and clamped to the nearest gap.
+    Models application lookups that miss by a small margin.
+    \item \textbf{30\% in-gap.}
+    A random gap between two adjacent keys is selected uniformly;
+    the query is placed entirely inside it.
+    Models misses in locally dense regions.
+    \item \textbf{20\% uniform.}
+    A random start is drawn uniformly from $[\min k, \max k]$ and
+    clamped to the nearest gap.
+    Ensures coverage of the full key span.
+\end{itemize}
+
+All three buckets produce queries that land in the dense part of the
+key space, consistent with the assumption.
+
+When a candidate query $[a, a+L)$ would contain a stored key $k^*$,
+it is \emph{truncated} to $[a, k^* - 1]$ rather than discarded and
+resampled.
+Truncation preserves queries that start inside a cluster and end
+between two closely-spaced keys, which would otherwise be rejected
+every time --- biasing the workload towards cluster boundaries and
+missing the harder case of a query landing deep inside a dense region.
+The effective range length may therefore be smaller than $L$.
