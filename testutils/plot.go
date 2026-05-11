@@ -270,7 +270,11 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 			logSpan := math.Log10(maxY) - math.Log10(minY)
 			pad := math.Max(0.15, logSpan*0.10)
 			lMin = math.Log10(minY) - pad
-			lMax = math.Log10(maxY) + pad
+			if cfg.YCeil > 0 {
+				lMax = math.Log10(cfg.YCeil) // no padding — axis top is exactly YCeil
+			} else {
+				lMax = math.Log10(maxY) + pad
+			}
 		}
 		yToPlot = func(y float64) float64 {
 			if y <= 0 {
