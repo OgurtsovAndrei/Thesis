@@ -6,19 +6,26 @@
 
 \subsection{The Hash Function}
 
-An alternative locality-preserving hash: $h(x) = \lfloor x / 2^t \rfloor$, keeping the
-top $K = L - t$ bits of each key.
+ERE size grows with the bit-length of keys.
+We need to compress keys into a smaller range $[0, 2^K)$ while preserving locality – so
+that a query interval maps to a bounded number of intervals in the compressed space.
+This need not be a hash in the cryptographic sense; the simplest locality-preserving
+compression is plain bit-truncation:
+\[
+    h(x) = \lfloor x / 2^t \rfloor,
+\]
+keeping the top $K = L - t$ bits of each key.
 
 Properties of the hash:
 \begin{itemize}
     \item \textbf{Locality-preserving:} truncation preserves order --- if $a < b$, then
-    $h(a) \leq h(b)$. Intervals map to intervals.
-    \item \textbf{Contiguous phantoms:} the phantom points of each stored key $x$
-    are confined to an interval of length~$2^t$ in the original universe --- all non-keys
-    sharing the same $K$-bit prefix as $x$. This contrasts with the SODA hash, where phantoms
-    are scattered uniformly.
-    \item \textbf{$O(1)$ storage:} the hash is a bit-shift --- stores only the shift
-    amount~$t$.
+    $h(a) \leq h(b)$.
+    Intervals map to intervals.
+    \item \textbf{Contiguous phantoms:} recall that the phantom points of a key $x$ are
+    all non-keys $y$ with $h(y) = h(x)$ --- the false pre-images that cause false positives.
+    Under truncation they all fall within an interval of length~$2^t$ in the
+    original universe: exactly the non-keys sharing the same $K$-bit prefix as $x$.
+    This contrasts with the SODA hash, where phantoms are scattered uniformly.
 \end{itemize}
 
 \begin{figure}[h]
@@ -38,7 +45,7 @@ Combining truncation with ERE yields a filter where the contiguous phantom struc
     \item \textbf{SODA hash:} phantoms scattered $\Rightarrow$ collision zone per key is
     $\mathcal{L} \times 2^t$.
     \item \textbf{Truncation:} phantoms contiguous $\Rightarrow$ collision zone per key is
-    $\mathcal{L} + 2^t$.
+    $2^t - 1$.
 \end{itemize}
 
 The additive (rather than multiplicative) interaction eliminates the $\mathcal{L}$
@@ -52,7 +59,7 @@ factor from the filter's space formula:
         \midrule
         Random (SODA) & $\mathcal{L} \times 2^t$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
         $\log_2(\mathcal{L}/\varepsilon) + O(1)$ \\
-        Truncation & $\mathcal{L} + 2^t$ & $\log_2(2n/\varepsilon)$ &
+        Truncation & $2^t - 1$ & $\log_2(2n/\varepsilon)$ &
         $\log_2(1/\varepsilon) + O(1)$ \\
         \bottomrule
     \end{tabular}

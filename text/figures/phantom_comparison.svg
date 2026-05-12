@@ -1,118 +1,150 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" font-family="sans-serif" font-size="13">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" font-family="sans-serif" font-size="13">
 
-  <!-- Title -->
-  <text x="360" y="24" text-anchor="middle" font-size="15" font-weight="bold">Phantom points and false-positive query ranges (for a single stored key x)</text>
+  <!-- ============================================================ -->
+  <!-- TITLE                                                        -->
+  <!-- ============================================================ -->
+  <text x="380" y="22" text-anchor="middle" font-size="15" font-weight="bold">Phantom points and false-positive query ranges (for a single stored key x)</text>
 
-  <!-- ============================== -->
-  <!-- U' axis (middle) with point x' -->
-  <!-- ============================== -->
-  <text x="20" y="62" font-weight="bold" font-size="13">U' (projected universe)</text>
+  <!-- ============================================================ -->
+  <!-- SHARED: U' AXIS (projected universe, sits above both halves) -->
+  <!-- x' = h(x) = hash image of the stored key                    -->
+  <!-- ============================================================ -->
+  <text x="20" y="53" font-weight="bold" font-size="13">U' (projected universe)</text>
+  <line x1="60" y1="72" x2="700" y2="72" stroke="#333" stroke-width="2"/>
+  <!-- x' point -->
+  <circle cx="370" cy="72" r="6" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/>
+  <text x="370" y="62" text-anchor="middle" font-size="13" font-weight="bold" fill="#e65100">x'</text>
+  <!-- caption -->
+  <text x="455" y="67" font-size="12" fill="#888">h(y) = x' for all phantoms y</text>
 
-  <!-- axis -->
-  <line x1="60" y1="85" x2="680" y2="85" stroke="#333" stroke-width="2"/>
-  <!-- point x' -->
-  <circle cx="360" cy="85" r="6" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/>
-  <text x="360" y="75" text-anchor="middle" font-size="13" font-weight="bold" fill="#e65100">x'</text>
+  <!-- ============================================================ -->
+  <!-- SECTION 1: RANDOM HASH                                       -->
+  <!-- Phantoms scattered uniformly; each gets its own L-strip      -->
+  <!-- ============================================================ -->
 
-  <!-- arrows from phantoms to x' -->
-  <!-- these will be drawn per section -->
-
-  <!-- ======================== -->
-  <!-- RANDOM HASH (top half)   -->
-  <!-- ======================== -->
-  <text x="20" y="130" font-weight="bold" font-size="14">Random hash — phantoms in U</text>
-  <text x="20" y="148" font-size="13" fill="#555">Points y ∈ Y mapped to x' are scattered across U</text>
-
-  <!-- U axis -->
-  <line x1="60" y1="190" x2="680" y2="190" stroke="#333" stroke-width="1.5"/>
-  <text x="50" y="194" text-anchor="end" font-size="13" fill="#666">U</text>
-
-  <!-- L-strips (danger zones) — one per phantom -->
-  <!-- phantom 1 at ~150 -->
-  <rect x="80" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
-  <circle cx="150" cy="190" r="5" fill="#d32f2f"/>
-  <text x="115" y="225" text-anchor="middle" font-size="13" fill="#d32f2f">L</text>
-
-  <!-- phantom 2 at ~260 -->
-  <rect x="190" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
-  <circle cx="260" cy="190" r="5" fill="#d32f2f"/>
-  <text x="225" y="225" text-anchor="middle" font-size="13" fill="#d32f2f">L</text>
-
-  <!-- phantom 3 at ~380 -->
-  <rect x="310" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
-  <circle cx="380" cy="190" r="5" fill="#d32f2f"/>
-  <text x="345" y="225" text-anchor="middle" font-size="13" fill="#d32f2f">L</text>
-
-  <!-- phantom 4 at ~500 -->
-  <rect x="430" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
-  <circle cx="500" cy="190" r="5" fill="#d32f2f"/>
-  <text x="465" y="225" text-anchor="middle" font-size="13" fill="#d32f2f">L</text>
-
-  <!-- phantom 5 at ~610 -->
-  <rect x="540" y="170" width="70" height="40" fill="#ff6b6b" opacity="0.25" rx="2"/>
-  <circle cx="610" cy="190" r="5" fill="#d32f2f"/>
-  <text x="575" y="225" text-anchor="middle" font-size="13" fill="#d32f2f">L</text>
-
-  <!-- arrows from phantoms down to x' -->
-  <line x1="150" y1="170" x2="358" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-  <line x1="260" y1="170" x2="359" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-  <line x1="380" y1="170" x2="360" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-  <line x1="500" y1="170" x2="361" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-  <line x1="610" y1="170" x2="362" y2="92" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-
-  <!-- annotation -->
-  <text x="370" y="248" text-anchor="middle" font-size="13" fill="#d32f2f">
-    Collision zone ≈ L × 2&#x1D57; (strips don't overlap)
-  </text>
-
-  <!-- divider -->
-  <line x1="40" y1="268" x2="700" y2="268" stroke="#ccc" stroke-width="1" stroke-dasharray="6,4"/>
-
-  <!-- ======================== -->
-  <!-- TRUNCATION (bottom half) -->
-  <!-- ======================== -->
-  <text x="20" y="295" font-weight="bold" font-size="14">Truncation — phantoms in U</text>
-  <text x="20" y="313" font-size="13" fill="#555">Points y ∈ Y mapped to x' form one contiguous block of size 2&#x1D57;</text>
+  <!-- section header -->
+  <text x="20" y="103" font-weight="bold" font-size="14">Random hash — phantoms in U</text>
+  <text x="20" y="119" font-size="12" fill="#555">Points y ∈ Y mapped to x' are scattered across U</text>
 
   <!-- U axis -->
-  <line x1="60" y1="355" x2="680" y2="355" stroke="#333" stroke-width="1.5"/>
-  <text x="50" y="359" text-anchor="end" font-size="13" fill="#666">U</text>
+  <line x1="60" y1="158" x2="700" y2="158" stroke="#333" stroke-width="1.5"/>
+  <text x="50" y="162" text-anchor="end" font-size="12" fill="#666">U</text>
 
-  <!-- contiguous phantom block -->
-  <rect x="310" y="343" width="100" height="24" fill="#2a7fff" opacity="0.35" rx="2"/>
-  <circle cx="320" cy="355" r="4" fill="#1565c0"/>
-  <circle cx="340" cy="355" r="4" fill="#1565c0"/>
-  <circle cx="360" cy="355" r="4" fill="#1565c0"/>
-  <circle cx="380" cy="355" r="4" fill="#1565c0"/>
-  <circle cx="400" cy="355" r="4" fill="#1565c0"/>
+  <!-- collision strips: one green L-width rect centered on each phantom -->
+  <!-- strip 1 — phantom at cx=130 -->
+  <rect x="95"  y="142" width="70" height="32" fill="#4caf50" opacity="0.22" rx="2" stroke="#4caf50" stroke-width="0.8" stroke-dasharray="3,2"/>
+  <!-- strip 2 — phantom at cx=245 -->
+  <rect x="210" y="142" width="70" height="32" fill="#4caf50" opacity="0.22" rx="2" stroke="#4caf50" stroke-width="0.8" stroke-dasharray="3,2"/>
+  <!-- strip 3 — phantom at cx=355 -->
+  <rect x="320" y="142" width="70" height="32" fill="#4caf50" opacity="0.22" rx="2" stroke="#4caf50" stroke-width="0.8" stroke-dasharray="3,2"/>
+  <!-- strip 4 — phantom at cx=495 -->
+  <rect x="460" y="142" width="70" height="32" fill="#4caf50" opacity="0.22" rx="2" stroke="#4caf50" stroke-width="0.8" stroke-dasharray="3,2"/>
+  <!-- strip 5 — phantom at cx=615 -->
+  <rect x="580" y="142" width="70" height="32" fill="#4caf50" opacity="0.22" rx="2" stroke="#4caf50" stroke-width="0.8" stroke-dasharray="3,2"/>
 
-  <!-- arrows from block up to x' -->
-  <line x1="320" y1="343" x2="358" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-  <line x1="360" y1="343" x2="360" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
-  <line x1="400" y1="343" x2="362" y2="92" stroke="#1565c0" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <!-- L size labels (one per strip) -->
+  <text x="130" y="191" text-anchor="middle" font-size="12" fill="#388e3c">L</text>
+  <text x="245" y="191" text-anchor="middle" font-size="12" fill="#388e3c">L</text>
+  <text x="355" y="191" text-anchor="middle" font-size="12" fill="#388e3c">L</text>
+  <text x="495" y="191" text-anchor="middle" font-size="12" fill="#388e3c">L</text>
+  <text x="615" y="191" text-anchor="middle" font-size="12" fill="#388e3c">L</text>
 
-  <!-- 2^t bracket under block -->
-  <line x1="310" y1="373" x2="410" y2="373" stroke="#1565c0" stroke-width="1.5"/>
-  <line x1="310" y1="369" x2="310" y2="377" stroke="#1565c0" stroke-width="1.5"/>
-  <line x1="410" y1="369" x2="410" y2="377" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="360" y="388" text-anchor="middle" font-size="13" fill="#1565c0">2&#x1D57;</text>
+  <!-- phantom points (red) -->
+  <circle cx="130" cy="158" r="5" fill="#d32f2f"/>
+  <circle cx="245" cy="158" r="5" fill="#d32f2f"/>
+  <circle cx="355" cy="158" r="5" fill="#d32f2f"/>
+  <circle cx="495" cy="158" r="5" fill="#d32f2f"/>
+  <circle cx="615" cy="158" r="5" fill="#d32f2f"/>
 
-  <!-- single collision zone: L to the left of block + block itself -->
-  <rect x="240" y="335" width="170" height="40" fill="#4caf50" opacity="0.18" rx="2" stroke="#4caf50" stroke-width="1" stroke-dasharray="4,3"/>
+  <!-- stored key x (blue, larger) — sits between strip 3 and strip 4, no collision strip -->
+  <circle cx="425" cy="158" r="7" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+  <text x="425" y="145" text-anchor="middle" font-size="12" font-weight="bold" fill="#0d47a1">x</text>
 
-  <!-- L bracket -->
-  <line x1="240" y1="400" x2="310" y2="400" stroke="#4caf50" stroke-width="1.5"/>
-  <line x1="240" y1="396" x2="240" y2="404" stroke="#4caf50" stroke-width="1.5"/>
-  <line x1="310" y1="396" x2="310" y2="404" stroke="#4caf50" stroke-width="1.5"/>
-  <text x="275" y="416" text-anchor="middle" font-size="13" fill="#388e3c">L</text>
+  <!-- arrows: each phantom maps up to x' in U' -->
+  <line x1="130" y1="142" x2="368" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="245" y1="142" x2="369" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="355" y1="142" x2="370" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="495" y1="142" x2="371" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="615" y1="142" x2="372" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <!-- x also maps to x' -->
+  <line x1="425" y1="151" x2="373" y2="79" stroke="#1565c0" stroke-width="1.1" stroke-dasharray="3,3" opacity="0.7"/>
 
-  <!-- total bracket -->
-  <line x1="240" y1="430" x2="410" y2="430" stroke="#333" stroke-width="1"/>
-  <line x1="240" y1="426" x2="240" y2="434" stroke="#333" stroke-width="1"/>
-  <line x1="410" y1="426" x2="410" y2="434" stroke="#333" stroke-width="1"/>
-  <text x="325" y="450" text-anchor="middle" font-size="13" fill="#333">Collision zone ≈ L + 2&#x1D57;</text>
+  <!-- collision zone label -->
+  <text x="375" y="210" text-anchor="middle" font-size="13" fill="#388e3c">Collision zone ≈ L × (2&#x1D57;-1) (strips don't overlap)</text>
 
-  <!-- h(y) = x' label on U' axis -->
-  <text x="440" y="80" font-size="13" fill="#888">h(y) = x' for all phantoms y</text>
+  <!-- ============================================================ -->
+  <!-- DIVIDER                                                      -->
+  <!-- ============================================================ -->
+  <line x1="40" y1="226" x2="720" y2="226" stroke="#ccc" stroke-width="1" stroke-dasharray="6,4"/>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: TRUNCATION                                        -->
+  <!-- Phantoms form one contiguous block of size 2^t around x     -->
+  <!-- Total points in block = 2^t = 8 (7 phantoms + 1 stored key) -->
+  <!-- ============================================================ -->
+
+  <!-- section header -->
+  <text x="20" y="250" font-weight="bold" font-size="14">Truncation — phantoms in U</text>
+  <text x="20" y="265" font-size="12" fill="#555">Points y ∈ Y mapped to x' form one contiguous block of size 2&#x1D57;</text>
+
+  <!-- U axis -->
+  <line x1="60" y1="310" x2="700" y2="310" stroke="#333" stroke-width="1.5"/>
+  <text x="50" y="314" text-anchor="end" font-size="12" fill="#666">U</text>
+
+  <!-- phantom block background [268, 436] = 2^t wide -->
+  <rect x="268" y="299" width="168" height="22" fill="#2a7fff" opacity="0.13" rx="2"/>
+
+  <!-- left collision zone: 3 phantoms closest to x on the left (296, 314, 332) -->
+  <rect x="247" y="297" width="78" height="26" fill="#4caf50" opacity="0.28" rx="2" stroke="#4caf50" stroke-width="0.9" stroke-dasharray="3,2"/>
+
+  <!-- right collision zone: 3 phantoms closest to x on the right (388, 406, 424) -->
+  <rect x="398" y="297" width="58" height="26" fill="#4caf50" opacity="0.28" rx="2" stroke="#4caf50" stroke-width="0.9" stroke-dasharray="3,2"/>
+
+  <!-- outermost left phantom — outside collision zone (278) -->
+  <circle cx="278" cy="310" r="5" fill="#d32f2f"/>
+
+  <!-- left collision zone phantoms (296, 314, 332) -->
+  <circle cx="296" cy="310" r="5" fill="#d32f2f"/>
+  <circle cx="314" cy="310" r="5" fill="#d32f2f"/>
+  <circle cx="332" cy="310" r="5" fill="#d32f2f"/>
+
+  <!-- right collision zone phantoms (388, 406, 424) -->
+  <circle cx="388" cy="310" r="5" fill="#d32f2f"/>
+  <circle cx="406" cy="310" r="5" fill="#d32f2f"/>
+  <circle cx="424" cy="310" r="5" fill="#d32f2f"/>
+
+  <!-- stored key x (blue, larger) — in the gap between the two collision zones -->
+  <circle cx="360" cy="310" r="7" fill="#1565c0" stroke="#0d47a1" stroke-width="1.5"/>
+  <text x="360" y="298" text-anchor="middle" font-size="12" font-weight="bold" fill="#0d47a1">x</text>
+
+  <!-- safe-zone annotation: queries containing x are not false positives -->
+  <!-- text offset left to avoid overlapping the x label -->
+  <text x="408" y="284" text-anchor="middle" font-size="10" fill="#555">queries contain x</text>
+  <text x="388" y="296" text-anchor="middle" font-size="10" fill="#555">→ not FP</text>
+  <line x1="268" y1="296" x2="352" y2="308" stroke="#555" stroke-width="0.8" opacity="0.5" stroke-dasharray="2,2"/>
+
+  <!-- arrows: representative phantoms map up to x' -->
+  <line x1="296" y1="297" x2="369" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.45"/>
+  <line x1="424" y1="297" x2="371" y2="79" stroke="#d32f2f" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.45"/>
+  <!-- x also maps to x' -->
+  <line x1="360" y1="303" x2="370" y2="79" stroke="#1565c0" stroke-width="1.1" stroke-dasharray="3,3" opacity="0.65"/>
+
+  <!-- 2^t size bracket under phantom block -->
+  <line x1="268" y1="330" x2="436" y2="330" stroke="#1565c0" stroke-width="1.4"/>
+  <line x1="268" y1="326" x2="268" y2="334" stroke="#1565c0" stroke-width="1.4"/>
+  <line x1="436" y1="326" x2="436" y2="334" stroke="#1565c0" stroke-width="1.4"/>
+  <text x="352" y="344" text-anchor="middle" font-size="12" fill="#1565c0">2&#x1D57;</text>
+
+  <!-- two collision zone segments — one per green zone -->
+  <!-- left segment under left collision zone [247, 325] -->
+  <line x1="247" y1="356" x2="325" y2="356" stroke="#388e3c" stroke-width="1.2"/>
+  <line x1="247" y1="352" x2="247" y2="360" stroke="#388e3c" stroke-width="1.2"/>
+  <line x1="325" y1="352" x2="325" y2="360" stroke="#388e3c" stroke-width="1.2"/>
+  <!-- right segment under right collision zone [398, 456] -->
+  <line x1="398" y1="356" x2="456" y2="356" stroke="#388e3c" stroke-width="1.2"/>
+  <line x1="398" y1="352" x2="398" y2="360" stroke="#388e3c" stroke-width="1.2"/>
+  <line x1="456" y1="352" x2="456" y2="360" stroke="#388e3c" stroke-width="1.2"/>
+  <!-- combined label -->
+  <text x="352" y="378" text-anchor="middle" font-size="13" fill="#388e3c">Collision zone ≈ 2&#x1D57; &#x2212; 1</text>
 
 </svg>
