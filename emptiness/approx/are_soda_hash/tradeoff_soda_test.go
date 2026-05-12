@@ -2,6 +2,7 @@ package are_soda_hash_test
 
 import (
 	"Thesis/emptiness/approx/are_soda_hash"
+	"Thesis/emptiness/exact"
 	"Thesis/testutils"
 	"fmt"
 	"math"
@@ -17,7 +18,7 @@ const mask60 = (uint64(1) << 60) - 1
 func TestTradeoff_SodaPlots(t *testing.T) {
 	t.Skip("skip: overwrites SVGs with manual annotations")
 	const (
-		n          = 1 << 18
+		n          = 1 << 20
 		queryCount = 1 << 18
 		nRuns      = 3
 		rangeLen   = uint64(128)
@@ -132,7 +133,7 @@ func TestTradeoff_SodaPlots(t *testing.T) {
 			var tasks []task
 
 			for _, K := range kGrid {
-				if f, err := are_soda_hash.NewSodaAREFromK(dist.keys, K, int64(rangeLen)); err == nil {
+				if f, err := are_soda_hash.NewSodaAREFromKWithBackend(dist.keys, K, int64(rangeLen), exact.VariantOneD); err == nil {
 					bpk := float64(f.SizeInBits()) / float64(len(dist.keys))
 					f := f
 					tasks = append(tasks, task{K, bpk,

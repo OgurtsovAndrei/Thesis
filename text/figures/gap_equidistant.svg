@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" font-family="system-ui, -apple-system, sans-serif">
+  <rect width="720" height="260" fill="white"/>
+
+  <!-- Title -->
+  <text x="360" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Gap-percentile on equidistant keys</text>
+
+  <!-- === Top: clustered data (works) === -->
+  <g transform="translate(40, 50)">
+    <text x="0" y="0" font-size="11" font-weight="600" fill="#16a34a">Clustered data (bimodal gaps) &#x2714;</text>
+
+    <!-- Number line -->
+    <line x1="0" y1="24" x2="640" y2="24" stroke="#94a3b8" stroke-width="1.2"/>
+
+    <!-- Cluster 1: tight keys -->
+    <circle cx="30" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="38" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="46" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="54" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="62" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="70" cy="24" r="3" fill="#3b82f6"/>
+
+    <!-- Big gap -->
+    <line x1="80" y1="34" x2="200" y2="34" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="140" y="48" text-anchor="middle" font-size="9" fill="#ef4444">big gap &gt; P95</text>
+
+    <!-- Cluster 2 -->
+    <circle cx="210" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="220" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="230" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="240" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="250" cy="24" r="3" fill="#3b82f6"/>
+
+    <!-- Big gap -->
+    <line x1="260" y1="34" x2="400" y2="34" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="330" y="48" text-anchor="middle" font-size="9" fill="#ef4444">big gap &gt; P95</text>
+
+    <!-- Cluster 3 -->
+    <circle cx="410" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="418" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="426" cy="24" r="3" fill="#3b82f6"/>
+    <circle cx="434" cy="24" r="3" fill="#3b82f6"/>
+
+    <!-- Scattered noise -->
+    <circle cx="500" cy="24" r="2.5" fill="#9333ea" opacity="0.5"/>
+    <circle cx="560" cy="24" r="2.5" fill="#9333ea" opacity="0.5"/>
+    <circle cx="610" cy="24" r="2.5" fill="#9333ea" opacity="0.5"/>
+
+    <!-- Gap histogram sketch (right) -->
+    <text x="540" y="48" text-anchor="middle" font-size="9" fill="#64748b">gaps: small small BIG small BIG ...</text>
+    <text x="540" y="60" text-anchor="middle" font-size="9" font-weight="600" fill="#16a34a">P95 clearly separates modes</text>
+  </g>
+
+  <!-- === Bottom: equidistant data (fails) === -->
+  <g transform="translate(40, 150)">
+    <text x="0" y="0" font-size="11" font-weight="600" fill="#dc2626">Equidistant data (unimodal gaps) &#x2718;</text>
+
+    <!-- Number line -->
+    <line x1="0" y1="24" x2="640" y2="24" stroke="#94a3b8" stroke-width="1.2"/>
+
+    <!-- Equidistant keys -->
+    <circle cx="30" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="70" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="110" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="150" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="190" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="230" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="270" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="310" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="350" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="390" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="430" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="470" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="510" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="550" cy="24" r="3" fill="#f59e0b"/>
+    <circle cx="590" cy="24" r="3" fill="#f59e0b"/>
+
+    <!-- Equal gap markers -->
+    <text x="50" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="90" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="130" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="170" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="210" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="250" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="290" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="330" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="370" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="410" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="450" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="490" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="530" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+    <text x="570" y="16" text-anchor="middle" font-size="8" fill="#94a3b8">g</text>
+
+    <!-- Explanation -->
+    <text x="310" y="48" text-anchor="middle" font-size="9" fill="#64748b">all gaps equal: g = g = g = ... = g</text>
+    <text x="310" y="62" text-anchor="middle" font-size="9" fill="#64748b">P95 = g &#x2192; threshold = g</text>
+    <text x="310" y="76" text-anchor="middle" font-size="9" font-weight="600" fill="#dc2626">g &gt; g is false for every gap &#x2192; no split &#x2192; one giant segment</text>
+    <text x="310" y="90" text-anchor="middle" font-size="9" fill="#9333ea">(with &#x2265; instead: every gap is a split &#x2192; n segments of 1 &#x2192; all fallback)</text>
+  </g>
+</svg>
