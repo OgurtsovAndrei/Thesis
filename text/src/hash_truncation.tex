@@ -32,9 +32,15 @@ Properties of the hash:
     \centering
     \includegraphics[width=0.85\textwidth]{phantom_comparison}
     \caption{Phantom point distribution: random hash (SODA) scatters phantoms uniformly
-    across $U$; truncation concentrates them in a contiguous block adjacent to the key.}
+    across $U$; truncation concentrates them in the contiguous $2^t$-point block that contains the key.}
     \label{fig:phantom-comparison}
 \end{figure}
+
+\begin{remark}
+    Throughout this section, $2^t = 2^{L - K}$ is the universe compression factor; the number of
+    original-universe points that hash to the same value in $[0, 2^K)$.
+    For truncation this matches the definition: $t$ bits are dropped from the back of each key.
+\end{remark}
 
 \subsection{ARE Construction With Truncation}
 
@@ -43,9 +49,9 @@ Combining truncation with ERE yields a filter where the contiguous phantom struc
 
 \begin{itemize}
     \item \textbf{SODA hash:} phantoms scattered $\Rightarrow$ collision zone per key is
-    $\mathcal{L} \times 2^t$.
-    \item \textbf{Truncation:} phantoms contiguous $\Rightarrow$ collision zone per key is
-    $2^t - 1$.
+    $\mathcal{L} \times (2^t - 1)$ (Section~\ref{sec:soda}).
+    \item \textbf{Truncation:} phantoms contiguous in one block $\Rightarrow$ a query
+    overlaps the block from at most $2^t - 1$ positions, giving collision zone $2^t - 1$.
 \end{itemize}
 
 The additive (rather than multiplicative) interaction eliminates the $\mathcal{L}$
@@ -57,7 +63,7 @@ factor from the filter's space formula:
         \toprule
         Hash & Collision zone & $K$ for FPR $\leq \varepsilon$ & Filter BPK \\
         \midrule
-        Random (SODA) & $\mathcal{L} \times 2^t$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
+        Random (SODA) & $\mathcal{L} \times (2^t-1)$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
         $\log_2(\mathcal{L}/\varepsilon) + O(1)$ \\
         Truncation & $2^t - 1$ & $\log_2(2n/\varepsilon)$ &
         $\log_2(1/\varepsilon) + O(1)$ \\
@@ -68,32 +74,10 @@ factor from the filter's space formula:
     \label{tab:trunc-vs-soda}
 \end{table}
 
-\subsection{The Price of Contiguity}
-\label{sec:trunc-failure}
-
-The same property that reduces the filter's space is also the fundamental weakness: all
-false positives are concentrated near stored keys. For a stored key~$x$, its phantoms
-are confined to the $2^t$ consecutive points sharing the same $K$-bit prefix as~$x$, making this
-the only region that can produce false positives.
-
-When inter-key gaps are smaller than the phantom size~$2^t$, phantom intervals of
-neighboring keys overlap and FPR approaches 100\%. This occurs with:
-\begin{itemize}
-    \item \textbf{Sequential keys} ($x, x{+}1, x{+}2, \ldots$): every gap is covered by
-    phantoms from both sides.
-    \item \textbf{Clustered keys}: phantom intervals overlap, covering the cluster without gaps.
-\end{itemize}
-
-Only uniformly spread keys with gaps $\gg 2^t$ achieve the theoretical FPR --- a narrow
-use case (Figure~\ref{fig:trunc-uniform}). The SODA hash avoids this entirely: pairwise
-independence scatters phantoms uniformly, giving $\Pr[h(x_1) = h(x_2)] \leq 1/r$ for
-any distribution, at the cost of $\log_2(\mathcal{L})$ extra bits per key in the
-resulting filter.
-
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{trunc_tradeoff_uniform}
-    \caption{FPR vs BPK for truncation vs SODA on uniform keys ($n = 2^{18}$,
+    \caption{FPR vs BPK for truncation vs SODA on uniform keys ($n = 2^{20}$,
         $\mathcal{L} = 128$). The SODA curve is shifted right by
         ${\approx}\log_2(128) = 7$~BPK --- matching the theoretical prediction.}
     \label{fig:trunc-uniform}
@@ -101,13 +85,125 @@ resulting filter.
 
 \FloatBarrier
 
+\subsection{The Price of Contiguity}
+\label{subsec:trunc-failure}
+
+The same contiguity that saves space is also the weakness.
+
+\subsubsection{FPR for Uniform Key Spacing}
+\label{subsubsec:trunc-fpr}
+
+Let $R$ denote the uniform gap between consecutive keys.
+Assume keys $x_0,\, x_0{+}R,\, x_0{+}2R,\ldots$
+A query $[q,\, q{+}\mathcal{L}{-}1]$ is truly empty iff it fits inside a gap:
+$q = x_i + s$, $s \in (1,\, R{-}\mathcal{L}]$.
+
+А false positive requires some key's hash value to fall inside $h([q, q+\mathcal{L}-1])$.
+Since the query lies in a gap between $x_i$ and $x_{i+1}$, and $h$ is order-preserving,
+all other keys are further away and their hash values fall outside this interval ---
+only the two immediate neighbors can contribute.
+Let $\alpha = q \bmod 2^t$ be the offset of the query start within its block.
+\begin{itemize}
+    \item \textbf{Left:} $x_i$ shares a block with $q$ iff $s \leq \alpha$
+    (since $q = x_i + s$, both lie in the same block requires $s \leq \alpha$).
+    \item \textbf{Right:} $x_{i+1} = x_i + R$ shares a block with $q{+}\mathcal{L}{-}1$ iff
+    $R - s - \mathcal{L} \leq 2^t - 1 - (\alpha + \mathcal{L} - 1) \bmod 2^t$.
+\end{itemize}
+
+When $\alpha \leq 2^t - \mathcal{L}$ (query in one block), the two conditions together cover
+$2^t - \mathcal{L}$ values of $s$; when $\alpha > 2^t - \mathcal{L}$ (query spans two blocks),
+they cover $2{\cdot}2^t - \mathcal{L}$ values.
+Averaging over $\alpha \sim \mathrm{Uniform}[0, 2^t)$:
+\begin{equation}
+    \Pr[\text{positive} \mid \text{empty query}]
+    \;=\; \frac{(2^t - \mathcal{L})^2 + \mathcal{L}(2{\cdot}2^t - \mathcal{L})}{2^t\,(R - \mathcal{L})}
+    \;=\; \frac{2^{2t}}{2^t\,(R - \mathcal{L})}
+    \;=\; \frac{2^t}{R - \mathcal{L}}.
+    \label{eq:trunc-fpr}
+\end{equation}
+
+Capping at 1 and handling the $R \leq \mathcal{L}$ case:
+\[
+    \mathrm{FPR} =
+    \begin{cases}
+        0 & R \leq \mathcal{L} \text{ (no empty queries)}, \\
+        \min\!\bigl(1,\ 2^t/(R - \mathcal{L})\bigr) & R > \mathcal{L}.
+    \end{cases}
+\]
+
+Dense or sequential keys ($R \leq \mathcal{L}$) have FPR~$= 0$ for free: every query
+of length $\mathcal{L}$ hits a key, so the filter is exact.
+Low FPR requires $R - \mathcal{L} \gg 2^t$; when $R - \mathcal{L} \lesssim 2^t$
+the phantom block covers most of the gap and FPR approaches~1.
+
+\subsubsection*{Breakdown thresholds for SOSD datasets}
+
+From Eq.~\eqref{eq:trunc-fpr}, high FPR occurs when $2^t \gtrsim R - \mathcal{L}$,
+so the critical truncation depth is $t^* = \lfloor\log_2(R - \mathcal{L})\rfloor$.
+Table~\ref{tab:trunc-breakdown} shows $t^*$ for typical SOSD gaps and several query lengths.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{@{}llrrrr@{}}
+        \toprule
+        Dataset       & Typical $R$     & $\mathcal{L}=4$ & $\mathcal{L}=16$ & $\mathcal{L}=128$ & $\mathcal{L}=1024$ \\
+        \midrule
+        Wiki / Books  & 1--5            & $0^*$           & $0^*$            & $0^*$             & $0^*$              \\
+        Facebook P50  & 28              & 4               & 3                & $0^*$             & $0^*$              \\
+        Facebook mean & 387             & 8               & 8                & 8                 & $0^*$              \\
+        OSM P50       & $4.5\times10^7$ & 25              & 25               & 25                & 25                 \\
+        \bottomrule
+        \multicolumn{6}{l}{\footnotesize ${}^{*}$~$R \leq \mathcal{L}$: every query contains a key.}
+    \end{tabular}
+    \caption{Critical truncation depth $t^*$ at which FPR~$\to 1$ for SOSD gap statistics
+        (Table~\ref{tab:sosd-gaps}) and varying query length~$\mathcal{L}$.}
+    \label{tab:trunc-breakdown}
+\end{table}
+
+Wiki and Books have gaps well below any practical $\mathcal{L}$, so every query hits a key.
+Facebook's tail (gaps up to ${\sim}700$) breaks at $t \approx 8$.
+OSM has $t^* \approx 25$ for all query lengths.
+In a 64-bit universe this means keeping $K = 64 - 25 = 39$ bits just to avoid complete failure;
+ERE compresses these to $K - \log n \approx 19$~BPK at $n = 2^{20}$.
+Achieving FPR~$\leq 10^{-3}$ requires $t \leq 15$ ($K \geq 49$, $\approx 29$~BPK) under uniform queries.
+Thus, truncation is impractical for clustered data.
+
+\begin{remark}
+    The formula~\eqref{eq:trunc-fpr} and the thresholds above assume \textbf{queries are placed uniformly at random in the universe} and utilize a \textbf{continuous approximation} of the discrete bit-space.
+    In the exact discrete case, the numerator in Eq.~\eqref{eq:trunc-fpr} is $2^t - 1$, which is negligible for practical truncation depths.
+    A more significant discrepancy arises from the query distribution: in practice, the benchmark queries of Section~\ref{sec:query-distribution} are drawn from the gaps between keys, so they land near phantom zones more often than a uniform draw would.
+\end{remark}
+
+The SODA hash avoids this entirely: pairwise independence gives
+$\mathrm{FPR} \leq \varepsilon$ for any key distribution, at the cost of
+$\log_2(\mathcal{L})$ extra bits per key.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{trunc_tradeoff_osm}
+    \caption{FPR vs BPK on OSM ($n = 2^{20}$, $\mathcal{L} = 128$, in-gap queries, Section~\ref{sec:query-distribution}).
+    Truncation is bounded below by a structural FPR floor set by the gap-to-$2^t$ ratio
+        (Eq.~\ref{eq:trunc-fpr}): at 24~BPK it remains at FPR~$\approx 10^{-2}$
+        while SODA reaches ${\sim}10^{-5}$.}
+    \label{fig:trunc-osm}
+\end{figure}
+
+\FloatBarrier
+
+\pagebreak
+
 
 \section{Adaptive Filter}
 \label{sec:adaptive}
 
-The adaptive filter checks at build time whether hashing is necessary at all.
+The SODA hash compresses keys into a $K$-bit universe of size $2^K = n\mathcal{L}/\varepsilon$.
+If the original key spread $\max(S) - \min(S)$ is already smaller than $2^K$,
+no hash is needed at all --- we build ERE directly on the (normalized) keys
+and get FPR~$= 0$ for free.
+The adaptive filter checks this condition at build time.
 
 \subsection{Exact Mode}
+\label{subsec:exact-mode}
 
 \begin{enumerate}
     \item \textbf{Normalize:} subtract $\min(S)$ from all keys, shifting the dataset to
@@ -118,7 +214,7 @@ The adaptive filter checks at build time whether hashing is necessary at all.
         \item $M \leq K$: the entire dataset fits in $K$ bits $\Rightarrow$ \textbf{exact
         mode}. Build ERE directly over normalized keys. No hash, FPR~$= 0$.
         \item $M > K$: data too spread $\Rightarrow$ \textbf{SODA mode}. Apply
-        pairwise-independent hash, same filter guarantees as Section~\ref{sec:soda}.
+        a hash drawn from a pairwise-independent family, same filter guarantees as Section~\ref{sec:soda}.
     \end{itemize}
 \end{enumerate}
 

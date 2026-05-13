@@ -9,8 +9,16 @@ The paper's original locality-preserving hash~\citep[§3.1]{goswami2015approxima
     h(x) = \bigl(u(\lfloor x/2^K \rfloor) + x\bigr) \bmod 2^K
     \label{eq:soda-hash}
 \end{equation}
-where $u: [0, U/2^K) \to [0, 2^K)$ is drawn from a pairwise-independent family, stored as two
-64-bit coefficients $(a, b)$.
+That is: compute the block index $\lfloor x/2^K \rfloor$, hash it with $u$ to get a per-block rotation,
+then add the key's within-block offset $x \bmod 2^K$.
+The result is in $[0, 2^K)$.
+
+$u: [0, U/2^K) \to [0, 2^K)$ is drawn from a pairwise-independent family, stored as two
+64-bit coefficients $(a, b)$:
+\begin{equation}
+    u(x) = \left\lfloor \frac{a \cdot x + b}{2^{128-K}} \right\rfloor.
+    \label{eq:soda-u}
+\end{equation}
 
 \begin{figure}[h]
     \centering
@@ -33,8 +41,6 @@ Properties of the hash:
     \textsc{IsEmpty} call to ERE.
     (The choice $K = \lceil\log_2(n\mathcal{L}/\varepsilon)\rceil \geq \log_2 \mathcal{L}$
     guarantees this.)
-    \item \textbf{Compact:} stores only two 64-bit coefficients $(a, b)$ ---
-    $O(1)$ bits, independent of $n$.
 \end{itemize}
 
 \subsection{ARE Construction With SODA Hash}
@@ -57,19 +63,17 @@ Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE fi
 \end{enumerate}
 
 \begin{center}
-\colorbox{orange}{\parbox{0.9\textwidth}{\textbf{TODO:} maybe we do not need to explain how to construct ARE here --- it looks like duplication. Maybe just write: \textit{Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE filter: hash all keys via Eq.~\eqref{eq:soda-hash}, sort and deduplicate, build ERE over $[0, 2^K)$.}}}
+\colorbox{orange}{\parbox{0.9\textwidth}{\textbf{FIXME:} maybe we do not need to explain how to construct ARE here --- it looks like duplication. Maybe just write: \textit{Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE filter: hash all keys via Eq.~\eqref{eq:soda-hash}, sort and deduplicate, build ERE over $[0, 2^K)$.}}}
 \end{center}
 
 \paragraph{Filter properties.}
 \begin{itemize}
-    \item \textbf{FPR $\leq \varepsilon$ for any data distribution} --- follows from the
-    pairwise independence of the hash.
-    \item \textbf{No false negatives} --- all images of the query range are checked in ERE.
-    \item \textbf{Space:} $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$, giving
-    BPK~$= \log_2(\mathcal{L}/\varepsilon) + O(1)$ --- matching the information-theoretic
-    lower bound.
-    Including ERE metadata (succinct bit vector $D$), the total cost is
-    $\log_2(\mathcal{L}/\varepsilon) + {\sim}2$ bits per key.
+    \item \textbf{FPR $\leq \varepsilon$ for any data distribution} --- follows from pairwise
+    independence of the hash, with $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$ giving
+    BPK~$= \log_2(\mathcal{L}/\varepsilon) + O(1)$, matching the information-theoretic lower bound.
+    Including ERE metadata, the total cost is $\log_2(\mathcal{L}/\varepsilon) + {\sim}2$ bits per key.
+    \item \textbf{No false negatives} --- if key $x \in [a, b]$, then
+    $h(x)$ lies in the mapped range $h([a, b])$, which is fully checked in ERE.
 \end{itemize}
 
 \subsection{Empirical Validation}
