@@ -65,14 +65,14 @@ Data) benchmark~\citep{kipf2019sosd}:
 
 \begin{table}[H]
     \centering
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrcrrrrr@{}}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrcrrrrrr@{}}
         \toprule
-        Dataset  & $n$                   & $U$ [bits]    & P10               & P50               & P90               & mean \\
+        Dataset  & $n$                   & $U$ [bits]    & P10               & P50               & P90               & max               & mean \\
         \midrule
-        Facebook & ${\approx}200\text{M}$ & 37           & 2                 & 28                & 693               & 387 \\
-        Wiki     & ${\approx}90\text{M}$  & 29           & 1                 & 1                 & 3                 & 3 \\
-        Books    & ${\approx}200\text{M}$ & 31           & 1                 & 2                 & 9                 & 5 \\
-        OSM      & 800M                   & 64           & $1.6\times10^{6}$ & $4.5\times10^{7}$ & $1.7\times10^{9}$ & $1.7\times10^{10}$ \\
+        Facebook & ${\approx}200\text{M}$ & 37           & 2                 & 28                & 693               & $5.7\times10^{5}$ & 387 \\
+        Wiki     & ${\approx}90\text{M}$  & 29           & 1                 & 1                 & 3                 & $1.7\times10^{5}$ & 3 \\
+        Books    & ${\approx}200\text{M}$ & 31           & 1                 & 2                 & 9                 & $2.0\times10^{4}$ & 5 \\
+        OSM      & 800M                   & 64           & $1.6\times10^{6}$ & $4.5\times10^{7}$ & $1.7\times10^{9}$ & $2.3\times10^{17}$ & $1.7\times10^{10}$ \\
         \bottomrule
     \end{tabular*}
     \caption{Consecutive-key gap statistics for SOSD datasets after sort and deduplication.
@@ -90,7 +90,9 @@ Data) benchmark~\citep{kipf2019sosd}:
         \includegraphics[width=0.48\textwidth]{hist_sosd_wiki} &
         \includegraphics[width=0.48\textwidth]{hist_sosd_osm} \\
     \end{tabular}
-    \caption{Key density histograms for SOSD datasets (1000 bins, log-scale Y-axis).}
+    \caption{Key density histograms for SOSD datasets (1000 bins, log-scale Y-axis).
+        Relative density is the fraction of all keys falling in each bin,
+        normalized so that a perfectly uniform distribution gives~1 everywhere.}
     \label{fig:sosd-histograms}
 \end{figure}
 
@@ -113,7 +115,7 @@ Together, the SOSD and synthetic datasets span the spectrum from near-sequential
 random) --- allowing us to evaluate each filter design across the range of distributions
 it may encounter in practice.
 
-\subsection{The Core Assumption}
+\subsection{An assumption on queries}
 \label{subsec:assumption}
 
 We assume that queries target regions of the key space where stored keys are dense,
@@ -156,11 +158,11 @@ the assumption of Section~\ref{subsec:assumption}:
     \item \textbf{20\% uniform.}
     A random start is drawn uniformly from $[\min k, \max k]$ and
     clamped to the nearest gap.
-    Ensures coverage of the full key span.
+    Covers sparse regions to verify FPR stays reasonable there too.
 \end{itemize}
 
-All three buckets produce queries that land in the dense part of the
-key space, consistent with the assumption.
+The near-key and in-gap buckets reflect the dominant workload;
+the uniform bucket acts as a safety check on sparse regions.
 
 When a candidate query $[a, a+L)$ would contain a stored key $k^*$,
 it is \emph{truncated} to $[a, k^* - 1]$ rather than discarded and
