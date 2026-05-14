@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -418,7 +419,7 @@ func TestEdge_NearKeyFallbackFPR_WideSpread(t *testing.T) {
 	// — guards against the comparison being trivially satisfied (e.g. if the
 	// fallback path were optimized away).
 	hTrunc, err := NewHybridScanAREWithPolicy(vals, 64, ConfigWithPolicy{
-		K: K, RangeLen: rangeLen, Policy: FallbackAlwaysTrunc{},
+		K: K, RangeLen: rangeLen, Policy: hybridutil.FallbackAlwaysTrunc{},
 	})
 	require.NoError(t, err)
 	fpTrunc := 0

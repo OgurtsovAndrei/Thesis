@@ -3,23 +3,18 @@ package are_dp
 import (
 	"Thesis/bits"
 	"Thesis/emptiness/approx/are_adaptive"
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"Thesis/emptiness/exact"
 	"fmt"
 	"math"
 	"sort"
 )
 
-type clusterFilter struct {
-	filter *are_adaptive.AdaptiveARE
-	minKey uint64
-	maxKey uint64
-}
-
 // DPScanARE segments sorted keys into consecutive clusters using dynamic
 // programming to minimise total estimated storage cost. It serves as a
 // gold-standard for comparison against greedy segmentation strategies.
 type DPScanARE struct {
-	clusters []clusterFilter
+	clusters []hybridutil.ClusterFilter
 	n        int
 }
 
@@ -84,7 +79,7 @@ func NewDPScanAREWithConfig(keys []bits.BitString, rangeLen uint64, cfg Config) 
 
 	segments := segmentDP(keys, K)
 
-	clusters := make([]clusterFilter, 0, len(segments))
+	clusters := make([]hybridutil.ClusterFilter, 0, len(segments))
 	for _, seg := range segments {
 		keys64 := bsToU64(seg.keys)
 		var keyBits uint32
@@ -95,10 +90,10 @@ func NewDPScanAREWithConfig(keys []bits.BitString, rangeLen uint64, cfg Config) 
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
-		clusters = append(clusters, clusterFilter{
-			filter: f,
-			minKey: seg.minKey,
-			maxKey: seg.maxKey,
+		clusters = append(clusters, hybridutil.ClusterFilter{
+			Filter: f,
+			MinKey: seg.minKey,
+			MaxKey: seg.maxKey,
 		})
 	}
 
@@ -114,11 +109,11 @@ func (d *DPScanARE) IsEmpty(a, b bits.BitString) bool {
 	bVal := b.TrieUint64()
 
 	lo := sort.Search(len(d.clusters), func(i int) bool {
-		return d.clusters[i].maxKey >= aVal
+		return d.clusters[i].MaxKey >= aVal
 	})
 
-	for i := lo; i < len(d.clusters) && d.clusters[i].minKey <= bVal; i++ {
-		if !d.clusters[i].filter.IsEmpty(aVal, bVal) {
+	for i := lo; i < len(d.clusters) && d.clusters[i].MinKey <= bVal; i++ {
+		if !d.clusters[i].Filter.IsEmpty(aVal, bVal) {
 			return false
 		}
 	}
@@ -138,7 +133,7 @@ func bsToU64(keys []bits.BitString) []uint64 {
 func (d *DPScanARE) SizeInBits() uint64 {
 	total := uint64(0)
 	for _, c := range d.clusters {
-		total += c.filter.SizeInBits()
+		total += c.Filter.SizeInBits()
 	}
 	total += uint64(len(d.clusters)) * 128
 	return total

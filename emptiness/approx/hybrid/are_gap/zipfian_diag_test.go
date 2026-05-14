@@ -90,14 +90,14 @@ func TestHybrid_ZipfianDiagnostic(t *testing.T) {
 			for i, c := range h.clusters {
 				nKeys := 0
 				for _, seg := range segments {
-					if seg.minKey == c.minKey {
+					if seg.minKey == c.MinKey {
 						nKeys = len(seg.keys)
 						break
 					}
 				}
-				cBPK := float64(c.filter.SizeInBits()) / float64(nKeys)
+				cBPK := float64(c.Filter.SizeInBits()) / float64(nKeys)
 				t.Logf("  cluster[%d]: %d keys, span=%d, BPK=%.2f",
-					i, nKeys, c.maxKey-c.minKey, cBPK)
+					i, nKeys, c.MaxKey-c.MinKey, cBPK)
 			}
 			if h.fallback != nil {
 				fbBPK := float64(h.fallback.SizeInBits()) / float64(nf)

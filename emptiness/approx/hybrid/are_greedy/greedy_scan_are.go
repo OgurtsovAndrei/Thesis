@@ -2,7 +2,7 @@ package are_greedy
 
 import (
 	"Thesis/emptiness/approx/are_adaptive"
-	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"Thesis/emptiness/exact"
 	"Thesis/utils/errutil"
 	"fmt"
@@ -71,7 +71,7 @@ func (cfg ConfigRaw) backend() exact.Variant {
 type ConfigWithPolicy struct {
 	K          uint32
 	RangeLen   uint64
-	Policy     FallbackPolicy
+	Policy     hybridutil.FallbackPolicy
 	EREBackend exact.Variant
 	backendSet bool
 }
@@ -90,45 +90,13 @@ func (cfg ConfigWithPolicy) backend() exact.Variant {
 	return exact.VariantAuto
 }
 
-type clusterFilter struct {
-	filter *are_adaptive.AdaptiveARE
-	minKey uint64
-	maxKey uint64
-}
-
-type fallbackFilter struct {
-	trunc    *are_trunc.TruncARE
-	adaptive *are_adaptive.AdaptiveARE
-	n        int
-}
-
-func (f *fallbackFilter) isEmptyUint64(lo, hi uint64) bool {
-	if f.trunc != nil {
-		return f.trunc.IsEmpty(lo, hi)
-	}
-	if f.adaptive != nil {
-		return f.adaptive.IsEmpty(lo, hi)
-	}
-	return true
-}
-
-func (f *fallbackFilter) SizeInBits() uint64 {
-	if f.trunc != nil {
-		return f.trunc.SizeInBits()
-	}
-	if f.adaptive != nil {
-		return f.adaptive.SizeInBits()
-	}
-	return 0
-}
-
 // GreedyScanARE segments sorted keys into consecutive clusters using greedy
 // spread-threshold + hierarchical merge. Clusters with spread ≤ 2^K use exact
 // mode (FPR=0). Clusters with spread > 2^K (SODA territory) are sent to a
 // trunc fallback instead, which is L-independent.
 type GreedyScanARE struct {
-	clusters  []clusterFilter
-	fallback  *fallbackFilter
+	clusters  []hybridutil.ClusterFilter
+	fallback  *hybridutil.FallbackFilter
 	nClusters int
 	nFallback int
 	n         int
@@ -140,7 +108,7 @@ func NewGreedyScanARE(keys []uint64, keyBits uint32, cfg Config) (*GreedyScanARE
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, 0, true, FallbackAlwaysSODA{}, cfg.backend())
+	return buildGreedy(cp, keyBits, cfg.K, 0, true, hybridutil.FallbackAlwaysSODA{}, cfg.backend())
 }
 
 // NewGreedyScanAREWithPolicy builds a GreedyScanARE with an explicit fallback
@@ -151,7 +119,7 @@ func NewGreedyScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 	cp := append([]uint64(nil), keys...)
 	policy := cfg.Policy
 	if policy == nil {
-		policy = FallbackAlwaysTrunc{}
+		policy = hybridutil.FallbackAlwaysTrunc{}
 	}
 	return buildGreedy(cp, keyBits, cfg.K, cfg.RangeLen, true, policy, cfg.backend())
 }
@@ -162,10 +130,10 @@ func NewGreedyScanARERaw(keys []uint64, keyBits uint32, cfg ConfigRaw) (*GreedyS
 	errutil.BugOn(keyBits > 64, "keyBits must be <= 64, got %d", keyBits)
 	errutil.BugOn(cfg.K == 0 || cfg.K > 64, "K must be in (0, 64], got %d", cfg.K)
 	cp := append([]uint64(nil), keys...)
-	return buildGreedy(cp, keyBits, cfg.K, 0, false, FallbackAlwaysTrunc{}, cfg.backend())
+	return buildGreedy(cp, keyBits, cfg.K, 0, false, hybridutil.FallbackAlwaysTrunc{}, cfg.backend())
 }
 
-func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge bool, policy FallbackPolicy, backend exact.Variant) (*GreedyScanARE, error) {
+func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge bool, policy hybridutil.FallbackPolicy, backend exact.Variant) (*GreedyScanARE, error) {
 	n := len(keys)
 	if n == 0 {
 		return &GreedyScanARE{}, nil
@@ -184,12 +152,13 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 	var fallbackKeys []uint64
 
 	for _, seg := range segments {
+		Klocal := hybridutil.LocalK(K, n, len(seg.keys))
 		spread := seg.maxKey - seg.minKey
 		spreadBits := uint32(0)
 		if spread > 0 {
 			spreadBits = uint32(64 - mbits.LeadingZeros64(spread))
 		}
-		if spreadBits <= K {
+		if spreadBits <= Klocal {
 			exactSegs = append(exactSegs, seg)
 		} else {
 			fallbackKeys = append(fallbackKeys, seg.keys...)
@@ -198,27 +167,26 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 
 	g := &GreedyScanARE{n: n}
 
-	// Build exact-mode cluster filters with per-cluster K_local
-	// (K rescaled to the cluster's own size — see localK doc).
-	g.clusters = make([]clusterFilter, 0, len(exactSegs))
+	// Build exact-mode cluster filters with per-cluster K_local.
+	g.clusters = make([]hybridutil.ClusterFilter, 0, len(exactSegs))
 	for _, seg := range exactSegs {
-		Kc := localK(K, n, len(seg.keys))
+		Kc := hybridutil.LocalK(K, n, len(seg.keys))
 		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(seg.keys, keyBits, Kc, 0, backend)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
-		g.clusters = append(g.clusters, clusterFilter{
-			filter: f,
-			minKey: seg.minKey,
-			maxKey: seg.maxKey,
+		g.clusters = append(g.clusters, hybridutil.ClusterFilter{
+			Filter: f,
+			MinKey: seg.minKey,
+			MaxKey: seg.maxKey,
 		})
 	}
 	g.nClusters = len(g.clusters)
 
 	// Build fallback filter (Trunc or SODA, per policy) with per-fallback K.
 	if len(fallbackKeys) > 0 {
-		Kfb := localK(K, n, len(fallbackKeys))
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, backend)
+		Kfb := hybridutil.LocalK(K, n, len(fallbackKeys))
+		fb, err := hybridutil.BuildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, backend)
 		if err != nil {
 			return nil, err
 		}
@@ -229,38 +197,6 @@ func buildGreedy(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, merge
 	return g, nil
 }
 
-// localK rescales the global K (sized for n_total keys) to the smaller K
-// appropriate for a sub-filter holding only n_local keys. See doc on the
-// identical helper in are_hybrid_scan/hybrid_scan_are.go.
-func localK(K uint32, nTotal, nLocal int) uint32 {
-	if nLocal <= 0 || nTotal <= 0 || nLocal >= nTotal {
-		return K
-	}
-	delta := mbits.Len64(uint64(nTotal-1)) - mbits.Len64(uint64(nLocal-1))
-	if delta < 0 {
-		delta = 0
-	}
-	if uint32(delta) >= K {
-		return 1
-	}
-	return K - uint32(delta)
-}
-
-func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy, backend exact.Variant) (*fallbackFilter, error) {
-	if policy.useTrunc(keys, K, rangeLen) {
-		fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, backend)
-		if err != nil {
-			return nil, fmt.Errorf("fallback trunc build: %w", err)
-		}
-		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
-	}
-	fb, err := are_adaptive.NewAdaptiveAREFromKWithBackend(keys, keyBits, K, 0, backend)
-	if err != nil {
-		return nil, fmt.Errorf("fallback adaptive build: %w", err)
-	}
-	return &fallbackFilter{adaptive: fb, n: len(keys)}, nil
-}
-
 // IsEmpty reports whether [lo, hi] contains no stored key.
 func (g *GreedyScanARE) IsEmpty(lo, hi uint64) bool {
 	if g.n == 0 {
@@ -268,17 +204,17 @@ func (g *GreedyScanARE) IsEmpty(lo, hi uint64) bool {
 	}
 
 	idx := sort.Search(len(g.clusters), func(i int) bool {
-		return g.clusters[i].maxKey >= lo
+		return g.clusters[i].MaxKey >= lo
 	})
 
-	for i := idx; i < len(g.clusters) && g.clusters[i].minKey <= hi; i++ {
-		if !g.clusters[i].filter.IsEmpty(lo, hi) {
+	for i := idx; i < len(g.clusters) && g.clusters[i].MinKey <= hi; i++ {
+		if !g.clusters[i].Filter.IsEmpty(lo, hi) {
 			return false
 		}
 	}
 
 	if g.fallback != nil {
-		if !g.fallback.isEmptyUint64(lo, hi) {
+		if !g.fallback.IsEmpty(lo, hi) {
 			return false
 		}
 	}
@@ -289,7 +225,7 @@ func (g *GreedyScanARE) IsEmpty(lo, hi uint64) bool {
 func (g *GreedyScanARE) SizeInBits() uint64 {
 	total := uint64(0)
 	for _, c := range g.clusters {
-		total += c.filter.SizeInBits()
+		total += c.Filter.SizeInBits()
 	}
 	if g.fallback != nil {
 		total += g.fallback.SizeInBits()

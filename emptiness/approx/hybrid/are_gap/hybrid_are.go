@@ -4,19 +4,14 @@ import (
 	"Thesis/bits"
 	"Thesis/emptiness/approx/are_adaptive"
 	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"fmt"
 	"math"
 	"sort"
 )
 
-type clusterFilter struct {
-	filter *are_adaptive.AdaptiveARE
-	minKey uint64
-	maxKey uint64
-}
-
 type HybridARE struct {
-	clusters  []clusterFilter
+	clusters  []hybridutil.ClusterFilter
 	fallback  *are_trunc.TruncARE
 	nClusters int
 	nFallback int
@@ -69,17 +64,17 @@ func NewHybridAREFromK(keys []bits.BitString, rangeLen uint64, K uint32) (*Hybri
 	}
 
 	// Build cluster filters
-	h.clusters = make([]clusterFilter, 0, len(segments))
+	h.clusters = make([]hybridutil.ClusterFilter, 0, len(segments))
 	for _, seg := range segments {
 		seg64 := bsToU64(seg.keys)
 		f, err := are_adaptive.NewAdaptiveAREFromK(seg64, keyBits, K, 0)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
-		h.clusters = append(h.clusters, clusterFilter{
-			filter: f,
-			minKey: seg.minKey,
-			maxKey: seg.maxKey,
+		h.clusters = append(h.clusters, hybridutil.ClusterFilter{
+			Filter: f,
+			MinKey: seg.minKey,
+			MaxKey: seg.maxKey,
 		})
 	}
 	h.nClusters = len(h.clusters)
@@ -117,12 +112,12 @@ func (h *HybridARE) IsEmpty(a, b bits.BitString) bool {
 
 	// Binary search: first cluster with maxKey >= aVal
 	lo := sort.Search(len(h.clusters), func(i int) bool {
-		return h.clusters[i].maxKey >= aVal
+		return h.clusters[i].MaxKey >= aVal
 	})
 
 	// Walk overlapping clusters
-	for i := lo; i < len(h.clusters) && h.clusters[i].minKey <= bVal; i++ {
-		if !h.clusters[i].filter.IsEmpty(aVal, bVal) {
+	for i := lo; i < len(h.clusters) && h.clusters[i].MinKey <= bVal; i++ {
+		if !h.clusters[i].Filter.IsEmpty(aVal, bVal) {
 			return false
 		}
 	}
@@ -140,7 +135,7 @@ func (h *HybridARE) IsEmpty(a, b bits.BitString) bool {
 func (h *HybridARE) SizeInBits() uint64 {
 	total := uint64(0)
 	for _, c := range h.clusters {
-		total += c.filter.SizeInBits()
+		total += c.Filter.SizeInBits()
 	}
 	if h.fallback != nil {
 		total += h.fallback.SizeInBits()

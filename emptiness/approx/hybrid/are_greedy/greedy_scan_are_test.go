@@ -1,6 +1,7 @@
 package are_greedy
 
 import (
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"Thesis/emptiness/exact"
 	"Thesis/testutils"
 	"math"
@@ -160,7 +161,7 @@ func TestGreedyScan_NearKeyFallbackFPR_WideSpread(t *testing.T) {
 	}
 
 	gTrunc, err := NewGreedyScanAREWithPolicy(keys, 64, ConfigWithPolicy{
-		K: K, RangeLen: rangeLen, Policy: FallbackAlwaysTrunc{},
+		K: K, RangeLen: rangeLen, Policy: hybridutil.FallbackAlwaysTrunc{},
 	})
 	if err != nil {
 		t.Fatal(err)

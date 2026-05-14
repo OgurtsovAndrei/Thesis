@@ -2,6 +2,7 @@ package are_dbscan
 
 import (
 	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"fmt"
 	"math"
 	mbits "math/bits"
@@ -75,7 +76,7 @@ func TestS5Diagnostic(t *testing.T) {
 	t.Logf("Result: %d clusters  %d fallback keys", len(clusters), len(fallback))
 
 	// truncSafe verdict.
-	isSafe := truncSafe(keys, K)
+	isSafe := hybridutil.TruncSafe(keys, K)
 	t.Log("\n=== truncSafe CHECK ===")
 	t.Logf("truncSafe(keys, K=%d) = %v  (expected true because gap=%d >> phantom_size=%d)", K, isSafe, gap, phantomSize)
 

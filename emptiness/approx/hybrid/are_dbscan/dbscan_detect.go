@@ -1,7 +1,6 @@
 package are_dbscan
 
 import (
-	"math/rand"
 	"sort"
 )
 
@@ -137,34 +136,3 @@ func detectClustersDBSCAN(keys []uint64, eps uint64, minPts int, minClusterSize 
 	return filtered, fallback
 }
 
-// quickselect returns the k-th smallest element (0-indexed).
-// Mutates the input slice. Average O(n), worst O(n²).
-func quickselect(a []uint64, k int) uint64 {
-	rng := rand.New(rand.NewSource(42))
-	lo, hi := 0, len(a)-1
-	for lo < hi {
-		pivot := a[lo+rng.Intn(hi-lo+1)]
-		i, j := lo, hi
-		for i <= j {
-			for a[i] < pivot {
-				i++
-			}
-			for a[j] > pivot {
-				j--
-			}
-			if i <= j {
-				a[i], a[j] = a[j], a[i]
-				i++
-				j--
-			}
-		}
-		if k <= j {
-			hi = j
-		} else if k >= i {
-			lo = i
-		} else {
-			break
-		}
-	}
-	return a[k]
-}

@@ -1,8 +1,9 @@
-package are_greedy
+package hybridutil
 
 import (
 	"math"
 	mbits "math/bits"
+	"math/rand"
 )
 
 // FallbackPolicy decides whether to use TruncARE or AdaptiveARE (SODA) for
@@ -20,7 +21,7 @@ func (FallbackAuto) useTrunc(keys []uint64, K uint32, _ uint64) bool {
 	if len(keys) < 2 {
 		return true
 	}
-	return truncSafe(keys, K)
+	return TruncSafe(keys, K)
 }
 func (FallbackAuto) String() string { return "Auto" }
 
@@ -30,8 +31,7 @@ type FallbackAlwaysTrunc struct{}
 func (FallbackAlwaysTrunc) useTrunc(_ []uint64, _ uint32, _ uint64) bool { return true }
 func (FallbackAlwaysTrunc) String() string                               { return "Trunc" }
 
-// FallbackAlwaysSODA always uses AdaptiveARE (SODA) regardless of data
-// distribution.
+// FallbackAlwaysSODA always uses AdaptiveARE (SODA) regardless of data distribution.
 type FallbackAlwaysSODA struct{}
 
 func (FallbackAlwaysSODA) useTrunc(_ []uint64, _ uint32, _ uint64) bool { return false }
@@ -54,22 +54,18 @@ func (f FallbackGapFraction) useTrunc(keys []uint64, K uint32, _ uint64) bool {
 	if n < 2 {
 		return true
 	}
-
 	spread := keys[n-1] - keys[0]
 	if spread == 0 {
 		return true
 	}
-
 	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
 	if spreadBits <= K {
 		return true
 	}
-
 	phantomSize := spread >> K
 	if phantomSize == 0 {
 		phantomSize = 1
 	}
-
 	var smallSpan uint64
 	for i := 0; i < n-1; i++ {
 		g := keys[i+1] - keys[i]
@@ -89,35 +85,29 @@ func (FallbackPhantom) useTrunc(keys []uint64, K uint32, rangeLen uint64) bool {
 	if n < 2 {
 		return true
 	}
-
 	spread := keys[n-1] - keys[0]
 	if spread == 0 {
 		return true
 	}
-
 	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
 	if spreadBits <= K {
 		return true
 	}
-
 	phantomSize := spread >> K
 	return phantomSize < rangeLen
 }
 func (FallbackPhantom) String() string { return "Phantom" }
 
-// truncSafe checks whether trunc fallback will work for the given keys.
-// Trunc breaks when the smallest gaps (P5) are smaller than phantomSize = spread / 2^K.
-func truncSafe(keys64 []uint64, K uint32) bool {
+// TruncSafe checks whether TruncARE fallback is safe: P5 gap > phantomSize.
+func TruncSafe(keys64 []uint64, K uint32) bool {
 	n := len(keys64)
 	if n < 2 {
 		return true
 	}
-
 	spread := keys64[n-1] - keys64[0]
 	if spread == 0 {
 		return true
 	}
-
 	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
 	if spreadBits <= K {
 		return true
@@ -126,7 +116,6 @@ func truncSafe(keys64 []uint64, K uint32) bool {
 	if phantomSize == 0 {
 		phantomSize = 1
 	}
-
 	gaps := make([]uint64, n-1)
 	for i := 0; i < n-1; i++ {
 		gaps[i] = keys64[i+1] - keys64[i]
@@ -135,42 +124,37 @@ func truncSafe(keys64 []uint64, K uint32) bool {
 	if idx >= len(gaps) {
 		idx = len(gaps) - 1
 	}
-	p5Gap := quickselectFP(gaps, idx)
-
-	return p5Gap > phantomSize
+	return Quickselect(gaps, idx) > phantomSize
 }
 
-// quickselectFP returns the k-th smallest element of arr (0-indexed) in-place.
-// Renamed from quickselect to avoid colliding with any existing helper in
-// this package.
-func quickselectFP(arr []uint64, k int) uint64 {
-	if len(arr) == 0 {
-		return 0
-	}
-	lo, hi := 0, len(arr)-1
+// Quickselect returns the k-th smallest element (0-indexed).
+// Mutates the input slice. Average O(n), worst O(n²).
+func Quickselect(a []uint64, k int) uint64 {
+	rng := rand.New(rand.NewSource(42))
+	lo, hi := 0, len(a)-1
 	for lo < hi {
-		p := partition(arr, lo, hi)
-		switch {
-		case p == k:
-			return arr[p]
-		case p < k:
-			lo = p + 1
-		default:
-			hi = p - 1
+		pivot := a[lo+rng.Intn(hi-lo+1)]
+		i, j := lo, hi
+		for i <= j {
+			for a[i] < pivot {
+				i++
+			}
+			for a[j] > pivot {
+				j--
+			}
+			if i <= j {
+				a[i], a[j] = a[j], a[i]
+				i++
+				j--
+			}
+		}
+		if k <= j {
+			hi = j
+		} else if k >= i {
+			lo = i
+		} else {
+			break
 		}
 	}
-	return arr[lo]
-}
-
-func partition(arr []uint64, lo, hi int) int {
-	pivot := arr[hi]
-	i := lo
-	for j := lo; j < hi; j++ {
-		if arr[j] < pivot {
-			arr[i], arr[j] = arr[j], arr[i]
-			i++
-		}
-	}
-	arr[i], arr[hi] = arr[hi], arr[i]
-	return i
+	return a[k]
 }

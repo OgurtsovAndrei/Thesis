@@ -3,10 +3,10 @@ package are_dbscan
 import (
 	"Thesis/emptiness/approx/are_adaptive"
 	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/approx/hybrid/hybridutil"
 	"Thesis/emptiness/exact"
 	"Thesis/utils/errutil"
 	"fmt"
-	mbits "math/bits"
 	"sort"
 )
 
@@ -16,43 +16,11 @@ const (
 	epsMultiplier  = 1   // density window scaling factor (see dbscanEpsFromK)
 )
 
-type clusterFilter struct {
-	filter *are_adaptive.AdaptiveARE
-	minKey uint64
-	maxKey uint64
-}
-
-type fallbackFilter struct {
-	trunc    *are_trunc.TruncARE
-	adaptive *are_adaptive.AdaptiveARE
-	n        int
-}
-
-func (f *fallbackFilter) IsEmpty(a, b uint64) bool {
-	if f.trunc != nil {
-		return f.trunc.IsEmpty(a, b)
-	}
-	if f.adaptive != nil {
-		return f.adaptive.IsEmpty(a, b)
-	}
-	return true
-}
-
-func (f *fallbackFilter) SizeInBits() uint64 {
-	if f.trunc != nil {
-		return f.trunc.SizeInBits()
-	}
-	if f.adaptive != nil {
-		return f.adaptive.SizeInBits()
-	}
-	return 0
-}
-
 // HybridScanARE uses 1D DBSCAN to segment keys into clusters (Adaptive ARE)
 // and a fallback filter (Trunc or SODA) for non-cluster keys.
 type HybridScanARE struct {
-	clusters  []clusterFilter
-	fallback  *fallbackFilter
+	clusters  []hybridutil.ClusterFilter
+	fallback  *hybridutil.FallbackFilter
 	nClusters int
 	nFallback int
 	n         int
@@ -100,7 +68,7 @@ func (cfg Config) backend() exact.Variant {
 type ConfigWithPolicy struct {
 	K                  uint32
 	RangeLen           uint64
-	Policy             FallbackPolicy
+	Policy             hybridutil.FallbackPolicy
 	EREBackend         exact.Variant
 	backendSet         bool
 	FallbackEREBackend exact.Variant
@@ -148,7 +116,7 @@ func NewHybridScanARE(keys []uint64, keyBits uint32, cfg Config) (*HybridScanARE
 	}
 	dbscanEps := dbscanEpsFromK(len(keys), cfg.K)
 	b := cfg.backend()
-	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, FallbackAlwaysSODA{}, b, b)
+	return newHybridScanARE(keys, keyBits, cfg.K, 0, dbscanEps, hybridutil.FallbackAlwaysSODA{}, b, b)
 }
 
 // NewHybridScanAREWithPolicy builds Scan-ARE with an explicit fallback policy.
@@ -197,40 +165,10 @@ func dbscanEpsFromK(_ int, K uint32) uint64 {
 
 // --- core build ---
 
-// localK rescales the global K (sized for n_total keys) to the smaller K
-// appropriate for a sub-filter holding only n_local keys. The construction
-// pins log2(L/ε) — that part of K is independent of n — and replaces the
-// global log2(n_total) with log2(n_local):
-//
-//	K_global = ceil(log2(n_total · L / ε))
-//	K_local  = ceil(log2(n_local  · L / ε)) = K_global - log2(n_total) + log2(n_local)
-//
-// Each sub-filter (cluster ARE, fallback ARE) gets its own K matched to its
-// own key count, instead of paying the full global K that's sized for the
-// whole dataset. Per-key cost in succinct ERE/SODA is K - log2(n_local) + 2,
-// so per-cluster cost collapses from `log2(L/ε) + log2(n_total/n_local)` to
-// `log2(L/ε)` — the segmentation no longer leaks the n_total/n_local factor.
-func localK(K uint32, nTotal, nLocal int) uint32 {
-	if nLocal <= 0 || nTotal <= 0 {
-		return K
-	}
-	if nLocal >= nTotal {
-		return K
-	}
-	delta := mbits.Len64(uint64(nTotal-1)) - mbits.Len64(uint64(nLocal-1))
-	if delta < 0 {
-		delta = 0
-	}
-	if uint32(delta) >= K {
-		return 1
-	}
-	return K - uint32(delta)
-}
-
 // clusterBackend is used for each dense cluster sub-filter;
 // fallbackBackend is used for the sparse fallback filter.
 // Pass the same value for both to apply one backend everywhere.
-func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy FallbackPolicy, clusterBackend, fallbackBackend exact.Variant) (*HybridScanARE, error) {
+func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, dbscanEps uint64, policy hybridutil.FallbackPolicy, clusterBackend, fallbackBackend exact.Variant) (*HybridScanARE, error) {
 	n := len(keys)
 	h := &HybridScanARE{n: n}
 
@@ -240,7 +178,7 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 			if err != nil {
 				return nil, fmt.Errorf("fallback build: %w", err)
 			}
-			h.fallback = &fallbackFilter{trunc: fb, n: n}
+			h.fallback = &hybridutil.FallbackFilter{Trunc: fb, N: n}
 			h.nFallback = n
 		}
 		return h, nil
@@ -248,24 +186,24 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 
 	segments, fallbackKeys := detectClustersDBSCAN(keys, dbscanEps, dbscanMinPts, minClusterSize)
 
-	h.clusters = make([]clusterFilter, 0, len(segments))
+	h.clusters = make([]hybridutil.ClusterFilter, 0, len(segments))
 	for _, seg := range segments {
-		Kc := localK(K, n, len(seg.keys))
+		Kc := hybridutil.LocalK(K, n, len(seg.keys))
 		f, err := are_adaptive.NewAdaptiveAREFromKWithBackend(seg.keys, keyBits, Kc, 0, clusterBackend)
 		if err != nil {
 			return nil, fmt.Errorf("cluster [%d, %d] build: %w", seg.minKey, seg.maxKey, err)
 		}
-		h.clusters = append(h.clusters, clusterFilter{
-			filter: f,
-			minKey: seg.minKey,
-			maxKey: seg.maxKey,
+		h.clusters = append(h.clusters, hybridutil.ClusterFilter{
+			Filter: f,
+			MinKey: seg.minKey,
+			MaxKey: seg.maxKey,
 		})
 	}
 	h.nClusters = len(h.clusters)
 
 	if len(fallbackKeys) > 0 {
-		Kfb := localK(K, n, len(fallbackKeys))
-		fb, err := buildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, fallbackBackend)
+		Kfb := hybridutil.LocalK(K, n, len(fallbackKeys))
+		fb, err := hybridutil.BuildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, fallbackBackend)
 		if err != nil {
 			return nil, err
 		}
@@ -276,22 +214,6 @@ func newHybridScanARE(keys []uint64, keyBits uint32, K uint32, rangeLen uint64, 
 	return h, nil
 }
 
-func buildFallback(keys []uint64, keyBits uint32, rangeLen uint64, K uint32, policy FallbackPolicy, backend exact.Variant) (*fallbackFilter, error) {
-	if policy.useTrunc(keys, K, rangeLen) {
-		fb, err := are_trunc.NewTruncAREFromKWithBackend(keys, keyBits, K, backend)
-		if err != nil {
-			return nil, fmt.Errorf("fallback trunc build: %w", err)
-		}
-		return &fallbackFilter{trunc: fb, n: len(keys)}, nil
-	}
-
-	fb, err := are_adaptive.NewAdaptiveAREFromKWithBackend(keys, keyBits, K, 0, backend)
-	if err != nil {
-		return nil, fmt.Errorf("fallback adaptive build: %w", err)
-	}
-	return &fallbackFilter{adaptive: fb, n: len(keys)}, nil
-}
-
 // --- query & metrics ---
 
 func (h *HybridScanARE) IsEmpty(lo, hi uint64) bool {
@@ -300,11 +222,11 @@ func (h *HybridScanARE) IsEmpty(lo, hi uint64) bool {
 	}
 
 	idx := sort.Search(len(h.clusters), func(i int) bool {
-		return h.clusters[i].maxKey >= lo
+		return h.clusters[i].MaxKey >= lo
 	})
 
-	for i := idx; i < len(h.clusters) && h.clusters[i].minKey <= hi; i++ {
-		if !h.clusters[i].filter.IsEmpty(lo, hi) {
+	for i := idx; i < len(h.clusters) && h.clusters[i].MinKey <= hi; i++ {
+		if !h.clusters[i].Filter.IsEmpty(lo, hi) {
 			return false
 		}
 	}
@@ -321,7 +243,7 @@ func (h *HybridScanARE) IsEmpty(lo, hi uint64) bool {
 func (h *HybridScanARE) SizeInBits() uint64 {
 	total := uint64(0)
 	for _, c := range h.clusters {
-		total += c.filter.SizeInBits()
+		total += c.Filter.SizeInBits()
 	}
 	if h.fallback != nil {
 		total += h.fallback.SizeInBits()

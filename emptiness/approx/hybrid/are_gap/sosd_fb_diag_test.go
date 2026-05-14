@@ -112,19 +112,19 @@ func TestHybrid_SOSD_FB_Diagnostic(t *testing.T) {
 				// Find the matching segment for key count
 				nKeys := 0
 				for _, seg := range segments {
-					if seg.minKey == c.minKey {
+					if seg.minKey == c.MinKey {
 						nKeys = len(seg.keys)
 						break
 					}
 				}
 				cBPK := float64(0)
 				if nKeys > 0 {
-					cBPK = float64(c.filter.SizeInBits()) / float64(nKeys)
+					cBPK = float64(c.Filter.SizeInBits()) / float64(nKeys)
 				}
 				t.Logf("  cluster[%d]: ~%d keys, range [%d, %d], span=%d, SizeInBits=%d, BPK=%.4f, IsExact=%v, K=%d",
-					i, nKeys, c.minKey, c.maxKey, c.maxKey-c.minKey,
-					c.filter.SizeInBits(), cBPK,
-					c.filter.IsExactMode, c.filter.K)
+					i, nKeys, c.MinKey, c.MaxKey, c.MaxKey-c.MinKey,
+					c.Filter.SizeInBits(), cBPK,
+					c.Filter.IsExactMode, c.Filter.K)
 			}
 			if h.fallback != nil {
 				fbBPK := float64(h.fallback.SizeInBits()) / float64(nf)
@@ -237,8 +237,8 @@ func TestHybrid_SOSD_FB_Diagnostic(t *testing.T) {
 				t.Logf("  HybridARE.IsEmpty(%d, %d) = %v (want true)",
 					knownNonKey, knownNonKey, h.IsEmpty(aBS, aBS))
 				for i, c := range h.clusters {
-					clusterResult := c.filter.IsEmpty(knownNonKey, knownNonKey)
-					t.Logf("  cluster[%d] (range [%d,%d]) IsEmpty = %v", i, c.minKey, c.maxKey, clusterResult)
+					clusterResult := c.Filter.IsEmpty(knownNonKey, knownNonKey)
+					t.Logf("  cluster[%d] (range [%d,%d]) IsEmpty = %v", i, c.MinKey, c.MaxKey, clusterResult)
 				}
 				if h.fallback != nil {
 					t.Logf("  fallback.IsEmpty = %v", h.fallback.IsEmpty(knownNonKey, knownNonKey))
