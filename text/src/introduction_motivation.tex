@@ -1,0 +1,16 @@
+\section{Motivation}
+\label{sec:motivation}
+
+% TODO: ~300 words
+% Points to cover:
+%   - LSM-trees (RocksDB, LevelDB, Cassandra) — write-optimised, reads touch every level
+%   - Range queries are common: scans, prefix lookups, time-window queries
+%   - Range filters cut disk I/O: if filter says "empty", skip the SSTable entirely
+%   - Bloom filter only answers point queries; range queries need a range filter
+%   - Practical scale: per-SSTable n ≈ 2^19–2^23 (Cao FAST'20), BPK budget ≈ 10
+%   - Goswami SODA'15 gives the information-theoretic optimum — but constants matter
+%   - This thesis: make those constants small in practice
+%
+% Useful anchors:
+%   \citep{cao2020characterizing}  — Cao FAST'20, RocksDB workload characterisation
+%   \citep{goswami2015approximate} — lower bound + construction

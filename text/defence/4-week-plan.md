@@ -356,6 +356,21 @@ The standalone audit doc is no longer worth its overhead — coverage will be ex
 - [ ] **Step 4:** Compile, verify both tables render.
 - [ ] **Step 5:** Commit: `git -C Thesis add text/src/evaluation.tex bench_results/b6_latency.log && git -C Thesis commit -m "bench(eval): add build/query latency comparison vs SOTA"`
 
+### Task 2.6 — Fill missing FPR/BPK cells (small gap, ~1-2 hours) *(2026-05-15)*
+
+Audit (2026-05-14) found two known gaps in `bench_results/data/`:
+
+**Known library limitations (not bugs — add footnotes in evaluation.tex, do not re-run):**
+- **Rosetta at L ≥ 4096**: prohibitive build time; 14 missing cells at each of N=2^20, 2^24, 2^28. Footnote: "Rosetta results are omitted for $\mathcal{L} \geq 4096$ due to prohibitive build time."
+- **SuRFReal on sosd_wiki**: upstream crash; 7 missing cells at each N. Footnote: "SuRFReal is excluded on the Wiki dataset due to an upstream library crash."
+
+**Gaps to actually fill (run 2026-05-15):**
+- N=2^16 not needed for thesis (thesis uses n=2^24 SOSD, n=2^20 synthetic).
+- All other filters (SODA, Scan-ARE, Greedy+Merge, Grafite, SNARF) complete at all required N.
+
+- [ ] **Step 1:** Add footnotes for Rosetta large-L and SuRFReal wiki in `evaluation.tex`.
+- [ ] **Step 2:** Commit: `git -C Thesis add text/src/evaluation.tex && git -C Thesis commit -m "chore(eval): document Rosetta and SuRFReal measurement gaps"`
+
 ---
 
 ## Week 3: Headline + conclusion + backups (May 11 – May 17)

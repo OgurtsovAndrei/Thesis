@@ -230,32 +230,22 @@ The adaptive filter checks this condition at build time.
 
 \subsection{When Does Exact Mode Trigger?}
 
-Exact mode requires $\max(S) - \min(S) < 2^K = n\mathcal{L}/\varepsilon$.
-Rewriting in terms of density $\rho = (n - 1) / (\max(S) - \min(S))$:
+Rewriting the condition
+\[
+    \max(S) - \min(S) < 2^{K} = \frac{n\mathcal{L}}{\varepsilon}
+\]
+in terms of
+the average gap:
+\[
+    \bar{g} = \frac{\max(S) - \min(S)}{n - 1}
+\]
 \begin{equation}
-    \rho > \frac{\varepsilon}{\mathcal{L}}
+    \bar{g} \;<\; \frac{\mathcal{L}}{\varepsilon}.
     \label{eq:exact-threshold}
 \end{equation}
-or equivalently, the average gap
-$\bar{g} = (\max(S) - \min(S)) / (n - 1)$ must satisfy
-$\bar{g} < \mathcal{L}/\varepsilon$.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}llll@{}}
-        \toprule
-        $\mathcal{L}$ & $\varepsilon$ & Max avg gap        & Min density           \\
-        \midrule
-        128           & $10^{-3}$     & 128,000            & $7.8 \times 10^{-6}$  \\
-        128           & $10^{-6}$     & $1.28 \times 10^8$ & $7.8 \times 10^{-9}$  \\
-        16            & $10^{-3}$     & 16,000             & $6.25 \times 10^{-5}$ \\
-        \bottomrule
-    \end{tabular}
-    \caption{Exact mode threshold for typical parameters. The density requirement is
-    extremely low --- exact mode fails only when keys are scattered across a universe
-    much wider than $n \cdot \mathcal{L} / \varepsilon$.}
-    \label{tab:exact-threshold}
-\end{table}
+At $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$ the threshold is $128{,}000$ ---
+well above the Facebook median gap of~$28$ or the Books mean of~$5$,
+so exact mode triggers on these datasets for free.
 
 This becomes especially powerful in combination with hybrid segmentation
 (Chapter~\ref{chap:hybrid}): each dense cluster is isolated into its own adaptive filter,

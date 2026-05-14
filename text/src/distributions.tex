@@ -168,7 +168,7 @@ When a candidate query $[a, a+L)$ would contain a stored key $k^*$,
 it is \emph{truncated} to $[a, k^* - 1]$ rather than discarded and
 resampled.
 Truncation preserves queries that start inside a cluster and end
-between two closely-spaced keys, which would otherwise be rejected
+between two closely spaced keys, which would otherwise be rejected
 every time --- biasing the workload towards cluster boundaries and
 missing the harder case of a query landing deep inside a dense region.
 The effective range length may therefore be smaller than $L$.

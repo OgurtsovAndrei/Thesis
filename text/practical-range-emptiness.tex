@@ -18,6 +18,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{xcolor}
+\usepackage{subcaption}
 \graphicspath{{figures/}}
 \geometry{margin=2cm}
 
@@ -47,7 +48,9 @@
 
     \chapter{Introduction}
     \label{ch:introduction}
-% TODO: expand introduction
+
+    \input{src/introduction_motivation}
+    \input{src/introduction_existing_work}
 
     \input{src/notation}
     \input{src/problem_statement}
@@ -67,7 +70,7 @@
     \label{chap:hash}
     \input{src/hash_soda}
     \input{src/hash_truncation}
-    \input{src/hash_cdf}
+    %\input{src/hash_cdf}
 
 
     \chapter{Hybrid Segmentation}

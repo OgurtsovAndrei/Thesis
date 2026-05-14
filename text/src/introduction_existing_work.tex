@@ -1,0 +1,25 @@
+\section{Existing Range Filters}
+\label{sec:existing-work}
+
+% TODO: ~500 words
+% One short paragraph per filter (2–3 sentences each):
+%   what it does, key strength, key weakness vs the lower bound
+%
+% Filters to cover (all in refs.bib):
+%   SuRF      — trie-based, fast, but far above the lower bound in BPK
+%   Rosetta   — Bloom-filter cascade, matches lower bound asymptotically, slow build
+%   SNARF     — learned CDF, low BPK, saturates FPR at ~1e-3 regardless of memory
+%   Grafite   — Elias-Fano + Golomb, close to lower bound, deterministic
+%
+% Closing paragraph (~2 sentences):
+%   All existing practical filters either miss the lower bound or have poor constants.
+%   In this thesis we show that the Goswami construction can be made practical
+%   by improving the ERE backend and replacing the global hash with a
+%   distribution-aware segmentation strategy.
+%
+% Contribution summary (1 short paragraph at the end of this section):
+%   "In this thesis, we make the following contributions: ..."
+%   1. Single-vector ERE: -24% metadata vs Goswami
+%   2. Binary/linear search replacing WPS: 6-110x faster query
+%   3. Truncation hash: -log2(L) BPK on uniform data, O(1) query
+%   4. Scan-ARE (1D-DBSCAN): near-zero FPR on clustered data at ~11 BPK
