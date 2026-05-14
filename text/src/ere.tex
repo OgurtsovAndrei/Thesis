@@ -173,6 +173,20 @@ Chapter~\ref{chap:evaluation}
 
 \colorbox{orange}{TODO: write about better mem layout}
 
+\paragraph{Relation to Elias-Fano coding and Grafite.}
+The single bitvector~$D$ is equivalent to Elias-Fano
+coding~\citep{elias1974efficient,fano1971number}: $D$ is exactly the unary-encoded
+high-bits bitvector, and the packed suffix array~$A_{ds}$ plays the role of the
+low-bits array.
+We derived this layout by first rejecting WPS: Section~\ref{sec:wps} shows that adaptive linear or binary
+search over packed suffixes is 8--160$\times$ faster (Table~\ref{tab:wps-vs-binsearch}),
+making the two-vector $(D_1, D_2)$ layout --- which exists to support the WPS access
+pattern --- redundant.
+Grafite~\citep{grafite2024} independently uses the same Elias-Fano structure as their
+succinct storage layer, motivating the choice by implementation simplicity; our
+contribution is the empirical quantification of the speed gap
+(Table~\ref{tab:wps-vs-binsearch}).
+
 \subsection{Block sizes and Lookup strategy}
 \label{subsec:block-sizes-and-lookup-strategy}
 

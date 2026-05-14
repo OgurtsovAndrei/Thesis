@@ -98,7 +98,7 @@ Assume keys $x_0,\, x_0{+}R,\, x_0{+}2R,\ldots$
 A query $[q,\, q{+}\mathcal{L}{-}1]$ is truly empty iff it fits inside a gap:
 $q = x_i + s$, $s \in (1,\, R{-}\mathcal{L}]$.
 
-А false positive requires some key's hash value to fall inside $h([q, q+\mathcal{L}-1])$.
+A false positive requires some key's hash value to fall inside $h([q, q+\mathcal{L}-1])$.
 Since the query lies in a gap between $x_i$ and $x_{i+1}$, and $h$ is order-preserving,
 all other keys are further away and their hash values fall outside this interval ---
 only the two immediate neighbors can contribute.
@@ -189,6 +189,16 @@ $\log_2(\mathcal{L})$ extra bits per key.
 \end{figure}
 
 \FloatBarrier
+
+\begin{remark}
+Grafite~\citep{grafite2024} independently proposes an equivalent heuristic named
+\emph{Bucketing} (their Section~4): keys are mapped via $x \mapsto \lfloor x/s \rfloor$
+and the occupied bucket indices are stored in Elias-Fano, with $s$ as the space-accuracy
+trade-off parameter --- the same idea as prefix truncation with $s = 2^t$.
+Our contribution relative to Grafite is the precise FPR formula
+(Equation~\ref{eq:trunc-fpr}) and the per-dataset breakdown analysis
+(Table~\ref{tab:trunc-breakdown}), which Grafite does not provide.
+\end{remark}
 
 \pagebreak
 

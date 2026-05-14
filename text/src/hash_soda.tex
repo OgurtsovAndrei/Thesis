@@ -16,7 +16,7 @@ The result is in $[0, 2^K)$.
 $u: [0, U/2^K) \to [0, 2^K)$ is drawn from a pairwise-independent family, stored as two
 64-bit coefficients $(a, b)$:
 \begin{equation}
-    u(x) = \left\lfloor \frac{a \cdot x + b}{2^{128-K}} \right\rfloor.
+    u(x) = \left\lfloor \frac{a \cdot x + b \bmod 2^{64}}{2^{64-K}} \right\rfloor.
     \label{eq:soda-u}
 \end{equation}
 
@@ -42,6 +42,17 @@ Properties of the hash:
     (The choice $K = \lceil\log_2(n\mathcal{L}/\varepsilon)\rceil \geq \log_2 \mathcal{L}$
     guarantees this.)
 \end{itemize}
+
+\paragraph{Comparison with Grafite.}
+Grafite~\citep{grafite2024} uses a hash of the same locality-preserving form but from a
+different pairwise-independent family:
+$q(x) = \bigl((c_1 x + c_2) \bmod p\bigr) \bmod r$,
+where $p = 2^{61}-1$ is a Mersenne prime.
+This construction requires modulo operations with non-power-of-two divisors ($p$ and $r$),
+whereas the multiply-shift family used here~\citep{goswami2015approximate} replaces them
+with a multiplication and a right shift, since all reductions are by powers of two.
+The theoretical guarantees are identical: pairwise independence gives
+$\mathrm{FPR} \leq \varepsilon$ for any data and query distribution.
 
 \subsection{ARE Construction With SODA Hash}
 
