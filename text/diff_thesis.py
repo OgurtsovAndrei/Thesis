@@ -121,7 +121,17 @@ def main():
     build_env = os.path.join(tmp_dir, "build")
     if os.path.exists(build_env):
         shutil.rmtree(build_env)
-    shutil.copytree(script_dir, build_env, ignore=shutil.ignore_patterns('diff_tmp*', '*.pdf', 'build'))
+    
+    # DO NOT ignore *.pdf here because figures are PDFs!
+    # Only ignore temporary directories and the main output PDFs
+    ignore_func = shutil.ignore_patterns(
+        'diff_tmp*', 
+        'build', 
+        'diff_highlighted.pdf', 
+        'practical-range-emptiness.pdf',
+        'proposal.pdf'
+    )
+    shutil.copytree(script_dir, build_env, ignore=ignore_func)
     shutil.copy(diff_tex, os.path.join(build_env, "diff.tex"))
     
     try:
