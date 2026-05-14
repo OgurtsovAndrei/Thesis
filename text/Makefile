@@ -53,7 +53,7 @@ figures:
 all: thesis proposal
 
 diff: figures
-	python3 diff_thesis.py $(BASE_COMMIT) --output $(DIFF_OUTPUT)
+	go run diff.go --commit $(BASE_COMMIT) --output $(DIFF_OUTPUT)
 
 thesis: figures
 	latexmk -pdf -interaction=nonstopmode $(MAIN).tex
