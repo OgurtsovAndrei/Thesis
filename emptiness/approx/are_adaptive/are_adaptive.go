@@ -142,8 +142,6 @@ func newAdaptiveAREFromKSorted(keys []uint64, keyBits uint32, K uint32, t uint32
 	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1
 	hashB := rng.Uint64()
-	fmt.Printf("DEBUG: AdaptiveARE n=%d K=%d seed=%d hashA=%d hashB=%d\n", n, K, seed, hashA, hashB)
-
 	hashedKeys := make([]uint64, n)
 
 	rMask := (uint64(1) << K) - 1
