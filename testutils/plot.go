@@ -151,8 +151,20 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 	if hasThresholds {
 		thresholdH = 100.0
 	}
-	w, h := 1020.0, 600.0+thresholdH
-	mL, mR, mT, mB := 90.0, 160.0, 40.0, 50.0+thresholdH
+	// Right margin grows with the longest legend label so text is never clipped.
+	// Menlo/Monaco monospace: advance ≈ 0.6 × font-size per character.
+	charW := float64(t.FontLabel) * 0.6
+	maxLabelChars := 0
+	for _, s := range series {
+		if len(s.Points) > 0 && len(s.Name) > maxLabelChars {
+			maxLabelChars = len(s.Name)
+		}
+	}
+	legendContentW := t.LegendLineLen + 6 + float64(maxLabelChars)*charW + 8
+	mR := math.Max(160, 16+legendContentW)
+	w := 90.0 + 770.0 + mR // mL=90, plotW fixed at 770
+	h := 600.0 + thresholdH
+	mL, mT, mB := 90.0, 40.0, 50.0+thresholdH
 	plotW := w - mL - mR
 	plotH := h - mT - mB
 
