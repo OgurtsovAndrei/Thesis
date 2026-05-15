@@ -10,57 +10,39 @@ type segment struct {
 
 // detectSegments partitions sorted keys into dense segments and fallback.
 //
-// Algorithm: 1D DBSCAN without border expansion and without a minClusterSize
-// post-filter. Only core-point runs (and their merges) form segments; all
-// other keys go to fallback.
-//
-//  1. Forward + reverse sweep identifies core points: those with ≥ segMinPts
-//     neighbours within eps.
-//  2. Contiguous core-point runs form segment cores.
-//  3. Adjacent cores within eps are merged.
-//  4. No border expansion: non-core points always go to fallback.
+// Single forward sweep collects (start, end) index ranges where the sliding
+// window of width eps contains >= segMinPts keys. Adjacent ranges within eps
+// of each other are merged. All keys inside a merged range form a segment;
+// everything else goes to fallback.
 func detectSegments(keys []uint64, eps uint64) ([]segment, []uint64) {
 	n := len(keys)
 	if n < 2 {
 		return nil, append([]uint64(nil), keys...)
 	}
 
-	isCore := make([]bool, n)
+	type run struct{ start, end int }
+	var runs []run
 
 	left := 0
+	runStart := -1
 	for right := 0; right < n; right++ {
 		for keys[right]-keys[left] > eps {
 			left++
 		}
 		if right-left+1 >= segMinPts {
-			isCore[right] = true
+			if runStart < 0 {
+				runStart = left
+			}
+		} else if runStart >= 0 {
+			runs = append(runs, run{runStart, right - 1})
+			runStart = -1
 		}
 	}
-	right := n - 1
-	for left := n - 1; left >= 0; left-- {
-		for keys[right]-keys[left] > eps {
-			right--
-		}
-		if right-left+1 >= segMinPts {
-			isCore[left] = true
-		}
-	}
-
-	type run struct{ start, end int }
-	var runs []run
-	for i := 0; i < n; {
-		if !isCore[i] {
-			i++
-			continue
-		}
-		start := i
-		for i+1 < n && isCore[i+1] && keys[i+1]-keys[i] <= eps {
-			i++
-		}
-		runs = append(runs, run{start, i})
-		i++
+	if runStart >= 0 {
+		runs = append(runs, run{runStart, n - 1})
 	}
 
+	// Merge runs within eps of each other in key-space.
 	merged := make([]run, 0, len(runs))
 	for _, r := range runs {
 		if len(merged) > 0 && keys[r.start]-keys[merged[len(merged)-1].end] <= eps {
@@ -89,6 +71,5 @@ func detectSegments(keys []uint64, eps uint64) ([]segment, []uint64) {
 			fallback = append(fallback, k)
 		}
 	}
-
 	return segs, fallback
 }
