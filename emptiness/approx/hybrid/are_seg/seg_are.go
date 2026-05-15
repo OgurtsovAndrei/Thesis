@@ -193,6 +193,38 @@ func NewSegAREFromKWithBackend(keys []uint64, keyBits, K uint32, rangeLen uint64
 	return newSegARE(keys, keyBits, K, rangeLen, eps, hybridutil.FallbackAlwaysSODA{}, backend)
 }
 
+// NewSegAREFromKWithPolicy is NewSegAREFromKWithBackend with an explicit
+// fallback policy. Used by benchmarks that need to compare different policies
+// on identical δ/K.
+func NewSegAREFromKWithPolicy(keys []uint64, keyBits, K uint32, rangeLen uint64, policy hybridutil.FallbackPolicy, backend exact.Variant) (*SegARE, error) {
+	errutil.BugOn(keyBits == 0 || keyBits > 64, "keyBits must be in [1,64], got %d", keyBits)
+	errutil.BugOn(K == 0 || K > 64, "K must be in (0,64], got %d", K)
+
+	n := len(keys)
+	if n == 0 {
+		return &SegARE{}, nil
+	}
+
+	var pow float64
+	if K >= 64 {
+		pow = float64(^uint64(0)) + 1
+	} else {
+		pow = float64(uint64(1) << K)
+	}
+	v := float64(segMinPts) * pow / float64(n)
+	var eps uint64
+	switch {
+	case v < 1:
+		eps = 1
+	case v >= float64(math.MaxUint64):
+		eps = math.MaxUint64
+	default:
+		eps = uint64(v)
+	}
+
+	return newSegARE(keys, keyBits, K, rangeLen, eps, policy, backend)
+}
+
 // segEps computes the DBSCAN neighbourhood radius δ = segMinPts · L/ε.
 func segEps(rangeLen uint64, epsilon float64) uint64 {
 	v := float64(segMinPts) * float64(rangeLen) / epsilon
