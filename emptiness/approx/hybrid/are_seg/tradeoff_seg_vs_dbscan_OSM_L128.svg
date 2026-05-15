@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="700" viewBox="0 0 1020 700">
+<defs><clipPath id="plot-region"><rect x="90.0" y="40.0" width="770.0" height="510.0"/></clipPath></defs>
+<style>text{font-family:Menlo,Monaco,monospace;font-size:22px;fill:#222} .axis{stroke:#333;stroke-width:1.5} .grid{stroke:#eee;stroke-width:0.5} .label{font-size:20px;fill:#444}</style>
+<text x="510" y="30" text-anchor="middle" style="font-size:24px;font-weight:bold">FPR vs BPK — OSM (n=1048576, L=128)</text>
+<line class="axis" x1="90.0" y1="550.0" x2="860.0" y2="550.0"/>
+<line class="axis" x1="90.0" y1="40.0" x2="90.0" y2="550.0"/>
+<line class="grid" x1="90.0" y1="550.0" x2="860.0" y2="550.0"/>
+<text class="label" x="82.0" y="554.0" text-anchor="end">10^-6</text>
+<line class="grid" x1="90.0" y1="471.5" x2="860.0" y2="471.5"/>
+<text class="label" x="82.0" y="475.5" text-anchor="end">10^-5</text>
+<line class="grid" x1="90.0" y1="393.1" x2="860.0" y2="393.1"/>
+<text class="label" x="82.0" y="397.1" text-anchor="end">10^-4</text>
+<line class="grid" x1="90.0" y1="314.6" x2="860.0" y2="314.6"/>
+<text class="label" x="82.0" y="318.6" text-anchor="end">10^-3</text>
+<line class="grid" x1="90.0" y1="236.2" x2="860.0" y2="236.2"/>
+<text class="label" x="82.0" y="240.2" text-anchor="end">10^-2</text>
+<line class="grid" x1="90.0" y1="157.7" x2="860.0" y2="157.7"/>
+<text class="label" x="82.0" y="161.7" text-anchor="end">10^-1</text>
+<line class="grid" x1="90.0" y1="79.2" x2="860.0" y2="79.2"/>
+<text class="label" x="82.0" y="83.2" text-anchor="end">1</text>
+<line class="grid" x1="148.3" y1="40.0" x2="148.3" y2="550.0"/>
+<text class="label" x="148.3" y="574.0" text-anchor="middle">2</text>
+<line class="grid" x1="210.2" y1="40.0" x2="210.2" y2="550.0"/>
+<text class="label" x="210.2" y="574.0" text-anchor="middle">4</text>
+<line class="grid" x1="272.1" y1="40.0" x2="272.1" y2="550.0"/>
+<text class="label" x="272.1" y="574.0" text-anchor="middle">6</text>
+<line class="grid" x1="334.0" y1="40.0" x2="334.0" y2="550.0"/>
+<text class="label" x="334.0" y="574.0" text-anchor="middle">8</text>
+<line class="grid" x1="395.8" y1="40.0" x2="395.8" y2="550.0"/>
+<text class="label" x="395.8" y="574.0" text-anchor="middle">10</text>
+<line class="grid" x1="457.7" y1="40.0" x2="457.7" y2="550.0"/>
+<text class="label" x="457.7" y="574.0" text-anchor="middle">12</text>
+<line class="grid" x1="519.6" y1="40.0" x2="519.6" y2="550.0"/>
+<text class="label" x="519.6" y="574.0" text-anchor="middle">14</text>
+<line class="grid" x1="581.5" y1="40.0" x2="581.5" y2="550.0"/>
+<text class="label" x="581.5" y="574.0" text-anchor="middle">16</text>
+<line class="grid" x1="643.4" y1="40.0" x2="643.4" y2="550.0"/>
+<text class="label" x="643.4" y="574.0" text-anchor="middle">18</text>
+<line class="grid" x1="705.3" y1="40.0" x2="705.3" y2="550.0"/>
+<text class="label" x="705.3" y="574.0" text-anchor="middle">20</text>
+<line class="grid" x1="767.2" y1="40.0" x2="767.2" y2="550.0"/>
+<text class="label" x="767.2" y="574.0" text-anchor="middle">22</text>
+<line class="grid" x1="829.1" y1="40.0" x2="829.1" y2="550.0"/>
+<text class="label" x="829.1" y="574.0" text-anchor="middle">24</text>
+<line x1="90.0" y1="471.0" x2="860.0" y2="471.0" stroke="#999" stroke-width="1.5" stroke-dasharray="6,4"/>
+<text x="860.0" y="467.0" text-anchor="end" style="font-size:17px;fill:#999">0 FP observed (floor = 1e-05)</text>
+<g clip-path="url(#plot-region)">
+<polyline fill="none" stroke="#e67e22" stroke-width="2.5" points="126.2,79.3 216.4,79.3 285.2,79.3 352.1,84.2 416.6,111.1 479.2,152.5 541.4,198.0 603.3,246.2 664.9,289.6 726.2,339.0 786.8,404.6"/>
+<circle cx="126.2" cy="79.3" r="3.6" fill="#e67e22"/>
+<circle cx="216.4" cy="79.3" r="3.6" fill="#e67e22"/>
+<circle cx="285.2" cy="79.3" r="3.6" fill="#e67e22"/>
+<circle cx="352.1" cy="84.2" r="3.6" fill="#e67e22"/>
+<circle cx="416.6" cy="111.1" r="3.6" fill="#e67e22"/>
+<circle cx="479.2" cy="152.5" r="3.6" fill="#e67e22"/>
+<circle cx="541.4" cy="198.0" r="3.6" fill="#e67e22"/>
+<circle cx="603.3" cy="246.2" r="3.6" fill="#e67e22"/>
+<circle cx="664.9" cy="289.6" r="3.6" fill="#e67e22"/>
+<circle cx="726.2" cy="339.0" r="3.6" fill="#e67e22"/>
+<circle cx="786.8" cy="404.6" r="3.6" fill="#e67e22"/>
+<polyline fill="none" stroke="#3498db" stroke-width="2.5" points="126.2,79.3 216.4,79.3 285.2,79.3 352.1,84.2 416.6,111.1 479.8,152.1 543.9,199.2 605.9,246.0 693.1,295.6 790.6,365.6 849.6,404.6"/>
+<polygon points="126.2,74.5 131.0,79.3 126.2,84.1 121.4,79.3" fill="#3498db"/>
+<polygon points="216.4,74.5 221.2,79.3 216.4,84.1 211.6,79.3" fill="#3498db"/>
+<polygon points="285.2,74.5 290.0,79.3 285.2,84.1 280.4,79.3" fill="#3498db"/>
+<polygon points="352.1,79.4 356.9,84.2 352.1,89.0 347.3,84.2" fill="#3498db"/>
+<polygon points="416.6,106.3 421.4,111.1 416.6,115.9 411.8,111.1" fill="#3498db"/>
+<polygon points="479.8,147.3 484.6,152.1 479.8,156.9 475.0,152.1" fill="#3498db"/>
+<polygon points="543.9,194.4 548.7,199.2 543.9,204.0 539.1,199.2" fill="#3498db"/>
+<polygon points="605.9,241.2 610.7,246.0 605.9,250.8 601.1,246.0" fill="#3498db"/>
+<polygon points="693.1,290.8 697.9,295.6 693.1,300.4 688.3,295.6" fill="#3498db"/>
+<polygon points="790.6,360.8 795.4,365.6 790.6,370.4 785.8,365.6" fill="#3498db"/>
+<polygon points="849.6,399.8 854.4,404.6 849.6,409.4 844.8,404.6" fill="#3498db"/>
+</g>
+<line x1="876" y1="60" x2="896" y2="60" stroke="#e67e22" stroke-width="2.5"/>
+<circle cx="886.0" cy="60.0" r="3.6" fill="#e67e22"/>
+<text class="label" x="902" y="64">SegARE (minPts=256, no border)</text>
+<line x1="876" y1="84" x2="896" y2="84" stroke="#3498db" stroke-width="2.5"/>
+<polygon points="886.0,79.2 890.8,84.0 886.0,88.8 881.2,84.0" fill="#3498db"/>
+<text class="label" x="902" y="88">Scan-ARE (DBSCAN)</text>
+<text x="475" y="600" text-anchor="middle" style="font-size:22px">Bits per Key (BPK)</text>
+<text transform="translate(22,295) rotate(-90)" text-anchor="middle" style="font-size:22px">False Positive Rate (FPR)</text>
+<line x1="90.0" y1="610.0" x2="860.0" y2="610.0" stroke="#ccc" stroke-width="1"/>
+<text x="82.0" y="613.0" text-anchor="end" style="font-size:17px;fill:#666">FPR ≤ 10⁻²</text>
+<g transform="translate(590.4,610.0) scale(1.5) translate(-590.4,-610.0)"><circle cx="590.4" cy="610.0" r="3.6" fill="#e67e22"/>
+</g>
+<g transform="translate(592.8,610.0) scale(1.5) translate(-592.8,-610.0)"><polygon points="592.8,605.2 597.6,610.0 592.8,614.8 588.0,610.0" fill="#3498db"/>
+</g>
+<line x1="90.0" y1="638.0" x2="860.0" y2="638.0" stroke="#ccc" stroke-width="1"/>
+<text x="82.0" y="641.0" text-anchor="end" style="font-size:17px;fill:#666">FPR ≤ 10⁻³</text>
+<g transform="translate(695.9,638.0) scale(1.5) translate(-695.9,-638.0)"><circle cx="695.9" cy="638.0" r="3.6" fill="#e67e22"/>
+</g>
+<g transform="translate(719.6,638.0) scale(1.5) translate(-719.6,-638.0)"><polygon points="719.6,633.2 724.4,638.0 719.6,642.8 714.8,638.0" fill="#3498db"/>
+</g>
+<line x1="90.0" y1="666.0" x2="860.0" y2="666.0" stroke="#ccc" stroke-width="1"/>
+<text x="82.0" y="669.0" text-anchor="end" style="font-size:17px;fill:#666">0 FP</text>
+</svg>
