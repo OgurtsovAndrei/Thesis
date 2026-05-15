@@ -1,8 +1,8 @@
 Chapter~\ref{chap:distributions} identified three distribution types.
 Sequential and near-sequential keys have small local spread, so exact mode
 (Section~\ref{sec:adaptive}) applies directly --- FPR~$= 0$ with no hash needed.
-When distribution is uniformed and the key span is large --- keys are spread out, truncation
-(Section~\ref{sec:truncation}) is effective: large gaps between keys mean few phantom
+When keys are uniform over a large span, truncation
+(Section~\ref{sec:truncation}) is effective: large inter-key gaps mean few phantom
 collisions and low FPR.
 
 Clustered keys (OSM, geospatial IDs) fit neither case alone: dense regions inside each
@@ -11,42 +11,76 @@ large inter-key distances where truncation works well.
 
 The hybrid idea is to split along this structure --- isolate each dense region into its
 own exact-mode sub-filter (FPR~$= 0$), and route the sparse keys between clusters to
-a truncation fallback.
+a fallback filter.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{segmentation}
     \caption{Hybrid segmentation: dense clusters go into exact-mode sub-filters
-        (FPR~$= 0$); sparse keys between clusters go to a truncation fallback.}
+        (FPR~$= 0$); sparse keys between clusters go to a fallback.}
     \label{fig:segmentation}
 \end{figure}
 
-The rest of this chapter presents the segmentation algorithm: 1D DBSCAN
-(Section~\ref{sec:hybrid-scan}).
+This chapter describes SegARE, our segmentation algorithm based on 1D DBSCAN.
 
-\section{1D DBSCAN Segmentation (Scan-ARE)}
+\section{1D DBSCAN in $O(n)$}
+\label{sec:dbscan-1d}
+
+DBSCAN~\citep{ester1996dbscan} is a density-based clustering algorithm.
+It takes two parameters: a neighbourhood width~$\delta$ and a density threshold
+\texttt{minPts}. A point is a \emph{core point} if it has at least \texttt{minPts}
+neighbours within a window of width~$\delta$; a \emph{border point} if it is within
+$\delta$ of a core point but not itself dense; and \emph{noise} otherwise. Clusters
+grow from core points by absorbing all density-reachable neighbours.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{dbscan_1d}
+  \caption{1D DBSCAN on a key sequence (minPts~$= 5$). Blue = core points (window
+    contains $\geq$ minPts neighbours). Orange = border (within $\delta$ of a core,
+    but $<$ minPts in own window). Gray = noise.}
+  \label{fig:dbscan-1d}
+\end{figure}
+
+In a general metric space, finding the $\delta$-neighbourhood of each point costs $O(n^2)$.
+On sorted one-dimensional data the neighbourhood of any key is a contiguous interval, so
+a two-pointer sweep suffices: the left pointer advances when the window exceeds~$\delta$,
+and the window size is $O(1)$ to check. One forward pass marks the rightmost point of each
+dense window; one reverse pass marks the leftmost. Together they identify all core points
+in $O(n)$.
+
+\section{SegARE: Design and Algorithm}
 \label{sec:hybrid-scan}
 
-\subsection{1D DBSCAN in $O(n)$}
+\paragraph{Border points are not useful here.}
+Standard DBSCAN absorbs border points into the nearest cluster. For range emptiness,
+this step adds no value: a border point has fewer than \texttt{minPts} neighbours within
+$\delta$, so it lives in a sparse region where the average gap exceeds~$\mathcal{L}/\varepsilon$.
+Exact mode does not trigger for such points (Equation~\ref{eq:exact-threshold}), so they
+belong in the fallback regardless. SegARE drops border expansion entirely.
 
-DBSCAN~\citep{ester1996dbscan} is normally $O(n^2)$ due to neighbor search. On sorted
-1D data, the $\delta$-neighborhood of any point is an interval, so the
-algorithm reduces to two-pointer sweeps:
+\paragraph{Expressing $\delta$ through \texttt{minPts}.}
+Standard DBSCAN treats $\delta$ and \texttt{minPts} as independent.
+In our setting the exact-mode condition gives us a natural coupling: a core window of
+\texttt{minPts} points is exact-mode eligible only if each consecutive pair is spaced at
+most $\mathcal{L}/\varepsilon$ apart. The tightest $\delta$ that still admits such a window is:
 
-\begin{enumerate}
-  \item \textbf{Forward sweep:} for each $\text{key}[i]$, advance the left pointer while
-    $\text{key}[i] - \text{key}[\text{left}] > \delta$. If the window has
-    $\geq \texttt{minPts}$ points, $\text{key}[i]$ is a core point.
-  \item \textbf{Reverse sweep:} same logic right-to-left (the forward pass only marks
-    the rightmost points of each dense window).
-  \item \textbf{Core runs:} contiguous core points with gap $\leq \delta$ form
-    cluster cores.
-  \item \textbf{Merge:} adjacent cores within $\delta$ of each other are joined.
-  \item \textbf{Border expansion:} non-core points within $\delta$ of a core point
-    (\emph{border points}) join the nearest cluster.
-  \item \textbf{Post-filter:} clusters with fewer than \texttt{minClusterSize} keys
-    dissolve back to fallback.
-\end{enumerate}
+\begin{equation}
+  \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}.
+  \label{eq:delta}
+\end{equation}
+
+This ties $\delta$ to \texttt{minPts}, leaving a single free parameter.
+
+\paragraph{Choosing \texttt{minPts} = 256.}
+Each segment stores fixed boundary metadata of roughly 300--500~bits
+(\texttt{minKey}, \texttt{maxKey}, and bookkeeping).
+For this overhead to be amortized, a segment must hold at least $\sim$256 keys ---
+otherwise the per-segment cost exceeds the BPK savings from exact mode.
+At the same time, \texttt{minPts} cannot be too large or dense sub-ranges fail to accumulate
+enough points to form a cluster.
+256 is a practical balance: it filters out micro-clusters whose overhead exceeds their
+benefit, while still detecting genuinely dense regions in real distributions.
 
 \begin{table}[H]
 \centering
@@ -54,72 +88,62 @@ algorithm reduces to two-pointer sweeps:
 \toprule
 Parameter & Value & Role \\
 \midrule
-\texttt{minPts}         & 10  & DBSCAN core threshold \\
-\texttt{minClusterSize} & 256 & Post-filter: clusters below this dissolve \\
+\texttt{minPts} & 256 & Core threshold $=$ minimum segment size \\
+$\delta$        & $256 \cdot \mathcal{L}/\varepsilon$ & Neighbourhood width \\
 \bottomrule
 \end{tabular}
-\caption{DBSCAN parameters. Two separate parameters --- unlike classic DBSCAN which
-  conflates core density and cluster size.}
-\label{tab:dbscan-params}
+\caption{SegARE parameters. Domain knowledge ties $\delta$ to \texttt{minPts},
+  so a single value controls both.}
+\label{tab:seg-params}
 \end{table}
-
-\subsection{Choosing $\delta$ From Problem Parameters}
-
-\begin{equation}
-  \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}
-  \label{eq:delta}
-\end{equation}
-
-From the exact mode analysis (Equation~\ref{eq:exact-threshold}): exact mode triggers
-when the average gap $< \mathcal{L}/\varepsilon$. Setting $\delta = \texttt{minPts} \cdot \mathcal{L}/\varepsilon$
-ties the neighbourhood radius directly to the core threshold: a window must hold
-\texttt{minPts} points, and each consecutive pair can be at most $\mathcal{L}/\varepsilon$ apart.
 
 \begin{table}[H]
 \centering
-\begin{tabular}{@{}lrrl@{}}
+\begin{tabular}{@{}lrr@{}}
 \toprule
-Distribution & Typical gap & Gap vs $\delta$ & Result \\
+Distribution & Typical gap & Gap vs $\delta$ \\
 \midrule
-Cluster (internal gap ${\sim}100$)  & 100            & $\ll \delta$ & Cluster found \\
-Uniform 64-bit (avg gap ${\sim}2^{44}$) & ${\sim}10^{13}$ & $\gg \delta$ & All fallback \\
-Sequential (gap $= 1000$)          & 1000           & $\ll \delta$ & One big cluster \\
+Clustered (internal gap ${\sim}100$)     & $10^2$          & $\ll \delta$ \\
+Uniform 64-bit (avg gap ${\sim}2^{44}$)  & ${\sim}10^{13}$ & $\gg \delta$ \\
+Sequential (gap~$= 1000$)                & $10^3$          & $\ll \delta$ \\
 \bottomrule
 \end{tabular}
 \caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
-  $\delta = 1.28 \times 10^6$. No data statistics or percentiles needed --- $\delta$ is derived
-  purely from $\mathcal{L}$ and $\varepsilon$.}
+  $\delta \approx 3.3 \times 10^{7}$.}
 \label{tab:eps-sanity}
 \end{table}
 
-\subsection{Dual Fallback}
+\subsection{Algorithm}
 
-Keys not assigned to any cluster go to a fallback filter. The choice between truncation
-and SODA is made automatically:
+Dropping border expansion simplifies the implementation: the forward/reverse sweep pair
+reduces to a single forward pass.
 
 \begin{enumerate}
-  \item Let $\text{spread} = \max(\text{fallback keys}) - \min(\text{fallback keys})$.
-    Compute phantom size: $\text{phantom\_size} = \text{spread} / 2^K$.
-  \item Compute the 5th-percentile gap ($P_5$) of fallback keys via quickselect.
-  \item If $P_5 > \text{phantom\_size}$: \textbf{truncation} (safe, saves
-    $\log_2(\mathcal{L})$ BPK).
-  \item If $P_5 \leq \text{phantom\_size}$: \textbf{adaptive/SODA} (guaranteed FPR).
+  \item \textbf{Forward sweep:} slide a two-pointer window. Whenever the window holds
+    $\geq \texttt{minPts}$ keys, record the index range $[\textit{left}, \textit{right}]$.
+  \item \textbf{Merge:} adjacent ranges with key-space gap $\leq \delta$ are joined.
+  \item \textbf{Fallback:} all keys outside merged ranges go to the fallback filter.
 \end{enumerate}
+
+\subsection{Fallback}
+
+Keys not assigned to any segment go to a SODA fallback
+(Section~\ref{sec:soda}). SODA is used unconditionally: fallback keys are sparse and
+heterogeneous by construction, so truncation cannot provide a reliable FPR guarantee.
 
 \subsection{Query}
 
-Clusters are sorted by $[\min, \max]$. For a query $[a, b]$:
+Segments are sorted by $[\texttt{minKey}, \texttt{maxKey}]$. For a query $[a, b]$:
 \begin{enumerate}
-  \item Binary search over clusters intersecting $[a, b]$ --- $O(\log C)$ where $C$ is
-    the number of clusters.
-  \item Check each intersecting cluster (typically 0--1).
+  \item Binary search over segments intersecting $[a, b]$ --- $O(\log C)$, $C$ = segment
+    count.
+  \item Check each intersecting segment (typically 0--1 in practice).
   \item Check the fallback filter.
-  \item Return ``empty'' only if all sub-filters agree.
+  \item Return ``empty'' only if all agree.
 \end{enumerate}
 
 \subsection{FPR Guarantee}
 
-Each sub-filter independently targets FPR~$\leq \varepsilon$. By a union bound, if a
-query touches at most $C$ sub-filters, the overall FPR~$\leq C\varepsilon$. In practice
-most queries touch only one sub-filter (either one cluster or just the fallback), so
-$C = 1$ and FPR~$\approx \varepsilon$.
+Each sub-filter independently targets FPR~$\leq \varepsilon$. By the union bound,
+overall FPR~$\leq C\varepsilon$ where $C$ is the number of sub-filters a query touches.
+In practice $C = 1$ for most queries, so FPR~$\approx \varepsilon$.
