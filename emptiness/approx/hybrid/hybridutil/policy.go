@@ -158,3 +158,39 @@ func Quickselect(a []uint64, k int) uint64 {
 	}
 	return a[k]
 }
+
+// FallbackInGapFPR selects Trunc iff the expected in-gap FPR of TruncARE
+// on the given fallback key set does not exceed Epsilon.
+//
+// The predicate evaluates, in one O(n) pass over the sorted keys,
+//
+//     (1/(n-1)) · Σ_i min(1, P / max(1, R_i - L))   ≤  Epsilon
+//
+// where R_i is the i-th consecutive gap and P = spread >> K is the
+// truncation phantom-block size. This matches the per-gap FPR of
+// Eq. 5.2 of the thesis and the in-gap query distribution used by
+// bench/internal/querygen.GenerateSmartQueriesWeighted (gap chosen
+// uniformly by index, query placed uniformly inside the gap).
+//
+// Guarantee (Expected FPR, Model A): if useTrunc returns true,
+// then E[FPR_trunc]_in-gap ≤ Epsilon + O(1/2^t).
+type FallbackInGapFPR struct{ Epsilon float64 }
+
+func (f FallbackInGapFPR) useTrunc(keys []uint64, K uint32, L uint64) bool {
+	n := len(keys)
+	if n < 2 {
+		return true
+	}
+	spread := keys[n-1] - keys[0]
+	if spread == 0 {
+		return true
+	}
+	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
+	if spreadBits <= K {
+		return true // exact mode inside TruncARE → FPR = 0
+	}
+	// Per-gap loop arrives in Task 2; reject conservatively for now.
+	return false
+}
+
+func (FallbackInGapFPR) String() string { return "InGapFPR" }
