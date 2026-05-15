@@ -1,6 +1,12 @@
 package hybridutil
 
-import "testing"
+import (
+	"math"
+	"math/rand"
+	"testing"
+
+	"Thesis/emptiness/approx/are_trunc"
+)
 
 // uniformKeys builds n keys with constant gap R, starting from 0.
 func uniformKeys(n int, R uint64) []uint64 {
@@ -123,4 +129,90 @@ func TestFallbackInGapFPR_HugeSparseSpread(t *testing.T) {
 	if !got {
 		t.Errorf("useTrunc=false want true (huge sparse gaps → FPR ≪ ε)")
 	}
+}
+
+// generateInGapQueries mirrors the in-gap branch of
+// bench/internal/querygen.GenerateSmartQueriesWeighted: pick a gap uniformly
+// by index, then place the query start uniformly inside that gap.
+func generateInGapQueries(keys []uint64, count int, L uint64, rng *rand.Rand) [][2]uint64 {
+	n := len(keys)
+	if n < 2 {
+		return nil
+	}
+	type gap struct{ lo, hi uint64 }
+	gaps := make([]gap, 0, n-1)
+	for i := 0; i < n-1; i++ {
+		if keys[i+1]-keys[i] > 1 {
+			gaps = append(gaps, gap{keys[i] + 1, keys[i+1] - 1})
+		}
+	}
+	if len(gaps) == 0 {
+		return nil
+	}
+	out := make([][2]uint64, 0, count)
+	for attempts := 0; attempts < count*4 && len(out) < count; attempts++ {
+		g := gaps[rng.Intn(len(gaps))]
+		gapLen := g.hi - g.lo + 1
+		if gapLen == 0 {
+			continue
+		}
+		a := g.lo + uint64(rng.Int63n(int64(gapLen)))
+		b := a + L - 1
+		if b > g.hi {
+			b = g.hi
+		}
+		if b >= a {
+			out = append(out, [2]uint64{a, b})
+		}
+	}
+	return out
+}
+
+func measureFPR(t *testing.T, f *are_trunc.TruncARE, queries [][2]uint64) float64 {
+	t.Helper()
+	if len(queries) == 0 {
+		t.Fatal("no queries to measure")
+	}
+	fp := 0
+	for _, q := range queries {
+		if !f.IsEmpty(q[0], q[1]) {
+			fp++
+		}
+	}
+	return float64(fp) / float64(len(queries))
+}
+
+func TestFallbackInGapFPR_PredictsMeasured(t *testing.T) {
+	// 1<<14 keys, uniform gap = 1<<20, L = 128, K = 24.
+	// P/(R-L) ≈ 63/(2^20 - 128) ≈ 6e-5 → very low FPR but non-zero.
+	const n = 1 << 14
+	const R = uint64(1) << 20
+	const L = uint64(128)
+	const K = uint32(24)
+	keys := uniformKeys(n, R)
+	const keyBits uint32 = 64
+
+	predicted, ok := inGapFPRMean(keys, K, L)
+	if !ok {
+		t.Fatalf("expected non-trivial mean, got edge-case")
+	}
+
+	trunc, err := are_trunc.NewTruncAREFromK(keys, keyBits, K)
+	if err != nil {
+		t.Fatalf("TruncARE build: %v", err)
+	}
+	rng := rand.New(rand.NewSource(42))
+	queries := generateInGapQueries(keys, 100_000, L, rng)
+	measured := measureFPR(t, trunc, queries)
+
+	// Tolerance: 30% relative or 5e-4 absolute floor (whichever is larger).
+	// Wider than the 10% from the spec because the in-gap empirical FPR has
+	// non-trivial Monte-Carlo variance at low predicted values.
+	tol := math.Max(0.30*predicted, 5e-4)
+	if math.Abs(predicted-measured) > tol {
+		t.Errorf("predicted=%g measured=%g (|diff|=%g > tol=%g)",
+			predicted, measured, math.Abs(predicted-measured), tol)
+	}
+	t.Logf("predicted=%g measured=%g diff=%g tol=%g",
+		predicted, measured, math.Abs(predicted-measured), tol)
 }

@@ -177,36 +177,50 @@ func Quickselect(a []uint64, k int) uint64 {
 type FallbackInGapFPR struct{ Epsilon float64 }
 
 func (f FallbackInGapFPR) useTrunc(keys []uint64, K uint32, L uint64) bool {
+	mean, ok := inGapFPRMean(keys, K, L)
+	if !ok {
+		return true // edge case: trivially safe (n<2, spread=0, or exact-mode)
+	}
+	return mean <= f.Epsilon
+}
+
+// inGapFPRMean returns (1/(n-1)) · Σ min(1, P/(R_i - L)) for the sorted keys.
+// ok=false signals an edge case where TruncARE is trivially safe:
+//   - n < 2
+//   - spread = 0
+//   - spread fits in K bits (exact mode inside TruncARE)
+//
+// In all edge cases the returned mean is 0.
+func inGapFPRMean(keys []uint64, K uint32, L uint64) (mean float64, ok bool) {
 	n := len(keys)
 	if n < 2 {
-		return true
+		return 0, false
 	}
 	spread := keys[n-1] - keys[0]
 	if spread == 0 {
-		return true
+		return 0, false
 	}
 	spreadBits := uint32(64 - mbits.LeadingZeros64(spread))
 	if spreadBits <= K {
-		return true // exact mode inside TruncARE → FPR = 0
+		return 0, false
 	}
 	P := spread >> K
 	if P == 0 {
 		P = 1
 	}
-
 	var sum float64
 	for i := 1; i < n; i++ {
 		R := keys[i] - keys[i-1]
 		switch {
 		case R <= L:
-			// FPR_i = 0  (no empty query of length L fits in this gap)
+			// FPR_i = 0
 		case R-L <= P:
-			sum += 1.0 // saturated: P/(R-L) ≥ 1
+			sum += 1.0
 		default:
-			sum += float64(P) / float64(R-L) // Eq. 5.2
+			sum += float64(P) / float64(R-L)
 		}
 	}
-	return sum/float64(n-1) <= f.Epsilon
+	return sum / float64(n-1), true
 }
 
 func (FallbackInGapFPR) String() string { return "InGapFPR" }
