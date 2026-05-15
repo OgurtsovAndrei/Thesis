@@ -52,35 +52,36 @@ in $O(n)$.
 \section{SegARE: Design and Algorithm}
 \label{sec:hybrid-scan}
 
-\paragraph{Border points are not useful here.}
-Standard DBSCAN absorbs border points into the nearest cluster. For range emptiness,
-this step adds no value: a border point has fewer than \texttt{minPts} neighbours within
-$\delta$, so it lives in a sparse region where the average gap exceeds~$\mathcal{L}/\varepsilon$.
-Exact mode does not trigger for such points (Equation~\ref{eq:exact-threshold}), so they
-belong in the fallback regardless. SegARE drops border expansion entirely.
+\paragraph{Border expansion hurts exact-mode eligibility.}
+Standard DBSCAN absorbs border points --- points within $\delta$ of a core but not themselves dense --- into the nearest cluster.
+This widens the cluster's span without adding density.
+A larger span can push the cluster above the exact-mode budget
+$2^{K_\text{local}}$, turning what would have been a zero-FPR sub-filter into an AdaptiveARE running in SODA mode.
+SegARE drops border expansion: the dense core alone captures the keys that benefit from exact mode.
 
 \paragraph{Expressing $\delta$ through \texttt{minPts}.}
 Standard DBSCAN treats $\delta$ and \texttt{minPts} as independent.
 In our setting the exact-mode condition gives us a natural coupling: a core window of
-\texttt{minPts} points is exact-mode eligible only if each consecutive pair is spaced at
-most $\mathcal{L}/\varepsilon$ apart. The tightest $\delta$ that still admits such a window is:
+\texttt{minPts} points is exact-mode eligible only if each consecutive pair is spaced at most $\mathcal{L}/\varepsilon$ apart.
+The tightest $\delta$ that still admits such a window is:
 
 \begin{equation}
-  \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}.
+  \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon} = \frac{512\,\mathcal{L}}{\varepsilon}.
   \label{eq:delta}
 \end{equation}
 
 This ties $\delta$ to \texttt{minPts}, leaving a single free parameter.
 
-\paragraph{Choosing \texttt{minPts} = 256.}
-Each segment stores fixed boundary metadata of roughly 300--500~bits
-(\texttt{minKey}, \texttt{maxKey}, and bookkeeping).
-For this overhead to be amortized, a segment must hold at least $\sim$256 keys ---
-otherwise the per-segment cost exceeds the BPK savings from exact mode.
-At the same time, \texttt{minPts} cannot be too large or dense sub-ranges fail to accumulate
-enough points to form a cluster.
-256 is a practical balance: it filters out micro-clusters whose overhead exceeds their
-benefit, while still detecting genuinely dense regions in real distributions.
+\paragraph{Choosing \texttt{minPts} = 512.}
+Each segment incurs a fixed in-memory overhead of roughly 700~bits
+(\texttt{minKey}, \texttt{maxKey}, pointer, and the sub-filter header).
+For 512~keys this adds $\sim 1.4$~BPK of bookkeeping; for smaller clusters the overhead
+quickly dominates the budget.
+At the same time, \texttt{minPts} cannot be too large or dense sub-ranges fail to
+accumulate enough points to form a cluster.
+512 is a practical balance: on real-world clustered distributions such as Facebook IDs
+and OSM cell IDs, dense segments contain thousands of keys and are detected correctly,
+while micro-clusters below this threshold are better served by the global SODA fallback.
 
 \begin{table}[H]
 \centering
@@ -88,8 +89,8 @@ benefit, while still detecting genuinely dense regions in real distributions.
 \toprule
 Parameter & Value & Role \\
 \midrule
-\texttt{minPts} & 256 & Core threshold $=$ minimum segment size \\
-$\delta$        & $256 \cdot \mathcal{L}/\varepsilon$ & Neighbourhood width \\
+\texttt{minPts} & 512 & Core threshold $=$ minimum segment size \\
+$\delta$        & $512 \cdot \mathcal{L}/\varepsilon$ & Neighbourhood width \\
 \bottomrule
 \end{tabular}
 \caption{SegARE parameters. Domain knowledge ties $\delta$ to \texttt{minPts},
@@ -109,7 +110,7 @@ Sequential (gap~$= 1000$)                & $10^3$          & $\ll \delta$ \\
 \bottomrule
 \end{tabular}
 \caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
-  $\delta \approx 3.3 \times 10^{7}$.}
+  $\delta \approx 6.6 \times 10^{7}$.}
 \label{tab:eps-sanity}
 \end{table}
 

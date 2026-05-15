@@ -1,6 +1,6 @@
 package are_seg
 
-const segMinPts = 256
+const segMinPts = 512
 
 type segment struct {
 	keys   []uint64
