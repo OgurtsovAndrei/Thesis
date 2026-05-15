@@ -45,10 +45,10 @@ func NewSegARE(keys []uint64, keyBits uint32, rangeLen uint64, epsilon float64) 
 	K := kFromParams(n, rangeLen, epsilon)
 	eps := segEps(rangeLen, epsilon)
 
-	return newSegARE(keys, keyBits, K, rangeLen, eps, exact.VariantAuto)
+	return newSegARE(keys, keyBits, K, rangeLen, eps, hybridutil.FallbackAlwaysSODA{}, exact.VariantAuto)
 }
 
-func newSegARE(keys []uint64, keyBits, K uint32, rangeLen, eps uint64, backend exact.Variant) (*SegARE, error) {
+func newSegARE(keys []uint64, keyBits, K uint32, rangeLen, segDelta uint64, policy hybridutil.FallbackPolicy, backend exact.Variant) (*SegARE, error) {
 	n := len(keys)
 	s := &SegARE{n: n}
 
@@ -64,7 +64,7 @@ func newSegARE(keys []uint64, keyBits, K uint32, rangeLen, eps uint64, backend e
 		return s, nil
 	}
 
-	segs, fallbackKeys := detectSegments(keys, eps)
+	segs, fallbackKeys := detectSegments(keys, segDelta)
 
 	s.clusters = make([]hybridutil.ClusterFilter, 0, len(segs))
 	for _, seg := range segs {
@@ -83,7 +83,7 @@ func newSegARE(keys []uint64, keyBits, K uint32, rangeLen, eps uint64, backend e
 
 	if len(fallbackKeys) > 0 {
 		Kfb := hybridutil.LocalK(K, n, len(fallbackKeys))
-		fb, err := hybridutil.BuildFallback(fallbackKeys, keyBits, rangeLen, Kfb, hybridutil.FallbackAlwaysSODA{}, backend)
+		fb, err := hybridutil.BuildFallback(fallbackKeys, keyBits, rangeLen, Kfb, policy, backend)
 		if err != nil {
 			return nil, err
 		}
@@ -160,7 +160,7 @@ func NewSegAREFromK(keys []uint64, keyBits, K uint32, rangeLen uint64) (*SegARE,
 		eps = uint64(v)
 	}
 
-	return newSegARE(keys, keyBits, K, rangeLen, eps, exact.VariantAuto)
+	return newSegARE(keys, keyBits, K, rangeLen, eps, hybridutil.FallbackAlwaysSODA{}, exact.VariantAuto)
 }
 
 // NewSegAREFromKWithBackend is NewSegAREFromK with an explicit ERE backend.
@@ -190,7 +190,7 @@ func NewSegAREFromKWithBackend(keys []uint64, keyBits, K uint32, rangeLen uint64
 		eps = uint64(v)
 	}
 
-	return newSegARE(keys, keyBits, K, rangeLen, eps, backend)
+	return newSegARE(keys, keyBits, K, rangeLen, eps, hybridutil.FallbackAlwaysSODA{}, backend)
 }
 
 // segEps computes the DBSCAN neighbourhood radius δ = segMinPts · L/ε.
