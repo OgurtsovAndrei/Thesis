@@ -105,8 +105,10 @@ func TestFallbackInGapFPR_Saturated(t *testing.T) {
 }
 
 func TestFallbackInGapFPR_DenseGapsLE_L(t *testing.T) {
-	// All gaps = 4 ≤ L = 8 → every gap contributes FPR_i = 0 → safe.
-	keys := uniformKeys(1024, 4)
+	// n = 1<<14, R = 4 → spread = (n-1)·R = 65532, spreadBits = 16.
+	// With K = 12, spreadBits > K so the per-gap loop runs.
+	// All gaps = 4 ≤ L = 8 → every gap contributes FPR_i = 0 → mean = 0 → safe.
+	keys := uniformKeys(1<<14, 4)
 	got := FallbackInGapFPR{Epsilon: 1e-9}.useTrunc(keys, 12, 8)
 	if !got {
 		t.Errorf("useTrunc=false want true (all gaps ≤ L → sum=0)")
