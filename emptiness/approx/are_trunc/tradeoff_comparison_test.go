@@ -3,6 +3,7 @@ package are_trunc_test
 import (
 	"Thesis/emptiness/approx/are_soda_hash"
 	"Thesis/emptiness/approx/are_trunc"
+	"Thesis/emptiness/exact"
 	"Thesis/testutils"
 	"fmt"
 	"math"
@@ -14,9 +15,8 @@ import (
 )
 
 func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
-	t.Skip("skip: overwrites SVGs with manual annotations")
 	const (
-		n          = 1 << 18
+		n          = 1 << 20
 		queryCount = 1 << 18
 		nRuns      = 3
 		rangeLen   = uint64(128)
@@ -46,16 +46,20 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 		querySets[r] = qs
 	}
 
-	kGrid := []uint32{
+	kGridTrunc := []uint32{
 		4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
 		21, 22, 23, 24, 25, 26, 28, 30, 32, 34, 36,
+	}
+	kGridSoda := []uint32{
+		4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+		21, 22, 23, 24, 25, 26, 28, 30, 32, 34, 36, 38,
 	}
 
 	theoretical := &testutils.SeriesData{Name: "Theoretical", Color: "#ef4444", Dashed: true, Marker: "none"}
 	truncSeries := &testutils.SeriesData{Name: "Truncation", Color: "#9b59b6", Marker: "triangle"}
 	sodaSeries := &testutils.SeriesData{Name: "SODA", Color: "#4dd88a", Marker: "diamond"}
 
-	for _, K := range kGrid {
+	for _, K := range kGridSoda {
 		thEps := float64(rangeLen) / math.Exp2(float64(K))
 		if thEps >= 1e-6 && thEps <= 1 {
 			theoretical.Points = append(theoretical.Points,
@@ -71,14 +75,16 @@ func TestTradeoff_TheoreticalVsSodaVsTrunc(t *testing.T) {
 	}
 	var tasks []task
 
-	for _, K := range kGrid {
-		if f, err := are_trunc.NewTruncAREFromK(keys, 64, K); err == nil {
+	for _, K := range kGridTrunc {
+		if f, err := are_trunc.NewTruncAREFromKWithBackend(keys, 64, K, exact.VariantOneD); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
 			f := f
 			tasks = append(tasks, task{"Truncation", K, bpk,
 				func(a, b uint64) bool { return f.IsEmpty(a, b) }})
 		}
-		if f, err := are_soda_hash.NewSodaAREFromK(keys, K, int64(rangeLen)); err == nil {
+	}
+	for _, K := range kGridSoda {
+		if f, err := are_soda_hash.NewSodaAREFromKWithBackend(keys, K, int64(rangeLen), exact.VariantOneD); err == nil {
 			bpk := float64(f.SizeInBits()) / float64(n)
 			f := f
 			tasks = append(tasks, task{"SODA", K, bpk,

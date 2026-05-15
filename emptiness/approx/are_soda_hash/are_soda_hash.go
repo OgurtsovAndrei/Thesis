@@ -62,6 +62,7 @@ func newSodaAREFromK(keys []uint64, K uint32, seed int64, backend exact.Variant)
 	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()
+	fmt.Printf("DEBUG: SodaARE n=%d K=%d seed=%d hashA=%d hashB=%d\n", n, K, seed, hashA, hashB)
 
 	rMask := ^uint64(0)
 	if K < 64 {
@@ -120,6 +121,7 @@ func NewSodaAREUint64WithBackend(keys []uint64, rangeLen uint64, epsilon float64
 	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()
+	fmt.Printf("DEBUG: SodaARE n=%d K=%d seed=%d hashA=%d hashB=%d\n", n, K, seed, hashA, hashB)
 
 	rMask := ^uint64(0)
 	if K < 64 {
@@ -178,6 +180,7 @@ func NewSodaAREUint64InPlaceWithBackend(keys []uint64, K uint32, seed int64, bac
 	rng := rand.New(rand.NewSource(seed))
 	hashA := rng.Uint64() | 1 // odd
 	hashB := rng.Uint64()
+	fmt.Printf("DEBUG: SodaARE n=%d K=%d seed=%d hashA=%d hashB=%d\n", n, K, seed, hashA, hashB)
 
 	rMask := ^uint64(0)
 	if K < 64 {

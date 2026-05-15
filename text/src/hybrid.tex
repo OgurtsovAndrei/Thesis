@@ -1,48 +1,31 @@
-\section{Gap-Percentile Segmentation}
-\label{sec:hybrid-gap}
+Chapter~\ref{chap:distributions} identified three distribution types.
+Sequential and near-sequential keys have small local spread, so exact mode
+(Section~\ref{sec:adaptive}) applies directly --- FPR~$= 0$ with no hash needed.
+When distribution is uniformed and the key span is large --- keys are spread out, truncation
+(Section~\ref{sec:truncation}) is effective: large gaps between keys mean few phantom
+collisions and low FPR.
 
-The first hybrid approach splits keys into dense clusters and sparse remainder using
-gap-percentile detection: large gaps between sorted keys mark cluster boundaries.
+Clustered keys (OSM, geospatial IDs) fit neither case alone: dense regions inside each
+cluster behave like near-sequential data, while the sparse gaps between clusters have
+large inter-key distances where truncation works well.
 
-Given $n$ sorted keys, compute gaps $g_i = \text{key}_{i+1} - \text{key}_i$. The
-95th-percentile gap (computed via quickselect) becomes the threshold~$\tau$. Then:
-
-\begin{enumerate}
-  \item \textbf{Split} at every position where $g_i > \tau$.
-  \item \textbf{Filter:} segments with $\geq 1\%$ of $n$ keys become clusters.
-  \item \textbf{Fallback:} remaining keys go to a truncation filter.
-\end{enumerate}
-
-Each cluster is built as an adaptive filter (Section~\ref{sec:adaptive}) --- if the
-cluster's spread fits in $K$ bits, exact mode triggers (FPR~$= 0$). Otherwise SODA
-mode.
+The hybrid idea is to split along this structure --- isolate each dense region into its
+own exact-mode sub-filter (FPR~$= 0$), and route the sparse keys between clusters to
+a truncation fallback.
 
 \begin{figure}[h]
-  \centering
-  \includegraphics[width=0.85\textwidth]{gap_equidistant}
-  \caption{Gap-percentile failure on equidistant data: all gaps are equal, so $P_{95}$
-    equals the common gap and no split points are found.}
-  \label{fig:gap-equidistant}
+    \centering
+    \includegraphics[width=0.85\textwidth]{segmentation}
+    \caption{Hybrid segmentation: dense clusters go into exact-mode sub-filters
+        (FPR~$= 0$); sparse keys between clusters go to a truncation fallback.}
+    \label{fig:segmentation}
 \end{figure}
 
-\paragraph{Limitations.}
-\begin{itemize}
-  \item \textbf{Equidistant data:} when all gaps are equal (sequential keys), the gap
-    distribution has a single mode --- there is no ``large gap'' to split at. The P95
-    threshold equals the common gap, and strict inequality fails for all gaps,
-    producing one giant segment.
-  \item \textbf{No merging:} two adjacent small segments that together would form a
-    valid cluster are never joined.
-  \item \textbf{Fallback is always truncation:} if fallback keys have small gaps
-    relative to the phantom size, truncation produces high FPR
-    (Section~\ref{subsec:trunc-failure}).
-\end{itemize}
+The rest of this chapter presents the segmentation algorithm: 1D DBSCAN
+(Section~\ref{sec:hybrid-scan}).
 
-\FloatBarrier
 \section{1D DBSCAN Segmentation (Scan-ARE)}
 \label{sec:hybrid-scan}
-
-The improved hybrid addresses all three limitations above using density-based clustering.
 
 \subsection{1D DBSCAN in $O(n)$}
 
@@ -83,14 +66,14 @@ Parameter & Value & Role \\
 \subsection{Choosing $\delta$ From Problem Parameters}
 
 \begin{equation}
-  \delta = c \cdot \frac{\mathcal{L}}{\varepsilon}, \quad c = 10
+  \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}
   \label{eq:delta}
 \end{equation}
 
 From the exact mode analysis (Equation~\ref{eq:exact-threshold}): exact mode triggers
-when the average gap $< \mathcal{L}/\varepsilon$. So
-$\delta = 10 \cdot \mathcal{L}/\varepsilon$ means: regions $10\times$ denser than
-the exact-mode threshold get clustered.
+when the average gap $< \mathcal{L}/\varepsilon$. Setting $\delta = \texttt{minPts} \cdot \mathcal{L}/\varepsilon$
+ties the neighbourhood radius directly to the core threshold: a window must hold
+\texttt{minPts} points, and each consecutive pair can be at most $\mathcal{L}/\varepsilon$ apart.
 
 \begin{table}[H]
 \centering

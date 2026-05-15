@@ -2,17 +2,13 @@ package hash
 
 import (
 	"Thesis/bits"
-	mbits "math/bits"
 	"sort"
 )
 
-// PairwiseHash computes a 2-universal hash: top K bits of (a*x + b) in 128-bit arithmetic.
+// PairwiseHash computes a 2-universal hash using the standard multiply-shift method.
+// It maps a 64-bit input to a K-bit output: h(x) = (a*x + b) >> (64 - K).
 func PairwiseHash(x, a, b uint64, K uint32) uint64 {
-	hi, lo := mbits.Mul64(a, x)
-	sumLo, carry := mbits.Add64(lo, b, 0)
-	_ = sumLo
-	sumHi := hi + carry
-	return sumHi >> (64 - K)
+	return (a*x + b) >> (64 - K)
 }
 
 // SortAndDedup sorts a slice of BitStrings and removes duplicates, returning a new deduplicated slice.
