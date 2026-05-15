@@ -133,27 +133,24 @@ func NewHybridScanAREWithPolicy(keys []uint64, keyBits uint32, cfg ConfigWithPol
 
 // dbscanEpsFromK returns the DBSCAN density window in key-space units.
 //
-// We want DBSCAN to detect any cluster that is exact-mode-eligible: spread
-// ≤ 2^K and size ≥ minClusterSize. Inside such a cluster the average gap is
-// at most 2^K / minClusterSize. For DBSCAN core (dbscanMinPts neighbours in
-// the eps-window), eps must be ≥ dbscanMinPts · avg_gap, i.e.
+// The theoretically correct formula is derived from K = ceil(log2(n·L/ε)),
+// so 2^K ≈ n·L/ε and the average gap across n keys in a universe of size 2^K
+// is ≈ 2^K / n. For DBSCAN to mark a point as a core point it needs
+// dbscanMinPts neighbours within the window, so:
 //
-//	eps ≥ dbscanMinPts · 2^K / minClusterSize.
+//	eps = dbscanMinPts · avg_gap = dbscanMinPts · 2^K / n
 //
-// The legacy formula (epsMultiplier · 2^K / n) used n in the denominator,
-// which only matches when the cluster covers the whole dataset (size = n).
-// On wide-spread real data (OSM, books_u64) it makes eps n/minClusterSize ×
-// too small so DBSCAN detects 0 clusters and Hybrid-Scan collapses to plain
-// fallback. The eps depends only on the smallest cluster we agree to track,
-// not on n.
-func dbscanEpsFromK(_ int, K uint32) uint64 {
+// This makes eps data-adaptive: for dense datasets (small average gap) eps is
+// small and DBSCAN is tight; for sparse datasets eps is large so only genuinely
+// dense local clusters (span ≪ 2^K) are detected.
+func dbscanEpsFromK(n int, K uint32) uint64 {
 	var pow float64
 	if K >= 64 {
 		pow = float64(^uint64(0)) + 1
 	} else {
 		pow = float64(uint64(1) << K)
 	}
-	v := float64(epsMultiplier) * float64(dbscanMinPts) * pow / float64(minClusterSize)
+	v := float64(dbscanMinPts) * pow / float64(n)
 	if v < 1 {
 		return 1
 	}
