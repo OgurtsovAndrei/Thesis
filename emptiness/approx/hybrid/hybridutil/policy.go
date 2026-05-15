@@ -189,8 +189,24 @@ func (f FallbackInGapFPR) useTrunc(keys []uint64, K uint32, L uint64) bool {
 	if spreadBits <= K {
 		return true // exact mode inside TruncARE → FPR = 0
 	}
-	// Per-gap loop arrives in Task 2; reject conservatively for now.
-	return false
+	P := spread >> K
+	if P == 0 {
+		P = 1
+	}
+
+	var sum float64
+	for i := 1; i < n; i++ {
+		R := keys[i] - keys[i-1]
+		switch {
+		case R <= L:
+			// FPR_i = 0  (no empty query of length L fits in this gap)
+		case R-L <= P:
+			sum += 1.0 // saturated: P/(R-L) ≥ 1
+		default:
+			sum += float64(P) / float64(R-L) // Eq. 5.2
+		}
+	}
+	return sum/float64(n-1) <= f.Epsilon
 }
 
 func (FallbackInGapFPR) String() string { return "InGapFPR" }
