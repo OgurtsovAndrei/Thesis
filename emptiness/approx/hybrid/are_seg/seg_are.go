@@ -45,7 +45,7 @@ func NewSegARE(keys []uint64, keyBits uint32, rangeLen uint64, epsilon float64) 
 	K := kFromParams(n, rangeLen, epsilon)
 	eps := segEps(rangeLen, epsilon)
 
-	return newSegARE(keys, keyBits, K, rangeLen, eps, hybridutil.FallbackAlwaysSODA{}, exact.VariantAuto)
+	return newSegARE(keys, keyBits, K, rangeLen, eps, hybridutil.FallbackInGapFPR{Epsilon: epsilon}, exact.VariantAuto)
 }
 
 func newSegARE(keys []uint64, keyBits, K uint32, rangeLen, segDelta uint64, policy hybridutil.FallbackPolicy, backend exact.Variant) (*SegARE, error) {
