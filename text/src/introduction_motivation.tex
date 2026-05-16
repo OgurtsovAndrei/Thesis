@@ -3,21 +3,25 @@
 
 Modern key--value stores --- RocksDB, LevelDB, Cassandra, HBase --- are built
 on the \emph{log-structured merge-tree} (LSM-tree)~\citep{oneil1996lsm}.
-The LSM-tree is write-optimised: incoming writes accumulate in an in-memory
-buffer and are flushed to disk as immutable sorted files (SSTables) at the
-top level, while a background compaction process merges and promotes files
-to successively larger levels. The structure converts random writes into
+The LSM-tree is a write-optimised data structure: incoming writes accumulate in an in-memory
+buffer and are flushed to disk as immutable Sorted String Tables (SSTables)
+at the top level, while a background compaction process merges and promotes
+files to successively larger levels.
+The structure converts random writes into
 sequential I/O at the cost of \emph{read amplification}: a single lookup
 may have to consult an SSTable at every level.
 
 To avoid touching each SSTable on disk, every file carries a small in-memory
-\emph{filter} in its metadata. The filter answers a membership-style question
+\emph{filter} in its metadata.
+The filter answers a membership-style question
 with one-sided error: false negatives are forbidden, and the false positive
 rate is bounded by~$\varepsilon$. If the filter says ``empty'', the engine
 skips the file with zero disk I/O. The Bloom filter~\citep{bloom1970space}
 fills this role for point lookups and is the default in production
-LSM-trees~\citep{monkey2017,dong2021rocksdb}. Bloom filters, however, cannot
-handle range queries~\citep{zhang2018surf}, and range-shaped workloads
+LSM-trees~\citep{monkey2017,dong2021rocksdb}. Bloom filters, however, answer
+a range query only by probing every key in the interval --- time linear in
+the range length, and impractical at LSM scale~\citep{zhang2018surf}.
+Range-shaped workloads
 --- short scans, prefix lookups over hierarchical keys (file paths, S2 cells,
 URLs), and time-window queries --- form a non-trivial share of
 production LSM traffic~\citep{cao2020facebook}.
@@ -28,25 +32,24 @@ under the same one-sided error guarantee.
 The information-theoretic limit of this problem is settled.
 \citet{goswami2015approximate} prove a worst-case lower bound of
 $\log_2(\mathcal{L}/\varepsilon)$ bits per key and give a matching
-construction --- a locality-preserving hash followed by an exact range
-emptiness (ERE) backend --- but their construction is, in their
-successors' own words, ``mainly theoretic in nature and thus very
-complicated to implement''~\citep{grafite2024}.
+construction --- a locality-preserving hash followed by an
+\emph{Exact Range Emptiness} (ERE) backend --- but their construction
+is, in their successors' own words, ``mainly theoretic in nature and
+thus very complicated to implement''~\citep{grafite2024}.
 
-The lower bound has a useful escape clause.
-\citet{vaidya2022snarf} restate it directly in the SNARF analysis:
-for a fixed memory budget, a range filter cannot handle large ranges
-and a low false positive rate simultaneously \emph{without further
-assumptions about the data set or workload}.
-Existing practical filters take one of two paths: either accept a
-distribution-dependent FPR guarantee that breaks under correlated
-queries (SuRF, SNARF), or pay for a distribution-free guarantee with
-heavier per-query work~\citep{luo2020rosetta,grafite2024}. Real LSM
-keys carry a third option that none of them exploits: production
-workloads cluster into dense blocks separated by sparse
-gaps~\citep{cao2020facebook}. This thesis pursues both goals at once.
-First, we tighten the constants in the Goswami-style ERE backend,
-narrowing the practical gap to the worst-case lower bound. Second,
-where the data distribution permits, we detect dense clusters and
-handle them exactly, stepping outside the bound on realistic inputs
-while preserving the worst-case guarantee on adversarial ones.
+The bound is worst-case, however, and \citet{vaidya2022snarf} make
+the escape clause explicit: it holds only \emph{without further
+assumptions on the data or workload}, so a filter tuned to a specific
+input regime can do better. Existing practical filters take one of
+two paths along this clause: either accept an FPR that holds only on
+uncorrelated, in-distribution queries (SuRF, SNARF), or pay for a
+distribution-free guarantee with heavier per-query
+work~\citep{luo2020rosetta,grafite2024}. Real LSM keys offer a third
+path that none of them exploits: production workloads cluster into
+dense blocks separated by sparse gaps~\citep{cao2020facebook}. This
+thesis pursues that third path. First, we tighten the constants in
+the Goswami-style ERE backend, narrowing the practical gap to the
+worst-case lower bound. Second, where the data distribution permits,
+we detect dense clusters and handle them exactly, going below the
+bound on benign inputs while preserving the worst-case guarantee on
+adversarial ones.

@@ -1,17 +1,19 @@
 \section{Existing Range Filters}
 \label{sec:existing-work}
 
-Five practical range filters have shaped the field over the past seven
-years. We group them by the technique that determines their
-space--accuracy trade-off, contrast each with the Goswami lower bound
-(Section~\ref{sec:bounds}), and use the grouping to position our
-contributions.
+We survey the five practical range filters most directly comparable
+to our work from the past seven years.
+We group them by the technique
+that determines their space--accuracy trade-off, contrast each with
+the Goswami lower bound (Section~\ref{sec:bounds}), and use the
+grouping to position our contributions.
 
 \paragraph{Trie-based: SuRF.}
 The Succinct Range Filter~\citep{zhang2018surf} stores the set of keys
-as a Fast Succinct Trie --- a LOUDS-dense plus LOUDS-sparse encoding,
-$10$ bits per trie node, $4$--$15\times$ faster than earlier succinct
-tries on point-query workloads. SuRF answers a range query by walking
+as a Fast Succinct Trie --- a level-order unary degree sequence (LOUDS)
+encoding with dense and sparse layers, $10$ bits per trie node,
+$4$--$15\times$ faster than earlier succinct tries on point-query
+workloads. SuRF answers a range query by walking
 the trie down to the boundary of the query interval, and in a RocksDB
 deployment accelerates closed-seek queries by up to $5\times$ over the
 Bloom-filter baseline. The trie skeleton gives no clean parameterisation
@@ -28,8 +30,8 @@ cite the Goswami construction.
 Rosetta~\citep{luo2020rosetta} stores one Bloom filter per key-prefix
 length, so a range query of length $R$ decomposes into at most
 $2 \log_2 R$ dyadic intervals, each initiating a Bloom probe at the
-root of its sub-tree. The cascade is shown to approach
-the Goswami lower bound within a constant factor of $1.44$ on uniform
+root of its sub-tree. The cascade's space is within a factor of $1.44$
+of the Goswami lower bound under uniform per-level
 allocation~\citep[\S3.1]{luo2020rosetta} and is reported $2$--$5\times$
 faster than SuRF and up to $40\times$ faster than the default RocksDB
 on a $50$M-key benchmark at $22$ bits per key. The authors are explicit
@@ -73,7 +75,10 @@ matches the Goswami lower bound to an additive $2n$ bits, and on
 uniform data it is reported $6.7$--$10.3\times$ faster to construct
 than Rosetta. What Grafite does not do --- and what we add in this
 thesis --- is exploit the structure of the input keys: its
-space--accuracy trade-off is by design workload-agnostic.
+space--accuracy trade-off is by design workload-agnostic. Our
+truncation hash (contribution~3) replaces Grafite's locality-preserving
+rotation, and Scan-ARE (contribution~4) layers distribution-aware
+segmentation on top of the same ERE-style backend.
 
 \paragraph{Dynamic extension: Memento.}
 Memento~\citep{eslami2024memento} is the contemporaneous SIGMOD~2024
@@ -87,27 +92,30 @@ matched memory. The authors explicitly note that static range filters
 suffice for the immutable files of an LSM-Tree
 deployment~\citep[\S1]{eslami2024memento}; Memento targets workloads
 where the key set itself is mutable --- single-global-filter
-LSM-trees, B-Tree indexes, and HTAP systems. Because our thesis stays
+LSM-trees, B-Tree indexes, and systems that mix transactional and
+analytical workloads. Because our thesis stays
 within the static setting, Memento is orthogonal rather than a
 head-to-head competitor.
 
 \paragraph{Positioning.}
 The space of practical range filters splits along a single axis: does
 the FPR guarantee hold under any query workload, or only under some
-distribution assumption? Trie-based and learned designs (SuRF, SNARF)
-fall on the heuristic side: they win on engineering simplicity or on
-specific data distributions, but their FPR has no worst-case bound and
-both papers concede degradation under correlated queries. The robust
-side is occupied by Rosetta (within a constant factor of the lower
-bound, $O(\log R)$ Bloom probes per query) and Grafite (worst-case
-robust, within an additive $2n$ bits of the Goswami lower bound).
-Memento extends the robust side to dynamic workloads at parity on the
-static axis. None of the five exploits the structure of real LSM
-keys --- production workloads cluster into dense blocks separated by
-sparse gaps, and this regularity is left on the table. The thesis
-fills the gap: we keep the worst-case guarantee of the Grafite-line
-and add a distribution-aware mechanism that beats the bound on
-realistic inputs.
+distribution assumption? Trie-based and learned designs fall on the
+heuristic side, but for different reasons. SuRF has no
+parameterisation by $\varepsilon$ at all: its space is fixed by the
+trie skeleton, and its FPR is whatever falls out of the suffix budget,
+empirically up to $25\%$ on correlated workloads. SNARF is
+parameterised by $\varepsilon$ but loses the guarantee under correlated
+queries, where the linear-spline model and the surrounding key context
+inflate the FPR. The robust side is occupied by Rosetta (within a
+factor of $1.44$ of the lower bound, $O(\log R)$ Bloom probes per
+query) and Grafite (within an additive $2n$ bits, single predecessor
+probe). Memento extends the robust side to dynamic workloads at
+parity on the static axis. None of the five exploits the
+cluster-and-gap structure of real LSM keys; this regularity is left
+on the table. The thesis fills the gap: we keep the worst-case
+guarantee of the Grafite line and add a distribution-aware mechanism
+that beats the bound on realistic inputs.
 
 \paragraph{Contributions of this thesis.}
 We start from Goswami's two-layer construction --- locality-preserving
@@ -118,7 +126,8 @@ lower bound on adversarial inputs and beat it on realistic ones.
     \item \textbf{Single-vector ERE backend (Chapter~\ref{chap:ere}).}
     The two metadata vectors $D_1, D_2$ of Goswami's ERE are replaced
     by a single succinct vector $D$, reducing metadata size by
-    $24\%$ (Poisson-predicted, empirically confirmed).
+    $24\%$ --- a saving predicted from the Poisson bucket-occupancy
+    model and confirmed empirically.
 
     \item \textbf{Adaptive bucket search (Chapter~\ref{chap:ere}).}
     The theoretically $O(1)$ Weak Prefix Search index inside each ERE
@@ -140,17 +149,18 @@ lower bound on adversarial inputs and beat it on realistic ones.
     and sparse tails. Dense clusters are handed to an ERE filter
     (exact, zero false positives); sparse points fall back to the
     truncation hash. On clustered SOSD data Scan-ARE drives the FPR
-    below $10^{-8}$ at $\sim\!11$ bits per key, where the strongest
-    prior art either degrades under workload correlation (SNARF,
-    floor $\sim\!10^{-3}$ in our measurements) or requires several
-    times more memory to reach $10^{-2}$.
+    below $10^{-8}$ at $\sim\!11$ bits per key. At matched memory the
+    strongest prior art either degrades under workload correlation
+    (SNARF, floor $\sim\!10^{-3}$ in our measurements) or, in the
+    distribution-free line (Grafite, Rosetta), only reaches an FPR
+    of $\sim\!10^{-2}$.
 \end{enumerate}
 
 \paragraph{Roadmap.}
 Chapter~\ref{chap:ere} develops the single-vector ERE and the adaptive
 bucket-search backend (contributions~1--2). Chapter~\ref{chap:distributions}
-characterises the key distributions we target, motivating the
-segmentation strategy. Chapter~\ref{chap:hash} formalises and compares
+characterises the key distributions we target, preparing the ground for
+contributions~3--4. Chapter~\ref{chap:hash} formalises and compares
 the SODA and Truncation hash designs (contribution~3).
 Chapter~\ref{chap:hybrid} introduces the Scan-ARE segmentation
 (contribution~4). Chapter~\ref{chap:evaluation} reports the empirical
