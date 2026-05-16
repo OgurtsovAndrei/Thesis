@@ -23,6 +23,7 @@ a fallback filter.
 
 This chapter describes SegARE, our segmentation algorithm based on 1D DBSCAN.
 
+
 \section{1D DBSCAN in $O(n)$}
 \label{sec:dbscan-1d}
 
@@ -34,117 +35,135 @@ $\delta$ of a core point but not itself dense; and \emph{noise} otherwise. Clust
 grow from core points by absorbing all density-reachable neighbours.
 
 \begin{figure}[h]
-  \centering
-  \includegraphics[width=0.85\textwidth]{dbscan_1d}
-  \caption{1D DBSCAN on a key sequence (minPts~$= 5$). Blue = core points (window
+    \centering
+    \includegraphics[width=0.85\textwidth]{dbscan_1d}
+    \caption{1D DBSCAN on a key sequence (minPts~$= 5$). Blue = core points (window
     contains $\geq$ minPts neighbours). Orange = border (within $\delta$ of a core,
-    but $<$ minPts in own window). Gray = noise.}
-  \label{fig:dbscan-1d}
+        but $<$ minPts in own window). Gray = noise.}
+    \label{fig:dbscan-1d}
 \end{figure}
 
 In a general metric space, finding the $\delta$-neighbourhood of each point costs $O(n^2)$.
-On sorted one-dimensional data the neighbourhood of any key is a contiguous interval, so
-a two-pointer sweep suffices: the left pointer advances when the window exceeds~$\delta$,
-and the window size is $O(1)$ to check. One forward pass marks the rightmost point of each
-dense window; one reverse pass marks the leftmost. Together they identify all core points
-in $O(n)$.
+On sorted one-dimensional data, density queries reduce to a sliding window, giving an
+$O(n)$ implementation.
+
 
 \section{SegARE: Design and Algorithm}
 \label{sec:hybrid-scan}
 
-\paragraph{Border expansion hurts exact-mode eligibility.}
-Standard DBSCAN absorbs border points --- points within $\delta$ of a core but not themselves dense --- into the nearest cluster.
-This widens the cluster's span without adding density.
-A larger span can push the cluster above the exact-mode budget
-$2^{K_\text{local}}$, turning what would have been a zero-FPR sub-filter into an AdaptiveARE running in SODA mode.
-SegARE drops border expansion: the dense core alone captures the keys that benefit from exact mode.
+\paragraph{Border expansion increases bits per key.}
+Standard DBSCAN absorbs border points --- points within $\delta$ of a core but not
+themselves dense --- into the nearest cluster.
+This widens the cluster's key-space universe without adding proportional density.
+The exact-mode ERE sub-filter encodes keys relative to that universe, so a wider span
+means more bits per key.
+SegARE drops border expansion: the dense core alone minimises span and keeps the
+sub-filter cost low.
 
 \paragraph{Expressing $\delta$ through \texttt{minPts}.}
 Standard DBSCAN treats $\delta$ and \texttt{minPts} as independent.
-In our setting the exact-mode condition gives us a natural coupling: a core window of
-\texttt{minPts} points is exact-mode eligible only if each consecutive pair is spaced at most $\mathcal{L}/\varepsilon$ apart.
-The tightest $\delta$ that still admits such a window is:
+We choose $\delta$ small enough that every range produced by the forward sweep
+fits the exact-mode budget of the underlying ERE sub-filter
+(see Section~\ref{subsec:fpr-guarantee} for the derivation):
 
 \begin{equation}
-  \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon} = \frac{512\,\mathcal{L}}{\varepsilon}.
-  \label{eq:delta}
+    \delta = \texttt{minPts} \cdot \frac{\mathcal{L}}{2\varepsilon} = \frac{256\,\mathcal{L}}{\varepsilon}.
+    \label{eq:delta}
 \end{equation}
 
 This ties $\delta$ to \texttt{minPts}, leaving a single free parameter.
 
 \paragraph{Choosing \texttt{minPts} = 512.}
-Each segment incurs a fixed in-memory overhead of roughly 700~bits
-(\texttt{minKey}, \texttt{maxKey}, pointer, and the sub-filter header).
-For 512~keys this adds $\sim 1.4$~BPK of bookkeeping; for smaller clusters the overhead
-quickly dominates the budget.
-At the same time, \texttt{minPts} cannot be too large or dense sub-ranges fail to
-accumulate enough points to form a cluster.
-512 is a practical balance: on real-world clustered distributions such as Facebook IDs
-and OSM cell IDs, dense segments contain thousands of keys and are detected correctly,
-while micro-clusters below this threshold are better served by the global SODA fallback.
+The choice balances three concerns:
+\begin{itemize}
+    \item \textbf{Overhead per key.} Each segment costs roughly 700~bits of fixed metadata
+    (\texttt{minKey}, \texttt{maxKey}, pointer, sub-filter header).
+    At 512~keys this adds $\sim 1.4$~BPK; for smaller clusters the overhead quickly
+    dominates the budget.
+    \item \textbf{Query cost.} The segment count is at most $\lfloor n/\texttt{minPts} \rfloor$,
+    so the binary search over segment boundaries (Section~\ref{subsec:query}) stays fast
+    regardless of dataset size.
+    \item \textbf{Detection power.} If \texttt{minPts} is set too high, genuinely dense
+    sub-ranges with fewer keys go entirely to the fallback, negating the benefit of
+    segmentation.
+\end{itemize}
+512 sits at a practical sweet spot: small enough to catch real clusters, large enough to
+keep per-segment overhead acceptable.
 
 \begin{table}[H]
-\centering
-\begin{tabular}{@{}lrl@{}}
-\toprule
-Parameter & Value & Role \\
-\midrule
-\texttt{minPts} & 512 & Core threshold $=$ minimum segment size \\
-$\delta$        & $512 \cdot \mathcal{L}/\varepsilon$ & Neighbourhood width \\
-\bottomrule
-\end{tabular}
-\caption{SegARE parameters. Domain knowledge ties $\delta$ to \texttt{minPts},
-  so a single value controls both.}
-\label{tab:seg-params}
-\end{table}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{@{}lrr@{}}
-\toprule
-Distribution & Typical gap & Gap vs $\delta$ \\
-\midrule
-Clustered (internal gap ${\sim}100$)     & $10^2$          & $\ll \delta$ \\
-Uniform 64-bit (avg gap ${\sim}2^{44}$)  & ${\sim}10^{13}$ & $\gg \delta$ \\
-Sequential (gap~$= 1000$)                & $10^3$          & $\ll \delta$ \\
-\bottomrule
-\end{tabular}
-\caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
-  $\delta \approx 6.6 \times 10^{7}$.}
-\label{tab:eps-sanity}
+    \centering
+    \begin{tabular}{@{}lrr@{}}
+        \toprule
+        Distribution                            & Typical gap     & Gap vs $\delta$ \\
+        \midrule
+        Clustered (internal gap ${\sim}100$)    & $10^2$          & $\ll \delta$    \\
+        Uniform 64-bit (avg gap ${\sim}2^{44}$) & ${\sim}10^{13}$ & $\gg \delta$    \\
+        Sequential (gap~$= 1000$)               & $10^3$          & $\ll \delta$    \\
+        \bottomrule
+    \end{tabular}
+    \caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
+        $\delta \approx 3.3 \times 10^{7}$.}
+    \label{tab:eps-sanity}
 \end{table}
 
 \subsection{Algorithm}
 
-Dropping border expansion simplifies the implementation: the forward/reverse sweep pair
-reduces to a single forward pass.
+SegARE runs in three steps:
 
 \begin{enumerate}
-  \item \textbf{Forward sweep:} slide a two-pointer window. Whenever the window holds
+    \item \textbf{Forward sweep:} slide a two-pointer window. Whenever the window holds
     $\geq \texttt{minPts}$ keys, record the index range $[\textit{left}, \textit{right}]$.
-  \item \textbf{Merge:} adjacent ranges with key-space gap $\leq \delta$ are joined.
-  \item \textbf{Fallback:} all keys outside merged ranges go to the fallback filter.
+    \item \textbf{Conditional merge:} adjacent ranges with key-space gap $\leq \delta$ are
+    joined only if the combined span still fits the exact-mode budget
+    $2^{K_{\text{local}}}$ for the merged size. Otherwise they remain separate.
+    \item \textbf{Fallback:} all keys outside merged ranges go to the fallback filter.
 \end{enumerate}
 
 \subsection{Fallback}
 
-Keys not assigned to any segment go to a SODA fallback
-(Section~\ref{sec:soda}). SODA is used unconditionally: fallback keys are sparse and
-heterogeneous by construction, so truncation cannot provide a reliable FPR guarantee.
+Keys not assigned to any segment go to a single fallback ARE filter.
+Depending on the density of the fallback keys, this may be a truncation filter
+or a hash-based one.
 
-\subsection{Query}
+\subsection{Query}\label{subsec:query}
 
 Segments are sorted by $[\texttt{minKey}, \texttt{maxKey}]$. For a query $[a, b]$:
 \begin{enumerate}
-  \item Binary search over segments intersecting $[a, b]$ --- $O(\log C)$, $C$ = segment
+    \item Binary search over segments intersecting $[a, b]$ --- $O(\log C)$, $C$ = segment
     count.
-  \item Check each intersecting segment (typically 0--1 in practice).
-  \item Check the fallback filter.
-  \item Return ``empty'' only if all agree.
+    \item Check each intersecting segment. After merging, the gap between any two adjacent
+    segments exceeds $\delta = 256\,\mathcal{L}/\varepsilon > \mathcal{L}$, so a query of
+    length $\mathcal{L}$ intersects at most one segment.
+    \item Check the fallback filter.
+    \item Return ``empty'' only if all agree.
 \end{enumerate}
 
-\subsection{FPR Guarantee}
+\subsection{FPR Guarantee}\label{subsec:fpr-guarantee}
 
-Each sub-filter independently targets FPR~$\leq \varepsilon$. By the union bound,
-overall FPR~$\leq C\varepsilon$ where $C$ is the number of sub-filters a query touches.
-In practice $C = 1$ for most queries, so FPR~$\approx \varepsilon$.
+Every segment sub-filter operates in exact mode (FPR~$= 0$).
+
+\textbf{Individual range.} Consider a range of $m$ sorted keys
+$k_0 < k_1 < \dots < k_{m-1}$ from the forward sweep.
+The window constraint says any \texttt{minPts} consecutive keys span at most
+$\delta$: $k_{i+(\texttt{minPts}-1)} - k_i \leq \delta$ for every valid $i$.
+We split the $m-1$ gaps into $\lceil(m-1)/(\texttt{minPts}-1)\rceil$
+non-overlapping blocks of $\texttt{minPts}-1$ consecutive gaps; each block
+spans $\leq \delta$ by the window constraint, so:
+\[
+    k_{m-1} - k_0 \;\leq\; \left\lceil \frac{m-1}{\texttt{minPts}-1} \right\rceil \cdot \delta.
+\]
+With $\delta = \texttt{minPts}\cdot\mathcal{L}/(2\varepsilon)$, the worst case
+occurs at $m = \texttt{minPts}+1$ and gives:
+\[
+    2\delta \;=\; \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}
+    \;<\; (\texttt{minPts}+1) \cdot \frac{\mathcal{L}}{\varepsilon}
+    \;\leq\; 2^{K_{\text{local}}}.
+\]
+Hence every range from the forward sweep fits the exact-mode budget.
+
+\textbf{Merged segments.} The merge step is conditional: two adjacent ranges are
+joined only if the combined span is still below $2^{K_{\text{local}}}$ for the
+combined size. This preserves the exact-mode invariant by construction.
+
+False positives can therefore come only from the fallback filter, giving overall
+FPR~$\leq \varepsilon$.
