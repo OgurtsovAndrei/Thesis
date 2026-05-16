@@ -31,8 +31,12 @@ Properties of the hash:
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{phantom_comparison}
-    \caption{Phantom point distribution: random hash (SODA) scatters phantoms uniformly
-    across $U$; truncation concentrates them in the contiguous $2^t$-point block that contains the key.}
+    \caption{Green strips show the \textbf{collision zone} of stored key $x$: starting
+    positions $q$ of queries $[q, q+\mathcal{L}-1]$ that are false positives due to $x$
+    (i.e.\ $x \notin [q,q+\mathcal{L}-1]$ yet $h(x)\in h([q,q+\mathcal{L}-1])$).
+    Each scattered phantom of the random hash contributes $\mathcal{L}$ such positions
+    (phantom at the strip's right edge); truncation's contiguous block limits the
+    total to $2^t - 1$, independent of $\mathcal{L}$.}
     \label{fig:phantom-comparison}
 \end{figure}
 
@@ -45,14 +49,20 @@ Properties of the hash:
 \subsection{ARE Construction With Truncation}
 
 Combining truncation with ERE yields a filter where the contiguous phantom structure
-(Figure~\ref{fig:phantom-comparison}) changes the collision analysis:
+(Figure~\ref{fig:phantom-comparison}) changes the collision analysis.
+We define the \textbf{collision zone} of stored key $x$ as the number of query starting
+positions $q$ for which $[q, q+\mathcal{L}-1]$ is a false positive due to $x$:
+$x \notin [q, q+\mathcal{L}-1]$ yet $h(x) \in h([q, q+\mathcal{L}-1])$.
 
 \begin{itemize}
-    \item \textbf{SODA hash:} phantoms scattered $\Rightarrow$ collision zone per key is
-    $\mathcal{L} \times (2^t - 1)$ (Section~\ref{sec:soda}).
-    \item \textbf{Truncation:} phantoms contiguous in one block $\Rightarrow$ an empty
-    query overlaps a key's phantom block in $2^t - 1$ positions on average,
-    giving collision zone $2^t - 1$ (Eq.~\eqref{eq:trunc-fpr}).
+    \item \textbf{SODA hash:} each of the $2^t - 1$ phantom positions is far from $x$,
+    so all $\mathcal{L}$ starting positions that cover it also exclude $x$;
+    collision zone $= \mathcal{L}(2^t - 1)$ (Section~\ref{sec:soda}).
+    \item \textbf{Truncation:} all $2^t - 1$ phantoms share one contiguous block with $x$.
+    A query misses $x$ only when it starts inside $(x, \text{block\_right}]$ or ends
+    inside $[\text{block\_left}, x)$; these two intervals have widths $(2^t - 1 - r)$
+    and $r$ respectively, summing to $2^t - 1$ regardless of $\mathcal{L}$
+    (Eq.~\eqref{eq:trunc-fpr}).
 \end{itemize}
 
 The additive (rather than multiplicative) interaction eliminates the $\mathcal{L}$
