@@ -27,15 +27,16 @@ cite the Goswami construction.
 \paragraph{Bloom cascade: Rosetta.}
 Rosetta~\citep{luo2020rosetta} stores one Bloom filter per key-prefix
 length, so a range query of length $R$ decomposes into at most
-$2 \log_2 R$ dyadic Bloom probes. The cascade is shown to approach
+$2 \log_2 R$ dyadic intervals, each initiating a Bloom probe at the
+root of its sub-tree. The cascade is shown to approach
 the Goswami lower bound within a constant factor of $1.44$ on uniform
 allocation~\citep[\S3.1]{luo2020rosetta} and is reported $2$--$5\times$
 faster than SuRF and up to $40\times$ faster than the default RocksDB
 on a $50$M-key benchmark at $22$ bits per key. The authors are explicit
 about the cost: ``due to the multiple probes required (for every
 prefix) Rosetta has a high probe cost''~\citep[\S1]{luo2020rosetta},
-mitigated by allocating the per-level bit budget from a sample of
-queries at build time.
+mitigated by allocating the per-level bit budget from runtime query
+statistics gathered between LSM compactions.
 
 \paragraph{Learned: SNARF.}
 SNARF~\citep{vaidya2022snarf} fits a linear-spline model to the
@@ -45,9 +46,11 @@ FPR is approximately $1/K$ where $K$ scales with the bit budget; on
 the configurations covered by their evaluation SNARF reaches up to
 $50\times$ better FPR than SuRF and $100\times$ better FPR than
 Rosetta at matched memory. The model accuracy, however, is
-distribution-dependent: on the multi-modal OSM dataset SNARF itself
-needs $15$--$16$ bits per key to reach FPR below
-$10^{-4}$~\citep[\S6.1.2]{vaidya2022snarf}. SNARF additionally has no
+distribution-dependent: on the OSM dataset, whose sorted keys contain
+large empty contiguous ranges and abrupt jumps, SNARF's FPR--space
+curve degrades visibly and reaches $10^{-4}$ only at substantially
+higher memory than on other real-world
+datasets~\citep[\S6.1.2, Fig.~5(B)]{vaidya2022snarf}. SNARF additionally has no
 worst-case bound under correlated queries: ``when a query end point
 is consistently close to an actual key but the query does not include
 a key, it may yield a false positive in SNARF and
@@ -78,11 +81,11 @@ filter that adds dynamicity --- insertions, deletions, and growth ---
 to the static state of the art. It is built on top of a Rank-and-Select
 Quotient Filter: each universe partition stores a fingerprint together
 with a contiguous list of fixed-length key suffixes (``mementos''),
-all packed via Robin Hood displacement. Memento reports false-positive
+all packed via Robin Hood hashing. Memento reports false-positive
 behaviour and per-query cache-miss count comparable to Grafite at
 matched memory. The authors explicitly note that static range filters
-suffice for the immutable SSTables of a per-file LSM
-deployment~\citep[\S2]{eslami2024memento}; Memento targets workloads
+suffice for the immutable files of an LSM-Tree
+deployment~\citep[\S1]{eslami2024memento}; Memento targets workloads
 where the key set itself is mutable --- single-global-filter
 LSM-trees, B-Tree indexes, and HTAP systems. Because our thesis stays
 within the static setting, Memento is orthogonal rather than a

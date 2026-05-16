@@ -19,8 +19,8 @@ fills this role for point lookups and is the default in production
 LSM-trees~\citep{monkey2017,dong2021rocksdb}. Bloom filters, however, cannot
 handle range queries~\citep{zhang2018surf}, and range-shaped workloads
 --- short scans, prefix lookups over hierarchical keys (file paths, S2 cells,
-URLs), and time-window queries --- are a growing share of LSM
-traffic~\citep{cao2020facebook}.
+URLs), and time-window queries --- form a non-trivial share of
+production LSM traffic~\citep{cao2020facebook}.
 
 For this regime we need a \emph{range filter}: given a query interval
 $[a, b]$ of length at most~$\mathcal{L}$, decide whether $[a, b] \cap S = \emptyset$
@@ -34,9 +34,10 @@ successors' own words, ``mainly theoretic in nature and thus very
 complicated to implement''~\citep{grafite2024}.
 
 The lower bound has a useful escape clause.
-\citet{vaidya2022snarf} state it directly: no fixed-memory finite filter
-can handle large ranges and a low false positive rate simultaneously
-\emph{without further assumptions about the data set or workload}.
+\citet{vaidya2022snarf} restate it directly in the SNARF analysis:
+for a fixed memory budget, a range filter cannot handle large ranges
+and a low false positive rate simultaneously \emph{without further
+assumptions about the data set or workload}.
 Existing practical filters take one of two paths: either accept a
 distribution-dependent FPR guarantee that breaks under correlated
 queries (SuRF, SNARF), or pay for a distribution-free guarantee with
