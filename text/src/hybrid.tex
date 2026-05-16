@@ -54,7 +54,7 @@ $O(n)$ implementation.
 \paragraph{Border expansion increases bits per key.}
 Standard DBSCAN absorbs border points --- points within $\delta$ of a core but not
 themselves dense --- into the nearest cluster.
-This widens the cluster's key-space universe without adding proportional density.
+This widens the cluster's span without adding proportional density.
 The exact-mode ERE sub-filter encodes keys relative to that universe, so a wider span
 means more bits per key.
 SegARE drops border expansion: the dense core alone minimises span and keeps the
@@ -90,21 +90,13 @@ The choice balances three concerns:
 512 sits at a practical sweet spot: small enough to catch real clusters, large enough to
 keep per-segment overhead acceptable.
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrr@{}}
-        \toprule
-        Distribution                            & Typical gap     & Gap vs $\delta$ \\
-        \midrule
-        Clustered (internal gap ${\sim}100$)    & $10^2$          & $\ll \delta$    \\
-        Uniform 64-bit (avg gap ${\sim}2^{44}$) & ${\sim}10^{13}$ & $\gg \delta$    \\
-        Sequential (gap~$= 1000$)               & $10^3$          & $\ll \delta$    \\
-        \bottomrule
-    \end{tabular}
-    \caption{Sanity check for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$,
-        $\delta \approx 3.3 \times 10^{7}$.}
-    \label{tab:eps-sanity}
-\end{table}
+To sanity-check the scale: for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$ we get
+$\delta \approx 3.3 \times 10^{7}$. Comparing this against the SOSD gap statistics
+(Table~\ref{tab:sosd-gaps}), Facebook/Wiki/Books have median gaps well below~$\delta$
+so most keys fall into segments, while OSM's median gap of $4.5 \times 10^{7}$ sits
+right at the threshold --- segmentation captures only the denser sub-clusters.
+A uniform 64-bit distribution has average gap ${\sim}2^{44} \gg \delta$, so every key
+goes to the fallback and SegARE degrades to plain truncation.
 
 \subsection{Algorithm}
 
@@ -131,9 +123,14 @@ Segments are sorted by $[\texttt{minKey}, \texttt{maxKey}]$. For a query $[a, b]
 \begin{enumerate}
     \item Binary search over segments intersecting $[a, b]$ --- $O(\log C)$, $C$ = segment
     count.
-    \item Check each intersecting segment. After merging, the gap between any two adjacent
-    segments exceeds $\delta = 256\,\mathcal{L}/\varepsilon > \mathcal{L}$, so a query of
-    length $\mathcal{L}$ intersects at most one segment.
+    \item Check the first intersecting segment only.
+    Suppose the query $[a, b]$
+    intersects two segments $S_1 = [\texttt{minKey}_1, \texttt{maxKey}_1]$ and
+    $S_2 = [\texttt{minKey}_2, \texttt{maxKey}_2]$ with $\texttt{maxKey}_1 < \texttt{minKey}_2$.
+    Then $a \leq \texttt{maxKey}_1$ and $b \geq \texttt{minKey}_2$, so the query covers
+    $\texttt{maxKey}_1$ --- a real key.
+    The exact-mode sub-filter of $S_1$ reports
+    non-empty, and no further segments need to be checked.
     \item Check the fallback filter.
     \item Return ``empty'' only if all agree.
 \end{enumerate}
@@ -152,8 +149,10 @@ spans $\leq \delta$ by the window constraint, so:
 \[
     k_{m-1} - k_0 \;\leq\; \left\lceil \frac{m-1}{\texttt{minPts}-1} \right\rceil \cdot \delta.
 \]
-With $\delta = \texttt{minPts}\cdot\mathcal{L}/(2\varepsilon)$, the worst case
-occurs at $m = \texttt{minPts}+1$ and gives:
+With $\delta = \texttt{minPts}\cdot\mathcal{L}/(2\varepsilon)$, the ceiling factor
+$\lceil(m-1)/(\texttt{minPts}-1)\rceil$ equals~1 for $m \leq \texttt{minPts}$
+(span $\leq \delta < m\mathcal{L}/\varepsilon$, trivially satisfied) and first
+reaches~2 at $m = \texttt{minPts}+1$, where the margin is tightest:
 \[
     2\delta \;=\; \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}
     \;<\; (\texttt{minPts}+1) \cdot \frac{\mathcal{L}}{\varepsilon}

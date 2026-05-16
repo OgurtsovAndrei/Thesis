@@ -14,7 +14,7 @@ compression is plain bit-truncation:
 \[
     h(x) = \lfloor x / 2^t \rfloor,
 \]
-keeping the top $K = L - t$ bits of each key.
+keeping the top $K = L - t$ bits of each key (where $L$ is the key width in bits).
 
 Properties of the hash:
 \begin{itemize}
@@ -50,8 +50,9 @@ Combining truncation with ERE yields a filter where the contiguous phantom struc
 \begin{itemize}
     \item \textbf{SODA hash:} phantoms scattered $\Rightarrow$ collision zone per key is
     $\mathcal{L} \times (2^t - 1)$ (Section~\ref{sec:soda}).
-    \item \textbf{Truncation:} phantoms contiguous in one block $\Rightarrow$ a query
-    overlaps the block from at most $2^t - 1$ positions, giving collision zone $2^t - 1$.
+    \item \textbf{Truncation:} phantoms contiguous in one block $\Rightarrow$ an empty
+    query overlaps a key's phantom block in $2^t - 1$ positions on average,
+    giving collision zone $2^t - 1$ (Eq.~\eqref{eq:trunc-fpr}).
 \end{itemize}
 
 The additive (rather than multiplicative) interaction eliminates the $\mathcal{L}$
@@ -65,7 +66,7 @@ factor from the filter's space formula:
         \midrule
         Random (SODA) & $\mathcal{L} \times (2^t-1)$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
         $\log_2(\mathcal{L}/\varepsilon) + O(1)$ \\
-        Truncation & $2^t - 1$ & $\log_2(2n/\varepsilon)$ &
+        Truncation & $2^t - 1$ & $\log_2(n/\varepsilon)$ &
         $\log_2(1/\varepsilon) + O(1)$ \\
         \bottomrule
     \end{tabular}
@@ -96,42 +97,38 @@ The same contiguity that saves space is also the weakness.
 Let $R$ denote the uniform gap between consecutive keys.
 Assume keys $x_0,\, x_0{+}R,\, x_0{+}2R,\ldots$
 A query $[q,\, q{+}\mathcal{L}{-}1]$ is truly empty iff it fits inside a gap:
-$q = x_i + s$, $s \in (1,\, R{-}\mathcal{L}]$.
+$q = x_i + s$, $s \in [1,\, R{-}\mathcal{L}]$.
 
 A false positive requires some key's hash value to fall inside $h([q, q+\mathcal{L}-1])$.
-Since the query lies in a gap between $x_i$ and $x_{i+1}$, and $h$ is order-preserving,
-all other keys are further away and their hash values fall outside this interval ---
-only the two immediate neighbors can contribute.
-Let $\alpha = q \bmod 2^t$ be the offset of the query start within its block, and
-$\beta = (\alpha + \mathcal{L} - 1) \bmod 2^t$ the offset of the query's right endpoint
-$q + \mathcal{L} - 1$ within its block (the mod is needed because the query may cross a
-block boundary).
+Since the query is empty, every block \emph{fully covered} by the query is key-free:
+any key inside such a block would lie in the query and contradict emptiness.
+Only the two \emph{edge} blocks --- the one straddled by $q$ on the left and the one
+straddled by $q + \mathcal{L} - 1$ on the right --- can hold a key whose hash collides
+with $h([q, q+\mathcal{L}-1])$, and it suffices to consider the immediate neighbours
+$x_i$ and $x_{i+1}$: order-preservation of $h$ gives $h(x_{i+2}) \geq h(x_{i+1})$, so
+if $x_{i+2}$ collides with the query then $x_{i+1}$ does too --- further keys cannot
+trigger \emph{new} false-positive events (symmetrically on the left).
+The argument holds regardless of how many blocks the query spans.
+
+Let $\alpha_i = x_i \bmod 2^t$ and $\alpha_{i+1} = x_{i+1} \bmod 2^t$ be the offsets of
+the neighbours within their respective blocks.
 \begin{itemize}
-    \item \textbf{Left:} $x_i$ shares a block with $q$ iff $s \leq \alpha$
-    (since $q = x_i + s$, both lie in the same block requires $s \leq \alpha$).
-    \item \textbf{Right:} $x_{i+1} = x_i + R$ shares a block with $q{+}\mathcal{L}{-}1$ iff
-    $R - s - \mathcal{L} \leq 2^t - 1 - \beta$, i.e., the distance from $x_{i+1}$ to the
-    end of the block containing $q + \mathcal{L} - 1$ is non-negative.
+    \item \textbf{Left overlap:} the query overlaps $x_i$'s phantom block iff
+    $q \leq x_i + 2^t - 1 - \alpha_i$, i.e., $s \leq 2^t - 1 - \alpha_i$ ---
+    contributing $2^t - 1 - \alpha_i$ values of $s$.
+    \item \textbf{Right overlap:} the query overlaps $x_{i+1}$'s phantom block iff
+    $q + \mathcal{L} - 1 \geq x_{i+1} - \alpha_{i+1}$, i.e.,
+    $s \geq R - \mathcal{L} + 1 - \alpha_{i+1}$ --- contributing $\alpha_{i+1}$ values of $s$.
 \end{itemize}
 
-Two cases arise depending on whether the query crosses a block boundary:
-\begin{itemize}
-    \item $\alpha \leq 2^t - \mathcal{L}$: query fits in one block, $\beta = \alpha + \mathcal{L} - 1$.
-    Left covers $\alpha$ values of $s$; right covers $2^t - 1 - \beta = 2^t - \alpha - \mathcal{L}$ values.
-    Total: $2^t - \mathcal{L}$.
-    \item $\alpha > 2^t - \mathcal{L}$: query spans two blocks, $\beta = \alpha + \mathcal{L} - 1 - 2^t$.
-    Left covers $\alpha$ values; right covers $2^t - 1 - \beta = 2{\cdot}2^t - \alpha - \mathcal{L}$ values.
-    Total: $2{\cdot}2^t - \mathcal{L}$.
-\end{itemize}
-
-Treating $\alpha$ as uniform on $[0, 2^t)$, the first case has measure $2^t - \mathcal{L}$ and
-the second has measure $\mathcal{L}$.
-Averaging:
+When $R - \mathcal{L} \ge 2^{t+1}$, the two ranges of $s$ are disjoint, so the
+false-positive count per gap is $(2^t - 1 - \alpha_i) + \alpha_{i+1}$.
+Treating $\alpha_i, \alpha_{i+1}$ as uniform on $\{0, \ldots, 2^t - 1\}$ (mean $(2^t-1)/2$)
+and dividing by the $R - \mathcal{L}$ empty-query positions:
 \begin{equation}
-    \Pr[\text{positive} \mid \text{empty query}]
-    \;=\; \frac{(2^t - \mathcal{L})^2 + \mathcal{L}(2{\cdot}2^t - \mathcal{L})}{2^t\,(R - \mathcal{L})}
-    \;=\; \frac{2^{2t}}{2^t\,(R - \mathcal{L})}
-    \;=\; \frac{2^t}{R - \mathcal{L}}.
+    \mathrm{FPR}
+    \;=\; \frac{2^t - 1}{R - \mathcal{L}}
+    \;\approx\; \frac{2^t}{R - \mathcal{L}}.
     \label{eq:trunc-fpr}
 \end{equation}
 
@@ -182,13 +179,13 @@ Achieving FPR~$\leq 10^{-3}$ requires $t \leq 15$ ($K \geq 49$, $\approx 29$~BPK
 Thus, truncation is impractical for clustered data.
 
 \begin{remark}
-    The formula~\eqref{eq:trunc-fpr} and the thresholds above assume \textbf{queries are placed uniformly at random in the universe} and utilize a \textbf{continuous approximation} of the discrete bit-space.
-    In the exact discrete case, the numerator in Eq.~\eqref{eq:trunc-fpr} is $2^t - 1$, which is negligible for practical truncation depths.
-    A more significant discrepancy arises from the query distribution: in practice, the benchmark queries of Section~\ref{sec:query-distribution} are drawn from the gaps between keys, so they land near phantom zones more often than a uniform draw would.
+    The derivation assumes \textbf{queries are placed uniformly at random in the universe},
+    so $\alpha_i, \alpha_{i+1}$ are uniform on $\{0, \ldots, 2^t-1\}$.
+    Benchmark queries (Section~\ref{sec:query-distribution}) are drawn from the gaps
+    between keys, so they land near phantom block more often than a uniform draw would.
 \end{remark}
 
-The SODA hash avoids this entirely: pairwise independence gives
-$\mathrm{FPR} \leq \varepsilon$ for any key distribution, at the cost of
+The SODA hash avoids this entirely: $\mathrm{FPR} \leq \varepsilon$ for any key distribution, at the cost of
 $\log_2(\mathcal{L})$ extra bits per key.
 
 \begin{figure}[h]

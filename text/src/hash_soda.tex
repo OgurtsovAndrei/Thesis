@@ -6,15 +6,15 @@
 
 The paper's original locality-preserving hash~\citep[§3.1]{goswami2015approximate}:
 \begin{equation}
-    h(x) = \bigl(u(\lfloor x/2^K \rfloor) + x\bigr) \bmod 2^K
+    h(x) = \bigl(u(\lfloor x/2^K \rfloor) + (x \bmod 2^K)\bigr) \bmod 2^K
     \label{eq:soda-hash}
 \end{equation}
 That is: compute the block index $\lfloor x/2^K \rfloor$, hash it with $u$ to get a per-block rotation,
 then add the key's within-block offset $x \bmod 2^K$.
 The result is in $[0, 2^K)$.
 
-$u: [0, U/2^K) \to [0, 2^K)$ is drawn from a pairwise-independent family, stored as two
-64-bit coefficients $(a, b)$:
+$u: [0, U/2^K) \to [0, 2^K)$ is drawn from the multiply-add-shift family
+of~\citet{dietzfelbinger1996universal}, stored as two 64-bit coefficients $(a, b)$:
 \begin{equation}
     u(x) = \left\lfloor \frac{a \cdot x + b \bmod 2^{64}}{2^{64-K}} \right\rfloor.
     \label{eq:soda-u}
@@ -32,7 +32,7 @@ $u: [0, U/2^K) \to [0, 2^K)$ is drawn from a pairwise-independent family, stored
 Properties of the hash:
 \begin{itemize}
     \item \textbf{Pairwise-independent:} $\Pr_{h \sim \mathcal{H}}[h(x_1) = h(x_2)] \leq 2^{-K}$
-    for every pair $x_1 \neq x_2 \in U$, where $\mathcal{H}$ is the multiply-shift family
+    for every pair $x_1 \neq x_2 \in U$, where $\mathcal{H}$ is the multiply-add-shift family
     (Equation~\eqref{eq:soda-u}).
     This holds for sequential, clustered, or adversarial data.
     \item \textbf{Locality-preserving:} the hash applies a per-block rotation, so
@@ -50,10 +50,9 @@ different pairwise-independent family:
 $q(x) = \bigl((c_1 x + c_2) \bmod p\bigr) \bmod r$,
 where $p = 2^{61}-1$ is a Mersenne prime.
 This construction requires modulo operations with non-power-of-two divisors ($p$ and $r$),
-whereas the multiply-shift family used here~\citep{goswami2015approximate} replaces them
-with a multiplication and a right shift, since all reductions are by powers of two.
-The theoretical guarantees are identical: pairwise independence gives
-$\mathrm{FPR} \leq \varepsilon$ for any data and query distribution.
+whereas the multiply-add-shift family used here~\citep{dietzfelbinger1996universal}
+replaces them with a multiplication and a right shift, since all reductions are by powers of two.
+The theoretical guarantees are identical: $\mathrm{FPR} \leq \varepsilon$ for any data and query distribution.
 
 \subsection{ARE Construction With SODA Hash}
 
