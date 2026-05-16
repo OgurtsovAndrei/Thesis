@@ -31,8 +31,9 @@ $u: [0, U/2^K) \to [0, 2^K)$ is drawn from a pairwise-independent family, stored
 
 Properties of the hash:
 \begin{itemize}
-    \item \textbf{Pairwise-independent:} $\Pr[h(x_1) = h(x_2)] \leq 1/2^K$ regardless of
-    key structure.
+    \item \textbf{Pairwise-independent:} $\Pr_{h \sim \mathcal{H}}[h(x_1) = h(x_2)] \leq 2^{-K}$
+    for every pair $x_1 \neq x_2 \in U$, where $\mathcal{H}$ is the multiply-shift family
+    (Equation~\eqref{eq:soda-u}).
     This holds for sequential, clustered, or adversarial data.
     \item \textbf{Locality-preserving:} the hash applies a per-block rotation, so
     consecutive keys within the same block map to consecutive positions in $[0, 2^K)$.
@@ -72,10 +73,6 @@ Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE fi
     \item Query: hash both endpoints; rotation may split the range into two
     intervals --- check both in ERE.
 \end{enumerate}
-
-\begin{center}
-\colorbox{orange}{\parbox{0.9\textwidth}{\textbf{FIXME:} maybe we do not need to explain how to construct ARE here --- it looks like duplication. Maybe just write: \textit{Combining this hash with ERE (Chapter~\ref{chap:ere}) yields the baseline ARE filter: hash all keys via Eq.~\eqref{eq:soda-hash}, sort and deduplicate, build ERE over $[0, 2^K)$.}}}
-\end{center}
 
 \paragraph{Filter properties.}
 \begin{itemize}

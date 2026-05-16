@@ -102,18 +102,31 @@ A false positive requires some key's hash value to fall inside $h([q, q+\mathcal
 Since the query lies in a gap between $x_i$ and $x_{i+1}$, and $h$ is order-preserving,
 all other keys are further away and their hash values fall outside this interval ---
 only the two immediate neighbors can contribute.
-Let $\alpha = q \bmod 2^t$ be the offset of the query start within its block.
+Let $\alpha = q \bmod 2^t$ be the offset of the query start within its block, and
+$\beta = (\alpha + \mathcal{L} - 1) \bmod 2^t$ the offset of the query's right endpoint
+$q + \mathcal{L} - 1$ within its block (the mod is needed because the query may cross a
+block boundary).
 \begin{itemize}
     \item \textbf{Left:} $x_i$ shares a block with $q$ iff $s \leq \alpha$
     (since $q = x_i + s$, both lie in the same block requires $s \leq \alpha$).
     \item \textbf{Right:} $x_{i+1} = x_i + R$ shares a block with $q{+}\mathcal{L}{-}1$ iff
-    $R - s - \mathcal{L} \leq 2^t - 1 - (\alpha + \mathcal{L} - 1) \bmod 2^t$.
+    $R - s - \mathcal{L} \leq 2^t - 1 - \beta$, i.e., the distance from $x_{i+1}$ to the
+    end of the block containing $q + \mathcal{L} - 1$ is non-negative.
 \end{itemize}
 
-When $\alpha \leq 2^t - \mathcal{L}$ (query in one block), the two conditions together cover
-$2^t - \mathcal{L}$ values of $s$; when $\alpha > 2^t - \mathcal{L}$ (query spans two blocks),
-they cover $2{\cdot}2^t - \mathcal{L}$ values.
-Averaging over $\alpha \sim \mathrm{Uniform}[0, 2^t)$:
+Two cases arise depending on whether the query crosses a block boundary:
+\begin{itemize}
+    \item $\alpha \leq 2^t - \mathcal{L}$: query fits in one block, $\beta = \alpha + \mathcal{L} - 1$.
+    Left covers $\alpha$ values of $s$; right covers $2^t - 1 - \beta = 2^t - \alpha - \mathcal{L}$ values.
+    Total: $2^t - \mathcal{L}$.
+    \item $\alpha > 2^t - \mathcal{L}$: query spans two blocks, $\beta = \alpha + \mathcal{L} - 1 - 2^t$.
+    Left covers $\alpha$ values; right covers $2^t - 1 - \beta = 2{\cdot}2^t - \alpha - \mathcal{L}$ values.
+    Total: $2{\cdot}2^t - \mathcal{L}$.
+\end{itemize}
+
+Treating $\alpha$ as uniform on $[0, 2^t)$, the first case has measure $2^t - \mathcal{L}$ and
+the second has measure $\mathcal{L}$.
+Averaging:
 \begin{equation}
     \Pr[\text{positive} \mid \text{empty query}]
     \;=\; \frac{(2^t - \mathcal{L})^2 + \mathcal{L}(2{\cdot}2^t - \mathcal{L})}{2^t\,(R - \mathcal{L})}

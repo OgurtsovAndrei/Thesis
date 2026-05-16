@@ -114,8 +114,8 @@ SegARE runs in three steps:
     \item \textbf{Forward sweep:} slide a two-pointer window. Whenever the window holds
     $\geq \texttt{minPts}$ keys, record the index range $[\textit{left}, \textit{right}]$.
     \item \textbf{Conditional merge:} adjacent ranges with key-space gap $\leq \delta$ are
-    joined only if the combined span still fits the exact-mode budget
-    $2^{K_{\text{local}}}$ for the merged size. Otherwise they remain separate.
+    joined only if the combined span is below $m'\mathcal{L}/\varepsilon$,
+    where $m'$ is the total key count of the merged segment. Otherwise they remain separate.
     \item \textbf{Fallback:} all keys outside merged ranges go to the fallback filter.
 \end{enumerate}
 
@@ -157,13 +157,13 @@ occurs at $m = \texttt{minPts}+1$ and gives:
 \[
     2\delta \;=\; \texttt{minPts} \cdot \frac{\mathcal{L}}{\varepsilon}
     \;<\; (\texttt{minPts}+1) \cdot \frac{\mathcal{L}}{\varepsilon}
-    \;\leq\; 2^{K_{\text{local}}}.
+    \;=\; m \cdot \frac{\mathcal{L}}{\varepsilon}.
 \]
 Hence every range from the forward sweep fits the exact-mode budget.
 
 \textbf{Merged segments.} The merge step is conditional: two adjacent ranges are
-joined only if the combined span is still below $2^{K_{\text{local}}}$ for the
-combined size. This preserves the exact-mode invariant by construction.
+joined only if the combined span is still below $m'\mathcal{L}/\varepsilon$ for the
+combined size $m'$. This preserves the exact-mode invariant by construction.
 
 False positives can therefore come only from the fallback filter, giving overall
 FPR~$\leq \varepsilon$.
