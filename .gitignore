@@ -54,3 +54,6 @@
 
 # Benchmark outputs (regenerable)
 bench_results/
+
+# Local worktrees (not pushed)
+.worktrees/
