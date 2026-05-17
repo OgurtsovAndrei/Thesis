@@ -10,92 +10,189 @@ grouping to position our contributions.
 
 \paragraph{Trie-based: SuRF.}
 The Succinct Range Filter~\citep{zhang2018surf} stores the set of keys
-as a Fast Succinct Trie --- a level-order unary degree sequence (LOUDS)
-encoding with dense and sparse layers, $10$ bits per trie node,
-$4$--$15\times$ faster than earlier succinct tries on point-query
-workloads. SuRF answers a range query by walking
-the trie down to the boundary of the query interval, and in a RocksDB
-deployment accelerates closed-seek queries by up to $5\times$ over the
-Bloom-filter baseline. The trie skeleton gives no clean parameterisation
-by $\varepsilon$: SuRF-Base costs about $10$ bits per key for $64$-bit
-integers and $14$ bits per key for email addresses regardless of the
-target FPR, and the authors themselves note that ``query keys are
-almost always correlated to the stored keys'', driving the empirical
-FPR up to $4\%$ on integer datasets and $25\%$ on
-emails~\citep[\S3.1]{zhang2018surf}. SuRF does not position itself
-against an information-theoretic range-filter space bound and does not
-cite the Goswami construction.
+as a Fast Succinct Trie --- a compact bitmap-based succinct trie
+encoding at about $10$ bits per node, $4$--$15\times$ faster than
+earlier succinct tries on point queries~\citep[\S4.1.2]{zhang2018surf}.
+A range query descends the trie to the boundary of the query interval.
+The cost of the query is set by the trie depth, which reflects the
+key length in the universe (e.g.\ $\leq 8$ levels for $64$-bit
+integers under a byte-wide fanout), but \emph{not} the query length
+$\mathcal{L}$; and the FPR has no explicit dependence on $\mathcal{L}$
+either --- unlike a linear-probe Bloom filter, which would give
+$\mathrm{FPR} \approx \mathcal{L}\varepsilon$ for a range of length $\mathcal{L}$.
+This makes SuRF suitable for queries of almost any
+length without a per-query penalty.
 
-\paragraph{Bloom cascade: Rosetta.}
-Rosetta~\citep{luo2020rosetta} stores one Bloom filter per key-prefix
-length, so a range query of length $R$ decomposes into at most
-$2 \log_2 R$ dyadic intervals, each initiating a Bloom probe at the
-root of its sub-tree. The cascade's space is within a factor of $1.44$
-of the Goswami lower bound under uniform per-level
-allocation~\citep[\S3.1]{luo2020rosetta} and is reported $2$--$5\times$
-faster than SuRF and up to $40\times$ faster than the default RocksDB
-on a $50$M-key benchmark at $22$ bits per key. The authors are explicit
-about the cost: ``due to the multiple probes required (for every
-prefix) Rosetta has a high probe cost''~\citep[\S1]{luo2020rosetta},
-mitigated by allocating the per-level bit budget from runtime query
-statistics gathered between LSM compactions.
+The price of this flexibility is the absence of a worst-case FPR guarantee.
+A false positive occurs when the prefix of a query key
+coincides with a stored key prefix, so the FPR is set by the trie
+depth and by the \emph{correlation between queries and data}. The
+authors themselves acknowledge that ``the point query FPR of
+SuRF-Base [can be] $100\%$'' in the adversarial
+case~\citep[\S3.2]{zhang2018surf}; in practice queries and keys are
+``almost always correlated to the stored
+keys''~\citep[\S3.1]{zhang2018surf}, and the empirical FPR on the YCSB
+workload is $4\%$ on $64$-bit integer keys and $25\%$ on email
+addresses~\citep[\S4.2]{zhang2018surf}.
+The space is not parameterized by $\varepsilon$ either: SuRF-Base costs about $10$ bits per key for
+$64$-bit integers and $14$ bits per key for emails regardless of the
+target FPR.
+
+The headline RocksDB result --- up to $5\times$ throughput on
+closed-seek queries over the Bloom-filter
+configuration~\citep[\S6, Fig.~13]{zhang2018surf} --- is an
+\emph{end-to-end} effect of skipped SSTable I/O, not a faster filter
+operation.
+A Bloom filter cannot prune range queries at all (``is equivalent to having no filter''~\citep[\S6]{zhang2018surf}),
+so without a range filter RocksDB fetches candidate blocks from every
+level; SuRF eliminates this I/O. The $5\times$ figure assumes $99\%$
+of queries return empty; at $10\%$ empty the speedup drops to about
+$1.5\times$.
+
+SuRF does not position itself against an information-theoretic
+range-filter space bound and does not cite the Goswami construction.
+
+\paragraph{Bloom hierarchy: Rosetta.}
+Rosetta~\citep{luo2020rosetta} indexes every binary prefix of every
+key in a Bloom hierarchy --- one filter per prefix length,
+$\log_2 \mathcal{L} + 1$ filters in total when a query-length bound
+$\mathcal{L}$ is known and as many as the key length
+otherwise~\citep[\S2.1, \S3.1]{luo2020rosetta}. A range query of
+length $\mathcal{L}$ decomposes into at most $2 \log_2 \mathcal{L}$
+dyadic intervals; for each one, Rosetta probes the Bloom filter at
+the root of the corresponding sub-tree and, on a positive answer,
+recursively descends into deeper
+levels~\citep[\S2.2.1]{luo2020rosetta}. Because Bloom filters are
+insensitive to the key distribution, the FPR guarantee holds under
+any workload.
+Under the ``first-cut'' bit-allocation
+policy~\citep[\S2.3]{luo2020rosetta}, the hierarchy occupies
+$1.44 \cdot n \log_2(\mathcal{L}/\varepsilon)$ bits --- the Goswami
+lower bound multiplied by the standard $1/\ln 2$ Bloom-filter
+overhead~\citep[\S3.1]{luo2020rosetta}; the deployed system
+redistributes the per-level budget using runtime query statistics
+gathered between LSM compactions~\citep[\S2.4]{luo2020rosetta}.
+The authors are explicit about the cost: ``due to the multiple
+probes required (for every prefix) Rosetta has a high probe
+cost''~\citep[\S1]{luo2020rosetta}. On a $50$M uint64-key benchmark
+at $22$ bits per key, Rosetta is up to $4\times$ faster end-to-end
+than SuRF and up to $40\times$ faster than default RocksDB on short
+and medium range queries~\citep[\S5, Fig.~5(A1), (D)]{luo2020rosetta};
+the advantage narrows on long ranges.
 
 \paragraph{Learned: SNARF.}
-SNARF~\citep{vaidya2022snarf} fits a linear-spline model to the
-empirical key CDF and stores a Golomb-coded sparse bit array (with an
-Elias--Fano alternative) over the predicted positions. The published
-FPR is approximately $1/K$ where $K$ scales with the bit budget; on
-the configurations covered by their evaluation SNARF reaches up to
-$50\times$ better FPR than SuRF and $100\times$ better FPR than
-Rosetta at matched memory. The model accuracy, however, is
-distribution-dependent: on the OSM dataset, whose sorted keys contain
-large empty contiguous ranges and abrupt jumps, SNARF's FPR--space
-curve degrades visibly and reaches $10^{-4}$ only at substantially
-higher memory than on other real-world
-datasets~\citep[\S6.1.2, Fig.~5(B)]{vaidya2022snarf}. SNARF additionally has no
-worst-case bound under correlated queries: ``when a query end point
-is consistently close to an actual key but the query does not include
-a key, it may yield a false positive in SNARF and
-SuRF''~\citep[\S4.1]{vaidya2022snarf}. In our SOSD~Facebook benchmark
-with workload-correlated queries (Chapter~\ref{chap:evaluation}) the
-empirical FPR floors around $10^{-3}$ regardless of additional memory.
+SNARF~\citep{vaidya2022snarf} fits a piecewise-linear monotonic
+model to the empirical Cumulative Distribution Function (CDF) of
+the key set and uses it to map each stored key $x$ to bit position
+$\lfloor \mathrm{MCDF}(x) \cdot nK \rfloor$ in a sparse bit array
+of size $nK$.
+The set bit positions are then stored either with
+Golomb coding~\citep{golomb1966runlength} (default, close to the
+information-theoretic optimum) or with Elias--Fano coding (faster queries at slightly
+higher space cost).
+The compressed array is split into fixed-size
+segments so that a query only decompresses the segments overlapping
+its interval~\citep[\S2.3.2]{vaidya2022snarf}.
+The parameter $K$ controls the bit array size ($|B| = nK$); total
+space is $\approx 2.4 + \log_2 K$ bits per
+key~\citep[\S3]{vaidya2022snarf}.
+
+On already-sorted input SNARF builds in $O(n)$: sampling, fitting
+linear segments between adjacent sample points, filling the bit
+array and compressing it are all linear.
+A range query costs $O(\log n + S)$, where $\log n$
+is the binary search in the model's sample array and $S$ is the
+number of decompressed segments.
+
+SNARF's FPR analysis rests on two assumptions: the model maps
+keys approximately uniformly into the bit array, and queries are
+uncorrelated with stored keys. Under these assumptions FPR
+$\approx 1/K$ for point queries and range queries, with no
+explicit dependence on the range
+length~\citep[\S3]{vaidya2022snarf}. Setting $K \approx
+1/\varepsilon$ gives total space $\approx 2.4 +
+\log_2(1/\varepsilon)$ bits per key, which absorbs the
+$\log_2 \mathcal{L}$ term of the Goswami bound: SNARF goes below
+the worst-case lower bound by exploiting distributional
+information. On the Search on Sorted Data (SOSD)
+benchmark~\citep{kipf2019sosd} SNARF reports up to $50\times$
+better FPR than SuRF and $100\times$ better FPR than Rosetta at
+matched memory~\citep[\S2]{vaidya2022snarf}.
+
+Both assumptions break in practice. The paper itself warns about
+correlated queries: ``when a query end point is consistently
+close to an actual key but the query does not include a key, it
+may yield a false positive in SNARF and
+SuRF''~\citep[\S4.1]{vaidya2022snarf}, and recommends Rosetta for
+short, highly correlated range queries. The uniform mapping
+assumption fails empirically on real-world distributions with
+structured sparsity. On the OpenStreetMap (OSM) dataset from SOSD
+--- cell IDs spanning nearly the full 64-bit universe yet
+concentrated in a small fraction of it --- the paper reports that
+SNARF reaches FPR $\leq 10^{-4}$ at $< 10$ bits per key only
+``for most cases'', and Fig.~5(B) shows the OSM range-query curve
+flooring well above the $10^{-4}$ level reached on the other SOSD
+datasets, even at $16$ bits per
+key~\citep[\S6.1.2, Fig.~5(B)]{vaidya2022snarf}.
 
 \paragraph{Practical realisation of Goswami: Grafite.}
 Grafite~\citep{grafite2024} is the closest related work to this thesis.
-It is explicitly framed as a practical, simplified instantiation of the
-Goswami construction: a locality-preserving hash
-$h(x) = (q(\lfloor x/r \rfloor) + x) \bmod r$ with pairwise-independent
-$q$ maps the universe down to a smaller range, the resulting hash
+The authors explicitly frame it as a simplified, practical
+instantiation of the Goswami construction~\citep[\S3]{grafite2024}:
+$h(x) = (q(\lfloor x/r \rfloor) + x) \bmod r$ with
+pairwise-independent $q$ maps the universe $U$ down to a smaller
+range $[0, r)$, with $r = n\mathcal{L}/\varepsilon$; the resulting hash
 codes are stored using Elias--Fano coding, and a range query reduces
-to a single predecessor probe. By the authors' own framing, Grafite is
-``the only range filter to date to achieve a robust and predictable
-false positive rate across all combinations of datasets, query
-workloads, and range sizes''~\citep[\S1]{grafite2024}. Its space
-matches the Goswami lower bound to an additive $2n$ bits, and on
-uniform data it is reported $6.7$--$10.3\times$ faster to construct
-than Rosetta. What Grafite does not do --- and what we add in this
-thesis --- is exploit the structure of the input keys: its
-space--accuracy trade-off is by design workload-agnostic. Our
-truncation hash (contribution~3) replaces Grafite's locality-preserving
-rotation, and Scan-ARE (contribution~4) layers distribution-aware
-segmentation on top of the same ERE-style backend.
+to a single predecessor probe~\citep[Algorithm 2]{grafite2024}.
+Theorem 3.4 establishes a space bound of
+$n \log_2(\mathcal{L}/\varepsilon) + 2n + o(n)$ bits and a query
+time of $O(\log \mathcal{L}/\varepsilon)$ --- matching the Goswami
+lower bound to within $O(n)$ bits.
+Construction takes $O(n \log n)$ time, dominated by sorting the
+hash codes prior to the Elias--Fano
+encoding~\citep[Algorithm 1]{grafite2024}.
+
+The authors' own framing of the headline result reads:
+``Grafite is the only design to date to achieve a robust and predictable false
+positive rate across all combinations of datasets, query workloads,
+and range sizes, while also providing faster queries and
+construction times, and dominating all competitors in the case of
+correlated query workloads''~\citep[\S1]{grafite2024}.
+
+Because Grafite is the main baseline of this thesis, we devote a
+separate detailed analysis to it in
+Section~\ref{sec:grafite-deep-dive} --- internals, parameter
+choices, and improvements we identified during the empirical
+comparison.
 
 \paragraph{Dynamic extension: Memento.}
-Memento~\citep{eslami2024memento} is the contemporaneous SIGMOD~2024
-filter that adds dynamicity --- insertions, deletions, and growth ---
-to the static state of the art. It is built on top of a Rank-and-Select
-Quotient Filter: each universe partition stores a fingerprint together
-with a contiguous list of fixed-length key suffixes (``mementos''),
-all packed via Robin Hood hashing. Memento reports false-positive
-behaviour and per-query cache-miss count comparable to Grafite at
-matched memory. The authors explicitly note that static range filters
-suffice for the immutable files of an LSM-Tree
-deployment~\citep[\S1]{eslami2024memento}; Memento targets workloads
-where the key set itself is mutable --- single-global-filter
-LSM-trees, B-Tree indexes, and systems that mix transactional and
-analytical workloads. Because our thesis stays
-within the static setting, Memento is orthogonal rather than a
-head-to-head competitor.
+Memento~\citep{eslami2024memento} is the SIGMOD~2024 filter that is
+the first to add dynamicity --- insertions, deletions, and growth
+--- to range filtering while preserving a robust FPR guarantee for
+any workload~\citep[\S1, \S4]{eslami2024memento}.
+It is built on top of a Rank-and-Select Quotient Filter: each \emph{keepsake
+box} --- a group of keys with a common fingerprint within one run
+--- stores that fingerprint together with a contiguous list of
+fixed-length key suffixes (``mementos''), all packed via Robin Hood
+hashing~\citep[\S3, \S4]{eslami2024memento}.
+
+On static workloads Memento's FPR sits within $1.5\times$ of Grafite
+at matched memory~\citep[\S7.1, Fig.~9]{eslami2024memento}.
+The small gap reflects Memento's ${\sim}3.3n$-bit metadata overhead
+versus Grafite's $2n$~\citep[\S6]{eslami2024memento}.
+Range queries take $O(\log_2 \mathcal{L})$ CPU operations and
+$1$--$2$ random memory accesses, both holding against any
+workload~\citep[\S6, Table~2]{eslami2024memento}. This matches
+Grafite on the cache-miss bound; in practice Memento is slightly
+slower than Grafite~\citep[\S7.1]{eslami2024memento}.
+
+The authors explicitly note that static range filters suffice for the immutable files of an
+LSM-Tree deployment~\citep[\S2]{eslami2024memento}; Memento targets
+workloads where the key set itself is mutable --- single-global-filter
+LSM-trees, B-Tree indexes, and systems that mix transactional and analytical workloads.
+Because our thesis stays within the static setting, Memento is
+orthogonal rather than a head-to-head competitor; on the static axis
+it lands close to Grafite.
 
 \paragraph{Positioning.}
 The space of practical range filters splits along a single axis: does
@@ -144,7 +241,7 @@ lower bound on adversarial inputs and beat it on realistic ones.
     $\log_2 \mathcal{L}$ bits per key with $O(1)$ query cost.
 
     \item \textbf{Distribution-aware segmentation: Scan-ARE
-    (Chapter~\ref{chap:hybrid}).}
+        (Chapter~\ref{chap:hybrid}).}
     A single-pass 1D-DBSCAN partitions the input into dense clusters
     and sparse tails. Dense clusters are handed to an ERE filter
     (exact, zero false positives); sparse points fall back to the
