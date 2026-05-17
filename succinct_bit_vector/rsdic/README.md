@@ -275,16 +275,133 @@ patterns, for thresholds $\{1, 4, 8, 16, 32, 64, 256, 1024\}$.
   results" above: bracket sizes there sit in the small-bracket regime
   and take the linear path.
 
+### Optimization 5: `Select1Pair` — exploit consecutive-rank locality (`rsdic.go`)
+
+**The pattern.** `ExactRangeEmptiness.IsEmpty(a, b)` triggers `getBlockRange(blockIdx)`,
+which needs the bit-positions of both the `blockIdx`-th and the `(blockIdx+1)`-th
+one-bits to locate a bucket. Upstream code (and our `Select1` after Optimization 4)
+computes these as two independent calls:
+
+```go
+posStart := rs.Select1(blockIdx)
+posEnd   := rs.Select1(blockIdx + 1)
+```
+
+Every range query of ERE pays this twice; every approximate backend wrapping
+ERE (SodaARE, AdaptiveARE, SegARE, Scan-ARE) inherits the cost on its hot path.
+
+**What gets repeated.** A single `Select1(r)` walks four data structures in order:
+
+1. `selectOneInds[r / 4096]` — pick the large-block hint
+2. `rankBlocks[lo..hi]` — locate `lblock` (linear scan up to 128 entries, or
+   binary search above the threshold from Optimization 4)
+3. `rankSmallBlocks[sblock..]` — walk forward through up to 16 small blocks of
+   the chosen large block to find the one that contains rank `r`
+4. `getSlice(bits, pointer, kEnumCodeLength[rankSB])` — fetch and decode the
+   bit-packed enum code for that small block, then `enumSelect1` on it
+
+For two consecutive ranks `r` and `r+1`, **all four lookups land on the same data**:
+
+| step                       | how `r` and `r+1` relate                                         | probability of agreement (50%-dense) |
+|----------------------------|------------------------------------------------------------------|--------------------------------------|
+| `selectOneInds` entry      | identical unless `r+1` crosses a 4096-rank boundary              | $\ge 99.97\,\%$                      |
+| `lblock`                   | identical unless `r+1` is the last one in its large block        | $\ge 99.94\,\%$                      |
+| `sblock`                   | identical unless `r+1` is the last one in its 64-bit small block | $\approx 96.9\,\%$                   |
+| `code` word from `rs.bits` | same word; can be cached in a register                           | same as `sblock` row                 |
+
+**Why this matters: warm cache is not free.** The cache lines for all four
+structures are still hot in L1 microseconds after the first call returns, so
+every memory access of the second call is an L1 hit. But hitting cache costs
+~3–4 cycles per access on M4 (and similarly on x86), and the CPU still has to
+pipeline through every `LDR`/`CMP`/`ADD` of the index walk. Measured on Apple
+M4 Max, the redundant warm-cache walk costs ~17–25 ns per pair — purely
+from re-executing instructions that hit cache lines the first call already
+loaded.
+
+In other words: the upstream pattern wastes work that does *not* show up as
+cache misses. It shows up as the CPU front-end ploughing through ~50–80
+instructions a second time to arrive at state we already had in registers
+moments ago.
+
+**After.** `Select1Pair(r)` runs the full index walk once, then for `r+1`
+reuses the captured state `(sblock, rankSB, code, remain)`:
+
+```go
+posA := sblock*kSmallBlockSize + uint64(enumSelect1(code, rankSB, uint8(remain)))
+
+if remain < uint64(rankSB) {
+    // r+1 lives in the same small block — just decode one more bit
+    posB := sblock*kSmallBlockSize + uint64(enumSelect1(code, rankSB, uint8(remain+1)))
+    return posA, posB
+}
+// rare path: r+1 leaves the small block — fall back to plain Select1
+return posA, rs.Select1(r + 1)
+```
+
+The fast path costs one extra `enumSelect1` over a single `Select1(r)` — no
+extra memory accesses, no extra branches. The slow path (when `r` is the last
+one in its small block, ≈ 3% of calls on dense data) does a full second
+`Select1`, no worse than upstream.
+
+**This is the kind of non-asymptotic optimization the thesis is about.** Both
+versions are $O(1)$ amortized; worst-case complexity is unchanged. What
+changed is **how many instructions and how many cycles per query the CPU
+spends** when two consumers share state. Recognizing the shared state is an
+algorithmic observation; exploiting it is a memory-hierarchy observation.
+
+**Where it's called in hot path.**
+
+- `ExactRangeEmptiness.getBlockRange` — every range query that does not straddle a block boundary
+- `ExactRangeEmptiness.getQueryBlockRanges` — the first two of three selects when start/end blocks are adjacent
+- Transitively: every `IsEmpty` on SodaARE, AdaptiveARE, SegARE, Scan-ARE, Greedy/Gap/DP-Scan whose segments are ERE-backed
+
+**Measured impact (Apple M4 Max, 50%-dense rsdic).**
+
+Micro-bench (`BenchmarkSelectInterleavedRank` — two separate `Select1` calls —
+vs `BenchmarkSelect1Pair`):
+
+|      $N$ | two `Select1`s (ns) | `Select1Pair` (ns) |         Δ |
+|---------:|--------------------:|-------------------:|----------:|
+| $2^{20}$ |                53.4 |               37.7 | **−29 %** |
+| $2^{22}$ |                64.0 |               42.9 | **−33 %** |
+| $2^{24}$ |                67.2 |               48.6 | **−28 %** |
+| $2^{26}$ |                86.8 |               57.4 | **−34 %** |
+| $2^{28}$ |               119.8 |              101.9 | **−15 %** |
+
+End-to-end on `ExactRangeEmptiness.IsEmpty` (real range queries,
+`BenchmarkExactRangeEmptiness_Query`):
+
+|              keys | baseline (ns) | with `Select1Pair` (ns) |         Δ |
+|------------------:|--------------:|------------------------:|----------:|
+|          $10^{3}$ |          51.8 |                    39.0 | **−25 %** |
+|   $8\cdot 10^{3}$ |          56.2 |                    41.0 | **−27 %** |
+| $3.3\cdot 10^{4}$ |          61.6 |                    41.0 | **−33 %** |
+| $2.6\cdot 10^{5}$ |          57.5 |                    40.5 | **−30 %** |
+|          $10^{6}$ |          58.1 |                    41.0 | **−29 %** |
+
+The saving is a near-constant ~17 ns per query, exactly the cost of one
+redundant warm-cache index walk that `Select1Pair` skips. The relative
+improvement only drops at $N = 2^{28}$, where the first call's cold-cache
+miss to main memory dominates and the saving sits proportionally below the
+cold-cache floor.
+
+**Correctness.** `TestSelect1Pair_MatchesSelect1` and `TestSelect1Pair_Patterns`
+cross-check `Select1Pair` against `(Select1(r), Select1(r+1))` over random,
+all-ones-then-zeros, alternating, sparse, cluster-then-sparse, and 90%-dense
+patterns. Edge cases covered: `r = ones - 1` (second rank falls off the end),
+`r = ones` (both off), `r` inside the last-block tail (handled by a separate
+fast path that issues two `selectRaw` calls on the cached `lastBlock`).
+
 ### Optimization 3: `runZerosRaw` → `bits.TrailingZeros64` (`enumCode.go`)
 
 **Before:**
 
 ```go
 func runZerosRaw(code uint64, pos uint8) uint8 {
-i := uint8(pos)
-for; i < kSmallBlockSize && !getBit(code, i); i++ {
+    i := uint8(pos)
+    for; i < kSmallBlockSize && !getBit(code, i); i++ {
 }
-return i - pos
+  return i - pos
 }
 ```
 
@@ -294,11 +411,11 @@ Bit-by-bit scan from `pos` looking for the first set bit — up to 64 iterations
 
 ```go
 func runZerosRaw(code uint64, pos uint8) uint8 {
-shifted := code >> pos
-if shifted == 0 {
-return kSmallBlockSize - pos
-}
-return uint8(bits.TrailingZeros64(shifted))
+    shifted := code >> pos
+    if shifted == 0 {
+        return kSmallBlockSize - pos
+    }
+    return uint8(bits.TrailingZeros64(shifted))
 }
 ```
 
