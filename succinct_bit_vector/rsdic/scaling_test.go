@@ -121,6 +121,39 @@ func BenchmarkSelectInterleavedRank(b *testing.B) {
 	}
 }
 
+// BenchmarkSelect1Pair measures the cost of Select1Pair(k) — single call that
+// returns both Select1(k) and Select1(k+1). One b.N iteration corresponds to
+// one Select1Pair call, directly comparable with BenchmarkSelectInterleavedRank.
+func BenchmarkSelect1Pair(b *testing.B) {
+	for _, n := range scalingSizes {
+		n := n
+		b.Run(fmt.Sprintf("N=2^%d", log2(n)), func(b *testing.B) {
+			rs, ones := buildRSDic(n, 42)
+			if ones < 2 {
+				b.Fatalf("insufficient ones in bitvector of size %d", n)
+			}
+			rng := rand.New(rand.NewSource(7))
+			ranks := make([]uint64, kIters)
+			for i := range ranks {
+				ranks[i] = uint64(rng.Int63n(int64(ones - 1)))
+			}
+			bytes := float64(rs.AllocSize())
+			b.ResetTimer()
+			var sink uint64
+			for i := 0; i < b.N; i++ {
+				a, c := rs.Select1Pair(ranks[i%kIters])
+				sink ^= a
+				sink ^= c
+			}
+			b.StopTimer()
+			if sink == 0xDEADBEEF {
+				b.Log("sink trick")
+			}
+			b.ReportMetric(bytes/(1024*1024), "bitvec_MB")
+		})
+	}
+}
+
 func log2(x uint64) int {
 	r := 0
 	for x > 1 {

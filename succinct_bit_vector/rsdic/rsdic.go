@@ -244,6 +244,86 @@ func (rs *RSDic) Select1(rank uint64) uint64 {
 	return sblock*kSmallBlockSize + uint64(enumSelect1(code, rankSB, uint8(remain)))
 }
 
+// Select1Pair returns (Select1(rank), Select1(rank+1)) for the common access
+// pattern used by ExactRangeEmptiness.getBlockRange. The two ranks almost
+// always live in the same small block (probability ~96% on dense bitvectors),
+// in which case the second result is obtained by a single extra enumSelect1
+// on the cached code word — no further selectOneInds / rankBlocks /
+// rankSmallBlocks scan. When the second rank crosses a small-block boundary
+// or falls into the last-block tail, the slow path falls back to Select1.
+func (rs *RSDic) Select1Pair(rank uint64) (uint64, uint64) {
+	if rank >= rs.oneNum {
+		return rs.num, rs.num
+	}
+	rank2 := rank + 1
+	if rank >= rs.oneNum-rs.lastOneNum {
+		lastBlockRank := uint8(rank - (rs.oneNum - rs.lastOneNum))
+		posA := rs.lastBlockInd() + uint64(selectRaw(rs.lastBlock, lastBlockRank+1))
+		if rank2 >= rs.oneNum {
+			return posA, rs.num
+		}
+		posB := rs.lastBlockInd() + uint64(selectRaw(rs.lastBlock, lastBlockRank+2))
+		return posA, posB
+	}
+	selectInd := rank / kSelectBlockSize
+	lo := rs.selectOneInds[selectInd]
+	var hi uint64
+	if selectInd+1 < uint64(len(rs.selectOneInds)) {
+		hi = rs.selectOneInds[selectInd+1] + 1
+	} else {
+		hi = uint64(len(rs.rankBlocks))
+	}
+	if hi > uint64(len(rs.rankBlocks)) {
+		hi = uint64(len(rs.rankBlocks))
+	}
+
+	var lblock uint64
+	if hi-lo <= kSelectLinearThreshold {
+		lblock = lo
+		for ; lblock < hi; lblock++ {
+			if rank < rs.rankBlocks[lblock] {
+				break
+			}
+		}
+		lblock--
+	} else {
+		l, r := lo, hi
+		for l < r {
+			mid := l + (r-l)/2
+			if rs.rankBlocks[mid] <= rank {
+				l = mid + 1
+			} else {
+				r = mid
+			}
+		}
+		if l == 0 {
+			l = 1
+		}
+		lblock = l - 1
+	}
+
+	sblock := lblock * kSmallBlockPerLargeBlock
+	pointer := rs.pointerBlocks[lblock]
+	remain := rank - rs.rankBlocks[lblock] + 1
+	for ; sblock < uint64(len(rs.rankSmallBlocks)); sblock++ {
+		rankSB := rs.rankSmallBlocks[sblock]
+		if remain <= uint64(rankSB) {
+			break
+		}
+		remain -= uint64(rankSB)
+		pointer += uint64(kEnumCodeLength[rankSB])
+	}
+	rankSB := rs.rankSmallBlocks[sblock]
+	code := getSlice(rs.bits, pointer, kEnumCodeLength[rankSB])
+	posA := sblock*kSmallBlockSize + uint64(enumSelect1(code, rankSB, uint8(remain)))
+
+	if remain < uint64(rankSB) {
+		posB := sblock*kSmallBlockSize + uint64(enumSelect1(code, rankSB, uint8(remain+1)))
+		return posA, posB
+	}
+	return posA, rs.Select1(rank2)
+}
+
 func (rs RSDic) Select0(rank uint64) uint64 {
 	if rank >= rs.zeroNum {
 		return rs.num
