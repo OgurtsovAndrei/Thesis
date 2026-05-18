@@ -9,12 +9,12 @@ at the top level, while a background compaction process merges and promotes
 files to successively larger levels.
 The structure converts random writes into
 sequential I/O at the cost of \emph{read amplification}: a single lookup
-may have to consult an SSTable at every level.
+has to consult an SSTable at every level.
 
 To avoid touching each SSTable on disk during a lookup, every file carries a small in-memory
 \emph{filter} in its metadata.
 The filter answers a membership question
-with one-sided error: false negatives are forbidden, and the false positive rate is bounded by~$\varepsilon$.
+with one-sided error: false negatives are forbidden, and the false positive rate (FPR) is bounded by~$\varepsilon$.
 If the filter says ``empty'', the engine
 skips the file with zero disk I/O.
 The Bloom filter~\citep{bloom1970space}
@@ -40,7 +40,8 @@ so a filter tuned to a specific data or workload can do better.
 Existing practical filters respond to this in two ways:
 either go below the Goswami bound by assuming a specific data distribution,
 losing the worst-case FPR guarantee (SuRF, SNARF),
-or stay at the bound and guarantee the FPR under any workload~\citep{luo2020rosetta,grafite2024}.
+or stay at the bound and guarantee the FPR under any workload
+(Rosetta, Grafite, Memento)~\citep{luo2020rosetta,grafite2024,eslami2024memento}.
 Many production LSM keys, however, have exploitable structure: they pack densely across the used range, spread across the universe, or concentrate in dense regions separated by large gaps~\citep{cao2020facebook}.
 None of the filters above uses this.
 This thesis does.
@@ -49,3 +50,4 @@ narrowing the gap to the lower bound.
 Second, where the data distribution permits, we detect dense clusters and handle them exactly,
 going below the bound on real-world data (Search on Sorted Data benchmark~\citep{kipf2019sosd})
 while preserving the worst-case guarantee on adversarial inputs.
+
