@@ -1,0 +1,77 @@
+\section{Our Contributions}
+\label{sec:our-contributions}
+
+\paragraph{Positioning.}
+Rosetta, Grafite, and Memento all carry a worst-case FPR guarantee ---
+the Goswami bound up to a constant or additive term --- and differ
+mainly in cost: Rosetta pays $O(\log_2 \mathcal{L})$ Bloom probes per
+query, Grafite a single predecessor probe within an additive $2n$ bits,
+and Memento adds dynamicity at static-axis parity with Grafite.
+SuRF and SNARF trade that guarantee for shape: SuRF is not
+parameterized by $\varepsilon$ at all and inherits its FPR from the
+trie skeleton (empirically up to $25\%$ on correlated workloads);
+SNARF goes below the Goswami bound when its CDF model fits the data
+and loses the guarantee otherwise.
+None of the five exploits the cluster-and-gap structure common in real
+LSM workloads --- the regularity this thesis targets.
+We keep the worst-case guarantee of the Grafite line and add a
+distribution-aware mechanism that beats the bound on realistic inputs.
+
+\paragraph{Contributions of this thesis.}
+We start from Goswami's two-layer construction --- locality-preserving
+hash followed by an ERE backend --- and extend it in three areas,
+producing a filter that matches the Goswami
+lower bound on adversarial inputs and beats it on realistic ones.
+\begin{enumerate}
+    \item \textbf{Single-vector ERE backend (Chapter~\ref{chap:ere}).}
+    The two metadata vectors $D_1, D_2$ of Goswami's ERE are replaced
+    by a single succinct vector $D$, reducing metadata size by
+    $24\%$ --- a saving predicted from the Poisson bucket-occupancy
+    model and confirmed empirically.
+
+    \colorbox{orange}{TODO: EF coding, grafit does the same}
+
+    \item \textbf{Adaptive bucket search (Chapter~\ref{chap:ere}).}
+    The theoretically $O(1)$ Weak Prefix Search index inside each ERE
+    bucket is replaced by adaptive binary/linear search on packed
+    suffixes, removing $59$~bits of auxiliary metadata per key and
+    reducing per-query latency by $13$--$30\times$ at LSM bucket
+    sizes.
+
+    \colorbox{orange}{TODO: We are the only ones, who managed to implement WPS, when others say that it is
+    ``mainly theoretic in nature and thus very complicated to implement''~\citep{grafite2024}}
+
+    \item \textbf{Truncation hash (Chapter~\ref{chap:hash}).}
+    For sparse inputs we replace Goswami's locality-preserving
+    rotation with the truncation map $h(x) = \lfloor x/2^t \rfloor$,
+    which saves $\log_2 \mathcal{L}$ bits per key.
+
+    \item \textbf{Distribution-aware segmentation: Seg-ARE (Chapter~\ref{chap:hybrid}).}
+    A 1D-DBSCAN-derived single-pass segmentation partitions the input
+    into dense clusters --- handed to exact-mode ERE sub-filters
+    (FPR $= 0$) --- and sparse tails routed to the truncation hash.
+    On clustered SOSD data this drives the FPR below $10^{-8}$ at
+    $\sim\!11$ BPK on Facebook and $\sim\!6$ BPK on Wiki, matching or
+    beating the strongest baselines
+    (Chapter~\ref{chap:evaluation}); Chapter~\ref{chap:conclusion}
+    discusses when Seg-ARE wins, ties, and loses, and the
+    Elias--Fano interpretation behind it.
+\end{enumerate}
+
+\paragraph{Roadmap.}
+\begin{itemize}
+    \item \textbf{Chapter~\ref{chap:ere}} develops the single-vector
+        ERE and the adaptive bucket-search backend
+        (contributions~1--2).
+    \item \textbf{Chapter~\ref{chap:distributions}} characterises the
+        key distributions we target, preparing the ground for
+        contributions~3--4.
+    \item \textbf{Chapter~\ref{chap:hash}} formalises and compares the
+        SODA and Truncation hash designs (contribution~3).
+    \item \textbf{Chapter~\ref{chap:hybrid}} introduces the Seg-ARE
+        segmentation (contribution~4).
+    \item \textbf{Chapter~\ref{chap:evaluation}} reports the empirical
+        comparison against SuRF, SNARF, Rosetta, and Grafite on SOSD
+        and synthetic workloads.
+    \item \textbf{Chapter~\ref{chap:conclusion}} concludes.
+\end{itemize}

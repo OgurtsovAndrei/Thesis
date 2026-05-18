@@ -1,0 +1,116 @@
+\section{Grafite: A Closer Look}
+\label{sec:grafite-deep-dive}
+
+Grafite~\citep{grafite2024} is the main baseline against which the
+filters of this thesis are compared. The high-level description in
+Section~\ref{sec:existing-work} is enough to position Grafite among
+existing range filters; this section gives the level of detail
+needed to (i)~understand the empirical results of
+Chapter~\ref{chap:evaluation} and (ii)~motivate the specific design
+choices behind our hash functions
+(Chapter~\ref{chap:hash}) and the hybrid filter
+(Chapter~\ref{chap:hybrid}).
+
+\subsection{Internals}
+\label{subsec:grafite-internals}
+
+\colorbox{orange}{TODO: walk through the hash $h(x) = (q(\lfloor x/r \rfloor) + x) \bmod r$, the choice of pairwise-independent $q$, and the role of $r = n\mathcal{L}/\varepsilon$.}
+
+\colorbox{orange}{TODO: describe the Elias--Fano encoding of the sorted hash codes ($H$ bitvector, $V$ low-part array, predecessor implementation).}
+
+\colorbox{orange}{TODO: walk Algorithm 1 (Construct) and Algorithm 2 (Range query) through a small example, including the wraparound case $h(a) > h(b)$.}
+
+\subsection{Parameter Choices and Their Consequences}
+\label{subsec:grafite-params}
+
+\colorbox{orange}{TODO: range bound $\mathcal{L}$ --- behaviour for query lengths above $\mathcal{L}$, FPR bound $\min\{1, \ell/2^{B-2}\}$.}
+
+\colorbox{orange}{TODO: bit budget $B$ per key --- derive $\varepsilon = \mathcal{L}/2^{B-2}$.}
+
+\colorbox{orange}{TODO: restriction $\mathcal{L} \leq u\varepsilon/n$ from Theorem 3.4 --- when does it bind, when is the trivial Elias--Fano of keys preferable.}
+
+\paragraph{Material to draw on.}
+Theorem~3.4 of~\citep{grafite2024} restricts $\mathcal{L} \leq
+u\varepsilon/n$; above this point $r = n\mathcal{L}/\varepsilon$
+exceeds the spread of the input and the upstream constructor
+throws. Our CGo wrapper catches the throw and substitutes a
+lossless Elias--Fano over the deduplicated input keys (commit
+\texttt{68c0cf5}), giving FPR $= 0$ at
+$n \cdot (2 + \log_2(U/n)) + \text{select-index overhead}$ bits.
+This regime is reached on the tightest-$\varepsilon$ end of the
+SOSD curves and is the configuration that produces the
+$10.94$\,bpk Wikipedia number cited in
+Section~\ref{subsec:grafite-gap}.
+
+\subsection{Improvements Identified in This Work}
+\label{subsec:grafite-improvements}
+
+\colorbox{orange}{TODO: enumerate the concrete improvements applied to Grafite during the experimental comparison (parameter tuning, implementation tweaks, etc.).}
+
+\paragraph{Material to draw on --- two concrete fixes.}
+Both are applied in every benchmark of
+Chapter~\ref{chap:evaluation}; Grafite is therefore measured in
+its best configuration, not out-of-the-box.
+
+\begin{enumerate}
+    \item \textbf{SUX \texttt{selectZero} pathology on clustered
+    data.} The Grafite predecessor routes through SUX's
+    \texttt{select\_zero}. On clustered inputs --- bitvectors with
+    long zero runs separated by dense regions --- the primitive
+    degraded to an $O(N)$ linear scan: $\sim 30$\,ns per query
+    on uniform data, $\sim 88\,\mu$s per query on SOSD-Wikipedia.
+    The fix replaces the offending traversal with a balanced
+    descent.
+    \colorbox{orange}{TODO: pin down which SUX inventory level fails and which fallback path was taken; cite the patch hash.}
+
+    \item \textbf{Lossless Elias--Fano fallback for the
+    over-budget regime} (commit \texttt{68c0cf5}). When the bit
+    budget pushes $r > \max(S)$, the upstream constructor throws;
+    our wrapper rebuilds the filter as
+    \texttt{grafite::ef\_sux\_vector} over the raw deduplicated
+    keys, yielding deterministic FPR $= 0$. This is the
+    configuration in which Grafite reaches its tightest space
+    points on the SOSD curves
+    (cf.~Section~\ref{subsec:grafite-params}).
+\end{enumerate}
+
+\subsection{What Grafite Leaves on the Table}
+\label{subsec:grafite-gap}
+
+\colorbox{orange}{TODO: workload-agnostic by design --- bounds hold uniformly across distributions. On inputs with exploitable structure a distribution-aware filter can improve both space and FPR jointly. This is the gap targeted by Chapters~\ref{chap:hash} and~\ref{chap:hybrid}.}
+
+\paragraph{Material to draw on --- the SOSD-Wikipedia headline.}
+($n = 2^{20}$, $\mathcal{L} = 128$, $\varepsilon = 0.01$,
+$2.6 \times 10^{5}$ empty queries.) The $988\,851$ unique
+timestamps span $\max - \min \approx 2^{26.1}$, yet the
+segmenter resolves them into $11$ dense ``epoch'' clusters, each
+occupying a local window of width $\le 2^{25}$. Encoding each
+cluster against its \emph{local} universe rather than the global
+one shrinks the average per-key cost from
+$\log_2(U/n) \approx 6.1$ bits to
+$\overline{\log_2(2^{M_c}/n_c)} \approx 3.6$ bits.
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Filter & bpk at FPR $= 0$ & query latency \\
+\midrule
+\textbf{SegARE-InGapFPR (ours)} & \textbf{8.57} & $186$\,ns/op \\
+Grafite (with both fixes above) & $10.94$       & $114$\,ns/op \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $2.4$-bpk gap equals exactly the spread ratio
+$\log_2(U_{\text{global}}/n) -
+\overline{\log_2(2^{M_c}/n_c)}$: Grafite, like every
+distribution-free LP-hash filter, sizes its structure against the
+global universe and cannot factor it into narrower local ones.
+The cost paid for the space win is a $\approx 1.6\times$
+query-latency overhead from cluster dispatch (a binary search over
+$11$ cluster ranges plus one sub-filter probe); the overhead is
+tunable through segmenter granularity.
+
+\colorbox{orange}{TODO: cross-link to the bench plot \texttt{bench\_results/plots\_paper/b6\_N1048576/fpr/sosd\_wiki.svg} and to the reproducer \texttt{wiki\_cluster\_plot\_test.go}.}
+
+\colorbox{orange}{TODO: note honestly that on this dataset \texttt{InGapFPR} is dormant --- the segmenter alone does the work; \texttt{InGapFPR} earns its keep on Books / OSM.}
