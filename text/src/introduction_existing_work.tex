@@ -1,18 +1,15 @@
 \section{Existing Range Filters}
 \label{sec:existing-work}
 
-We survey the five practical range filters most directly comparable
-to our work from the past seven years.
-We group them by the technique
-that determines their space--accuracy trade-off, contrast each with
-the Goswami lower bound (Section~\ref{sec:bounds}), and use the
-grouping to position our contributions.
+We survey the five practical range filters most directly comparable to our work.
+We describe each by the technique that determines its
+space--accuracy trade-off and contrast it with the Goswami lower
+bound (Section~\ref{sec:bounds}).
 
 \paragraph{Trie-based: SuRF.}
 The Succinct Range Filter~\citep{zhang2018surf} stores the set of keys
 as a Fast Succinct Trie --- a compact bitmap-based succinct trie
-encoding at about $10$ bits per node, $4$--$15\times$ faster than
-earlier succinct tries on point queries~\citep[\S4.1.2]{zhang2018surf}.
+encoding at about $10$ bits per node~\citep[\S4.1.2]{zhang2018surf}.
 A range query descends the trie to the boundary of the query interval.
 The cost of the query is set by the trie depth, which reflects the
 key length in the universe (e.g.\ $\leq 8$ levels for $64$-bit
@@ -39,15 +36,18 @@ $64$-bit integers and $14$ bits per key for emails regardless of the
 target FPR.
 
 The headline RocksDB result --- up to $5\times$ throughput on
-closed-seek queries over the Bloom-filter
-configuration~\citep[\S6, Fig.~13]{zhang2018surf} --- is an
-\emph{end-to-end} effect of skipped SSTable I/O, not a faster filter
-operation.
-A Bloom filter cannot prune range queries at all (``is equivalent to having no filter''~\citep[\S6]{zhang2018surf}),
+closed-seek queries with SuRF-Real over the Bloom-filter
+configuration, on a synthetic $100$~GB time-series workload with
+$128$-bit timestamp$+$sensor keys, all filters sized to $14$~bits per
+key~\citep[\S6, Fig.~13]{zhang2018surf} --- is an \emph{end-to-end}
+effect of skipped SSTable I/O, not a faster filter operation.
+A Bloom filter cannot prune range queries at all (``the Bloom filter
+does not help range queries and is equivalent to having no
+filter''~\citep[\S6]{zhang2018surf}),
 so without a range filter RocksDB fetches candidate blocks from every
-level; SuRF eliminates this I/O. The $5\times$ figure assumes $99\%$
-of queries return empty; at $10\%$ empty the speedup drops to about
-$1.5\times$.
+level; SuRF eliminates this I/O. The $5\times$ holds when $99\%$ of
+queries return empty; at $10\%$ empty the gap narrows to roughly
+$1.5\times$ (read from Fig.~13).
 
 SuRF does not position itself against an information-theoretic
 range-filter space bound and does not cite the Goswami construction.
@@ -82,10 +82,9 @@ the advantage narrows on long ranges.
 
 \paragraph{Learned: SNARF.}
 SNARF~\citep{vaidya2022snarf} fits a piecewise-linear monotonic
-model to the empirical Cumulative Distribution Function (CDF) of
+model $F$ to the empirical Cumulative Distribution Function (CDF) of
 the key set and uses it to map each stored key $x$ to bit position
-$\lfloor \mathrm{MCDF}(x) \cdot nK \rfloor$ in a sparse bit array
-of size $nK$.
+$\lfloor F(x) \cdot nK \rfloor$ in a sparse bit array of size $nK$.
 The set bit positions are then stored either with
 Golomb coding~\citep{golomb1966runlength} (default, close to the
 information-theoretic optimum) or with Elias--Fano coding (faster queries at slightly
@@ -112,15 +111,15 @@ explicit dependence on the range
 length~\citep[\S3]{vaidya2022snarf}. Setting $K \approx
 1/\varepsilon$ gives total space $\approx 2.4 +
 \log_2(1/\varepsilon)$ bits per key, which absorbs the
-$\log_2 \mathcal{L}$ term of the Goswami bound: SNARF goes below
-the worst-case lower bound by exploiting distributional
-information. On the Search on Sorted Data (SOSD)
+$\log_2 \mathcal{L}$ term of the Goswami bound: SNARF goes below the
+bound when its assumptions about the data hold.
+On the Search on Sorted Data (SOSD)
 benchmark~\citep{kipf2019sosd} SNARF reports up to $50\times$
 better FPR than SuRF and $100\times$ better FPR than Rosetta at
 matched memory~\citep[\S2]{vaidya2022snarf}.
 
-Both assumptions break in practice. The paper itself warns about
-correlated queries: ``when a query end point is consistently
+Both assumptions break in practice.
+The paper itself warns about correlated queries: ``when a query end point is consistently
 close to an actual key but the query does not include a key, it
 may yield a false positive in SNARF and
 SuRF''~\citep[\S4.1]{vaidya2022snarf}, and recommends Rosetta for
@@ -176,8 +175,8 @@ box} --- a group of keys with a common fingerprint within one run
 fixed-length key suffixes (``mementos''), all packed via Robin Hood
 hashing~\citep[\S3, \S4]{eslami2024memento}.
 
-On static workloads Memento's FPR sits within $1.5\times$ of Grafite
-at matched memory~\citep[\S7.1, Fig.~9]{eslami2024memento}.
+On static workloads Memento's FPR is up to $1.5\times$ higher than
+Grafite's at matched memory~\citep[\S7.1, Fig.~9]{eslami2024memento}.
 The small gap reflects Memento's ${\sim}3.3n$-bit metadata overhead
 versus Grafite's $2n$~\citep[\S6]{eslami2024memento}.
 Range queries take $O(\log_2 \mathcal{L})$ CPU operations and

@@ -13,33 +13,31 @@ trie skeleton (empirically up to $25\%$ on correlated workloads);
 SNARF goes below the Goswami bound when its CDF model fits the data
 and loses the guarantee otherwise.
 None of the five exploits the cluster-and-gap structure common in real
-LSM workloads --- the regularity this thesis targets.
+LSM workloads.
 We keep the worst-case guarantee of the Grafite line and add a
 distribution-aware mechanism that beats the bound on realistic inputs.
 
 \paragraph{Contributions of this thesis.}
 We start from Goswami's two-layer construction --- locality-preserving
-hash followed by an ERE backend --- and extend it in three areas,
+hash followed by an ERE backend --- and extend it in multiple areas,
 producing a filter that matches the Goswami
 lower bound on adversarial inputs and beats it on realistic ones.
 \begin{enumerate}
     \item \textbf{Single-vector ERE backend (Chapter~\ref{chap:ere}).}
-    The two metadata vectors $D_1, D_2$ of Goswami's ERE are replaced
-    by a single succinct vector $D$, reducing metadata size by
-    $24\%$ --- a saving predicted from the Poisson bucket-occupancy
-    model and confirmed empirically.
-
-    \colorbox{orange}{TODO: EF coding, grafit does the same}
+    We adopt the single-vector $D$ layout (also used by
+    Grafite~\citep{grafite2024}) in place of Goswami's two metadata
+    vectors $D_1, D_2$, and back it with a Poisson bucket-occupancy
+    model that predicts the resulting space saving --- $24\%$ relative
+    to the vanilla Goswami backend, confirmed empirically
+    (Section~\ref{sec:motivation} sketches the empirical reasoning
+    that justifies this collapse).
 
     \item \textbf{Adaptive bucket search (Chapter~\ref{chap:ere}).}
-    The theoretically $O(1)$ Weak Prefix Search index inside each ERE
-    bucket is replaced by adaptive binary/linear search on packed
-    suffixes, removing $59$~bits of auxiliary metadata per key and
-    reducing per-query latency by $13$--$30\times$ at LSM bucket
-    sizes.
-
-    \colorbox{orange}{TODO: We are the only ones, who managed to implement WPS, when others say that it is
-    ``mainly theoretic in nature and thus very complicated to implement''~\citep{grafite2024}}
+    We implement Goswami's Weak Prefix Search (WPS) index in full and
+    show empirically that adaptive binary/linear search on packed
+    suffixes outperforms it at LSM bucket sizes, removing $59$~bits of
+    auxiliary metadata per key and reducing per-query latency by
+    $13$--$30\times$ relative to WPS.
 
     \item \textbf{Truncation hash (Chapter~\ref{chap:hash}).}
     For sparse inputs we replace Goswami's locality-preserving
@@ -47,12 +45,12 @@ lower bound on adversarial inputs and beats it on realistic ones.
     which saves $\log_2 \mathcal{L}$ bits per key.
 
     \item \textbf{Distribution-aware segmentation: Seg-ARE (Chapter~\ref{chap:hybrid}).}
-    A 1D-DBSCAN-derived single-pass segmentation partitions the input
+    A single-pass density-based segmentation partitions the input
     into dense clusters --- handed to exact-mode ERE sub-filters
     (FPR $= 0$) --- and sparse tails routed to the truncation hash.
-    On clustered SOSD data this drives the FPR below $10^{-8}$ at
-    $\sim\!11$ BPK on Facebook and $\sim\!6$ BPK on Wiki, matching or
-    beating the strongest baselines
+    On SOSD dataset this drives the FPR below $10^{-8}$ at
+    $\sim\!11$ bits per key on Facebook User IDs and $\sim\!6$ bits per key on
+    Wiki timestamps, matching or beating the strongest baselines
     (Chapter~\ref{chap:evaluation}); Chapter~\ref{chap:conclusion}
     discusses when Seg-ARE wins, ties, and loses, and the
     Elias--Fano interpretation behind it.
@@ -71,7 +69,7 @@ lower bound on adversarial inputs and beats it on realistic ones.
     \item \textbf{Chapter~\ref{chap:hybrid}} introduces the Seg-ARE
         segmentation (contribution~4).
     \item \textbf{Chapter~\ref{chap:evaluation}} reports the empirical
-        comparison against SuRF, SNARF, Rosetta, and Grafite on SOSD
+        comparison against SuRF, SNARF, Rosetta, and Grafite on real world SOSD
         and synthetic workloads.
     \item \textbf{Chapter~\ref{chap:conclusion}} concludes.
 \end{itemize}

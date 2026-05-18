@@ -44,10 +44,24 @@ or stay at the bound and guarantee the FPR under any workload
 (Rosetta, Grafite, Memento)~\citep{luo2020rosetta,grafite2024,eslami2024memento}.
 Many production LSM keys, however, have exploitable structure: they pack densely across the used range, spread across the universe, or concentrate in dense regions separated by large gaps~\citep{cao2020facebook}.
 None of the filters above uses this.
-This thesis does.
-First, we shrink the practical overhead of the Goswami-style \emph{Exact Range Emptiness} backend,
-narrowing the gap to the lower bound.
-Second, where the data distribution permits, we detect dense clusters and handle them exactly,
-going below the bound on real-world data (Search on Sorted Data benchmark~\citep{kipf2019sosd})
-while preserving the worst-case guarantee on adversarial inputs.
 
+This thesis takes apart, simplifies, and speeds up the Goswami-style
+\emph{Exact Range Emptiness} (ERE) backend.
+We implemented Goswami's internal Weak Prefix Search
+(WPS) index~\citep{belazzougui2010fast} in full --- the part Grafite
+calls ``mainly theoretic in nature and thus very complicated to
+implement''~\citep{grafite2024} --- and measured its cost empirically.
+The measurements show that adaptive binary/linear search on packed
+suffixes outperforms WPS at LSM bucket sizes; eliminating WPS in turn
+lets us collapse Goswami's two metadata vectors $D_1, D_2$ into a
+single vector $D$.
+Beyond the bit-count savings, the contiguous memory layout reduces pointer chasing and speeds up queries.
+We arrive at the same backend structure as Grafite, with
+the empirical evidence that this simplification is in fact warranted
+(Chapter~\ref{chap:ere}).
+
+On top of this backend we add a distribution-aware segmentation that
+detects dense clusters and handles them exactly --- going below the
+worst-case bound on real-world data (Search on Sorted Data
+benchmark~\citep{kipf2019sosd}) while preserving the guarantee on
+adversarial inputs.
