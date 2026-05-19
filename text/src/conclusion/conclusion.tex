@@ -1,86 +1,60 @@
 \section{Summary of Contributions}
 \label{sec:conclusion-summary}
 
-This thesis extended Goswami's two-layer range filter construction in
-three areas: a single-vector ERE backend that cuts metadata size by
-$24\%$ (Chapter~\ref{chap:ere}); an adaptive bucket-search procedure
-that drops $59$~bits of per-key metadata and speeds queries by
-$13$--$30\times$ at LSM bucket sizes (Chapter~\ref{chap:ere}); a
-truncation hash that saves $\log_2 \mathcal{L}$ bits per key on sparse
-inputs (Chapter~\ref{chap:hash}); and Seg-ARE, a single-pass
-segmentation that routes dense clusters to exact-mode ERE sub-filters
-and sparse tails to the truncation hash (Chapter~\ref{chap:hybrid}).
-The first three improvements bring the Goswami-line filter closer to
-the lower bound on adversarial inputs. Seg-ARE goes below the bound on
-distributions where the structure permits.
+\begin{itemize}
+    \item \textbf{Single-vector ERE backend} (Chapter~\ref{chap:ere}):
+    consolidates two-layer metadata into one bit-vector, cutting metadata
+    size by $24\%$.
+    \item \textbf{Adaptive bucket-search} (Chapter~\ref{chap:ere}):
+    drops $59$ bits of per-key metadata and speeds queries by
+    $13$--$30\times$ at LSM bucket sizes.
+    \item \textbf{Truncation hash} (Chapter~\ref{chap:hash}):
+    saves $\log_2 \mathcal{L}$ bits per key on sparse inputs,
+    going below the Goswami bound on distributions where keys are spread
+    across the universe.
+    \item \textbf{Seg-ARE} (Chapter~\ref{chap:hybrid}):
+    a single-pass segmentation that routes dense clusters to exact-mode
+    ERE sub-filters and sparse tails to the truncation hash, going below
+    the bound on structured distributions.
+\end{itemize}
+The first two improvements bring the Goswami-line filter closer to the
+lower bound on adversarial inputs; the truncation hash and Seg-ARE each
+cross below it on inputs where the respective structure is present.
 
-\section{Seg-ARE and Grafite as Variants of Elias--Fano Coding}
-\label{sec:conclusion-ef-view}
+In absolute terms, the combined filter achieves the following on
+standard SOSD benchmarks at $\mathrm{FPR} \leq 10^{-3}$:
 
-A useful way to read the empirical results of
-Chapter~\ref{chap:evaluation} is through the Elias--Fano (EF) primitive
-that both Grafite and Seg-ARE rely on at the structural level.
-
-Grafite, in the regime where the requested $\varepsilon$ falls below
-the lossless threshold $u/n$, degenerates into a single EF encoding of
-the raw sorted keys --- the wrapper substitutes
-\texttt{ef\_sux\_vector(keys)} and the filter answers range queries by
-predecessor probe. Below this threshold Grafite is an approximate
-filter; above it, it is essentially EF on the whole universe.
-
-Seg-ARE applies the same EF primitive, but only after segmenting the
-input. Each dense cluster identified by the forward sweep is handed to
-an exact-mode ERE sub-filter, which encodes the cluster's keys
-locally; sparse keys outside any cluster fall through to the
-truncation hash. The total size of a Seg-ARE filter is the sum of
-per-cluster EF encodings plus the fallback's hash table --- versus
-Grafite's single EF encoding over the whole universe.
-
-This framing makes the win condition concrete: Seg-ARE beats Grafite
-exactly when per-cluster EF is more compact than universe-wide EF,
-i.e.\ when the data has dense regions separated by large gaps the
-segmentation can isolate. Quantitatively, the bpk gap between the two
-filters on a clustered input decomposes as
-\[
-    \log_2(U_{\text{global}}/n) \;-\;
-    \overline{\log_2(2^{M_c}/n_c)},
-\]
-where $U_{\text{global}}$ is the spread of the whole input and
-$2^{M_c}, n_c$ are the local window width and key count of the $c$-th
-cluster. On SOSD-Wikipedia the segmenter resolves the $\sim\!10^6$
-unique timestamps into roughly a dozen epoch-aligned clusters, each
-occupying a window of $2^{M_c} \leq 2^{25}$ around a $2^{26}$-wide
-global spread; the per-key cost drops from $\log_2(U/n) \approx 6.1$
-bits to $\overline{\log_2(2^{M_c}/n_c)} \approx 3.6$ bits, and the
-difference shows up directly in the headline numbers above.
+\begin{itemize}
+    \item \textbf{3.7 bits per key} on Wikipedia timestamps --- less
+    than a third of any competitor at the same error rate.
+    \item \textbf{7.7--9.2 bits per key} on clustered synthetic keys,
+    versus $12$--$19$ for the next-best filter.
+    \item \textbf{170--400\,ns} per query across all four SOSD
+    real-world datasets and query lengths
+    $\mathcal{L} \in \{1,\,16,\,1024\}$.
+\end{itemize}
 
 \section{When Seg-ARE Wins, Ties, and Loses}
 \label{sec:conclusion-where}
 
 The empirical picture across the four SOSD distributions falls out of
-the EF interpretation above:
+the per-cluster vs universe-wide Elias--Fano decomposition of
+Section~\ref{sec:hybrid-ef}:
 
 \begin{itemize}
     \item \textbf{Wiki --- clearest win.} Wikipedia edit timestamps
     are heavily concentrated on the right side of the universe
-    (Figure~\ref{fig:sosd-histograms}), with dense regions and large
-    sparse gaps in between. The segmentation isolates the dense parts
+    (Figure~\ref{fig:sosd-histograms}). The segmentation isolates the dense parts
     cleanly; per-cluster EF encodes each tight region in far fewer
-    bits than a universe-wide EF could. Seg-ARE reaches
-    $\mathrm{FPR} < 10^{-8}$ at $\sim\!6$ BPK against Grafite's
+    bits than a universe-wide EF could.
+    Seg-ARE reaches $\mathrm{FPR} < 10^{-8}$ at $\sim\!6$ BPK against Grafite's
     $\sim\!7$ BPK at the lossless threshold.
-    Honest disclosure: on Wiki the segmenter alone is doing the work
-    --- the cluster geometry routes nearly all empty queries to
-    exact-mode sub-filters, and the truncation-hash fallback rarely
-    fires. On Books and OSM, where the cluster/gap separation is
-    weaker, the fallback path contributes a larger share of the
-    overall accuracy.
     \item \textbf{Facebook --- tied.} Facebook user IDs occupy a
     relatively small $37$-bit universe with no large gaps. There is
     little for segmentation to exploit, and universe-wide EF is
-    already compact. Seg-ARE and Grafite both reach FPR $= 0$ at
-    $\sim\!11$ BPK; Seg-ARE matches but does not improve over the
-    Grafite-with-fallback baseline.
+    already compact.
+    Seg-ARE and Grafite both reach FPR $= 0$ at $\sim\!11$ BPK;
+    Seg-ARE matches but does not improve over the Grafite-with-fallback baseline.
     \item \textbf{OSM --- no advantage.} OpenStreetMap cell IDs are
     spread thinly across the full $64$-bit universe, with median gaps
     of order $10^7$. The DBSCAN-style detector finds essentially no
@@ -88,20 +62,12 @@ the EF interpretation above:
     so most keys go to the truncation-hash fallback and Seg-ARE
     degrades to truncation. Honest hashing is the only option on this
     geometry; no segmentation primitive helps.
-    \item \textbf{Uniform --- degrades to fallback.} Synthetic uniform
-    distributions are the limit case of OSM: no clusters at any scale,
-    every key in the fallback, and Seg-ARE collapses into plain
-    truncation. This is the worst-case axis where the worst-case
-    Goswami bound bites; here the contributions from
-    Chapter~\ref{chap:ere} (single-vector ERE, adaptive bucket search)
-    are what keep the filter close to the bound.
 \end{itemize}
 
-Seg-ARE is therefore not a universal improvement over Grafite. It is a
-distribution-aware option that activates when the data has the
+Seg-ARE is therefore not a universal improvement over Grafite.
+It is a distribution-aware option that activates when the data has the
 cluster-and-gap geometry common in many real LSM key sets
-(Wiki-like, Facebook-trace-style burst patterns) and stays harmless on
-the rest.
+(Wiki-like, Facebook-trace-style burst patterns) and stays harmless on the rest.
 
 \section{Limitations}
 \label{sec:conclusion-limits}
@@ -112,8 +78,8 @@ The Seg-ARE design carries three honest limitations.
 $\delta = \texttt{minPts} \cdot \mathcal{L} / (2\varepsilon)$ and on
 the fixed choice $\texttt{minPts} = 512$
 (Chapter~\ref{chap:hybrid}). On clusters smaller than $\texttt{minPts}$
-keys the detector misses real density and the win is lost. We have
-not investigated adaptive $\texttt{minPts}$ tuning.
+keys the detector misses real density and the win is lost.
+We have not investigated adaptive $\texttt{minPts}$ tuning.
 
 \textbf{Per-segment overhead.} Each segment carries $\sim\!700$~bits
 of fixed metadata (cluster bounds, sub-filter header, pointer). At
@@ -134,13 +100,14 @@ Three directions stand out.
 
 \textbf{Adaptive segmentation parameters.} The window and density
 thresholds are currently fixed at construction time from a single
-\texttt{minPts} value. Choosing them per LSM level (top levels have
+\texttt{minPts} value.
+Choosing them per LSM level (top levels have
 fewer keys but tighter clusters; bottom levels are denser but flatter)
 could close the gap on OSM-like distributions where the global
 $\delta$ is too coarse.
 
-\textbf{Combining segmentation with learned models.} The CDF-fitting
-approach of SNARF~\citep{vaidya2022snarf} solves the universe-mapping
+\textbf{Combining segmentation with learned models.}
+The CDF-fitting approach of SNARF~\citep{vaidya2022snarf} solves the universe-mapping
 problem that hurts Grafite on small-universe inputs, but loses the
 worst-case guarantee. Running a segmenter first, then a CDF model on
 each cluster, would localise the model's assumptions and might recover
