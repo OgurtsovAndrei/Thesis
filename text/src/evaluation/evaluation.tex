@@ -4,9 +4,10 @@
 Real-world keys come from the four SOSD datasets described in
 Section~\ref{sec:sosd} (Facebook, Wiki, Books, OSM) and are
 loaded in their native bit-width.
-Synthetic distributions (uniform, clustered) supplement them; their
-generators emit $60$-bit keys so that every filter sees the same
-universe.
+Synthetic distributions supplement them: uniform, spread, zipfian,
+and temporal generators mask their output to $60$ bits, while the
+clustered generator emits full $64$-bit keys (cluster centers and
+the uniform fraction are drawn from the whole \texttt{uint64} range).
 The only exception to native-width handling is SNARF: its upstream
 C++ implementation cannot accept keys close to $\texttt{UINT64\_MAX}$,
 so the SNARF wrapper masks inputs to $60$~bits internally. All other
