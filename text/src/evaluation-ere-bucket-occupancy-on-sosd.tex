@@ -1,0 +1,63 @@
+To characterize how the SODA hash distributes input keys across ERE
+blocks on real workloads, we measured per-bucket statistics for each
+SOSD dataset across three range lengths.
+
+\begin{table}[H]
+    \centering
+    \setlength{\tabcolsep}{9pt}
+    \begin{tabular}{@{}lrrrrrrrr@{}}
+        \toprule
+        Dataset              & $n$                  & $\mathcal{L}$ & $w$  & $X_{50}$   & $X_{90}$   & Max        & Max footprint & Fill              \\
+        \midrule
+        \texttt{sosd\_fb}    & $2^{27}$             & 16            & $11$ & $27$       & $103$      & $463$      & $637$~B       & $22.6\%$          \\
+        \texttt{sosd\_fb}    & $2^{27}$             & 256           & $15$ & $208$      & $545$      & $1{,}589$  & $2.9$~KB      & $4.9\%$           \\
+        \texttt{sosd\_wiki}  & ${\sim}2^{26}{}^{*}$ & 16            & $12$ & $3{,}240$  & $3{,}843$  & $4{,}054$  & $5.9$~KB  & $\mathbf{99.0\%}$ \\
+        \texttt{sosd\_wiki}  & ${\sim}2^{26}{}^{*}$ & 256           & $16$ & $52{,}565$ & $58{,}855$ & $62{,}037$   & $121$~KB   & $\mathbf{94.7\%}$ \\
+        \texttt{sosd\_books} & $2^{27}$             & 16            & $11$ & $812$      & $875$      & $978$      & $1.3$~KB      & $47.8\%$          \\
+        \texttt{sosd\_books} & $2^{27}$             & 256           & $15$ & $13{,}215$ & $13{,}670$ & $14{,}039$ & $25.7$~KB  & $42.8\%$ \\
+        \texttt{sosd\_osm}   & $2^{29}$             & 16            & $11$ & $3$        & $5$        & $35$       & $48$~B        & $1.7\%$           \\
+        \texttt{sosd\_osm}   & $2^{29}$             & 256           & $15$ & $3$        & $5$        & $85$       & $159$~B       & $0.3\%$           \\
+        \bottomrule
+    \end{tabular}
+    \caption{Bucket-size statistics for the inner ERE of the SODA-hashed ARE
+    filter on the SOSD datasets across two range lengths covering the
+    typical Facebook UDB range ($\mathcal{L} = 16$) and its P90
+        ($\mathcal{L} = 256$).
+        $^{*}$\texttt{sosd\_wiki} effective $n \approx 65 \times 10^{6}$ after
+        deduplication of repeated timestamps (Section~\ref{sec:sosd}); reported
+        as ${\sim}2^{26}$ for visual consistency with the other rows.}
+    \label{tab:eval-bucket-fill}
+
+    \medskip
+    \noindent\textbf{Columns.}
+    \begin{description}[leftmargin=2.2cm, labelwidth=2cm, labelsep=0.2cm,
+        style=nextline, itemsep=2pt, topsep=4pt]
+\item[$w$] Suffix length in bits, configured per row. Physical block
+capacity is $2^w$ distinct $w$-bit suffixes.
+\item[$X_{50}$, $X_{90}$] Key-weighted CDF percentiles over non-empty
+buckets: the smallest bucket size such that buckets of size $\leq X_p$
+collectively hold at least $p \cdot n$ keys.
+\item[\emph{Max}] Empirical maximum bucket size, $\max_b k_b$.
+\item[\emph{Max footprint}] Bit-packed size of the heaviest bucket
+($\max_b k_b \cdot w / 8$ bytes).
+\item[\emph{Fill}] $\max_b k_b / 2^w$ --- the heaviest bucket's
+saturation against physical capacity.
+    \end{description}
+\end{table}
+
+\paragraph{Observations.}
+\texttt{sosd\_fb} and \texttt{sosd\_osm} stay well below saturation at
+every $\mathcal{L}$. \texttt{sosd\_books} runs at ${\sim}42\%$ across
+$\mathcal{L}$. \texttt{sosd\_wiki} fully saturates at $\mathcal{L} = 16$
+($99\%$).
+In all cases except \texttt{sosd\_wiki} at $\mathcal{L}=256$, bucket footprints fit L1d on modern x86 servers, typically $32$--$48$~KB.
+The saturated wiki bucket ($121$~KB) fits L2.
+
+When fill approaches $100\%$, the SODA hash has run out of resolution:
+every key in a dense input region collapses into a single ARE block, and
+the bucket-search cost for those queries becomes $O(2^w)$ rather than
+$O(1)$ on average. For \texttt{sosd\_wiki} this means binary search on a
+fully packed bucket of up to ${\sim}6 \times 10^4$ keys ($121$~KB at
+$\mathcal{L} = 256$) --- still bounded by $w$ iterations and cache-resident
+in L2 (Section~\ref{subsec:block-sizes-and-lookup-strategy}),
+but the buckets are no longer lightly loaded as the SODA construction assumes.

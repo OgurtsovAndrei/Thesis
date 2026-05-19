@@ -1,0 +1,158 @@
+Range filters in LSM-tree storage systems are built \emph{per SSTable}:
+each on-disk file carries its own filter, and the relevant input size $n$
+is the number of keys in one SSTable, not the database total. Production
+deployments keep SSTables small --- tens to hundreds of megabytes --- for
+several reasons listed below.
+
+\begin{enumerate}
+    \item \textbf{Memory and time, compounded.} The build of the filter during compaction operations
+    needs random access to keys,
+    so the working set --- not just the filter --- must be held in RAM during the operation.
+    Filter construction itself runs at a few million keys per second:
+    \citet{grafite2024} report ${\sim}7$~M keys/s for
+    Grafite at $n = 2 \times 10^8$ on a single thread.
+    Both RAM and time scale linearly with $n$; compacting an $n = 2^{30}$ SSTable
+    claims gigabytes of RAM and minutes of CPU on a single operation.
+    This single-thread cost is unavoidable: in LevelDB, Cassandra, HBase,
+    and Pebble each compaction job is single-threaded by design;
+    RocksDB's optional subcompactions partition a job across threads but
+    emit a separate SSTable per subcompaction, so the filter for one
+    output file is still built by one thread~\citep{dong2021rocksdb}.
+    \item \textbf{Cloud I/O.} Loading and saving SSTables on object
+    storage backends (S3, GCS) is bandwidth-bound at the per-object
+    level: a single connection to S3 sustains ${\sim}55$--$95$~MiB/s
+    end-to-end~\citep{durner2023cloud}, so a multi-gigabyte file
+    streamed to a remote VM takes tens of seconds.
+    Splitting an object across parallel uploads scales aggregate throughput
+    further but competes with the live database for network bandwidth and CPU.
+    \item \textbf{Blast radius.} Corruption of one SSTable file or one
+    object loses exactly the keys in that file. Smaller files bound the blast.
+    \item \textbf{Sharding.} Multiple smaller SSTables can be queried in
+    parallel for the on-disk scans following a filter probe, migrated
+    independently between nodes, and replicated at file granularity; one
+    giant file cannot.
+    \colorbox{orange}{TODO: do we really need this point?}
+\end{enumerate}
+
+\paragraph{Realistic per-SSTable $n$.}
+The default RocksDB \texttt{target\_file\_size\_base} is $64$~MB, with
+production deployments commonly tuning to $128$~MB; entry sizes in
+real workloads (key + value) are roughly $60$--$150$~bytes on
+average~\citep{cao2020facebook}, putting the typical per-SSTable count
+at $n \in [2^{19},\ 2^{21}]$.
+
+Two production cases push $n$ higher. Secondary-index and counter
+column families (CFs --- RocksDB's per-table partitioning, with
+independent in-memory write buffers (memtables) and SSTables) store all information in the
+key and use the value as a placeholder: in Facebook's social-graph
+workload (UDB), the \texttt{Assoc\_count} CF has $20$-byte bigint
+keys with values
+under $8$~B, averaging $\sim 28$~B/entry, and similar patterns
+appear in other index/counter CFs~\citep{cao2020facebook}.
+KV-separation deployments
+(WiscKey~\citep{wisckey2016}, RocksDB BlobDB, Pebble) store only a key
+plus a $10$--$20$-byte blob handle in the SSTable, with values placed
+in separate blob files. In both cases the per-SSTable count rises
+to $n \in [2^{22},\ 2^{23}]$.
+
+Range filter
+papers~\citep{zhang2018surf,luo2020rosetta,vaidya2022snarf,eslami2024memento,grafite2024}
+report headline numbers at $n \in [2^{24},\ 2^{28}]$, but this is a
+single-filter microbenchmark convention rather than a deployment
+claim: SuRF, SNARF, and Rosetta integrate per-SSTable into RocksDB;
+Memento targets B-Trees (WiredTiger, MongoDB's storage engine); Grafite is presented as a
+stand-alone structure. The SOSD benchmark~\citep{kipf2019sosd}
+provides datasets at this same scale ($200$M keys $\approx 2^{27.6}$).
+
+\paragraph{Why not a global filter.}
+A database-wide filter is faster on the query side: range filter query
+time is essentially independent of $n$, so each per-file probe is
+constant-time --- but a per-file design pays one such probe per
+SSTable, while a single global filter needs only one. The update
+side is the opposite story: LSM compaction atomically replaces SSTables,
+making per-file filter rebuild touch only the keys in that compaction,
+while a global filter must either rebuild over all keys or maintain
+counting structures that support deletion.
+GRF~\citep{wang2024grf}, a recent global range filter for LSM-trees,
+achieves single-probe queries through shape encoding; production
+systems --- and our benchmarks --- still adopt the simpler per-SSTable
+model.
+
+The query-side argument is also weaker than it first looks. Within a
+level (L1+), RocksDB stores SSTables as a non-overlapping
+\emph{sorted run}: each file carries $[\textit{smallest},
+\textit{largest}]$ key metadata in the MANIFEST (RocksDB's global level-metadata file), and a query does an
+$O(\log\#\textit{files})$ binary search on this metadata to identify
+only the SSTables whose key range overlaps the query, then probes
+their per-file filters~\citep{rocksdb-leveled}.
+
+\paragraph{Our choice of $n$.}
+We benchmark at three anchor scales:
+\begin{itemize}
+    \item $n = 2^{20}$ --- per-SSTable production workload;
+    \item $n = 2^{24}$ --- large SSTable or aggregate filter;
+    \item $n = 2^{28}$ --- paper-evaluation and SOSD scale.
+\end{itemize}
+$n = 2^{30}$ is additionally reported as an asymptotic stretch point,
+beyond realistic per-SSTable deployments.
+
+\paragraph{Per-key budget.}
+Published range filter evaluations consistently report total per-key
+budgets in the $10$--$20$~BPK range, with $14$--$16$~BPK as the typical
+headline configuration (Table~\ref{tab:industry-bpk}). The LSM
+point-filter convention sits at the lower end of this window: RocksDB
+ships Bloom filters at $10$~BPK by default~\citep{rocksdb-bloom},
+reported by~\citet{monkey2017} as the cross-system standard. We adopt
+the same target range.
+
+\begin{table}[H]
+    \centering
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{@{}llcl@{}}
+        \toprule
+        Filter                            & BPK budget & Reported FPR                                   & Notes             \\
+        \midrule
+        SuRF~\citep{zhang2018surf}        & $10$--$16$ & ${\sim}10^{-3}$ at $16$~BPK\textsuperscript{*} & RocksDB-anchored \\
+        Rosetta~\citep{luo2020rosetta}    & $10$--$20$ & $10^{-2}$ to $10^{-4}$                         & FPR-vs-BPK sweep  \\
+        SNARF~\citep{vaidya2022snarf}     & $16$       & $6.2 \times 10^{-5}$\textsuperscript{*}        & Headline result   \\
+        Memento~\citep{eslami2024memento} & $\geq 12$  & $\varepsilon$-parameterized                    & Design minimum    \\
+        Grafite~\citep{grafite2024}       & ${\sim}12$ & $\leq \mathcal{L}/2^{\mathrm{BPK}-2}$          & Adversarial bound \\
+        \bottomrule
+    \end{tabular}
+    \caption{Per-key memory budgets and corresponding false positive rates
+    reported in recent range filter literature.
+    FPR depends strongly on range length~$\mathcal{L}$ and workload.
+    \textsuperscript{*}SuRF and SNARF FPR values at $16$~BPK are both reported in
+    \citet{vaidya2022snarf} for direct comparison.}
+    \label{tab:industry-bpk}
+\end{table}
+
+\paragraph{FPR targets.}\label{par:fpr-targets}
+We report, for each filter, the BPK required to reach two fixed FPR
+targets: $10^{-2}$ and $10^{-3}$. Both targets sit inside the operating
+range of published range filter evaluations: classical
+filters~\citep{zhang2018surf,luo2020rosetta,wang2024grf} anchor their
+headline numbers around $10^{-2}$ to $10^{-3}$, while modern optimal
+filters~\citep{vaidya2022snarf,grafite2024,eslami2024memento} sweep
+deeper. They also align with the LSM point-filter convention:
+Cassandra's default \texttt{bloom\_filter\_fp\_chance} is $0.01$ for
+all compaction strategies except Leveled Compaction Strategy (LCS)~\citep{cassandra-bloom}.
+
+\paragraph{Query range length $\mathcal{L}$.}
+We sweep $\mathcal{L} \in \{1, 16, 128, 1024, 4096, 16384, 65536\}$.
+The lower half is production-aligned:
+in Facebook's UDB workload, more than $60\%$ of iterator operations
+read exactly one key, the P90 is below $100$ keys, and scans above
+$10{,}000$ are very rare~\citep{cao2020facebook}; the Yahoo! Cloud Serving
+Benchmark (YCSB) Workload~E caps short-range scans at $100$. Range filter
+papers~\citep{vaidya2022snarf,luo2020rosetta,grafite2024,eslami2024memento}
+report headline FPR in this same window: SNARF at
+$\mathcal{L} = 256$, Rosetta at $\mathcal{L} = 64$, Grafite and
+Memento sweeping $\mathcal{L} \in \{1, 32, 1024\}$. The upper half
+($\mathcal{L} \geq 4096$) extends past production P99 and any reported
+literature sweep. Such large $\mathcal{L}$ values are usually excluded
+from filter benchmarks because hashing-based filters cannot maintain
+low FPR there; we include them because our construction can.
+
+\colorbox{orange}{TODO: really?}

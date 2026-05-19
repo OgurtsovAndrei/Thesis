@@ -1,0 +1,53 @@
+The combination of truncation-based hashing and exact-mode clusters enables handling very
+large range queries that would be impractical for other approaches.
+
+At $\mathcal{L} = 65536$, non-hybrid filters face a fundamental problem: the fingerprint
+length $K = \lceil \log_2(n \cdot \mathcal{L} / \varepsilon) \rceil$ must grow by
+$\log_2(\mathcal{L}) = 16$ bits to maintain the same FPR. For SODA, this means 16 extra
+BPK. For Bloom, $\mathcal{L} = 65536$ point lookups per query is impractical.
+
+Scan-ARE sidesteps this on two levels:
+
+\paragraph{Exact clusters.} Each cluster stores its $[\min, \max]$ bounds. If a query
+range $[a, b]$ overlaps a cluster's bounds, at least one stored key is inside $[a, b]$
+--- that is a true positive, not a false positive. If $[a, b]$ does not overlap any
+cluster, the cluster contributes nothing. If $[a, b]$ falls entirely within a cluster,
+the sub-filter is exact (Section~\ref{sec:adaptive}), so false positives are impossible.
+Either way, exact clusters produce zero false positives regardless of $\mathcal{L}$.
+
+\paragraph{Truncation fallback.} The sparse fallback uses truncation hashing
+(Section~\ref{sec:truncation}), where the phantom points of a stored key are confined
+to the $2^t$-point prefix block containing that key
+(Figure~\ref{fig:phantom-comparison}). A false positive can occur only when a query
+\emph{endpoint} $a$ or $b$ falls inside such a block without containing the stored key
+itself. Because these phantoms remain localized rather than scattering across the
+universe as under SODA, the FPR of truncation is independent of the query range length
+$\mathcal{L}$. The fallback thus avoids the $\log_2(\mathcal{L})$ BPK penalty that
+SODA-based filters must pay.
+
+\subsection{SOSD Results ($n = 2^{24}$, $\mathcal{L} = 65536$)}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fpr_bpk_books_L65536}
+    \caption{FPR vs BPK --- SOSD Books (ISBN sequences, highly clustered),
+        $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE achieves FPR~$< 10^{-8}$ at
+        ${\sim}5$~BPK; all non-hybrid filters degrade to FPR~$\approx 1$.}
+    \label{fig:books-l65536}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fpr_bpk_wiki_L65536}
+    \caption{FPR vs BPK --- SOSD Wiki (Wikipedia timestamps, moderately clustered),
+        $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE dominates; only Grafite remains
+        competitive at ${\sim}10$~BPK but with 2--3$\times$ more space.}
+    \label{fig:wiki-l65536}
+\end{figure}
+
+On both datasets, Scan-ARE achieves FPR~$< 10^{-8}$ at ${\sim}5$~BPK, while Truncation,
+SODA, and Bloom all degrade to FPR~$\approx 1$ at comparable budgets. SNARF plateaus at
+FPR~$\sim 10^{-3}$. Only Grafite remains competitive on Wiki (${\sim}10$~BPK for
+FPR~$10^{-2}$), but at 2--3$\times$ the space of Scan-ARE.
+
+% TODO: add Facebook and OSM results when plots are regenerated
