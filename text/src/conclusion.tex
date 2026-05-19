@@ -39,7 +39,20 @@ Grafite's single EF encoding over the whole universe.
 This framing makes the win condition concrete: Seg-ARE beats Grafite
 exactly when per-cluster EF is more compact than universe-wide EF,
 i.e.\ when the data has dense regions separated by large gaps the
-segmentation can isolate.
+segmentation can isolate. Quantitatively, the bpk gap between the two
+filters on a clustered input decomposes as
+\[
+    \log_2(U_{\text{global}}/n) \;-\;
+    \overline{\log_2(2^{M_c}/n_c)},
+\]
+where $U_{\text{global}}$ is the spread of the whole input and
+$2^{M_c}, n_c$ are the local window width and key count of the $c$-th
+cluster. On SOSD-Wikipedia the segmenter resolves the $\sim\!10^6$
+unique timestamps into roughly a dozen epoch-aligned clusters, each
+occupying a window of $2^{M_c} \leq 2^{25}$ around a $2^{26}$-wide
+global spread; the per-key cost drops from $\log_2(U/n) \approx 6.1$
+bits to $\overline{\log_2(2^{M_c}/n_c)} \approx 3.6$ bits, and the
+difference shows up directly in the headline numbers above.
 
 \section{When Seg-ARE Wins, Ties, and Loses}
 \label{sec:conclusion-where}
@@ -56,6 +69,12 @@ the EF interpretation above:
     bits than a universe-wide EF could. Seg-ARE reaches
     $\mathrm{FPR} < 10^{-8}$ at $\sim\!6$ BPK against Grafite's
     $\sim\!7$ BPK at the lossless threshold.
+    Honest disclosure: on Wiki the segmenter alone is doing the work
+    --- the cluster geometry routes nearly all empty queries to
+    exact-mode sub-filters, and the truncation-hash fallback rarely
+    fires. On Books and OSM, where the cluster/gap separation is
+    weaker, the fallback path contributes a larger share of the
+    overall accuracy.
     \item \textbf{Facebook --- tied.} Facebook user IDs occupy a
     relatively small $37$-bit universe with no large gaps. There is
     little for segmentation to exploit, and universe-wide EF is

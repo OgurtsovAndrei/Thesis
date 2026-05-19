@@ -121,11 +121,11 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
         \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
         Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 427           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        SNARF   & 982           & \textnormal{---} & 693           & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Rosetta & \textbf{137}  & \textbf{181}  & \textbf{134}  & \textbf{162}  & \textbf{157}  & \textbf{160}  & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Grafite & 328           & 348           & 278           & 299           & 299           & 493           & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Seg-ARE & 404           & 192           & 146           & 197           & 191           & 321           & TBD & TBD & TBD & TBD & TBD & TBD \\
+        SuRF    & 427           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & \textnormal{---} & TBD & TBD & TBD \\
+        SNARF   & 982           & \textnormal{---} & 693           & \textnormal{---} & \textnormal{---} & \textnormal{---} & 1061          & TBD & 594              & TBD & TBD & TBD \\
+        Rosetta & \textbf{137}  & \textbf{181}  & \textbf{134}  & \textbf{162}  & \textbf{157}  & \textbf{160}  & \textbf{165}     & TBD & 186              & TBD & TBD & TBD \\
+        Grafite & 328           & 348           & 278           & 299           & 299           & 493           & 323              & TBD & 279              & TBD & TBD & TBD \\
+        Seg-ARE & 404           & 192           & 146           & 197           & 191           & 321           & 831              & TBD & \textbf{183}     & TBD & TBD & TBD \\
         \bottomrule
     \end{tabular}
     \caption{Query latency (ns/op) --- point queries ($\mathcal{L}=1$).
@@ -153,11 +153,11 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
         \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
         Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 410           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        SNARF   & 1005          & \textnormal{---} & 692           & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 1551          & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Grafite & \textbf{322}  & 300           & 266           & 305           & 307           & 499           & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Seg-ARE & 373           & \textbf{227}  & \textbf{170}  & \textbf{197}  & \textbf{192}  & \textbf{326}  & TBD & TBD & TBD & TBD & TBD & TBD \\
+        SuRF    & 410           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & \textnormal{---} & TBD & TBD & TBD \\
+        SNARF   & 1005          & \textnormal{---} & 692           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & \textnormal{---} & TBD & TBD & TBD \\
+        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 1551          & 2010             & TBD & 929              & TBD & TBD & TBD \\
+        Grafite & \textbf{322}  & 300           & 266           & 305           & 307           & 499           & \textbf{311}     & TBD & 306              & TBD & TBD & TBD \\
+        Seg-ARE & 373           & \textbf{227}  & \textbf{170}  & \textbf{197}  & \textbf{192}  & \textbf{326}  & 328              & TBD & \textbf{191}     & TBD & TBD & TBD \\
         \bottomrule
     \end{tabular}
     \caption{Query latency (ns/op) --- short queries ($\mathcal{L}=16$).
@@ -177,11 +177,11 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
         \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
         Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 383           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        SNARF   & 987           & \textnormal{---} & 689           & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Grafite & \textbf{307}  & \textnormal{---} & 219           & \textnormal{---} & \textnormal{---} & 644           & TBD & TBD & TBD & TBD & TBD & TBD \\
-        Seg-ARE & 394           & \textbf{231}  & \textbf{169}  & \textbf{199}  & \textbf{195}  & \textbf{335}  & TBD & TBD & TBD & TBD & TBD & TBD \\
+        SuRF    & 383           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & \textnormal{---} & TBD & TBD & TBD \\
+        SNARF   & 987           & \textnormal{---} & 689           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & \textnormal{---} & TBD & TBD & TBD \\
+        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & \textnormal{---} & TBD & TBD & TBD \\
+        Grafite & \textbf{307}  & \textnormal{---} & 219           & \textnormal{---} & \textnormal{---} & 644           & \textbf{295}     & TBD & 304              & TBD & TBD & TBD \\
+        Seg-ARE & 394           & \textbf{231}  & \textbf{169}  & \textbf{199}  & \textbf{195}  & \textbf{335}  & 336              & TBD & \textbf{201}     & TBD & TBD & TBD \\
         \bottomrule
     \end{tabular}
     \caption{Query latency (ns/op) --- long queries ($\mathcal{L}=1024$).

@@ -434,6 +434,31 @@ single cache line. Binary search on packed suffixes also requires
 no auxiliary index, whereas the most compact WPS variant adds $59$~BPK on
 top of the suffix data.
 
+\subsection{Improvements to the Grafite Backend}
+\label{subsec:grafite-improvements}
+
+The same rank/select-and-Elias--Fano machinery that underlies our ERE
+backend (Section~\ref{subsec:ere-one-vector}) is also used by
+Grafite~\citep{grafite2024} as the storage layer of its approximate
+range filter. While running Grafite on clustered inputs we identified
+a performance pathology in its predecessor path and contributed a fix
+that we apply in every measurement of Chapter~\ref{chap:evaluation}.
+
+\paragraph{The SUX \texttt{selectZero} pathology on clustered inputs.}
+Grafite's predecessor query routes through the \texttt{select\_zero}
+primitive of the SUX succinct-bit-vector library. The original
+inventory-and-subtree traversal degrades to an $O(N)$ linear scan on
+bit vectors with long zero runs separated by dense regions --- exactly
+the shape produced by clustered key distributions. On uniform data the
+primitive costs ${\sim}30$~ns per query; on SOSD-Wikipedia, where keys
+form tight epoch-aligned clusters, the same primitive blows up to
+${\sim}88\,\mu$s per query --- a three-orders-of-magnitude regression
+purely from input geometry.
+
+Our fix replaces the offending inventory-bound traversal with a
+balanced descent through the SUX subtree structure. We patched the
+relevant code locally in our CGo wrapper.
+
 \subsection{Space Analysis}
 
 For $K$-bit keys, ERE stores $w = K - \lfloor \log_2 n \rfloor$ bits of

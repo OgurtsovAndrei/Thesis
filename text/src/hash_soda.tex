@@ -45,14 +45,13 @@ Properties of the hash:
 \end{itemize}
 
 \paragraph{Comparison with Grafite.}
-Grafite~\citep{grafite2024} uses a hash of the same locality-preserving form but from a
-different pairwise-independent family:
-$q(x) = \bigl((c_1 x + c_2) \bmod p\bigr) \bmod r$,
-where $p = 2^{61}-1$ is a Mersenne prime.
-This construction requires modulo operations with non-power-of-two divisors ($p$ and $r$),
-whereas the multiply-add-shift family used here~\citep{dietzfelbinger1996universal}
-replaces them with a multiplication and a right shift, since all reductions are by powers of two.
-The theoretical guarantees are identical: $\mathrm{FPR} \leq \varepsilon$ for any data and query distribution.
+Grafite~\citep{grafite2024} uses a hash of the same locality-preserving form but draws
+its per-block shift from a different pairwise-independent family --- multiply-add-modulo
+over a Mersenne prime, requiring true modulo operations, where the multiply-add-shift
+family of~\citet{dietzfelbinger1996universal} used here replaces them with a multiplication
+and a right shift. The theoretical guarantees are identical;
+Section~\ref{sec:grafite-deep-dive} dissects Grafite's full construction and our
+implementation-level contributions to it.
 
 \subsection{ARE Construction With SODA Hash}
 

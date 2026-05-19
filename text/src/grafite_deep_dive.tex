@@ -1,0 +1,48 @@
+\section{Grafite: A Closer Look}
+\label{sec:grafite-deep-dive}
+
+Section~\ref{sec:existing-work} introduces the Grafite construction:
+locality-preserving hash, Elias--Fano storage of hash codes, the
+Theorem~3.4 space bound. We focus here on three angles relevant to
+this thesis: graceful degradation on long queries, an implicit
+universe definition that diverges from our Adaptive Filter
+(Section~\ref{sec:adaptive}), and a fallback path our CGo wrapper
+installs.
+
+\subsection{Parameter Choices and Their Consequences}
+\label{subsec:grafite-params}
+
+Queries longer than the configured $\mathcal{L}$ degrade gracefully
+along $\min\{1,\,\ell/2^{B-2}\}$; queries shorter get the design FPR
+for free. On top of the budget identity, Theorem~3.4
+of~\citep{grafite2024} carries the restriction
+$\mathcal{L} \leq u\varepsilon/n$ --- equivalently
+$r = n\mathcal{L}/\varepsilon \leq u$. Above this point the requested
+hash range exceeds the universe, and the upstream constructor throws.
+The authors use this throw deliberately, to direct the user to a
+lossless encoding (Elias--Fano over the raw keys, or any other exact
+representation): at this regime an approximate fingerprint costs more
+bits than storing keys exactly, so building the hash is wasteful.
+
+\paragraph{Universe normalization.}
+Grafite measures the universe as $\max(S)$ rather than
+$\max(S) - \min(S)$: keys are passed unshifted into both the hash and
+the Elias--Fano builder, and the budget check fires on the absolute
+maximum, not on the spread. Our Adaptive Filter
+(Section~\ref{sec:adaptive}) subtracts $\min(S)$ first. When $\min(S)$
+is far from zero, the normalized universe is strictly smaller --- the
+Adaptive filter then enters exact mode on a wider parameter range,
+and the resulting Elias--Fano encoding is smaller once both are in
+exact mode.
+
+\subsection{Lossless Elias--Fano Fallback}
+\label{subsec:grafite-fallback}
+
+We make the mode-selection automatic: our CGo wrapper catches the
+throw and substitutes a direct \texttt{grafite::ef\_sux\_vector} over
+the deduplicated input keys, giving deterministic $\mathrm{FPR} = 0$
+at $n \cdot (2 + \log_2(\max(S)/n)) + \text{select-index overhead}$
+bits. Grafite then remains comparable across the full budget axis
+instead of failing on its tightest-$\varepsilon$ end. The next chapter
+generalises this single-segment exact-mode trigger into a per-cluster
+mechanism via segmentation.

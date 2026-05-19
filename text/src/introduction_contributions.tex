@@ -54,6 +54,20 @@ lower bound on adversarial inputs and beats it on realistic ones.
     (Chapter~\ref{chap:evaluation}); Chapter~\ref{chap:conclusion}
     discusses when Seg-ARE wins, ties, and loses, and the
     Elias--Fano interpretation behind it.
+
+    \item \textbf{Improvements to the Grafite reference implementation.}
+    Beyond designing our own filter, we deeply analysed the closest
+    prior art in the Goswami line and patched it with two
+    fixes applied in every measurement of
+    Chapter~\ref{chap:evaluation}: a balanced-descent replacement for
+    the SUX \texttt{select\_zero} pathology on clustered inputs
+    (three-orders-of-magnitude latency regression in the unpatched
+    code, Section~\ref{subsec:grafite-improvements}); and a lossless
+    Elias--Fano fallback that activates when the upstream constructor
+    would otherwise throw on configurations where lossless storage is
+    cheaper than the requested approximate filter
+    (Section~\ref{subsec:grafite-fallback}). Grafite is therefore
+    reported in its best configuration throughout this work.
 \end{enumerate}
 
 \paragraph{Roadmap.}
