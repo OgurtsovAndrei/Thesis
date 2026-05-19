@@ -25,40 +25,52 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lrrrrrr|rrrrrr@{}}
         \toprule
-        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-        Filter & FB & OSM & Wiki & Books & Uniform & Clustered \\
+        & \multicolumn{6}{c|}{Smart-mix (correlated, 100\% empty)} & \multicolumn{6}{c}{Gap-heavy (100\% empty)} \\
+        \cmidrule(lr){2-7} \cmidrule(lr){8-13}
+        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c|}{Synthetic} & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
+        Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 16.9 & 20.9                  & \textnormal{---} & 17.6 & 17.3 & 32.4 \\
-        SNARF   & 12.1 & \textnormal{---}       & 8.7              & \textnormal{---} & 15.1 & 12.5 \\
-        Rosetta & 15.8 & 14.7                  & 16.0             & 14.7 & 14.9 & 14.8 \\
-        Grafite & \textbf{10.9} & \textbf{12.5} & 4.6              & 12.6 & \textbf{12.4} & 11.9 \\
-        Seg-ARE & 11.2 & \textbf{12.5}         & \textbf{3.7}     & \textbf{12.4} & \textbf{12.4} & \textbf{7.8} \\
+        SuRF    & 17.7          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 16.9          & 20.9          & \textnormal{---} & 17.6          & 17.3          & 32.4 \\
+        SNARF   & 13.4          & \textnormal{---} & 8.7           & \textnormal{---} & \textnormal{---} & \textnormal{---} & 13.4          & \textnormal{---} & 8.7           & \textnormal{---} & 15.1          & 12.5 \\
+        Rosetta & 15.9          & 14.7          & 15.7          & 14.9          & 14.8          & 14.9          & 15.8          & 14.7          & 16.0          & 14.7          & 14.9          & 14.8 \\
+        Grafite & \textbf{11.3} & 12.6          & 6.5           & \textbf{11.9} & 12.6          & 11.8          & \textbf{11.3} & 12.5          & 4.6           & 12.6          & \textbf{12.4} & 11.9 \\
+        Seg-ARE & \textbf{11.3} & \textbf{12.3} & \textbf{3.7}  & 12.6          & \textbf{12.5} & \textbf{7.7}  & \textbf{11.3} & \textbf{12.5} & \textbf{3.7}  & \textbf{12.4} & \textbf{12.4} & \textbf{7.8} \\
         \bottomrule
     \end{tabular}
     \caption{BPK at FPR $\leq 10^{-3}$ --- point queries ($\mathcal{L}=1$).
-             $n = \min(2^{28},\ |\text{dataset}|)$, gap-heavy query workload.
+             $n = \min(2^{28},\ |\text{dataset}|)$.
+             Left half: smart-mix workload (50\% near-key, 30\% in-gap,
+             20\% uniform, all truncated to be empty). Right half:
+             gap-heavy workload (0\% near-key). Both columns measure
+             FPR on 100\% empty queries; smart-mix is the correlated
+             workload where SuRF/Rosetta show their worst-case
+             behavior, gap-heavy is the benign baseline.
              Dash: target FPR not reached within the measured BPK range.}
     \label{tab:bpk-L1}
 \end{table}
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lrrrrrr|rrrrrr@{}}
         \toprule
-        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-        Filter & FB & OSM & Wiki & Books & Uniform & Clustered \\
+        & \multicolumn{6}{c|}{Smart-mix (correlated, 100\% empty)} & \multicolumn{6}{c}{Gap-heavy (100\% empty)} \\
+        \cmidrule(lr){2-7} \cmidrule(lr){8-13}
+        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c|}{Synthetic} & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
+        Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 16.8                  & 20.9                  & \textnormal{---} & 17.6                  & 17.3                  & 31.8 \\
-        SNARF   & 12.0                  & \textnormal{---}       & 10.2             & \textnormal{---}       & \textbf{15.0}         & 12.6 \\
-        Rosetta & \textnormal{---}       & \textnormal{---}       & \textnormal{---} & \textnormal{---}       & \textnormal{---}       & 19.3 \\
-        Grafite & \textbf{11.3}         & 16.6                  & 4.6              & 16.8                  & 16.6                  & 14.6 \\
-        Seg-ARE & \textbf{11.3}         & \textbf{16.3}         & \textbf{3.7}     & \textbf{16.7}         & 16.5                  & \textbf{7.9} \\
+        SuRF    & 17.5          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 16.8          & 20.9          & \textnormal{---} & 17.6          & 17.3          & 31.8 \\
+        SNARF   & 12.0          & \textnormal{---} & 9.8           & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.0          & \textnormal{---} & 10.2          & \textnormal{---} & \textbf{15.0} & 12.6 \\
+        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 19.4          & 20.3          & 20.0          & 20.3          & \textnormal{---} & \textnormal{---} & 19.3 \\
+        Grafite & \textbf{11.3} & 16.7          & 6.5           & 16.6          & \textbf{16.4} & 14.6          & \textbf{11.3} & 16.6          & 4.6           & 16.8          & 16.6          & 14.6 \\
+        Seg-ARE & \textbf{11.3} & \textbf{16.3} & \textbf{3.7}  & \textbf{16.5} & \textbf{16.4} & \textbf{7.9}  & \textbf{11.3} & \textbf{16.3} & \textbf{3.7}  & \textbf{16.7} & 16.5          & \textbf{7.9} \\
         \bottomrule
     \end{tabular}
     \caption{BPK at FPR $\leq 10^{-3}$ --- short queries ($\mathcal{L}=16$).
@@ -68,18 +80,21 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lrrrrrr|rrrrrr@{}}
         \toprule
-        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-        Filter & FB & OSM & Wiki & Books & Uniform & Clustered \\
+        & \multicolumn{6}{c|}{Smart-mix (correlated, 100\% empty)} & \multicolumn{6}{c}{Gap-heavy (100\% empty)} \\
+        \cmidrule(lr){2-7} \cmidrule(lr){8-13}
+        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c|}{Synthetic} & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
+        Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 18.0                  & \textbf{24.2}         & \textnormal{---} & \textbf{17.7}         & \textbf{17.2}         & 34.9                  \\
-        SNARF   & 12.4                  & \textnormal{---}       & 12.3             & \textnormal{---}       & \textnormal{---}       & 13.6                  \\
-        Rosetta & \textnormal{---}       & \textnormal{---}       & \textnormal{---} & \textnormal{---}       & \textnormal{---}       & \textnormal{---}       \\
-        Grafite & \textbf{11.3}         & \textnormal{---}       & 4.6              & \textnormal{---}       & \textnormal{---}       & 18.9                  \\
-        Seg-ARE & \textbf{11.3}         & \textnormal{---}       & \textbf{3.7}     & 22.3                  & 22.4                  & \textbf{9.3}          \\
+        SuRF    & 18.1          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 18.0          & \textbf{24.2} & \textnormal{---} & \textbf{17.7} & \textbf{17.2} & 34.9 \\
+        SNARF   & 12.3          & \textnormal{---} & 12.3          & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.4          & \textnormal{---} & 12.3          & \textnormal{---} & \textnormal{---} & 13.6 \\
+        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
+        Grafite & \textbf{11.3} & \textnormal{---} & 6.5           & \textnormal{---} & \textnormal{---} & 18.7          & \textbf{11.3} & \textnormal{---} & 4.6           & \textnormal{---} & \textnormal{---} & 18.9 \\
+        Seg-ARE & \textbf{11.3} & \textbf{22.5} & \textbf{3.7}  & \textbf{22.4} & \textbf{22.4} & \textbf{9.2}  & \textbf{11.3} & \textnormal{---} & \textbf{3.7}  & 22.3          & 22.4          & \textbf{9.3} \\
         \bottomrule
     \end{tabular}
     \caption{BPK at FPR $\leq 10^{-3}$ --- long queries ($\mathcal{L}=1024$).
@@ -96,64 +111,81 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lrrrrrr|rrrrrr@{}}
         \toprule
-        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-        Filter & FB & OSM & Wiki & Books & Uniform & Clustered \\
+        & \multicolumn{6}{c|}{Smart-mix empty (with truncation)} & \multicolumn{6}{c}{Smart-mix mixed (no truncation)} \\
+        \cmidrule(lr){2-7} \cmidrule(lr){8-13}
+        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c|}{Synthetic} & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
+        Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 422                   & 586                   & \textnormal{---} & 413                   & 447                   & 668                   \\
-        SNARF   & 1014                  & \textnormal{---}       & 816              & \textnormal{---}       & 953                   & 904                   \\
-        Rosetta & \textbf{153}          & 206                   & \textbf{137}     & \textbf{174}          & \textbf{166}          & \textbf{177}          \\
-        Grafite & 386                   & 371                   & 296              & 299                   & 394                   & 467                   \\
-        Seg-ARE & 354                   & \textbf{196}          & 150              & 186                   & 205                   & 328                   \\
+        SuRF    & 427           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        SNARF   & 982           & \textnormal{---} & 693           & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Rosetta & \textbf{137}  & \textbf{181}  & \textbf{134}  & \textbf{162}  & \textbf{157}  & \textbf{160}  & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Grafite & 328           & 348           & 278           & 299           & 299           & 493           & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Seg-ARE & 404           & 192           & 146           & 197           & 191           & 321           & TBD & TBD & TBD & TBD & TBD & TBD \\
         \bottomrule
     \end{tabular}
     \caption{Query latency (ns/op) --- point queries ($\mathcal{L}=1$).
-             Same operating point as Table~\ref{tab:bpk-L1}.}
+             Same operating point as Table~\ref{tab:bpk-L1}.
+             Left half: smart-mix workload with truncation
+             (Section~\ref{subsec:queries-empty}), so every query is
+             empty and the filter exercises only its ``no match''
+             code path. Right half: smart-mix workload without
+             truncation (Section~\ref{subsec:queries-combined}), so a
+             fraction of the queries actually contain stored keys.
+             Right half pending smart-mix-mixed re-measurement at
+             $n = 2^{28}$.}
     \label{tab:latency-L1}
 \end{table}
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lrrrrrr|rrrrrr@{}}
         \toprule
-        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-        Filter & FB & OSM & Wiki & Books & Uniform & Clustered \\
+        & \multicolumn{6}{c|}{Smart-mix empty (with truncation)} & \multicolumn{6}{c}{Smart-mix mixed (no truncation)} \\
+        \cmidrule(lr){2-7} \cmidrule(lr){8-13}
+        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c|}{Synthetic} & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
+        Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 409                   & 588                   & \textnormal{---} & 369                   & 429                   & 659                   \\
-        SNARF   & 1050                  & \textnormal{---}       & 721              & \textnormal{---}       & 966                   & 864                   \\
-        Rosetta & \textnormal{---}       & \textnormal{---}       & \textnormal{---} & \textnormal{---}       & \textnormal{---}       & 1661                  \\
-        Grafite & \textbf{329}          & 389                   & 270              & 299                   & 347                   & 517                   \\
-        Seg-ARE & 339                   & \textbf{222}          & \textbf{170}     & \textbf{190}          & \textbf{198}          & \textbf{319}          \\
+        SuRF    & 410           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        SNARF   & 1005          & \textnormal{---} & 692           & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 1551          & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Grafite & \textbf{322}  & 300           & 266           & 305           & 307           & 499           & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Seg-ARE & 373           & \textbf{227}  & \textbf{170}  & \textbf{197}  & \textbf{192}  & \textbf{326}  & TBD & TBD & TBD & TBD & TBD & TBD \\
         \bottomrule
     \end{tabular}
     \caption{Query latency (ns/op) --- short queries ($\mathcal{L}=16$).
-             Same operating point as Table~\ref{tab:bpk-L16}.}
+             Same setup as Table~\ref{tab:latency-L1}.}
     \label{tab:latency-L16}
 \end{table}
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lrrrrrr|rrrrrr@{}}
         \toprule
-        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-        Filter & FB & OSM & Wiki & Books & Uniform & Clustered \\
+        & \multicolumn{6}{c|}{Smart-mix empty (with truncation)} & \multicolumn{6}{c}{Smart-mix mixed (no truncation)} \\
+        \cmidrule(lr){2-7} \cmidrule(lr){8-13}
+        & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c|}{Synthetic} & \multicolumn{4}{c}{SOSD} & \multicolumn{2}{c}{Synthetic} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
+        Filter & FB & OSM & Wiki & Books & Unif & Clust & FB & OSM & Wiki & Books & Unif & Clust \\
         \midrule
-        SuRF    & 452                   & \textbf{581}          & \textnormal{---} & 401                   & 424                   & 667                   \\
-        SNARF   & 1045                  & \textnormal{---}       & 761              & \textnormal{---}       & \textnormal{---}       & 881                   \\
-        Rosetta & \textnormal{---}       & \textnormal{---}       & \textnormal{---} & \textnormal{---}       & \textnormal{---}       & \textnormal{---}       \\
-        Grafite & \textbf{337}          & \textnormal{---}       & 290              & \textnormal{---}       & \textnormal{---}       & 667                   \\
-        Seg-ARE & 446                   & \textnormal{---}       & \textbf{172}     & \textbf{256}          & \textbf{186}          & \textbf{323}          \\
+        SuRF    & 383           & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        SNARF   & 987           & \textnormal{---} & 689           & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Rosetta & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Grafite & \textbf{307}  & \textnormal{---} & 219           & \textnormal{---} & \textnormal{---} & 644           & TBD & TBD & TBD & TBD & TBD & TBD \\
+        Seg-ARE & 394           & \textbf{231}  & \textbf{169}  & \textbf{199}  & \textbf{195}  & \textbf{335}  & TBD & TBD & TBD & TBD & TBD & TBD \\
         \bottomrule
     \end{tabular}
     \caption{Query latency (ns/op) --- long queries ($\mathcal{L}=1024$).
-             Same operating point as Table~\ref{tab:bpk-L1024}.}
+             Same setup as Table~\ref{tab:latency-L1}.}
     \label{tab:latency-L1024}
 \end{table}
 
@@ -258,7 +290,7 @@ Build throughput (M\,keys/s) measured at the same operating point as the BPK tab
         \midrule
         SuRF    & 26.8                  & \textbf{26.8}         & \textnormal{---} & \textbf{27.8}         & 23.8                  & 28.1 \\
         SNARF   & 11.0                  & \textnormal{---}       & 13.3             & \textnormal{---}       & 10.1                  & 9.5  \\
-        Rosetta & \textnormal{---}       & \textnormal{---}       & \textnormal{---} & \textnormal{---}       & \textnormal{---}       & 2.3  \\
+        Rosetta & 2.1                   & 2.1                   & 3.0              & \textnormal{---}       & \textnormal{---}       & 2.3  \\
         Grafite & \textbf{54.5}         & 22.8                  & 34.9             & 22.9                  & 23.1                  & 36.0 \\
         Seg-ARE & 41.3                  & 22.3                  & \textbf{57.1}    & 25.1                  & \textbf{25.1}         & \textbf{44.1} \\
         \bottomrule

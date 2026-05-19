@@ -150,8 +150,9 @@ the assumption of Section~\ref{subsec:assumption}:
     uniformly from $[k - 5L,\; k + 5L)$.
     Models application lookups that miss by a small margin.
     \item \textbf{30\% in-gap.}
-    A random gap between two adjacent keys is selected uniformly;
-    the query is placed entirely inside it.
+    A random gap of size $\geq 2$ is selected uniformly; the query
+    is placed inside it and truncated to the gap boundary if it
+    overflows. Empty by construction on every dataset.
     Models misses in locally dense regions.
     \item \textbf{20\% uniform.}
     A random start is drawn uniformly from $[\min k, \max k]$.
@@ -188,29 +189,65 @@ may therefore be smaller than $L$.
 \subsection{Combined queries (for latency)}
 \label{subsec:queries-combined}
 
-For query-latency measurements we want the workload to look like
-the actual LSM read pattern: a fraction of the queries land on a
-stored key and the filter answers ``not empty'' truthfully, not as
-a false positive.
+In a deployed LSM-tree, the primary performance contribution of a filter
+lies in its handling of empty queries. When a filter returns a
+``not empty'' result, the storage engine must proceed with a block read,
+an I/O operation whose cost typically dominates the filter's execution time.
+Thus, the filter's latency is most critical when it successfully prevents
+a disk fetch. For this reason, our primary latency evaluations are
+conducted on the same empty-only query stream used for FPR measurement.
 
-The combined-queries generator draws from the same three-bucket
-mixture and skips the truncation step, so a query may contain one
-or more stored keys with frequency that depends on the data
-density and on the requested $L$.
-In-gap queries stay empty by
-construction; near-key and uniform queries become non-empty when
-their interval crosses a stored key. On Wikipedia timestamps with
-$L=1024$ this gives a non-empty fraction of $\sim\!23\%$
-(reflecting the dense $30$-bit universe); on Facebook user IDs
-($33$-bit universe) the fraction is $\sim\!14\%$; on uniformly
-spread keys at $n=2^{20}$ it is well below $1\%$.
+Nevertheless, it is still necessary to ensure that filter performance does
+not degrade severely on non-empty queries. If a filter's ``not empty''
+evaluation path were significantly slower than its ``empty'' path, it could
+introduce noticeable CPU overhead before the I/O operation even begins.
+To evaluate this, we generate a second query stream using the same mixture,
+but omit the forced truncation step (while retaining in-gap truncation).
+In this stream, a query that overlaps with a stored key is evaluated at
+its full length $L$ rather than being artificially shortened to $[a, k^* - 1]$.
 
-The FPR estimator runs over the empty subset alone (the only
-queries on which a false positive can be defined), while the
-latency estimator times the whole stream and reports nanoseconds
-per query across both empty and non-empty answers. The two query
-sets share their RNG seed up to the truncation step, so the
-FPR-side measurement is exactly the empty-only restriction of the
-latency-side measurement; latency differences between the two
-modes are therefore attributable to the filter handling
-non-empty queries, not to a different sampling distribution.
+The non-empty fraction depends on the local key density and on
+$L$. Under the smart-mix weights ($50\,/\,30\,/\,20$) the $30\%$
+in-gap queries remain empty by construction; the other two
+buckets contribute non-empty queries as follows.
+The $50\%$ near-key bucket draws an offset uniformly from
+$[-5L, 5L)$, so even on a sparse universe roughly
+$\tfrac{1}{10}$ of these queries land on the reference key ---
+a $\sim\!5\%$ non-empty floor that is independent of data density.
+On distributions where the average gap between adjacent keys is
+smaller than $L$, near-key queries also catch one or more
+neighbours and the bucket essentially saturates near its $50\%$
+limit.
+The $20\%$ uniform bucket adds about $L \cdot n / U$ on top, which
+matters on small-universe inputs (Facebook, Wiki) and is
+negligible on $64$-bit universes (OSM, Books-800M, Uniform).
+The ceiling is therefore $70\%$ when both buckets always hit.
+Table~\ref{tab:nonempty-fraction} reports the measured fractions
+at $n = 2^{28}$ across the datasets used in
+Section~\ref{sec:eval-tables}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{@{}lrrr@{}}
+        \toprule
+        Dataset & $L=1$ & $L=16$ & $L=1024$ \\
+        \midrule
+        Facebook  & $9.0\%$  & $20.7\%$ & $50.6\%$ \\
+        Wiki      & $46.3\%$ & $63.2\%$ & $68.4\%$ \\
+        Books     & $5.0\%$  & $5.0\%$  & $4.9\%$  \\
+        OSM       & $5.0\%$  & $5.0\%$  & $4.9\%$  \\
+        Uniform   & $5.0\%$  & $5.0\%$  & $4.9\%$  \\
+        Clustered & $4.2\%$  & $6.8\%$  & $9.7\%$  \\
+        \bottomrule
+    \end{tabular}
+    \caption{Non-empty fraction of the combined-queries workload
+        under the smart-mix weights ($n = 2^{28}$). Wiki has
+        average inter-key gap close to $1$, so its near-key bucket
+        is essentially fully non-empty already at $L = 1$. The
+        other dense distribution, Facebook, picks up the
+        uniform-bucket contribution as $L$ grows. The
+        large-universe datasets (OSM, Books-800M, Uniform) sit at
+        the $5\%$ near-key floor; the synthetic Clustered set is
+        only mildly denser.}
+    \label{tab:nonempty-fraction}
+\end{table}
