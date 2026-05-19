@@ -30,8 +30,8 @@ The bpk gap then decomposes as
     \underbrace{\log_2(U_{\text{global}}/n)}_{\text{Grafite EF data}}
     \;-\;
     \underbrace{\Bigl(\sum_{c} \frac{n_c}{n} \cdot
-        \log_2\!\bigl(2^{M_c}/n_c\bigr) \;+\; \frac{n_{\text{fb}}}{n} \cdot
-        \log_2(1/\varepsilon)\Bigr)}_{\text{Seg-ARE: EF data + truncation fallback}},
+    \log_2\!\bigl(2^{M_c}/n_c\bigr) \;+\; \frac{n_{\text{fb}}}{n} \cdot
+    \log_2(1/\varepsilon)\Bigr)}_{\text{Seg-ARE: EF data + truncation fallback}},
 \]
 where $U_{\text{global}}$ is the spread of the whole input, $2^{M_c}$
 and $n_c$ are the local window width and key count of the $c$-th
@@ -41,122 +41,99 @@ fallback.
 The two paragraphs below work through two examples: a synthetic
 clustered distribution and the SOSD-Wikipedia timestamps.
 
-\paragraph{Clustered synthetic ($n = 2^{28}$, build-$L = 1$,
-$\varepsilon = 10^{-2}$).}
+\paragraph{Clustered synthetic ($n = 2^{28}$).}
 The clustered generator places keys across essentially the full
-$2^{64}$ universe, so $\log_2(U/n) = 36$ bits per key for the
-universe-wide baseline.
+$2^{64}$ universe (see Section~\ref{sec:eval-setup}), so
+$\log_2(U/n) = 36$ bits per key for the universe-wide baseline.
 
-At build-time $\delta = 512 \cdot L / (2\varepsilon) = 25\,600$ the
-forward sweep isolates $8911$ dense clusters covering $72.9\%$ of the
-keys, with $M_c \in [14.6,\, 28.7]$ bits and
-$n_c \in [512,\, 6.7\!\times\!10^{7}]$. The remaining $27.1\%$ fall
-through to the truncation hash. The key-weighted per-cluster EF cost
-is
+The forward sweep isolates $8911$ dense clusters covering $72.9\%$
+of the keys, with $M_c \in [14.6,\, 28.7]$ bits and
+$n_c \in [512,\, 6.7\!\times\!10^{7}]$.
+The remaining $27.1\%$ fall through to the truncation hash.
+The key-weighted per-cluster EF \emph{lower-part} contribution is
 \[
     \frac{1}{\sum_c n_c} \sum_c n_c \cdot \log_2\!\Bigl(\frac{2^{M_c}}{n_c}\Bigr)
     \;\approx\; 2.87 \text{ bits per in-cluster key}
 \]
---- a $33$-bit reduction in EF \emph{data} cost relative to a
-hypothetical universe-wide EF over all $2^{64}$.
+--- the rest $\approx 7$ bits per key are metadata overhead and keys in truncation fallback
+forms resulting $\approx 10$ bits per key.
 
 Grafite cannot trigger its lossless fallback
 (Section~\ref{subsec:grafite-fallback}) at the requested $\varepsilon$
 either: lossless requires $n\mathcal{L}/\varepsilon > U$, i.e.\
 $\varepsilon < n\mathcal{L}/U = 2^{28}\!\cdot\!128/2^{64} \approx
-1.9\!\times\!10^{-9}$, far below the $10^{-2}$ we set. At any
-$\varepsilon$ used in this evaluation Grafite stays in approximate
-mode and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) +
-O(1)$. Universe-wide lossless EF for this input would actually cost
-$\log_2(U/n) + 2 + \text{select-index} \approx 38.94$~BPK
-(measured at the saturating end of the Grafite sweep at requested
-BPK ${\geq}40$) --- so high that lossless on a $2^{64}$ universe is
-useless as a filter: it stores more bits per key than the keys
-themselves carry information.
+1.9\!\times\!10^{-9}$.
+At any $\varepsilon$ used in this evaluation Grafite stays in approximate
+mode and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$.
+Universe-wide lossless EF on this input would saturate at
+${\approx}\,38.9$~BPK --- not a useful operating point for a filter
+whose whole purpose is to be much smaller than the keys themselves.
 
 Figure~\ref{fig:seg-clustered-L128} shows the empirical curve at
-query length $L = 128$. At matched
-$\mathrm{FPR} \approx 6\!\times\!10^{-5}$, Seg-ARE sits at $9.77$ BPK
+query length $L = 128$.
+At matched $\mathrm{FPR} \approx 6\!\times\!10^{-5}$, Seg-ARE sits at $9.77$ BPK
 and Grafite at $20.63$ BPK. Both filters then drop below the
 $4\!\times\!10^{-6}$ measurement floor (set by the $10^{6}$-query
-batch): Seg-ARE at $10.07$ BPK ($K = 50$) and Grafite at
-$26.63$ BPK (requested $\text{BPK}=26$); the true FPR at these points
-is non-zero but below detection, not literally zero. The $16.5$-BPK
-gap at the floor is therefore a lower bound on the BPK separation:
+batch): Seg-ARE at $10.07$ BPK and Grafite at $26.63$ BPK; the true FPR at these points
+is non-zero but below detection, not exactly zero.
+The $16.5$-BPK gap at the floor is therefore a lower bound on the BPK separation:
 matching FPRs deeper would widen the gap further, with Grafite's
 genuinely zero-FPR point only at the $38.94$~BPK lossless saturation.
-
-The Seg-ARE per-key budget decomposes as
-\[
-\text{Seg-ARE BPK}\;\approx\;
-\underbrace{0.729 \cdot (\,2.87 + 2.53)}_{\text{in-cluster: EF data + ERE metadata}} +
-\underbrace{0.271 \cdot w_{\text{fb}}}_{\text{fallback truncation}}
-\;=\;3.94 + (\text{fallback}),
-\]
-with fallback measured (by subtracting the in-cluster contribution
-from the observed total) at $10.07 - 3.94 \approx 6.1$~BPK, i.e.\
-${\sim}22.6$ bits per fallback key --- consistent with a truncation
-filter at $K_{\text{fb}}$ tuned to the same $\varepsilon$ over the
-$7.7\!\times\!10^{7}$ leftover keys. Grafite, by contrast, pays
-$\log_2(128/6\!\times\!10^{-5}) + {\sim}2 \approx 23$ bits at
-$\mathrm{FPR} = 6\!\times\!10^{-5}$, observed at $20.6$ (about $2$
-bits below the worst-case constant).
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{seg_vs_grafite_clustered_L128}
     \caption{FPR vs BPK on the synthetic clustered distribution
-    ($n = 2^{28}$, $L = 128$ at query time, $L = 1$ at build time).
-    The $16.5$-BPK gap at the $4\!\times\!10^{-6}$ measurement floor
-    comes from segmentation. Both filters report empirical
-    FPR\,=\,0 at their respective floor points (Seg-ARE at
-    $10.07$~BPK, Grafite at $26.63$~BPK); true zero only happens
-    once Grafite saturates into universe-wide lossless EF at
-    $38.94$~BPK, off-chart on the right.}
+        ($n = 2^{28}$, query length $L = 128$)}
     \label{fig:seg-clustered-L128}
 \end{figure}
 
-\paragraph{SOSD-Wikipedia ($n = 2^{28}$, $L = 1$,
-$\varepsilon = 10^{-2}$).}
+\FloatBarrier
+
+\paragraph{SOSD-Wikipedia ($n = 2^{28}$).}
 Wikipedia edit timestamps form a tight near-sequential cluster:
 after deduplication $n \approx 9 \times 10^{7}$ keys span a window
 of width $\max - \min \approx 2.37\!\times\!10^{8}$ (about $28$
-bits), giving $\log_2(U/n) \approx 1.4$ bits per key for a
-universe-wide EF baseline. The segmenter does not collapse the
-input into a single cluster: at $\delta = 25\,600$ the forward
-sweep finds $359$ dense clusters covering $99.9\%$ of the keys,
-with one giant cluster of $7.7\!\times\!10^{7}$ keys
-($M_c = 26.5$ bits) and $358$ smaller ones ($M_c$ down to $14.6$
-bits). The key-weighted per-cluster EF cost is
-\[
-    \frac{1}{\sum_c n_c} \sum_c n_c \cdot \log_2\!\Bigl(\frac{2^{M_c}}{n_c}\Bigr)
-    \;\approx\; 0.62 \text{ bits per in-cluster key},
-\]
-$0.77$ bits per key below the universe-wide $1.4$.
+bits).
+The segmenter does not collapse the
+input into a single cluster: the forward sweep finds $359$ dense
+clusters covering $99.9\%$ of the keys, with one giant cluster of
+$7.7\!\times\!10^{7}$ keys ($M_c = 26.5$ bits) and $358$ smaller
+ones ($M_c$ down to $14.6$ bits).
+The full Seg-ARE filter uses 3.74 bits per key.
 
-Empirically (Figure~\ref{fig:seg-wiki-L128}), Grafite reaches
-$\mathrm{FPR} = 0$ at $4.6$ BPK and Seg-ARE at $3.74$ BPK --- a
-$0.9$-BPK gap. This matches the segmentation prediction almost
-exactly: the $0.77$-bit-per-key drop in EF data cost applied to
-the $99.9\%$ in-cluster fraction gives $0.77$ BPK, leaving
-${\sim}0.1$ BPK to small implementation constants.
+Grafite, on the same input, encodes the raw 29 bits universe.
+The EF coding saves $\approx \log_2(n)$ bits per key, that gives $29 - \log_2(9 \times 10^{7}) \approx 29 - 26.4 = 2.6$ bits per key.
+Together with the metadata overhead, it reaches FPR$\,=0$ at $4.6$~BPK in Figure~\ref{fig:seg-wiki-L128}.
+The $0.9$-BPK gap to Seg-ARE is the normalization and segmentation saving --- both
+filters use the same EF coding primitive.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.85\textwidth]{seg_vs_grafite_wiki_L128}
-    \caption{FPR vs BPK on SOSD-Wikipedia ($n = 2^{28}$, $L = 128$ at
-    query time). Both filters reach $\mathrm{FPR} = 0$ at low
-    BPK: Seg-ARE at $3.74$, Grafite at $4.6$. The $0.9$-BPK gap is
-    almost entirely the $0.77$ bit-per-key segmentation saving in
-    EF data cost (per-cluster $M_c$ values below the universe
-    width).}
+    \caption{FPR vs BPK on SOSD-Wikipedia ($n = 2^{28}$, query length $L = 128$)}
     \label{fig:seg-wiki-L128}
 \end{figure}
 
-The view also predicts the failure modes: when the input has no
-isolable dense regions (uniform, OSM), every key falls through to the
-fallback, the per-cluster sum collapses to a single truncation-filter
-term, and Seg-ARE degrades to plain truncation
-(Section~\ref{sec:truncation}). The empirical wins, ties, and losses
-across the four SOSD distributions are discussed in
-Chapter~\ref{chap:conclusion}.
+\FloatBarrier
+
+\paragraph{Uniform synthetic.}
+Uniform is the case where Seg-ARE has no clusters to extract --- every
+key goes to the truncation fallback. The truncation hack
+(Section~\ref{sec:truncation}) pays
+$\log_2(1/\varepsilon) + O(1)$ bits per key \emph{independently of
+    $\mathcal{L}$}: large inter-key gaps make phantom collisions rare,
+so the fixed-suffix length needed to hit a target $\varepsilon$ does
+not have to grow with the query length.
+Grafite has no such hack and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$,
+which grows with $\mathcal{L}$ by exactly $\log_2 \mathcal{L}$ bits.
+Tables~\ref{tab:bpk-L1}--\ref{tab:bpk-L1024} (Uniform / gap-heavy column)
+show the consequence at $\varepsilon = 10^{-3}$: at
+$\mathcal{L} = 1$ both filters sit at $12.4$~BPK, at
+$\mathcal{L} = 16$ Seg-ARE is $15.1$~BPK against Grafite's
+$16.6$~BPK, and at $\mathcal{L} = 1024$ Grafite drops out of the
+measured range while Seg-ARE still reaches the target at
+$15.3$~BPK. The widening gap is the missing $\log_2 \mathcal{L}$
+factor.
+
+\FloatBarrier
