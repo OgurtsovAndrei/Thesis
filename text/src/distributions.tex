@@ -107,6 +107,9 @@ key sets:
     No clustering.
     \item \textbf{Clustered:} a mixture of Gaussian clusters with controlled parameters
     (number of clusters, intra-cluster spread, inter-cluster gap).
+    \colorbox{orange}{TODO: state the concrete parameter values used in the benchmarks
+        (number of clusters, $\sigma$, inter-cluster gap) --- see
+        \texttt{Thesis/testutils/distribution.go:GenerateClusterDistribution}.}
 \end{itemize}
 
 Together, the SOSD and synthetic datasets span the spectrum from near-sequential
@@ -138,36 +141,76 @@ in the query workload.
 
 \section{Query generation}\label{sec:query-distribution}
 
-All benchmarks measure FPR on \emph{empty} queries --- range queries
-$[a, b]$ that contain no stored key, so every positive answer is a
-false positive by definition.
-
 Queries are drawn from a three-bucket mixture that reflects
 the assumption of Section~\ref{subsec:assumption}:
 
 \begin{itemize}
     \item \textbf{50\% near-key.}
     A random stored key $k$ is chosen; the query start is drawn
-    uniformly from $[k - 5L,\; k + 5L)$ and clamped to the nearest gap.
+    uniformly from $[k - 5L,\; k + 5L)$.
     Models application lookups that miss by a small margin.
     \item \textbf{30\% in-gap.}
     A random gap between two adjacent keys is selected uniformly;
     the query is placed entirely inside it.
     Models misses in locally dense regions.
     \item \textbf{20\% uniform.}
-    A random start is drawn uniformly from $[\min k, \max k]$ and
-    clamped to the nearest gap.
+    A random start is drawn uniformly from $[\min k, \max k]$.
     Covers sparse regions to verify FPR stays reasonable there too.
 \end{itemize}
 
 The near-key and in-gap buckets reflect the dominant workload;
 the uniform bucket acts as a safety check on sparse regions.
+The headline \emph{gap-heavy} workload of
+Section~\ref{sec:eval-tables} reweighs the mixture to
+$0\,/\,70\,/\,30$ (no near-key, 70\% in-gap, 30\% uniform) so that no
+candidate query is guaranteed empty just by its construction.
 
-When a candidate query $[a, a+L)$ would contain a stored key $k^*$,
-it is \emph{truncated} to $[a, k^* - 1]$ rather than discarded and
-resampled.
-Truncation preserves queries that start inside a cluster and end
-between two closely spaced keys, which would otherwise be rejected
-every time --- biasing the workload towards cluster boundaries and
-missing the harder case of a query landing deep inside a dense region.
-The effective range length may therefore be smaller than $L$.
+The two metrics this thesis cares about --- FPR and query latency
+--- want different things from the same query stream, so we draw
+two query sets from the mixture above and let truncation decide
+which.
+
+\subsection{Empty queries for False Positive Ration Measurement}
+\label{subsec:queries-empty}
+
+For FPR estimation every measured query must be empty: a positive
+answer on a non-empty query is a true positive, not a false one,
+and would deflate the FPR estimate. We enforce emptiness by
+\emph{truncation}: when a candidate query $[a, a+L)$ would contain
+a stored key $k^*$, it is shortened to $[a, k^* - 1]$ rather than
+discarded and resampled. Truncation preserves queries that start
+inside a cluster and end between two closely spaced keys, which
+would otherwise be rejected every time --- biasing the workload
+towards cluster boundaries and missing the harder case of a query
+landing deep inside a dense region. The effective range length
+may therefore be smaller than $L$.
+
+\subsection{Combined queries (for latency)}
+\label{subsec:queries-combined}
+
+For query-latency measurements we want the workload to look like
+the actual LSM read pattern: a fraction of the queries land on a
+stored key and the filter answers ``not empty'' truthfully, not as
+a false positive.
+
+The combined-queries generator draws from the same three-bucket
+mixture and skips the truncation step, so a query may contain one
+or more stored keys with frequency that depends on the data
+density and on the requested $L$.
+In-gap queries stay empty by
+construction; near-key and uniform queries become non-empty when
+their interval crosses a stored key. On Wikipedia timestamps with
+$L=1024$ this gives a non-empty fraction of $\sim\!23\%$
+(reflecting the dense $30$-bit universe); on Facebook user IDs
+($33$-bit universe) the fraction is $\sim\!14\%$; on uniformly
+spread keys at $n=2^{20}$ it is well below $1\%$.
+
+The FPR estimator runs over the empty subset alone (the only
+queries on which a false positive can be defined), while the
+latency estimator times the whole stream and reports nanoseconds
+per query across both empty and non-empty answers. The two query
+sets share their RNG seed up to the truncation step, so the
+FPR-side measurement is exactly the empty-only restriction of the
+latency-side measurement; latency differences between the two
+modes are therefore attributable to the filter handling
+non-empty queries, not to a different sampling distribution.

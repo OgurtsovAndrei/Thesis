@@ -1,634 +1,66 @@
 \section{Benchmark Setup}
 \label{sec:eval-setup}
 
-All experiments use 60-bit keys from the SOSD benchmark
-suite~\citep{kipf2019sosd}: Facebook user IDs, Wikipedia edit timestamps,
-OpenStreetMap cell IDs, and Books ISBNs. Synthetic distributions (uniform, clustered)
-supplement the real-world datasets.
-\\ \colorbox{orange}{TODO: 60 bits - SNARF overflow when values are close to UINT64\_MAX, measure separatly}
+Real-world keys come from the four SOSD datasets described in
+Section~\ref{sec:sosd} (Facebook, Wiki, Books, OSM) and are
+loaded in their native bit-width.
+Synthetic distributions (uniform, clustered) supplement them; their
+generators emit $60$-bit keys so that every filter sees the same
+universe.
+The only exception to native-width handling is SNARF: its upstream
+C++ implementation cannot accept keys close to $\texttt{UINT64\_MAX}$,
+so the SNARF wrapper masks inputs to $60$~bits internally. All other
+filters (Grafite, SuRF, Rosetta, and our ARE variants) operate on the
+full provided width.
 
 Competing implementations:
 \begin{itemize}
     \item \textbf{SegARE}: our simplified 1D DBSCAN hybrid filter (Section~\ref{sec:hybrid-scan}).
-    \item \textbf{Greedy+Merge}: our greedy spread-threshold hybrid filter.
     \item \textbf{Grafite}~\citep{grafite2024}: information-theoretically optimal
     range filter (SIGMOD~2024).
     \item \textbf{SNARF}~\citep{vaidya2022snarf}: learned CDF-based range filter.
     \item \textbf{SuRF}~\citep{zhang2018surf}: succinct range filter with three variants
     (base, hash suffix, real suffix).
-    \item \textbf{Bloom ARE}: trivial baseline --- standard Bloom filter with $\mathcal{L}$
-    point lookups per range query.
+    \item \textbf{Rosetta}~\citep{luo2020rosetta}: Bloom-hierarchy range filter (SIGMOD~2020).
 \end{itemize}
 
 All filters are evaluated on FPR-vs-BPK tradeoff curves, measured over $10^6$
 random empty-range queries per configuration --- enough to register
 $10^3$--$10^4$ false positives at our target FPR range of $10^{-2}$--$10^{-3}$
 (Section~\ref{sec:eval-workload-params}, ``\nameref{par:fpr-targets}'').
-
-% TODO: add build throughput and query latency benchmarks
+The query workload follows Section~\ref{sec:query-distribution}:
+FPR is measured on the empty-only stream
+(Section~\ref{subsec:queries-empty}), latency on the combined
+stream (Section~\ref{subsec:queries-combined}). The latency tables
+of Section~\ref{sec:eval-tables} also report a small follow-up
+comparison between the two workloads.
 
 
 \section{Workload Parameter Choices}
 \label{sec:eval-workload-params}
-
-Range filters in LSM-tree storage systems are built \emph{per SSTable}:
-each on-disk file carries its own filter, and the relevant input size $n$
-is the number of keys in one SSTable, not the database total. Production
-deployments keep SSTables small --- tens to hundreds of megabytes --- for
-several reasons listed below.
-
-\begin{enumerate}
-    \item \textbf{Memory and time, compounded.} The build of the filter during compaction operations
-    needs random access to keys,
-    so the working set --- not just the filter --- must be held in RAM during the operation.
-    Filter construction itself runs at a few million keys per second:
-    \citet{grafite2024} report ${\sim}7$~M keys/s for
-    Grafite at $n = 2 \times 10^8$ on a single thread.
-    Both RAM and time scale linearly with $n$; compacting an $n = 2^{30}$ SSTable
-    claims gigabytes of RAM and minutes of CPU on a single operation.
-    This single-thread cost is unavoidable: in LevelDB, Cassandra, HBase,
-    and Pebble each compaction job is single-threaded by design;
-    RocksDB's optional subcompactions partition a job across threads but
-    emit a separate SSTable per subcompaction, so the filter for one
-    output file is still built by one thread~\citep{dong2021rocksdb}.
-    \item \textbf{Cloud I/O.} Loading and saving SSTables on object
-    storage backends (S3, GCS) is bandwidth-bound at the per-object
-    level: a single connection to S3 sustains ${\sim}55$--$95$~MiB/s
-    end-to-end~\citep{durner2023cloud}, so a multi-gigabyte file
-    streamed to a remote VM takes tens of seconds.
-    Splitting an object across parallel uploads scales aggregate throughput
-    further but competes with the live database for network bandwidth and CPU.
-    \item \textbf{Blast radius.} Corruption of one SSTable file or one
-    object loses exactly the keys in that file. Smaller files bound the blast.
-    \item \textbf{Sharding.} Multiple smaller SSTables can be queried in
-    parallel for the on-disk scans following a filter probe, migrated
-    independently between nodes, and replicated at file granularity; one
-    giant file cannot.
-    \colorbox{orange}{TODO: do we really need this point?}
-\end{enumerate}
-
-\paragraph{Realistic per-SSTable $n$.}
-The default RocksDB \texttt{target\_file\_size\_base} is $64$~MB, with
-production deployments commonly tuning to $128$~MB; entry sizes in
-real workloads (key + value) are roughly $60$--$150$~bytes on
-average~\citep{cao2020facebook}, putting the typical per-SSTable count
-at $n \in [2^{19},\ 2^{21}]$.
-
-Two production cases push $n$ higher. Secondary-index and counter
-column families (CFs --- RocksDB's per-table partitioning, with
-independent in-memory write buffers (memtables) and SSTables) store all information in the
-key and use the value as a placeholder: in Facebook's social-graph
-workload (UDB), the \texttt{Assoc\_count} CF has $20$-byte bigint
-keys with values
-under $8$~B, averaging $\sim 28$~B/entry, and similar patterns
-appear in other index/counter CFs~\citep{cao2020facebook}.
-KV-separation deployments
-(WiscKey~\citep{wisckey2016}, RocksDB BlobDB, Pebble) store only a key
-plus a $10$--$20$-byte blob handle in the SSTable, with values placed
-in separate blob files. In both cases the per-SSTable count rises
-to $n \in [2^{22},\ 2^{23}]$.
-
-Range filter
-papers~\citep{zhang2018surf,luo2020rosetta,vaidya2022snarf,eslami2024memento,grafite2024}
-report headline numbers at $n \in [2^{24},\ 2^{28}]$, but this is a
-single-filter microbenchmark convention rather than a deployment
-claim: SuRF, SNARF, and Rosetta integrate per-SSTable into RocksDB;
-Memento targets B-Trees (WiredTiger, MongoDB's storage engine); Grafite is presented as a
-stand-alone structure. The SOSD benchmark~\citep{kipf2019sosd}
-provides datasets at this same scale ($200$M keys $\approx 2^{27.6}$).
-
-\paragraph{Why not a global filter.}
-A database-wide filter is faster on the query side: range filter query
-time is essentially independent of $n$, so each per-file probe is
-constant-time --- but a per-file design pays one such probe per
-SSTable, while a single global filter needs only one. The update
-side is the opposite story: LSM compaction atomically replaces SSTables,
-making per-file filter rebuild touch only the keys in that compaction,
-while a global filter must either rebuild over all keys or maintain
-counting structures that support deletion.
-GRF~\citep{wang2024grf}, a recent global range filter for LSM-trees,
-achieves single-probe queries through shape encoding; production
-systems --- and our benchmarks --- still adopt the simpler per-SSTable
-model.
-
-The query-side argument is also weaker than it first looks. Within a
-level (L1+), RocksDB stores SSTables as a non-overlapping
-\emph{sorted run}: each file carries $[\textit{smallest},
-\textit{largest}]$ key metadata in the MANIFEST (RocksDB's global level-metadata file), and a query does an
-$O(\log\#\textit{files})$ binary search on this metadata to identify
-only the SSTables whose key range overlaps the query, then probes
-their per-file filters~\citep{rocksdb-leveled}.
-
-\paragraph{Our choice of $n$.}
-We benchmark at three anchor scales:
-\begin{itemize}
-    \item $n = 2^{20}$ --- per-SSTable production workload;
-    \item $n = 2^{24}$ --- large SSTable or aggregate filter;
-    \item $n = 2^{28}$ --- paper-evaluation and SOSD scale.
-\end{itemize}
-$n = 2^{30}$ is additionally reported as an asymptotic stretch point,
-beyond realistic per-SSTable deployments.
-
-\paragraph{Per-key budget.}
-Published range filter evaluations consistently report total per-key
-budgets in the $10$--$20$~BPK range, with $14$--$16$~BPK as the typical
-headline configuration (Table~\ref{tab:industry-bpk}). The LSM
-point-filter convention sits at the lower end of this window: RocksDB
-ships Bloom filters at $10$~BPK by default~\citep{rocksdb-bloom},
-reported by~\citet{monkey2017} as the cross-system standard. We adopt
-the same target range.
-
-\begin{table}[H]
-    \centering
-    \small
-    \setlength{\tabcolsep}{5pt}
-    \begin{tabular}{@{}llcl@{}}
-        \toprule
-        Filter                            & BPK budget & Reported FPR                                   & Notes             \\
-        \midrule
-        SuRF~\citep{zhang2018surf}        & $10$--$16$ & ${\sim}10^{-3}$ at $16$~BPK\textsuperscript{*} & RocksDB-anchored \\
-        Rosetta~\citep{luo2020rosetta}    & $10$--$20$ & $10^{-2}$ to $10^{-4}$                         & FPR-vs-BPK sweep  \\
-        SNARF~\citep{vaidya2022snarf}     & $16$       & $6.2 \times 10^{-5}$\textsuperscript{*}        & Headline result   \\
-        Memento~\citep{eslami2024memento} & $\geq 12$  & $\varepsilon$-parameterized                    & Design minimum    \\
-        Grafite~\citep{grafite2024}       & ${\sim}12$ & $\leq \mathcal{L}/2^{\mathrm{BPK}-2}$          & Adversarial bound \\
-        \bottomrule
-    \end{tabular}
-    \caption{Per-key memory budgets and corresponding false positive rates
-    reported in recent range filter literature.
-    FPR depends strongly on range length~$\mathcal{L}$ and workload.
-    \textsuperscript{*}SuRF and SNARF FPR values at $16$~BPK are both reported in
-    \citet{vaidya2022snarf} for direct comparison.}
-    \label{tab:industry-bpk}
-\end{table}
-
-\paragraph{FPR targets.}\label{par:fpr-targets}
-We report, for each filter, the BPK required to reach two fixed FPR
-targets: $10^{-2}$ and $10^{-3}$. Both targets sit inside the operating
-range of published range filter evaluations: classical
-filters~\citep{zhang2018surf,luo2020rosetta,wang2024grf} anchor their
-headline numbers around $10^{-2}$ to $10^{-3}$, while modern optimal
-filters~\citep{vaidya2022snarf,grafite2024,eslami2024memento} sweep
-deeper. They also align with the LSM point-filter convention:
-Cassandra's default \texttt{bloom\_filter\_fp\_chance} is $0.01$ for
-all compaction strategies except Leveled Compaction Strategy (LCS)~\citep{cassandra-bloom}.
-
-\paragraph{Query range length $\mathcal{L}$.}
-We sweep $\mathcal{L} \in \{1, 16, 128, 1024, 4096, 16384, 65536\}$.
-The lower half is production-aligned:
-in Facebook's UDB workload, more than $60\%$ of iterator operations
-read exactly one key, the P90 is below $100$ keys, and scans above
-$10{,}000$ are very rare~\citep{cao2020facebook}; the Yahoo! Cloud Serving
-Benchmark (YCSB) Workload~E caps short-range scans at $100$. Range filter
-papers~\citep{vaidya2022snarf,luo2020rosetta,grafite2024,eslami2024memento}
-report headline FPR in this same window: SNARF at
-$\mathcal{L} = 256$, Rosetta at $\mathcal{L} = 64$, Grafite and
-Memento sweeping $\mathcal{L} \in \{1, 32, 1024\}$. The upper half
-($\mathcal{L} \geq 4096$) extends past production P99 and any reported
-literature sweep. Such large $\mathcal{L}$ values are usually excluded
-from filter benchmarks because hashing-based filters cannot maintain
-low FPR there; we include them because our construction can.
+\input{src/evaluation-workload-parameter-choices}
 
 
 \section{ERE Backend Comparison: Two-Vector vs One-Vector}
 \label{sec:eval-ere-backend}
-
-We compare the two-vector and one-vector ERE backends as the exact layer
-of two ARE wrappers (SODA and Greedy+Merge) across six distributions.
-The analytic prediction from
-Section~\ref{subsec:ere-one-vector} is $\Delta = M/n$~BPK, where $M$ is
-the number of non-empty blocks; the maximum is $B/n = 1$~BPK and the
-Poisson middle for uniform input at $\lambda = 1$ is
-$1 - e^{-1} \approx 0.632$~BPK. The numbers below confirm the prediction
-end-to-end.
-
-\begin{table}[H]
-    \centering
-    \setlength{\tabcolsep}{5pt}
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
-        \toprule
-        & \multicolumn{3}{c}{SODA} & \multicolumn{3}{c}{Greedy+Merge} \\
-        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
-        Dataset
-        & two-vec BPK & one-vec BPK & $\Delta$
-        & two-vec BPK & one-vec BPK & $\Delta$ \\
-        \midrule
-        \texttt{uniform}     & $16.932$ & $16.499$ & $0.433$ & $16.932$ & $16.499$ & $0.433$ \\
-        \texttt{clustered}   & $16.602$ & $16.500$ & $0.102$ & $12.759$ & $12.519$ & $0.240$ \\
-        \texttt{sosd\_fb}    & $16.020$ & $16.000$ & $0.020$ & $11.232$ & $11.000$ & $0.232$ \\
-        \texttt{sosd\_wiki}  & $16.532$ & $16.530$ & $0.002$ & $9.708$  & $9.530$  & $0.178$ \\
-        \texttt{sosd\_osm}   & $16.931$ & $16.499$ & $0.432$ & $26.678$ & $26.411$ & $0.267$ \\
-        \texttt{sosd\_books} & $16.000$ & $16.000$ & $0.000$ & $4.517$  & $4.000$  & $0.517$ \\
-        \bottomrule
-    \end{tabular}
-    \caption{Total ARE-level BPK with the two-vector $(D_1, D_2)$ ERE backend
-        (Section~\ref{subsec:ere-original-structure}) versus the one-vector $D$
-        backend (Section~\ref{subsec:ere-one-vector}). Workload: $n = 2^{20}$
-        (or all available keys, whichever is smaller), $K = 34$ — equivalent to
-        $\mathcal{L} = 128$, $\varepsilon = 0.01$ via $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$
-        for SODA; Greedy+Merge takes $K$ directly. SODA stays in the
-        $14$--$16$~BPK headline window (Table~\ref{tab:industry-bpk}) on every
-        distribution; Greedy+Merge ranges from $4.0$~BPK (\texttt{sosd\_books},
-        single-cluster collapse) to $26.4$~BPK (\texttt{sosd\_osm}, many small
-        clusters with per-cluster bookkeeping overhead).}
-    \label{tab:ere-backend-cross-distribution}
-\end{table}
-
-SODA's locality-preserving hash keeps clustered inputs clustered in the
-hashed universe, so the SOSD datasets leave most blocks empty under
-SODA ($\Delta \le 0.020$~BPK on \texttt{sosd\_fb}, \texttt{sosd\_wiki},
-\texttt{sosd\_books}); \texttt{uniform} and \texttt{sosd\_osm} approach the analytic prediction
-(Section~\ref{subsec:block-sizes-and-lookup-strategy}) at ${\sim}0.43$~BPK
-(because the benchmark evaluates at exactly $n = 2^{20}$,
-SODA hash collisions drop the unique fingerprint count slightly below the power-of-two threshold;
-this halves the ERE block count $B$ to $2^{19}$, shifting the load factor to $\lambda \approx 2$;
-the reported ARE BPK is logical, so it perfectly matches the analytic $M/n$ prediction without physical succinct-index overheads).
-Greedy+Merge isolates dense regions and
-builds a separate ERE per cluster; even within a cluster the keys
-retain sub-structure, so $M/B$ stays well below $1$. Its absolute BPK
-is dominated by the wrapper rather than ERE, so even small $M/n$
-values translate into a noticeable relative improvement (e.g.\
-\texttt{sosd\_books} drops from $4.517$ to $4.000$~BPK).
-
-\paragraph{Query latency.}
-Table~\ref{tab:ere-backend-query-latency} reports average ARE query
-latency on the same workload. Both wrappers gain uniformly across all
-distributions: SODA $1.21$--$2.95\times$, Greedy+Merge $1.28$--$3.00\times$.
-The $\geq 2\times$ wins on \texttt{uniform} and \texttt{sosd\_osm} come
-from cache-friendly access at small suffix width ($w = K - \log_2 n = 14$):
-the contiguous $D$ vector keeps both \textsc{Select} calls hitting the
-same auxiliary-index pages, while the two-vector layout alternates
-between $D_1$ and $D_2$ and pays an extra cache miss per query.
-\colorbox{orange}{TODO: measure cache hits \& misses}
-% TODO(linux): measure this claim with hardware performance counters (perf stat -e cache-misses)
-% on an x86 Linux machine; the architectural argument is sound but the miss count is not yet empirically confirmed.
-
-\begin{table}[H]
-    \centering
-    \setlength{\tabcolsep}{5pt}
-    \small
-    \begin{tabular}{@{}lrrrrrr@{}}
-        \toprule
-        & \multicolumn{3}{c}{SODA} & \multicolumn{3}{c}{Greedy+Merge} \\
-        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
-        Dataset
-        & two-vec ns & one-vec ns & speedup
-        & two-vec ns & one-vec ns & speedup \\
-        \midrule
-        \texttt{uniform}     & $220.5$ & $75.0$  & $2.94\times$ & $218.6$ & $72.9$  & $3.00\times$ \\
-        \texttt{clustered}   & $253.9$ & $191.8$ & $1.32\times$ & $317.9$ & $198.3$ & $1.60\times$ \\
-        \texttt{sosd\_fb}    & $309.2$ & $206.7$ & $1.50\times$ & $224.9$ & $158.0$ & $1.42\times$ \\
-        \texttt{sosd\_wiki}  & $266.7$ & $207.2$ & $1.29\times$ & $303.3$ & $206.5$ & $1.47\times$ \\
-        \texttt{sosd\_osm}   & $242.2$ & $82.2$  & $2.95\times$ & $298.3$ & $232.6$ & $1.28\times$ \\
-        \texttt{sosd\_books} & $263.3$ & $218.3$ & $1.21\times$ & $223.1$ & $104.7$ & $2.13\times$ \\
-        \bottomrule
-    \end{tabular}
-    \caption{Average ARE query latency, two-vector vs one-vector ERE backend.
-    Same workload as Table~\ref{tab:ere-backend-cross-distribution}:
-        $n = 2^{20}$ (or all available keys, whichever is smaller), $K = 34$;
-        raw $64$-bit keys (no $60$-bit mask). Apple~M4~Max,
-        $32{,}768$ half-hit/half-miss queries, $3$ rounds.
-        This is a small-scale backend
-        comparison at fixed $n = 2^{20}$; absolute latencies grow $5$--$10\times$
-        at the headline scale $n = 2^{24}$ once the filter footprint outgrows
-        the L3 cache and per-query work becomes cache-miss-bound.}
-    \label{tab:ere-backend-query-latency}
-\end{table}
+\input{src/evaluation-ere-backend-comparison}
 
 
 \section{ERE Bucket Occupancy on SOSD}
 \label{sec:eval-bucket-occupancy}
-
-To characterize how the SODA hash distributes input keys across ERE
-blocks on real workloads, we measured per-bucket statistics for each
-SOSD dataset across three range lengths.
-
-\begin{table}[H]
-    \centering
-    \setlength{\tabcolsep}{9pt}
-    \begin{tabular}{@{}lrrrrrrrr@{}}
-        \toprule
-        Dataset              & $n$         & $\mathcal{L}$ & $w$  & $X_{50}$    & $X_{90}$    & Max          & Max footprint & Fill              \\
-        \midrule
-        \texttt{sosd\_fb}    & $2^{27}$    & 16            & $11$ & $27$        & $103$       & $463$        & $637$~B   & $22.6\%$          \\
-        \texttt{sosd\_fb}    & $2^{27}$    & 256           & $15$ & $208$       & $545$       & $1{,}589$    & $2.9$~KB  & $4.9\%$           \\
-        \texttt{sosd\_wiki}  & ${\sim}2^{26}{}^{*}$ & 16            & $12$ & $3{,}240$   & $3{,}843$   & $4{,}054$    & $5.9$~KB  & $\mathbf{99.0\%}$ \\
-        \texttt{sosd\_wiki}  & ${\sim}2^{26}{}^{*}$ & 256           & $16$ & $52{,}565$  & $58{,}855$  & $62{,}037$   & $121$~KB   & $\mathbf{94.7\%}$ \\
-        \texttt{sosd\_books} & $2^{27}$    & 16            & $11$ & $812$       & $875$       & $978$        & $1.3$~KB  & $47.8\%$          \\
-        \texttt{sosd\_books} & $2^{27}$    & 256           & $15$ & $13{,}215$  & $13{,}670$  & $14{,}039$   & $25.7$~KB  & $42.8\%$ \\
-        \texttt{sosd\_osm}   & $2^{29}$    & 16            & $11$ & $3$         & $5$         & $35$         & $48$~B    & $1.7\%$           \\
-        \texttt{sosd\_osm}   & $2^{29}$    & 256           & $15$ & $3$         & $5$         & $85$         & $159$~B   & $0.3\%$           \\
-        \bottomrule
-    \end{tabular}
-    \caption{Bucket-size statistics for the inner ERE of the SODA-hashed ARE
-    filter on the SOSD datasets across two range lengths covering the
-    typical Facebook UDB range ($\mathcal{L} = 16$) and its P90
-    ($\mathcal{L} = 256$).
-        $^{*}$\texttt{sosd\_wiki} effective $n \approx 65 \times 10^{6}$ after
-        deduplication of repeated timestamps (Section~\ref{sec:sosd}); reported
-        as ${\sim}2^{26}$ for visual consistency with the other rows.}
-    \label{tab:eval-bucket-fill}
-
-    \medskip
-    \noindent\textbf{Columns.}
-    \begin{description}[leftmargin=2.2cm, labelwidth=2cm, labelsep=0.2cm,
-        style=nextline, itemsep=2pt, topsep=4pt]
-\item[$w$] Suffix length in bits, configured per row. Physical block
-capacity is $2^w$ distinct $w$-bit suffixes.
-\item[$X_{50}$, $X_{90}$] Key-weighted CDF percentiles over non-empty
-buckets: the smallest bucket size such that buckets of size $\leq X_p$
-collectively hold at least $p \cdot n$ keys.
-\item[\emph{Max}] Empirical maximum bucket size, $\max_b k_b$.
-\item[\emph{Max footprint}] Bit-packed size of the heaviest bucket
-($\max_b k_b \cdot w / 8$ bytes).
-\item[\emph{Fill}] $\max_b k_b / 2^w$ --- the heaviest bucket's
-saturation against physical capacity.
-    \end{description}
-\end{table}
-
-\paragraph{Observations.}
-\texttt{sosd\_fb} and \texttt{sosd\_osm} stay well below saturation at
-every $\mathcal{L}$. \texttt{sosd\_books} runs at ${\sim}42\%$ across
-$\mathcal{L}$. \texttt{sosd\_wiki} fully saturates at $\mathcal{L} = 16$
-($99\%$).
-In all cases except \texttt{sosd\_wiki} at $\mathcal{L}=256$, bucket footprints fit L1d on modern x86 servers, typically $32$--$48$~KB.
-The saturated wiki bucket ($121$~KB) fits L2.
-
-When fill approaches $100\%$, the SODA hash has run out of resolution:
-every key in a dense input region collapses into a single ARE block, and
-the bucket-search cost for those queries becomes $O(2^w)$ rather than
-$O(1)$ on average. For \texttt{sosd\_wiki} this means binary search on a
-fully packed bucket of up to ${\sim}6 \times 10^4$ keys ($121$~KB at
-$\mathcal{L} = 256$) --- still bounded by $w$ iterations and cache-resident
-in L2 (Section~\ref{subsec:block-sizes-and-lookup-strategy}),
-but the buckets are no longer lightly loaded as the SODA construction assumes.
+\input{src/evaluation-ere-bucket-occupancy-on-sosd}
 
 
-\section{Large-Range Performance: $\mathcal{L} = 65536$}
-\label{sec:eval-large-range}
-
-The combination of truncation-based hashing and exact-mode clusters enables handling very
-large range queries that would be impractical for other approaches.
-
-At $\mathcal{L} = 65536$, non-hybrid filters face a fundamental problem: the fingerprint
-length $K = \lceil \log_2(n \cdot \mathcal{L} / \varepsilon) \rceil$ must grow by
-$\log_2(\mathcal{L}) = 16$ bits to maintain the same FPR. For SODA, this means 16 extra
-BPK. For Bloom, $\mathcal{L} = 65536$ point lookups per query is impractical.
-
-Scan-ARE sidesteps this on two levels:
-
-\paragraph{Exact clusters.} Each cluster stores its $[\min, \max]$ bounds. If a query
-range $[a, b]$ overlaps a cluster's bounds, at least one stored key is inside $[a, b]$
---- that is a true positive, not a false positive. If $[a, b]$ does not overlap any
-cluster, the cluster contributes nothing. If $[a, b]$ falls entirely within a cluster,
-the sub-filter is exact (Section~\ref{sec:adaptive}), so false positives are impossible.
-Either way, exact clusters produce zero false positives regardless of $\mathcal{L}$.
-
-\paragraph{Truncation fallback.} The sparse fallback uses truncation hashing
-(Section~\ref{sec:truncation}), where the phantom points of a stored key are confined
-to the $2^t$-point prefix block containing that key
-(Figure~\ref{fig:phantom-comparison}). A false positive can occur only when a query
-\emph{endpoint} $a$ or $b$ falls inside such a block without containing the stored key
-itself. Because these phantoms remain localized rather than scattering across the
-universe as under SODA, the FPR of truncation is independent of the query range length
-$\mathcal{L}$. The fallback thus avoids the $\log_2(\mathcal{L})$ BPK penalty that
-SODA-based filters must pay.
-
-\subsection{SOSD Results ($n = 2^{24}$, $\mathcal{L} = 65536$)}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.9\textwidth]{fpr_bpk_books_L65536}
-    \caption{FPR vs BPK --- SOSD Books (ISBN sequences, highly clustered),
-        $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE achieves FPR~$< 10^{-8}$ at
-        ${\sim}5$~BPK; all non-hybrid filters degrade to FPR~$\approx 1$.}
-    \label{fig:books-l65536}
-\end{figure}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.9\textwidth]{fpr_bpk_wiki_L65536}
-    \caption{FPR vs BPK --- SOSD Wiki (Wikipedia timestamps, moderately clustered),
-        $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE dominates; only Grafite remains
-        competitive at ${\sim}10$~BPK but with 2--3$\times$ more space.}
-    \label{fig:wiki-l65536}
-\end{figure}
-
-On both datasets, Scan-ARE achieves FPR~$< 10^{-8}$ at ${\sim}5$~BPK, while Truncation,
-SODA, and Bloom all degrade to FPR~$\approx 1$ at comparable budgets. SNARF plateaus at
-FPR~$\sim 10^{-3}$. Only Grafite remains competitive on Wiki (${\sim}10$~BPK for
-FPR~$10^{-2}$), but at 2--3$\times$ the space of Scan-ARE.
-
-% TODO: add Facebook and OSM results when plots are regenerated
+%\section{Large-Range Performance: $\mathcal{L} = 65536$}
+%\label{sec:eval-large-range}
+%\include{src/evaluation-L65k}
 
 \FloatBarrier
 
 
-\section{BPK at Industry-Standard FPR Targets}
-\label{sec:eval-bpk-targets}
-
-In practice, storage systems target a specific FPR --- typically $10^{-2}$ or $10^{-3}$
---- and want to minimize the filter's memory footprint. The relevant question is: how
-many bits per key does each filter need to reach the target FPR?
-
-We report this metric separately for each of the 9 benchmark distributions: 4 real-world
-(SOSD) and 5 synthetic. Each distribution exercises different filter strengths --- a
-filter that excels on clustered data may be mediocre on uniform, and vice versa.
-
-% TODO: fill in all tables with final benchmark results
-
-\subsubsection*{SOSD Distributions}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- SOSD Facebook ($n = 2^{24}$, highly clustered).}
-    \label{tab:bpk-fb}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- SOSD Books ($n = 2^{24}$, clustered by publisher).}
-    \label{tab:bpk-books}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- SOSD Wiki ($n = 2^{24}$, moderately clustered).}
-    \label{tab:bpk-wiki}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- SOSD OSM ($n = 2^{24}$, geospatially clustered).}
-    \label{tab:bpk-osm}
-\end{table}
-
-\subsubsection*{Synthetic Distributions}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- Clustered synthetic ($n = 2^{24}$).}
-    \label{tab:bpk-clustered}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- Uniform synthetic ($n = 2^{24}$).}
-    \label{tab:bpk-uniform}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- Spread synthetic ($n = 2^{24}$).}
-    \label{tab:bpk-spread}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- Zipfian synthetic ($n = 2^{24}$).}
-    \label{tab:bpk-zipfian}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{@{}lrrrr@{}}
-        \toprule
-        & \multicolumn{2}{c}{$\mathcal{L} = 128$} & \multicolumn{2}{c}{$\mathcal{L} = 65536$} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Filter     & FPR $10^{-2}$ & FPR $10^{-3}$ & FPR $10^{-2}$ & FPR $10^{-3}$ \\
-        \midrule
-        Scan-ARE   & ---           & ---           & ---           & ---           \\
-        Grafite    & ---           & ---           & ---           & ---           \\
-        SNARF      & ---           & ---           & ---           & ---           \\
-        SODA       & ---           & ---           & ---           & ---           \\
-        Truncation & ---           & ---           & ---           & ---           \\
-        SuRF-Real  & ---           & ---           & ---           & ---           \\
-        Bloom      & ---           & ---           & ---           & ---           \\
-        \bottomrule
-    \end{tabular}
-    \caption{BPK to reach target FPR --- Temporal synthetic ($n = 2^{24}$).}
-    \label{tab:bpk-temporal}
-\end{table}
+\section{Comparison Tables}
+\label{sec:eval-tables}
+\input{src/evaluation_tables}
 
 
 \section{Summary of Results}
@@ -651,3 +83,4 @@ filter that excels on clustered data may be mediocre on uniform, and vice versa.
     dominates the Pareto frontier by exploiting cluster density for exact-mode sub-filters.}
     \label{tab:comparison}
 \end{table}
+\colorbox{orange}{TODO: check}
