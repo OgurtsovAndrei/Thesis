@@ -12,9 +12,13 @@ type segment struct {
 //
 // Single forward sweep collects (start, end) index ranges where the sliding
 // window of width eps contains >= segMinPts keys. Adjacent ranges within eps
-// of each other are merged. All keys inside a merged range form a segment;
-// everything else goes to fallback.
-func detectSegments(keys []uint64, eps uint64) ([]segment, []uint64) {
+// of each other are merged only when the combined span still fits the
+// exact-mode budget reported by thresholdFn(m). All keys inside a merged
+// range form a segment; everything else goes to fallback.
+//
+// thresholdFn(m) returns 2^K_local for a segment of m keys, i.e. the largest
+// span that AdaptiveARE can encode in exact mode.
+func detectSegments(keys []uint64, eps uint64, thresholdFn func(m int) uint64) ([]segment, []uint64) {
 	n := len(keys)
 	if n < 2 {
 		return nil, append([]uint64(nil), keys...)
@@ -42,14 +46,23 @@ func detectSegments(keys []uint64, eps uint64) ([]segment, []uint64) {
 		runs = append(runs, run{runStart, n - 1})
 	}
 
-	// Merge runs within eps of each other in key-space.
+	// Merge runs within eps of each other, but only if the resulting cluster
+	// still satisfies the exact-mode condition. Otherwise keep them separate
+	// to preserve the FPR ≤ ε guarantee.
 	merged := make([]run, 0, len(runs))
 	for _, r := range runs {
-		if len(merged) > 0 && keys[r.start]-keys[merged[len(merged)-1].end] <= eps {
-			merged[len(merged)-1].end = r.end
-		} else {
-			merged = append(merged, r)
+		if len(merged) > 0 {
+			last := &merged[len(merged)-1]
+			if keys[r.start]-keys[last.end] <= eps {
+				combinedSpan := keys[r.end] - keys[last.start]
+				combinedM := r.end - last.start + 1
+				if combinedSpan < thresholdFn(combinedM) {
+					last.end = r.end
+					continue
+				}
+			}
 		}
+		merged = append(merged, r)
 	}
 
 	assigned := make([]bool, n)

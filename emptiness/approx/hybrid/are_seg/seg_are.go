@@ -13,13 +13,14 @@ import (
 
 // SegARE is a hybrid approximate range emptiness filter.
 //
-// Dense segments (≥ segMinPts=256 keys with average gap ≤ L/ε) go into
-// AdaptiveARE sub-filters (exact mode when spread fits in 2^K_local bits,
-// SODA hash otherwise). All other keys go to an AlwaysSODA fallback.
+// Dense segments (≥ segMinPts=512 keys with average gap ≤ L/(2ε)) go into
+// AdaptiveARE sub-filters. By construction every segment fits the exact-mode
+// span budget, so cluster FPR = 0 and overall FPR ≤ ε (fallback only).
 //
 // Segmentation uses 1D DBSCAN without border expansion:
-//   - δ = segMinPts · L/ε
+//   - δ = segMinPts · L/(2ε)
 //   - minimum segment size = segMinPts (implicit from core-point condition)
+//   - merge step is conditional on preserving exact mode
 type SegARE struct {
 	clusters  []hybridutil.ClusterFilter
 	fallback  *hybridutil.FallbackFilter
@@ -64,7 +65,14 @@ func newSegARE(keys []uint64, keyBits, K uint32, rangeLen, segDelta uint64, poli
 		return s, nil
 	}
 
-	segs, fallbackKeys := detectSegments(keys, segDelta)
+	thresholdFn := func(m int) uint64 {
+		kLocal := hybridutil.LocalK(K, n, m)
+		if kLocal >= 64 {
+			return math.MaxUint64
+		}
+		return uint64(1) << kLocal
+	}
+	segs, fallbackKeys := detectSegments(keys, segDelta, thresholdFn)
 
 	s.clusters = make([]hybridutil.ClusterFilter, 0, len(segs))
 	for _, seg := range segs {
@@ -142,14 +150,14 @@ func NewSegAREFromK(keys []uint64, keyBits, K uint32, rangeLen uint64) (*SegARE,
 		return &SegARE{}, nil
 	}
 
-	// δ = segMinPts · L/ε ≈ segMinPts · 2^K / n   (since 2^K ≈ n·L/ε)
+	// δ = segMinPts · L/(2ε) ≈ segMinPts · 2^K / (2n)   (since 2^K ≈ n·L/ε)
 	var pow float64
 	if K >= 64 {
 		pow = float64(^uint64(0)) + 1
 	} else {
 		pow = float64(uint64(1) << K)
 	}
-	v := float64(segMinPts) * pow / float64(n)
+	v := float64(segMinPts) * pow / (2 * float64(n))
 	var eps uint64
 	switch {
 	case v < 1:
@@ -179,7 +187,7 @@ func NewSegAREFromKWithBackend(keys []uint64, keyBits, K uint32, rangeLen uint64
 	} else {
 		pow = float64(uint64(1) << K)
 	}
-	v := float64(segMinPts) * pow / float64(n)
+	v := float64(segMinPts) * pow / (2 * float64(n))
 	var eps uint64
 	switch {
 	case v < 1:
@@ -211,7 +219,7 @@ func NewSegAREFromKWithPolicy(keys []uint64, keyBits, K uint32, rangeLen uint64,
 	} else {
 		pow = float64(uint64(1) << K)
 	}
-	v := float64(segMinPts) * pow / float64(n)
+	v := float64(segMinPts) * pow / (2 * float64(n))
 	var eps uint64
 	switch {
 	case v < 1:
@@ -225,9 +233,14 @@ func NewSegAREFromKWithPolicy(keys []uint64, keyBits, K uint32, rangeLen uint64,
 	return newSegARE(keys, keyBits, K, rangeLen, eps, policy, backend)
 }
 
-// segEps computes the DBSCAN neighbourhood radius δ = segMinPts · L/ε.
+// segEps computes the DBSCAN neighbourhood radius δ = segMinPts · L/(2ε).
+// This guarantees that any single run satisfies the exact-mode condition:
+// LP-worst-case span ≤ 2δ = segMinPts·L/ε for the smallest m = segMinPts+1,
+// strictly below the threshold (segMinPts+1)·L/ε ≤ 2^K_local.
+// The merge step performs an additional exact-mode check (see detectSegments)
+// to preserve the guarantee across merged clusters.
 func segEps(rangeLen uint64, epsilon float64) uint64 {
-	v := float64(segMinPts) * float64(rangeLen) / epsilon
+	v := float64(segMinPts) * float64(rangeLen) / (2 * epsilon)
 	if v < 1 {
 		return 1
 	}
