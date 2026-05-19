@@ -130,13 +130,13 @@ const (
 
 // PlotConfig controls axes, layout, and visual theme of a generated SVG.
 type PlotConfig struct {
-	Title    string
-	XLabel   string
-	YLabel   string
-	XScale   AxisScale
-	YScale   AxisScale
-	YFloor   float64 // if >0 and YScale==Log10, draws a measurement floor line at this value
-	YCeil    float64 // if >0 and YScale==Log10, hard-cap the upper axis at this value (clips data above)
+	Title         string
+	XLabel        string
+	YLabel        string
+	XScale        AxisScale
+	YScale        AxisScale
+	YFloor        float64 // if >0 and YScale==Log10, draws a measurement floor line at this value
+	YCeil         float64 // if >0 and YScale==Log10, hard-cap the upper axis at this value (clips data above)
 	XMax          float64 // if >0 and using linear X-scale, hard-cap the X-axis at this value
 	KeepAllPoints bool    // if true, suppress the log-scale trim-on-second-floor-hit (use for histograms)
 	Theme         Theme   // zero value uses DefaultTheme()
@@ -162,9 +162,9 @@ func GeneratePerformanceSVG(cfg PlotConfig, series []SeriesData, outPath string)
 	}
 	legendContentW := t.LegendLineLen + 6 + float64(maxLabelChars)*charW + 8
 	mR := math.Max(160, 16+legendContentW)
-	w := 90.0 + 770.0 + mR // mL=90, plotW fixed at 770
+	w := 110.0 + 770.0 + mR // mL=110 (room for rotated Y-title + 10⁻ⁿ ticks), plotW fixed at 770
 	h := 600.0 + thresholdH
-	mL, mT, mB := 90.0, 40.0, 50.0+thresholdH
+	mL, mT, mB := 110.0, 40.0, 50.0+thresholdH
 	plotW := w - mL - mR
 	plotH := h - mT - mB
 
@@ -479,8 +479,32 @@ func fmtPow10(e int) string {
 	case e == 6:
 		return "1M"
 	default:
-		return fmt.Sprintf("10^%d", e)
+		return "10" + superscriptInt(e)
 	}
+}
+
+// superscriptInt renders the integer e using Unicode super-script digits
+// (⁰¹²³⁴⁵⁶⁷⁸⁹) and a true minus sign (⁻). Used by fmtPow10 so log-scale
+// tick labels render as "10⁻⁷" instead of the wide ASCII "10^-7" that
+// collides with the rotated Y-axis title.
+func superscriptInt(e int) string {
+	digits := []rune{'⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'}
+	neg := e < 0
+	if neg {
+		e = -e
+	}
+	if e == 0 {
+		return "⁰"
+	}
+	var rs []rune
+	for e > 0 {
+		rs = append([]rune{digits[e%10]}, rs...)
+		e /= 10
+	}
+	if neg {
+		rs = append([]rune{'⁻'}, rs...)
+	}
+	return string(rs)
 }
 
 func fmtNum(v float64) string {
