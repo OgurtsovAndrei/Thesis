@@ -7,7 +7,7 @@
     size by $24\%$.
     \item \textbf{Adaptive bucket-search} (Chapter~\ref{chap:ere}):
     drops $59$ bits of per-key metadata and speeds queries by
-    $13$--$30\times$ at LSM bucket sizes.
+    $13$--$30\times$ at the bucket sizes that arise at per-SSTable scale.
     \item \textbf{Truncation hash} (Chapter~\ref{chap:hash}):
     saves $\log_2 \mathcal{L}$ bits per key on sparse inputs,
     going below the Goswami bound on distributions where keys are spread
@@ -32,7 +32,7 @@ standard SOSD benchmarks at $\mathrm{FPR} \leq 10^{-3}$:
     \item \textbf{150--420\,ns} per query across all four SOSD
     real-world datasets and query lengths
     $\mathcal{L} \in \{1,\,16,\,1024\}$
-    (Tables~\ref{tab:latency-L1}--\ref{tab:latency-L1024}).
+    (Table~\ref{tab:latency}).
 \end{itemize}
 
 \section{When Seg-ARE Wins, Ties, and Loses}
@@ -50,7 +50,7 @@ Section~\ref{sec:hybrid-ef}:
     bits than a universe-wide EF could.
     Seg-ARE reaches $\mathrm{FPR} = 0$ at $3.7$~BPK against Grafite's
     $4.6$~BPK at the lossless threshold
-    (Figure~\ref{fig:seg-wiki-L128}, Table~\ref{tab:bpk-L16}).
+    (Figure~\ref{fig:seg-wiki-L128}, Table~\ref{tab:bpk}, $\mathcal{L}=16$ block).
     \item \textbf{Facebook --- tied.} Facebook user IDs occupy a
     relatively small $37$-bit universe with no large gaps. There is
     little for segmentation to exploit, and universe-wide EF is
@@ -69,7 +69,7 @@ Section~\ref{sec:hybrid-ef}:
 Seg-ARE is therefore not a universal improvement over Grafite.
 It is a distribution-aware option that activates when the data has the
 cluster-and-gap geometry common in many real LSM key sets
-(Wiki-like, Facebook-trace-style burst patterns) and stays harmless on the rest.
+(Wiki-like clustered timestamps, Facebook-UDB-like packed ID ranges) and stays harmless on the rest.
 
 \section{Limitations}
 \label{sec:conclusion-limits}

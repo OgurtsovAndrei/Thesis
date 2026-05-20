@@ -64,7 +64,7 @@ either: lossless requires $n\mathcal{L}/\varepsilon > U$, i.e.\
 $\varepsilon < n\mathcal{L}/U = 2^{28}\!\cdot\!128/2^{64} \approx
 1.9\!\times\!10^{-9}$.
 At any $\varepsilon$ used in this evaluation Grafite stays in approximate
-mode and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$.
+mode and follows the Goswami bound $\log_2(\mathcal{L}/\varepsilon) + O(1)$.
 Universe-wide lossless EF on this input would saturate at
 ${\approx}\,38.9$~BPK --- not a useful operating point for a filter
 whose whole purpose is to be much smaller than the keys themselves.
@@ -125,10 +125,10 @@ $\log_2(1/\varepsilon) + O(1)$ bits per key \emph{independently of
     $\mathcal{L}$}: large inter-key gaps make collisions rare,
 so the fixed-suffix length needed to hit a target $\varepsilon$ does
 not have to grow with the query length.
-Grafite has no such mechanism and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$,
+Grafite has no such mechanism and follows the Goswami bound $\log_2(\mathcal{L}/\varepsilon) + O(1)$,
 which grows with $\mathcal{L}$ by exactly $\log_2 \mathcal{L}$ bits.
-Tables~\ref{tab:bpk-L1}--\ref{tab:bpk-L1024} (Uniform / gap-heavy column)
-show the consequence at $\varepsilon = 10^{-3}$: at
+Table~\ref{tab:bpk} (Uniform / gap-heavy column)
+shows the consequence at $\varepsilon = 10^{-3}$: at
 $\mathcal{L} = 1$ both filters sit at $12.4$~BPK, at
 $\mathcal{L} = 16$ Seg-ARE is $15.1$~BPK against Grafite's
 $16.6$~BPK, and at $\mathcal{L} = 1024$ Grafite drops out of the
