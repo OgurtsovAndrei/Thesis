@@ -52,7 +52,9 @@ func getGitDiff(commit, gitRoot string) map[string]FileChange {
 				oldLenStr := match[2]
 				newStart, _ := strconv.Atoi(match[3])
 				newLen, _ := strconv.Atoi(match[4])
-				if match[4] == "" { newLen = 1 }
+				if match[4] == "" {
+					newLen = 1
+				}
 
 				// Detect pure additions
 				isNew := (oldLenStr == "0")
@@ -73,7 +75,7 @@ func getGitDiff(commit, gitRoot string) map[string]FileChange {
 func processFile(path string, changes FileChange) string {
 	content, _ := ioutil.ReadFile(path)
 	lines := strings.Split(string(content), "\n")
-	
+
 	var result []string
 	var currentPara []string
 	paraChanged := Unchanged
@@ -84,9 +86,9 @@ func processFile(path string, changes FileChange) string {
 		}
 		paraText := strings.Join(currentPara, "\n")
 		trimmed := strings.TrimSpace(paraText)
-		
+
 		isStructure := false
-		for _, cmd := range []string{"\\chapter", "\\section", "\\subsection", "\\subsubsection", "\\item", "\\begin{table}", "\\end{table}", "\\begin{figure}", "\\end{figure}", "\\begin{equation}", "\\end{equation}", "\\begin{abstract}", "\\end{abstract}"} {
+		for _, cmd := range []string{"\\chapter", "\\section", "\\subsection", "\\subsubsection", "\\item", "\\input", "\\include", "\\begin{table}", "\\end{table}", "\\begin{figure}", "\\end{figure}", "\\begin{equation}", "\\end{equation}", "\\begin{abstract}", "\\end{abstract}"} {
 			if strings.HasPrefix(trimmed, cmd) {
 				isStructure = true
 				break
@@ -169,7 +171,7 @@ func main() {
 				patch := `
 \usepackage[dvipsnames,svgnames]{xcolor}
 \usepackage[pdftex,color,leftbars]{changebar}
-\setlength{\cbwidth}{6pt}
+\setlength{\changebarwidth}{6pt}
 \setlength{\changebarsep}{15pt}
 `
 				re := regexp.MustCompile(`(\\documentclass(?:\[[^\]]*\])?\{[^}]+\})`)

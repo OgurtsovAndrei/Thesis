@@ -10,7 +10,7 @@ BENCH_ROOT = ../..
 # --- DIFF CONFIGURATION ---
 # Set the commit hash here to highlight changes relative to it.
 # You can use a hash (e.g., eecabc5) or relative (e.g., HEAD~1)
-BASE_COMMIT = cb123483
+BASE_COMMIT = a76ba0b0
 DIFF_OUTPUT = diff_highlighted.pdf
 # ---------------------------
 
@@ -35,7 +35,9 @@ SVG_MAP = \
 	$(FIG_DIR)/hist_sosd_fb.svg:hist_sosd_fb \
 	$(FIG_DIR)/hist_sosd_books.svg:hist_sosd_books \
 	$(FIG_DIR)/hist_sosd_wiki.svg:hist_sosd_wiki \
-	$(FIG_DIR)/hist_sosd_osm.svg:hist_sosd_osm
+	$(FIG_DIR)/hist_sosd_osm.svg:hist_sosd_osm \
+	$(FIG_DIR)/seg_vs_grafite_wiki_L128.svg:seg_vs_grafite_wiki_L128 \
+	$(FIG_DIR)/seg_vs_grafite_clustered_L128.svg:seg_vs_grafite_clustered_L128
 
 figures:
 	mkdir -p $(FIG_DIR)
