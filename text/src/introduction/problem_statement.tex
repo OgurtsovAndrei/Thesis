@@ -63,8 +63,9 @@ via two layers:
     \item A locality-preserving hash (Section~\ref{sec:soda}) $h\colon U \to U'$, where $U' = [0, 2^K)$ and $r = |U'| = 2^K$.
     The hash partitions $U$ into blocks of size $r$, applies an independent rotation
     within each block, and then maps the shifted block onto $U'$ by translation.
-    The hash is drawn from a pairwise-independent family, so for any two distinct
-    keys $x_1, x_2 \in U$, $\Pr[h(x_1) = h(x_2)] \leq 1/2^K$.
+    The hash is drawn from a pairwise-independent family $\mathcal{H}$,
+    so for any $h \in \mathcal{H}$ and any pair $x_1, x_2 \in U$,
+    $\Pr[h(x_1) = h(x_2) \text{ and } x_1 \neq x_2] \leq 1/2^K$.
 
     \item An \textbf{Exact Range Emptiness (ERE)} (Section~\ref{sec:ere}) structure over $S' = h(S) \subseteq U'$:
     a succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits, which answers ``$[a', b'] \cap S' = \emptyset$?''.
@@ -75,7 +76,7 @@ The resulting space is $n \log_2(\mathcal{L}/\varepsilon) + O(n)$ bits, or equiv
 $\log_2(\mathcal{L}/\varepsilon) + O(1)$ bits per key --- matching the lower bound.
 
 The fingerprint length $K = \lceil\log_2(n\mathcal{L}/\varepsilon)\rceil$ controls accuracy:
-because $\Pr[h(x_1) = h(x_2)] \leq 1/2^K$ for any two distinct keys, the overall error
+because $\Pr[h(x_1) = h(x_2) \text{ and } x_1 \neq x_2] \leq 1/2^K$ for any pair of keys, the overall error
 probability of the construction is bounded by $n\mathcal{L}/2^K$, which we constrain to be $\le \varepsilon$.
 Thus, increasing $K$ by one bit halves the false positive rate. After ERE compression
 (which subtracts $\log_2 n$ for block indexing), the effective cost per key is

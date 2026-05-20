@@ -47,7 +47,6 @@ inside the block.
 The local check uses two weak prefix queries (Section~\ref{sec:wps})
 as an $O(1)$ index into the bucket's sorted suffix list; the stored
 suffixes themselves witness (non-)emptiness via a final comparison.
-\colorbox{orange}{TODO: btw i do not like forward refs, maybe I need to change order of sections?}
 
 \subsection{Local Search in Buckets}
 \label{subsec:ere-local-search}
@@ -171,8 +170,6 @@ Chapter~\ref{chap:evaluation}
     \label{tab:ere-rank-select}
 \end{table}
 
-\colorbox{orange}{TODO: write about better mem layout}
-
 \paragraph{Relation to Elias-Fano coding and Grafite.}
 The single bitvector~$D$ is equivalent to Elias-Fano
 coding~\citep{elias1974efficient,fano1971number}: $D$ is exactly the unary-encoded
@@ -247,7 +244,8 @@ random 64-bit keys, taken across all $B$ blocks.
 The Poisson probability mass function $\Pr[X = k] = e^{-\lambda}\lambda^k/k!$~\citep[eq.~(6.1)]{feller1968introduction}
 makes the tail decay like $1/k!$: even at $B = 2^{30}$, the expected number of
 blocks with $\geq 20$ keys is ${\sim}1.7 \times 10^{-10}$, making buckets larger
-than ${\sim}20$ keys virtually impossible for uniform data.
+than $20$ keys virtually impossible for uniform data.
+Such bucket sizes are well suited to linear search.
 
 \paragraph{Non-uniform distributions and worst-case bounds}
 

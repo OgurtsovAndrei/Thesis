@@ -31,9 +31,9 @@ of~\citet{dietzfelbinger1996universal}, stored as two 64-bit coefficients $(a, b
 
 Properties of the hash:
 \begin{itemize}
-    \item \textbf{Pairwise-independent:} for every $h$ drawn from the multiply-add-shift family
-    $\mathcal{H}$ (Equation~\eqref{eq:soda-u}) and every pair $x_1 \neq x_2 \in U$,
-    $\Pr[h(x_1) = h(x_2)] \leq 2^{-K}$.
+    \item \textbf{Pairwise-independent:} for any $h \in \mathcal{H}$ from the multiply-add-shift family
+    (Equation~\eqref{eq:soda-u}) and any pair $x_1, x_2 \in U$,
+    $\Pr[h(x_1) = h(x_2) \text{ and } x_1 \neq x_2] \leq 2^{-K}$.
     This holds for sequential, clustered, or adversarial data.
     \item \textbf{Locality-preserving:} the hash applies a per-block rotation, so
     consecutive keys within the same block map to consecutive positions in $[0, 2^K)$.

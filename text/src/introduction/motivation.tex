@@ -13,8 +13,8 @@ has to consult an SSTable at every level.
 
 To avoid reading every SSTable during a lookup, every file carries a small in-memory
 \emph{filter} in its metadata.
-The filter answers a membership question
-with one-sided error: false negatives are forbidden, and the false positive rate (FPR) is bounded by~$\varepsilon$.
+The filter answers a membership question:
+its answer may be a false positive with probability $\leq \varepsilon$, while false negatives are forbidden.
 If the filter indicates that a key is not present in an SSTable, the engine
 skips the file with zero disk I/O.
 The Bloom filter~\citep{bloom1970space}
@@ -26,7 +26,7 @@ URLs), and time-window queries --- are common in production LSM workloads~\citep
 
 For range queries we need a \emph{range filter}: given a query interval
 $[a, b]$ of length at most~$\mathcal{L}$, decide whether $[a, b] \cap S = \emptyset$
-under the same one-sided error guarantee.
+under the same false-positive guarantee.
 \citet{goswami2015approximate} prove a tight worst-case lower bound of
 $\log_2(\mathcal{L}/\varepsilon)$ bits per key and give a matching
 construction --- a locality-preserving hash followed by an
