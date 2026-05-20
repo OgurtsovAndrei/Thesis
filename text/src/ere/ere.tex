@@ -260,8 +260,8 @@ The original ARE construction~\citep{goswami2015approximate} uses a \emph{locali
 hash: consecutive input keys map to consecutive hashed values, so dense
 input regions stay dense in the hashed universe.
 On heavily clustered benchmarks the heaviest bucket reaches ${\sim}6 \times 10^4$~keys.
-At the typical Facebook User-DB (UDB) range ($\mathcal{L} = 16$), median bucket
-sizes stay in the low thousands; near production P90 ($\mathcal{L} = 256$)
+On Wikipedia timestamps at $\mathcal{L} = 16$, median bucket
+sizes are in the low thousands; near production P90 ($\mathcal{L} = 256$)
 they grow into the tens of thousands
 (Table~\ref{tab:eval-bucket-fill}, Chapter~\ref{chap:evaluation}).
 The worst-case footprint stays at ${\sim}120$~KB --- comfortably

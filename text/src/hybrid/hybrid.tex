@@ -97,8 +97,9 @@ $\delta \approx 3.3 \times 10^{7}$. Comparing this against the SOSD gap statisti
 (Table~\ref{tab:sosd-gaps}), Facebook/Wiki/Books have median gaps well below~$\delta$
 so most keys fall into segments, while OSM's median gap of $4.5 \times 10^{7}$ sits
 right at the threshold --- segmentation captures only the denser sub-clusters.
-A uniform 64-bit distribution has average gap ${\sim}2^{44} \gg \delta$, so every key
-goes to the fallback and Seg-ARE degrades to plain truncation.
+A uniform 60-bit distribution has average gap ${\sim}2^{60}/n \gg \delta$
+for every $n \leq 2^{28}$, so every key goes to the fallback and Seg-ARE
+degrades to plain truncation.
 
 \subsection{Algorithm}
 

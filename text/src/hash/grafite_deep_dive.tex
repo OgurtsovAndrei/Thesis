@@ -12,6 +12,11 @@ our CGo wrapper installs.
 \subsection{Parameter Choices and Their Consequences}
 \label{subsec:grafite-params}
 
+Let $\ell$ denote the actual query length (which may exceed the
+configured $\mathcal{L}$) and let $B$ denote Grafite's per-key budget
+in bits, so that the Elias--Fano fingerprint storage occupies
+$2^{B-2}$ slots per key (the constant $2$ accounts for the
+Elias--Fano lower-/upper-bits overhead, see~\citep{grafite2024}).
 Queries longer than the configured $\mathcal{L}$ degrade gracefully
 along $\min\{1,\,\ell/2^{B-2}\}$; queries shorter get the design FPR
 for free. On top of the budget identity, Theorem~3.4

@@ -37,7 +37,7 @@ lower bound on adversarial inputs and beats it on realistic ones.
     show empirically that adaptive binary/linear search on packed
     suffixes outperforms it at LSM bucket sizes, removing $59$~bits of
     auxiliary metadata per key and reducing per-query latency by
-    $13$--$30\times$ relative to WPS.
+    $8$--$160\times$ relative to WPS.
 
     \item \textbf{Truncation hash (Chapter~\ref{chap:hash}).}
     For sparse inputs we replace Goswami's locality-preserving
@@ -48,8 +48,8 @@ lower bound on adversarial inputs and beats it on realistic ones.
     A single-pass density-based segmentation partitions the input
     into dense clusters --- handed to exact-mode ERE sub-filters
     (FPR $= 0$) --- and sparse tails routed to the truncation hash.
-    On SOSD dataset this drives the FPR below $10^{-8}$ at
-    $\sim\!11$ bits per key on Facebook User IDs and $\sim\!6$ bits per key on
+    On SOSD datasets this drives the FPR below $10^{-8}$ at
+    $\sim\!11$ bits per key on Facebook User IDs and $3.7$ bits per key on
     Wiki timestamps, matching or beating the strongest baselines
     (Chapter~\ref{chap:evaluation}); Chapter~\ref{chap:conclusion}
     discusses when Seg-ARE wins, ties, and loses, and the

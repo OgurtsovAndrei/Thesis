@@ -221,6 +221,7 @@ limit.
 The $20\%$ uniform bucket adds about $L \cdot n / U$ on top, which
 matters on small-universe inputs (Facebook, Wiki) and is
 negligible on $64$-bit universes (OSM, Books-800M, Uniform).
+\colorbox{orange}{TODO: Books-800M is a separate 64-bit Books variant; clarify or replace with OSM only.}
 The ceiling is therefore $70\%$ when both buckets always hit.
 Table~\ref{tab:nonempty-fraction} reports the measured fractions
 at $n = 2^{28}$ across the datasets used in
@@ -248,6 +249,7 @@ Section~\ref{sec:eval-tables}.
         uniform-bucket contribution as $L$ grows. The
         large-universe datasets (OSM, Books-800M, Uniform) sit at
         the $5\%$ near-key floor; the synthetic Clustered set is
-        only mildly denser.}
+        only mildly denser.
+        \colorbox{orange}{TODO: confirm Books-800M variant or replace with OSM only.}}
     \label{tab:nonempty-fraction}
 \end{table}
