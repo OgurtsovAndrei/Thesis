@@ -11,11 +11,11 @@ The structure converts random writes into
 sequential I/O at the cost of \emph{read amplification}: a single lookup
 has to consult an SSTable at every level.
 
-To avoid touching each SSTable on disk during a lookup, every file carries a small in-memory
+To avoid reading every SSTable during a lookup, every file carries a small in-memory
 \emph{filter} in its metadata.
 The filter answers a membership question
 with one-sided error: false negatives are forbidden, and the false positive rate (FPR) is bounded by~$\varepsilon$.
-If the filter says ``empty'', the engine
+If the filter indicates that a key is not present in an SSTable, the engine
 skips the file with zero disk I/O.
 The Bloom filter~\citep{bloom1970space}
 fills this role for point lookups and is the default in production
@@ -52,16 +52,16 @@ We implemented Goswami's internal Weak Prefix Search
 calls ``mainly theoretic in nature and thus very complicated to
 implement''~\citep{grafite2024} --- and measured its cost empirically.
 The measurements show that adaptive binary/linear search on packed
-suffixes outperforms WPS at LSM bucket sizes; eliminating WPS in turn
-lets us collapse Goswami's two metadata vectors $D_1, D_2$ into a
-single vector $D$.
-Beyond the bit-count savings, the contiguous memory layout reduces pointer chasing and speeds up queries.
-We arrive at the same backend structure as Grafite, with
-the empirical evidence that this simplification is in fact warranted
-(Chapter~\ref{chap:ere}).
+suffixes outperforms WPS at LSM bucket sizes on both axes ---
+$59$~bits per key of auxiliary metadata removed and per-query latency
+reduced by $13$--$30\times$ relative to WPS.
+Once WPS is gone, Goswami's two metadata vectors $D_1, D_2$ collapse
+into a single Elias--Fano-encoded vector $D$ --- a further $24\%$
+metadata saving and the same backend Grafite arrives at by
+implementation-simplicity arguments (Chapter~\ref{chap:ere}).
 
 On top of this backend we add a distribution-aware segmentation that
-detects dense clusters and handles them exactly --- going below the
-worst-case bound on real-world data (Search on Sorted Data
+detects dense clusters and handles them exactly --- going below
+Goswami's bound on real-world data (Search on Sorted Data
 benchmark~\citep{kipf2019sosd}) while preserving the guarantee on
 adversarial inputs.
