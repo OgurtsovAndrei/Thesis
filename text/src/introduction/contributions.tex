@@ -6,7 +6,7 @@ Rosetta, Grafite, and Memento all carry a worst-case FPR guarantee ---
 the Goswami bound up to a constant or additive term --- and differ
 mainly in cost: Rosetta pays $O(\log_2 \mathcal{L})$ Bloom probes per
 query, Grafite a single predecessor probe within an additive $2n$ bits,
-and Memento adds dynamicity at static-axis parity with Grafite.
+and Memento adds dynamicity while matching Grafite on static workloads.
 SuRF and SNARF trade that guarantee for shape: SuRF is not
 parameterized by $\varepsilon$ at all and inherits its FPR from the
 trie skeleton (empirically up to $25\%$ on correlated workloads);
@@ -35,7 +35,8 @@ lower bound on adversarial inputs and beats it on realistic ones.
     \item \textbf{Adaptive bucket search (Chapter~\ref{chap:ere}).}
     We implement Goswami's Weak Prefix Search (WPS) index in full and
     show empirically that adaptive binary/linear search on packed
-    suffixes outperforms it at LSM bucket sizes, removing $59$~bits of
+    suffixes outperforms it at the bucket sizes that arise at per-SSTable
+    scale (Section~\ref{sec:eval-workload-params}), removing $59$~bits of
     auxiliary metadata per key and reducing per-query latency by
     $13$--$30\times$ relative to WPS.
 
@@ -60,7 +61,8 @@ lower bound on adversarial inputs and beats it on realistic ones.
     prior art in the Goswami line and patched it with two
     fixes applied in every measurement of
     Chapter~\ref{chap:evaluation}: a balanced-descent replacement for
-    the SUX (succinct-data-structures library by Vigna) \texttt{select\_zero} pathology on clustered inputs
+    the \texttt{select\_zero} pathology in the SUX
+    succinct-data-structures library~\citep{vigna2008broadword} on clustered inputs
     (three-orders-of-magnitude latency regression in the unpatched
     code, Section~\ref{subsec:grafite-improvements}); and a lossless
     Elias--Fano fallback that activates when the upstream constructor

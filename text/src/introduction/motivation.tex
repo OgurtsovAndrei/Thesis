@@ -52,7 +52,8 @@ We implemented Goswami's internal Weak Prefix Search
 calls ``mainly theoretic in nature and thus very complicated to
 implement''~\citep{grafite2024} --- and measured its cost empirically.
 The measurements show that adaptive binary/linear search on packed
-suffixes outperforms WPS at LSM bucket sizes on both axes ---
+suffixes outperforms WPS at the bucket sizes that arise at per-SSTable
+scale on both axes ---
 $59$~bits per key of auxiliary metadata removed and per-query latency
 reduced by $13$--$30\times$ relative to WPS.
 Once WPS is gone, Goswami's two metadata vectors $D_1, D_2$ collapse

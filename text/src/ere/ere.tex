@@ -449,12 +449,13 @@ that we apply in every measurement of Chapter~\ref{chap:evaluation}.
 
 \paragraph{The SUX \texttt{selectZero} pathology on clustered inputs.}
 Grafite's predecessor query routes through the \texttt{select\_zero}
-primitive of the SUX succinct-bit-vector library. The original
+primitive of the SUX succinct-data-structures library
+by~\citet{vigna2008broadword}. The original
 inventory-and-subtree traversal degrades to an $O(N)$ linear scan on
 bit vectors with long zero runs separated by dense regions --- exactly
 the shape produced by clustered key distributions. On uniform data the
 primitive costs ${\sim}30$~ns per query; on SOSD-Wikipedia, where keys
-form tight epoch-aligned clusters, the same primitive blows up to
+form tight near-sequential clusters, the same primitive blows up to
 ${\sim}88\,\mu$s per query --- a three-orders-of-magnitude regression
 purely from input geometry.
 

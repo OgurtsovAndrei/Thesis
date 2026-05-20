@@ -55,8 +55,9 @@
         layer on top.
         We implement Goswami's Weak Prefix Search index in full and show empirically
         that adaptive binary/linear search on packed suffixes is $8$--$160\times$
-        faster at LSM bucket sizes, which lets us collapse the two ERE metadata
-        vectors into one, saving $24\%$ of the metadata footprint.
+        faster at the bucket sizes that arise at per-SSTable scale, which lets us
+        collapse the two ERE metadata vectors into one, saving $24\%$ of the
+        metadata footprint.
         For sparse inputs we replace the locality-preserving hash with bit truncation,
         removing the $\log_2 \mathcal{L}$ term from the per-key budget.
         On top of this backend we add Seg-ARE, a single-pass density-based segmentation
