@@ -192,67 +192,19 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
 \end{table}
 
 \paragraph{Empty-only vs combined queries.}
-The latency tables above measure the empty-only workload of
-Section~\ref{subsec:queries-empty}, so the filter only ever
-exercises its ``no match'' code path. To check that the ordering
-between filters survives a realistic mix of empty and non-empty
-queries, we re-ran the same operating points with the combined
-workload of Section~\ref{subsec:queries-combined} (no truncation).
-At $n = 2^{24}$ on the four SOSD datasets and at $L \in \{1, 16, 1024\}$
-the changes fall into three groups:
-
-\begin{itemize}
-    \item \textbf{Roughly unchanged ($|\Delta| \leq 8\%$).}
-    Seg-ARE on every distribution and L, and Grafite on Facebook,
-    Wikipedia, and uniform inputs. These filters perform a
-    near-constant amount of work per query: Grafite a single
-    Elias--Fano predecessor probe, Seg-ARE a binary search over
-    cluster bounds plus one cluster or fallback hash probe.
-    Neither code path branches on whether the query contains a
-    key, so the latency depends mostly on cache state and not on
-    workload composition.
-
-    \item \textbf{Slower on dense or long queries ($+10\%$ to $+57\%$).}
-    Rosetta and SuRF on every cell where the query is likely to
-    contain a stored key, plus Grafite on Books and OSM, and
-    SNARF on the Wiki/Uniform/OSM cells. The mechanism differs
-    per filter:
-    Rosetta descends its Bloom cascade along the matching
-    prefix, so an empty query short-circuits at the first
-    negative Bloom level while a non-empty query descends the
-    full $\log_2 \mathcal{L}$ levels with branching at each step;
-    on Books $(\mathcal{L}=1024)$ this drives Rosetta's latency
-    up by $+50\%$. SuRF descends its level-order succinct trie until the child
-    bitmap reads zero --- a shallow exit on empty queries and a
-    full $\Theta(\text{trie height})$ traversal on non-empty
-    queries; the OSM dataset (64-bit cell IDs, $\sim\!50$-bit
-    effective universe) hits this worst case and SuRF slows by
-    $\sim\!37\%$ at every $L$.
-    Grafite's $\sim\!20\%$ on Books and OSM is a cache effect
-    rather than control flow: both Elias--Fano ranks cross a
-    superblock boundary when the hashed range straddles a stored
-    key, doubling the low-bits scan that dominates each rank.
-
-    \item \textbf{Faster on non-empty queries.}
-    SNARF on Books and the clustered distribution drops by $-5\%$
-    to $-10\%$: its Golomb-Coded-Set-compressed block scan returns on the
-    first matching candidate, so a non-empty query aborts in
-    the middle of a block instead of decoding it completely. The
-    saving is bounded by the average block size, which is why the
-    effect does not exceed $\sim\!10\%$.
-\end{itemize}
-
-The ordering between filters is preserved across both workloads
---- Seg-ARE remains the fastest, Rosetta and SNARF the slowest.
-The largest single shift, Rosetta's $+57\%$ on
-Books~$(\mathcal{L}=16)$, leaves it well behind Grafite and
-Seg-ARE either way. We report the empty-only numbers as headline
-figures because they let the FPR and latency columns be measured
-on the same query batch and they isolate the filter's structural
-work from the workload-specific control flow.
-The combined-workload check is the more realistic operating
-point and confirms that the qualitative conclusions of
-Table~\ref{tab:latency-L1024} hold under non-empty queries too.
+To check that the ordering between filters survives a realistic
+mix of empty and non-empty queries, we re-ran the same operating
+points with the combined workload of
+Section~\ref{subsec:queries-combined} (no truncation), at
+$n = 2^{24}$ on the four SOSD datasets and $L \in \{1, 16, 1024\}$.
+The ordering between filters is preserved: at $\mathcal{L} = 1$
+Rosetta is fastest (Table~\ref{tab:latency-L1}) and Seg-ARE a
+close second; at $\mathcal{L} \geq 16$ Seg-ARE is fastest and
+Rosetta degrades steeply
+(Tables~\ref{tab:latency-L16}--\ref{tab:latency-L1024}), while
+SNARF stays among the slowest at every $\mathcal{L}$.
+We report the empty-only numbers as headline figures because
+they let FPR and latency be measured on the same query batch.
 
 % ────────────────────────────────────────────────────────────────────
 
