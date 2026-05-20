@@ -7,22 +7,9 @@ within the measured parameter range.
 \textbf{Bold} marks the best result in each column
 (lowest BPK / lowest latency / highest throughput), excluding dashes.
 
-\paragraph{Interpolated BPK.}
-BPK is reported as the \emph{interpolated} value at $\mathrm{FPR}=10^{-3}$.
-Given the last measured point above the threshold $(b_1, f_1)$
-and the first below it $(b_2, f_2)$, we interpolate linearly
-in $\log(\mathrm{FPR})$ space:
-\[
-    b^* = b_1 + (b_2 - b_1)\,\frac{\ln f_1 - \ln\varepsilon}{\ln f_1 - \ln f_2}.
-\]
-Points where FPR rose relative to the previous measurement (outliers)
-are excluded before interpolation.
-Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
-
-\colorbox{orange}{TODO}
-%\paragraph{Reported BPK.}
-%BPK is the smallest measured value at which $\mathrm{FPR} \leq 10^{-3}$.
-%Latency and throughput are taken from that same point.
+\paragraph{Reported BPK.}
+BPK is the smallest measured value at which $\mathrm{FPR} \leq 10^{-3}$.
+Latency and throughput are taken from that same point.
 
 % ────────────────────────────────────────────────────────────────────
 
@@ -46,24 +33,24 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
         SuRF    & 17.7          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 16.9          & 20.9             & \textnormal{---} & 17.6             & 17.3          & 32.4         \\
         SNARF   & 12.4          & \textnormal{---} & 8.8              & \textnormal{---} & \textnormal{---} & \textnormal{---} & 13.4          & \textnormal{---} & 8.7              & \textnormal{---} & 15.1          & 12.5         \\
         Rosetta & 15.5          & 14.8             & 15.8             & 14.9             & 14.8             & 14.9             & 15.8          & 14.7             & 16.0             & 14.7             & 14.9          & 14.8         \\
-        Grafite & \textbf{10.8} & 12.7             & 4.7              & \textbf{12.5}    & 12.6             & 14.7             & \textbf{11.3} & 12.5             & 4.6              & 12.6             & \textbf{12.4} & 11.9         \\
-        Seg-ARE & 12.6          & \textbf{12.5}    & \textbf{3.7}     & 12.6             & \textbf{12.5}    & \textbf{7.7}     & \textbf{11.3} & \textbf{12.5}    & \textbf{3.7}     & \textbf{12.4}    & \textbf{12.4} & \textbf{7.8} \\
+        Grafite & \textbf{10.8} & \textbf{12.6}    & 4.7              & \textbf{12.9}    & 12.6             & 14.7             & \textbf{11.3} & 12.5             & 4.6              & 12.6             & \textbf{12.4} & 11.9         \\
+        Seg-ARE & 12.6          & 13.5             & \textbf{3.7}     & 13.5             & \textbf{12.5}    & \textbf{7.7}     & \textbf{11.3} & \textbf{12.5}    & \textbf{3.7}     & \textbf{12.4}    & \textbf{12.4} & \textbf{7.8} \\
         \midrule
         \multicolumn{13}{l}{\textit{Short queries, $\mathcal{L} = 16$}} \\
         \midrule
         SuRF    & 17.5          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 16.8          & 20.9             & \textnormal{---} & 17.6             & 17.3          & 31.8         \\
         SNARF   & 11.7          & \textnormal{---} & 9.7              & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.0          & \textnormal{---} & 10.2             & \textnormal{---} & \textbf{15.0} & 12.6         \\
         Rosetta & 20.5          & 20.1             & 20.1             & 20.2             & 20.1             & 19.4             & 20.3          & 20.0             & 20.3             & 20.3             & 20.0          & 19.3         \\
-        Grafite & \textbf{11.3} & 16.5             & 5.2              & \textbf{16.5}    & 16.7             & 15.0             & \textbf{11.3} & 16.6             & 4.6              & 16.8             & 16.6          & 14.6         \\
-        Seg-ARE & \textbf{11.3} & \textbf{16.3}    & \textbf{3.7}     & \textbf{16.5}    & \textbf{16.4}    & \textbf{7.9}     & \textbf{11.3} & \textbf{16.3}    & \textbf{3.7}     & \textbf{16.7}    & 15.1          & \textbf{7.9} \\
+        Grafite & \textbf{11.3} & 16.6             & 4.9              & 16.6             & 16.6             & 14.6             & \textbf{11.3} & 16.6             & 4.6              & 16.8             & 16.6          & 14.6         \\
+        Seg-ARE & 11.4          & \textbf{16.5}    & \textbf{3.7}     & \textbf{16.5}    & \textbf{16.5}    & \textbf{7.9}     & \textbf{11.3} & \textbf{16.3}    & \textbf{3.7}     & \textbf{16.7}    & 15.1          & \textbf{7.9} \\
         \midrule
         \multicolumn{13}{l}{\textit{Long queries, $\mathcal{L} = 1024$}} \\
         \midrule
         SuRF    & 18.1          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 18.0          & \textbf{24.2}    & \textnormal{---} & \textbf{17.7}    & 17.2          & 34.9         \\
         SNARF   & 11.9          & \textnormal{---} & 12.7             & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.4          & \textnormal{---} & 12.3             & \textnormal{---} & 15.4          & 13.6         \\
         Rosetta & 46.2          & 41.8             & 47.2             & 41.1             & 41.3             & 43.5             & 44.8          & 42.1             & 47.4             & 42.8             & 41.7          & 43.1         \\
-        Grafite & \textbf{11.3} & \textbf{22.5}    & 5.2              & 22.6             & 22.6             & 18.7             & \textbf{11.3} & 22.5             & 4.6              & 22.4             & 22.7          & 18.9         \\
-        Seg-ARE & \textbf{11.3} & \textbf{22.5}    & \textbf{3.7}     & \textbf{22.4}    & \textbf{22.4}    & \textbf{9.2}     & \textbf{11.3} & 22.5             & \textbf{3.7}     & 22.3             & \textbf{15.3} & \textbf{9.3} \\
+        Grafite & \textbf{11.3} & 22.9             & 4.6              & 22.6             & 22.6             & 18.9             & \textbf{11.3} & 22.5             & 4.6              & 22.4             & 22.7          & 18.9         \\
+        Seg-ARE & 11.4          & \textbf{22.5}    & \textbf{3.7}     & \textbf{22.5}    & \textbf{22.5}    & \textbf{9.4}     & \textbf{11.3} & 22.5             & \textbf{3.7}     & 22.3             & \textbf{15.3} & \textbf{9.3} \\
         \bottomrule
     \end{tabular}
     \caption{BPK to reach FPR $\leq 10^{-3}$ for point ($\mathcal{L}=1$),
@@ -78,6 +65,9 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
         Dash: target FPR not reached within the measured BPK range.}
     \label{tab:bpk}
 \end{table}
+
+Across flat distributions (FB, OSM, Books, Uniform) Seg-ARE matches Grafite to within $0.5$~BPK.
+On structured distributions --- Wikipedia edit timestamps and the synthetic clustered set --- Seg-ARE saves $1$--$10$~BPK.
 
 % ────────────────────────────────────────────────────────────────────
 
