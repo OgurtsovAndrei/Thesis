@@ -29,7 +29,7 @@
 \newtheorem{assumption}{Assumption}
 
 \title{Applicability of Non-Asymptotic Optimizations in Range Filters}
-\author{Andrei Ogurtsov}
+\author{Andrei Ogurtsov \\ \small Supervised by Artem Anisimov}
 \date{\today}
 
 \begin{document}
@@ -54,7 +54,7 @@
         This thesis re-engineers the Goswami construction and adds a distribution-aware
         layer on top.
         We implement Goswami's Weak Prefix Search index in full and show empirically
-        that adaptive binary/linear search on packed suffixes is $8$--$160\times$
+        that adaptive binary/linear search on packed suffixes is $13$--$30\times$
         faster at the bucket sizes that arise at per-SSTable scale, which lets us
         collapse the two ERE metadata vectors into one, saving $24\%$ of the
         metadata footprint.
