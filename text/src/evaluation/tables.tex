@@ -69,7 +69,7 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
         \midrule
         SuRF    & 17.5          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 16.8          & 20.9          & \textnormal{---} & 17.6          & 17.3          & 31.8 \\
         SNARF   & 11.7          & \textnormal{---} & 9.7              & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.0          & \textnormal{---} & 10.2          & \textnormal{---} & \textbf{15.0} & 12.6 \\
-        Rosetta & 20.5          & 20.1             & 20.1             & 20.2             & 20.1             & 19.4             & 20.3          & 20.0             & 20.3             & \textnormal{---} & \textnormal{---} & 19.3 \\
+        Rosetta & 20.5          & 20.1             & 20.1             & 20.2             & 20.1             & 19.4             & 20.3          & 20.0             & 20.3             & 20.3             & 20.0             & 19.3 \\
         Grafite & \textbf{11.3} & 16.5             & 5.2              & \textbf{16.5}    & 16.7             & 15.0             & \textbf{11.3} & 16.6             & 4.6              & 16.8          & 16.6          & 14.6 \\
         Seg-ARE & \textbf{11.3} & \textbf{16.3}    & \textbf{3.7}     & \textbf{16.5}    & \textbf{16.4}    & \textbf{7.9}  & \textbf{11.3} & \textbf{16.3} & \textbf{3.7}  & \textbf{16.7} & 15.1          & \textbf{7.9} \\
         \bottomrule
@@ -92,10 +92,10 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
         Filter  & FB            & OSM              & Wiki             & Books            & Unif             & Clust            & FB               & OSM              & Wiki             & Books            & Unif             & Clust            \\
         \midrule
         SuRF    & 18.1          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 18.0          & \textbf{24.2} & \textnormal{---} & \textbf{17.7} & 17.2          & 34.9 \\
-        SNARF   & 11.9          & \textnormal{---} & 12.7             & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.4          & \textnormal{---} & 12.3          & \textnormal{---} & \textnormal{---} & 13.6 \\
-        Rosetta & 46.2          & 41.8             & 47.2             & 41.1             & 41.3             & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        Grafite & \textbf{11.3} & \textbf{22.5}    & 5.2              & 22.6             & 22.6             & 18.7             & \textbf{11.3} & \textnormal{---} & 4.6           & \textnormal{---} & \textnormal{---} & 18.9 \\
-        Seg-ARE & \textbf{11.3} & \textbf{22.5}    & \textbf{3.7}     & \textbf{22.4}    & \textbf{22.4}    & \textbf{9.2}  & \textbf{11.3} & \textnormal{---} & \textbf{3.7}  & 22.3          & \textbf{15.3} & \textbf{9.3} \\
+        SNARF   & 11.9          & \textnormal{---} & 12.7             & \textnormal{---} & \textnormal{---} & \textnormal{---} & 12.4          & \textnormal{---} & 12.3          & \textnormal{---} & 15.4          & 13.6 \\
+        Rosetta & 46.2          & 41.8             & 47.2             & 41.1             & 41.3             & 43.5             & 44.8             & 42.1             & 47.4             & 42.8             & 41.7             & 43.1             \\
+        Grafite & \textbf{11.3} & \textbf{22.5}    & 5.2              & 22.6             & 22.6             & 18.7             & \textbf{11.3} & 22.5             & 4.6           & 22.4          & 22.7          & 18.9 \\
+        Seg-ARE & \textbf{11.3} & \textbf{22.5}    & \textbf{3.7}     & \textbf{22.4}    & \textbf{22.4}    & \textbf{9.2}  & \textbf{11.3} & 22.5             & \textbf{3.7}  & 22.3          & \textbf{15.3} & \textbf{9.3} \\
         \bottomrule
     \end{tabular}
     \caption{BPK at FPR $\leq 10^{-3}$ --- long queries ($\mathcal{L}=1024$).
@@ -110,6 +110,9 @@ Latency and throughput are taken from the actual measured point $(b_2, f_2)$.
 
 Query latency (ns/op) measured at the same operating point as the BPK tables above
 (minimum BPK that achieves FPR $\leq 10^{-3}$).
+An asterisk (*) marks cells where the filter did not reach the target FPR
+within the measured BPK range; the value is the latency at the lowest achieved FPR under the smart-mix workload,
+shown as a query-time floor rather than the operating-point latency.
 
 \begin{table}[H]
     \centering
@@ -123,8 +126,8 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
         \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
         Filter  & FB           & OSM              & Wiki             & Books            & Unif             & Clust            & FB           & OSM              & Wiki             & Books            & Unif             & Clust            \\
         \midrule
-        SuRF    & 427          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 524              & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        SNARF   & 982          & \textnormal{---} & 693              & \textnormal{---} & \textnormal{---} & \textnormal{---} & 980              & \textnormal{---} & 651              & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
+        SuRF    & 427          & 677*             & 159*             & 588*             & 604*             & 643*             & 524              & 677*             & 159*             & 588*             & 604*             & 643*             \\
+        SNARF   & 982          & 974*             & 693              & 953*             & 1017*            & 1555*            & 980              & 974*             & 651              & 953*             & 1017*            & 1555*            \\
         Rosetta & \textbf{137} & \textbf{181}     & \textbf{134}     & \textbf{162}     & \textbf{157}     & \textbf{160}  & \textbf{169}     & \textbf{186}     & \textbf{183}     & \textbf{177}     & \textbf{188}     & \textbf{188}    \\
         Grafite & 328          & 348              & 278              & 299              & 299              & 493              & 385          & 388              & 277              & 347              & 378              & 542              \\
         Seg-ARE & 404          & 192              & 146              & 197              & 191              & 321              & 410          & 224              & 199              & 216              & 218              & 333              \\
@@ -155,9 +158,9 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
         \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
         Filter  & FB           & OSM              & Wiki             & Books            & Unif             & Clust            & FB               & OSM              & Wiki             & Books            & Unif             & Clust            \\
         \midrule
-        SuRF    & 410          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 506              & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        SNARF   & 1005         & \textnormal{---} & 692              & \textnormal{---} & \textnormal{---} & \textnormal{---} & 928              & \textnormal{---} & 575              & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        Rosetta & 1797         & 2531             & 676              & \textnormal{---} & \textnormal{---} & 1551             & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 1445            \\
+        SuRF    & 410          & 597*             & 153*             & 712*             & 515*             & 748*             & 506              & 597*             & 153*             & 712*             & 515*             & 748*             \\
+        SNARF   & 1005         & 1043*            & 692              & 758*             & 1214*            & 926*             & 928              & 1043*            & 575              & 758*             & 1214*            & 926*             \\
+        Rosetta & 1797         & 2531             & 676              & 2418             & 2462             & 1551             & 1843             & 3511             & 882              & 2729             & 2447             & 1445            \\
         Grafite & \textbf{322} & 300              & 266              & 305              & 307              & 499              & 408              & 396              & 290              & 357              & 318              & 361              \\
         Seg-ARE & 373          & \textbf{227}     & \textbf{170}     & \textbf{197}     & \textbf{192}     & \textbf{326}     & \textbf{407}     & \textbf{250}     & \textbf{232}     & \textbf{231}     & \textbf{224}     & \textbf{214}    \\
         \bottomrule
@@ -179,10 +182,10 @@ Query latency (ns/op) measured at the same operating point as the BPK tables abo
         \cmidrule(lr){2-5} \cmidrule(lr){6-7} \cmidrule(lr){8-11} \cmidrule(lr){12-13}
         Filter  & FB           & OSM              & Wiki             & Books            & Unif             & Clust            & FB               & OSM              & Wiki             & Books            & Unif             & Clust            \\
         \midrule
-        SuRF    & 383          & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & 470              & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        SNARF   & 987          & \textnormal{---} & 689              & \textnormal{---} & \textnormal{---} & \textnormal{---} & 830              & \textnormal{---} & 554              & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        Rosetta & 4305         & \textnormal{---} & 816              & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        Grafite & \textbf{307} & 355              & 219              & \textnormal{---} & \textnormal{---} & 644              & \textbf{348}     & \textnormal{---} & 292              & \textnormal{---} & \textnormal{---} & 492             \\
+        SuRF    & 383          & 649*             & 201*             & 526*             & 530*             & 616*             & 470              & 649*             & 201*             & 526*             & 530*             & 616*             \\
+        SNARF   & 987          & 1129*            & 689              & 746*             & 1286*            & 1041*            & 830              & 1129*            & 554              & 746*             & 1286*            & 1041*            \\
+        Rosetta & 4305         & 16767            & 816              & 16064            & 14602            & 4584             & 4678             & 20318            & 1339             & 15352            & 18324            & 4238             \\
+        Grafite & \textbf{307} & 355              & 219              & 334              & 1211             & 644              & \textbf{348}     & 332              & 292              & 347              & 366              & 492              \\
         Seg-ARE & 394          & \textbf{231}     & \textbf{169}     & \textbf{199}     & \textbf{195}     & \textbf{335}     & 421              & \textbf{236}     & \textbf{225}     & \textbf{229}     & \textbf{224}     & \textbf{215}    \\
         \bottomrule
     \end{tabular}
@@ -212,6 +215,9 @@ they let FPR and latency be measured on the same query batch.
 \label{subsec:eval-throughput}
 
 Build throughput (M\,keys/s) measured at the same operating point as the BPK tables above.
+An asterisk (*) marks cells where the filter did not reach the target FPR
+within the measured BPK range; the value is the throughput at the highest
+measured BPK (same proxy point as the asterisked latency entries).
 
 \begin{table}[H]
     \centering
@@ -222,8 +228,8 @@ Build throughput (M\,keys/s) measured at the same operating point as the BPK tab
         \cmidrule(lr){2-5} \cmidrule(lr){6-7}
         Filter  & FB            & OSM              & Wiki             & Books            & Uniform       & Clustered     \\
         \midrule
-        SuRF    & 26.8          & \textbf{26.8}    & \textnormal{---} & \textbf{27.8}    & \textbf{23.8} & 28.1          \\
-        SNARF   & 11.0          & \textnormal{---} & 14.5             & \textnormal{---} & 10.1          & 9.5           \\
+        SuRF    & 26.8          & \textbf{26.8}    & 36.8*            & \textbf{27.8}    & \textbf{23.8} & 28.1          \\
+        SNARF   & 11.0          & 8.1*             & 14.5             & 8.2*             & 10.1          & 9.5           \\
         Rosetta & 3.8           & 2.8              & 3.8              & 2.7              & 2.8           & 2.8           \\
         Grafite & \textbf{54.5} & 23.3             & 34.9             & 23.6             & 23.5          & 35.7          \\
         Seg-ARE & 41.3          & 25.6             & \textbf{57.1}    & 24.8             & 23.2          & \textbf{38.6} \\
@@ -243,9 +249,9 @@ Build throughput (M\,keys/s) measured at the same operating point as the BPK tab
         \cmidrule(lr){2-5} \cmidrule(lr){6-7}
         Filter  & FB            & OSM              & Wiki             & Books            & Uniform          & Clustered     \\
         \midrule
-        SuRF    & 26.8          & \textbf{26.8}    & \textnormal{---} & \textbf{27.8}    & 23.8             & 28.1          \\
-        SNARF   & 11.0          & \textnormal{---} & 13.3             & \textnormal{---} & 10.1             & 9.5           \\
-        Rosetta & 2.1           & 2.1              & 3.0              & \textnormal{---} & \textnormal{---} & 2.3           \\
+        SuRF    & 26.8          & \textbf{26.8}    & 36.9*            & \textbf{27.8}    & 23.8             & 28.1          \\
+        SNARF   & 11.0          & 8.0*             & 13.3             & 8.1*             & 10.1             & 9.5           \\
+        Rosetta & 2.1           & 2.1              & 3.0              & 2.3              & 2.2              & 2.3           \\
         Grafite & \textbf{54.5} & 22.8             & 34.9             & 22.9             & 23.1             & 36.0          \\
         Seg-ARE & 41.3          & 22.3             & \textbf{57.1}    & 25.1             & \textbf{73.0}    & \textbf{44.1} \\
         \bottomrule
@@ -264,10 +270,10 @@ Build throughput (M\,keys/s) measured at the same operating point as the BPK tab
         \cmidrule(lr){2-5} \cmidrule(lr){6-7}
         Filter  & FB            & OSM              & Wiki             & Books            & Uniform          & Clustered        \\
         \midrule
-        SuRF    & 26.8          & \textbf{26.8}    & \textnormal{---} & \textbf{27.8}    & 23.8             & 28.1             \\
-        SNARF   & 11.0          & \textnormal{---} & 11.7             & \textnormal{---} & 10.1             & 9.1              \\
-        Rosetta & 1.1           & \textnormal{---} & 1.3              & \textnormal{---} & \textnormal{---} & \textnormal{---} \\
-        Grafite & \textbf{54.5} & 22.4             & 34.9             & \textnormal{---} & \textnormal{---} & 38.4             \\
+        SuRF    & 26.8          & \textbf{26.8}    & 36.6*            & \textbf{27.8}    & 23.8             & 28.1             \\
+        SNARF   & 11.0          & 8.0*             & 11.7             & 8.2*             & 10.1             & 9.1              \\
+        Rosetta & 1.1           & 1.2              & 1.3              & 1.2              & 1.3              & 1.2              \\
+        Grafite & \textbf{54.5} & 22.4             & 34.9             & 23.1             & 21.6             & 38.4             \\
         Seg-ARE & 41.3          & 23.4             & \textbf{57.1}    & 25.1             & \textbf{73.0}    & \textbf{44.1}    \\
         \bottomrule
     \end{tabular}
