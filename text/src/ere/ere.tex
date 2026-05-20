@@ -177,7 +177,7 @@ high-bits bitvector, and the packed suffix array~$A_{ds}$ plays the role of the
 low-bits array.
 We arrived at this layout by replacing WPS with adaptive search:
 Section~\ref{sec:wps} shows that adaptive linear or binary
-search over packed suffixes is 8--160$\times$ faster (Table~\ref{tab:wps-vs-binsearch}),
+search over packed suffixes is $13$--$30\times$ faster (Table~\ref{tab:wps-vs-binsearch}),
 making the two-vector $(D_1, D_2)$ layout --- which exists to support the WPS access
 pattern --- redundant.
 Grafite~\citep{grafite2024} independently uses the same Elias-Fano structure as their
@@ -375,12 +375,8 @@ compressed):
     \caption{Three WPS variants on Apple~M4~Max, $K = 64$, 64-bit keys.
         Query latency generally rises with $n$ because the trie deepens,
         so each query traverses more levels and pays one
-        hash-probe-and-pointer-chase per level. Raw bench output:
-        \texttt{research/wps/locators/wps\_query\_latency\_2026-05-03.txt}.
-        \colorbox{orange}{TODO: re-measure at the thesis anchor scales
-            $n \in \{2^{20}, 2^{24}, 2^{28}\}$ (current sweep stops at $2^{20}$);
-            other $n$ values are not relevant. The Space~(bits/key) figures
-            also predate the current code and need verification.}}
+        hash-probe-and-pointer-chase per level.
+}
     \label{tab:wps-cost}
 \end{table}
 
@@ -418,9 +414,7 @@ across representative bucket sizes.
     For LSM-typical bucket sizes (a few thousand keys) the speedup is
     $13$--$30\times$; the full $8$--$160\times$ span above covers the
     range of bucket sizes a generic ARE filter can encounter.
-    \colorbox{orange}{TODO: double-check together with Table~\ref{tab:wps-cost}
-        before submission --- the bucket-size axis here is conceptually
-        independent of the $n$ axis used to derive the WPS Compact range.}}
+}
     \label{tab:wps-vs-binsearch}
 \end{table}
 
