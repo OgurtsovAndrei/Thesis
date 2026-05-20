@@ -64,8 +64,7 @@ via two layers:
     The hash partitions $U$ into blocks of size $r$, applies an independent rotation
     within each block, and then maps the shifted block onto $U'$ by translation.
     The hash is drawn from a pairwise-independent family $\mathcal{H}$,
-    so for any $h \in \mathcal{H}$ and any pair $x_1, x_2 \in U$,
-    $\Pr[h(x_1) = h(x_2) \text{ and } x_1 \neq x_2] \leq 1/2^K$.
+    so for any $h \in \mathcal{H}$ $\Pr[h(x_1) = h(x_2) \text{ and } x_1 \neq x_2] \leq 1/2^K$.
 
     \item An \textbf{Exact Range Emptiness (ERE)} (Section~\ref{sec:ere}) structure over $S' = h(S) \subseteq U'$:
     a succinct structure with zero error and space $n \log_2(r/n) + O(n)$ bits, which answers ``$[a', b'] \cap S' = \emptyset$?''.
