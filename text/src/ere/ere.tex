@@ -472,7 +472,13 @@ then run the original word-by-word scan --- which is now bounded by
 a single $1024$-bit window regardless of how the zeros are
 distributed globally. The query cost becomes $O(\log B + 1024/64)$
 with $B$ the number of spatial blocks, replacing the unbounded
-forward walk. We patched the SUX sources locally in our CGo wrapper.
+forward walk.
+Each spatial-inventory entry is a \texttt{uint64}
+covering $1024$ bits of the underlying vector, so the auxiliary
+structure costs $64/1024 = 1/16$ bit per bit-vector bit; on the
+Elias--Fano upper vector (${\sim}2n$ bits for $n$ keys) this is
+${\sim}0.125$~BPK of additional space.
+We patched the SUX sources locally in our CGo wrapper.
 
 \subsection{Space Analysis}
 
