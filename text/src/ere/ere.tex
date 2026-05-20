@@ -415,6 +415,9 @@ across representative bucket sizes.
     WPS pays a large per-call constant from trie pointer-chasing and hash
     probing that does not amortise with $k$, while binary search on packed
     suffixes scales as $O(\log k)$ with small constants on contiguous memory.
+    For LSM-typical bucket sizes (a few thousand keys) the speedup is
+    $13$--$30\times$; the full $8$--$160\times$ span above covers the
+    range of bucket sizes a generic ARE filter can encounter.
     \colorbox{orange}{TODO: double-check together with Table~\ref{tab:wps-cost}
         before submission --- the bucket-size axis here is conceptually
         independent of the $n$ axis used to derive the WPS Compact range.}}
