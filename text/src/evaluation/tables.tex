@@ -149,6 +149,13 @@ SNARF stays among the slowest at every $\mathcal{L}$.
 We report the empty-only numbers as headline figures because
 they let FPR and latency be measured on the same query batch.
 
+\paragraph{Why Rosetta is fastest at $\mathcal{L} = 1$.}
+At $\mathcal{L} = 1$ Rosetta's Bloom-cascade query
+(Section~\ref{sec:existing-work}, paragraph~\nameref{par:rosetta})
+degenerates to a single probe of the deepest Bloom level. The
+per-level probe cost that hurts it at $\mathcal{L} \geq 16$ is
+not paid here.
+
 % ────────────────────────────────────────────────────────────────────
 
 \subsection{Build Throughput at Operating Point}
