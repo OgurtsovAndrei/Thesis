@@ -50,18 +50,22 @@ Properties of the hash:
 
 Combining truncation with ERE yields a filter where the contiguous phantom structure
 (Figure~\ref{fig:phantom-comparison}) changes the collision analysis.
-We define the \textbf{collision zone} of stored key $x$ as the number of query starting
-positions $q$ for which $[q, q+\mathcal{L}-1]$ is a false positive due to $x$:
-$x \notin [q, q+\mathcal{L}-1]$ yet $h(x) \in h([q, q+\mathcal{L}-1])$.
+We define the \textbf{collision zone} $\mathrm{CZ}(x)$ of stored key $x$ as the set of
+query starting positions $q$ for which $[q, q+\mathcal{L}-1]$ is a false positive due
+to $x$:
+\[
+    \mathrm{CZ}(x) \;=\; \bigl\{\, q \;:\; x \notin [q, q+\mathcal{L}-1] \text{ yet } h(x) \in h([q, q+\mathcal{L}-1]) \,\bigr\}.
+\]
+Its cardinality $|\mathrm{CZ}(x)|$ counts the false-positive starts contributed by $x$.
 
 \begin{itemize}
     \item \textbf{SODA hash:} each of the $2^t - 1$ phantom positions is far from $x$,
     so all $\mathcal{L}$ starting positions that cover it also exclude $x$;
-    collision zone $= \mathcal{L}(2^t - 1)$ (Section~\ref{sec:soda}).
+    $|\mathrm{CZ}(x)| = \mathcal{L}(2^t - 1)$ (Section~\ref{sec:soda}).
     \item \textbf{Truncation:} all $2^t - 1$ phantoms share one contiguous block with $x$.
     A query misses $x$ only when it starts inside $(x, \text{block\_right}]$ or ends
     inside $[\text{block\_left}, x)$; these two intervals have widths $(2^t - 1 - r)$
-    and $r$ respectively, summing to $2^t - 1$ regardless of $\mathcal{L}$
+    and $r$ respectively, so $|\mathrm{CZ}(x)| = 2^t - 1$ regardless of $\mathcal{L}$
     (Eq.~\eqref{eq:trunc-fpr}).
 \end{itemize}
 
@@ -72,7 +76,7 @@ factor from the filter's space formula:
     \centering
     \begin{tabular}{@{}llll@{}}
         \toprule
-        Hash & Collision zone & $K$ for FPR $\leq \varepsilon$ & Filter BPK \\
+        Hash & $|\mathrm{CZ}(x)|$ & $K$ for FPR $\leq \varepsilon$ & Filter BPK \\
         \midrule
         Random (SODA) & $\mathcal{L} \times (2^t-1)$ & $\log_2(n\mathcal{L}/\varepsilon)$ &
         $\log_2(\mathcal{L}/\varepsilon) + O(1)$ \\
@@ -155,8 +159,12 @@ Capping at 1 and handling the $R \leq \mathcal{L}$ case:
 
 Dense or sequential keys ($R \leq \mathcal{L}$) have FPR~$= 0$ for free: every query
 of length $\mathcal{L}$ hits a key, so the filter is exact.
-Low FPR requires $R - \mathcal{L} \gg 2^t$; when $R - \mathcal{L} \lesssim 2^t$
-the phantom block covers most of the gap and FPR approaches~1.
+When $R > \mathcal{L}$, Eq.~\eqref{eq:trunc-fpr} reads $\mathrm{FPR} \approx 2^t / (R - \mathcal{L})$, so the gap excess $R - \mathcal{L}$ has to be a large multiple of the
+phantom-block width $2^t$ to keep FPR low.
+Concretely: at $R - \mathcal{L} = 10 \cdot 2^t$ the FPR is ${\approx}0.1$; at
+$R - \mathcal{L} = 2 \cdot 2^t$ it is already ${\approx}0.5$; at the floor
+$R - \mathcal{L} \leq 2^t$ the phantom block covers (almost) all of the gap and the
+formula saturates at FPR~$=1$.
 
 \subsubsection*{Breakdown thresholds for SOSD datasets}
 

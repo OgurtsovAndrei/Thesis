@@ -9,8 +9,8 @@ the raw sorted keys --- the wrapper substitutes
 \texttt{ef\_sux\_vector(keys)} and the filter answers range queries by
 predecessor probe (Section~\ref{subsec:grafite-fallback}).
 Below this threshold Grafite is an approximate filter; above it, it is
-essentially EF over the whole universe.
-Similar to Adaptive Filter~\ref{sec:adaptive}.
+essentially EF over the whole universe --- the same exact/approximate
+switch as our Adaptive Filter (Section~\ref{sec:adaptive}).
 
 Seg-ARE applies the same EF primitive, but only after segmenting the
 input.

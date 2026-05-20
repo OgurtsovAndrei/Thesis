@@ -43,9 +43,11 @@ grow from core points by absorbing all density-reachable neighbours.
     \label{fig:dbscan-1d}
 \end{figure}
 
-In a general metric space, finding the $\delta$-neighbourhood of each point costs $O(n^2)$.
+On a finite point set in a general metric space, the naive DBSCAN scan computes the
+$\delta$-neighbourhood of each point in $O(n^2)$ time~\citep{ester1996dbscan}; the
+original paper recovers $O(n \log n)$ with a spatial index such as an R-tree.
 On sorted one-dimensional data, density queries reduce to a sliding window, giving an
-$O(n)$ implementation.
+$O(n)$ implementation without any auxiliary index.
 
 
 \section{SegARE: Design and Algorithm}
