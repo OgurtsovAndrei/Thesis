@@ -36,6 +36,12 @@ stream (Section~\ref{subsec:queries-combined}). The latency tables
 of Section~\ref{sec:eval-tables} also report a small follow-up
 comparison between the two workloads.
 
+\paragraph{Hardware.}
+Unless stated otherwise, all measurements in this chapter were taken
+on an Apple~M4~Max (macOS, 64\,GB unified memory).
+The one exception is the ERE backend comparison of Section~\ref{sec:eval-ere-backend},
+which uses an x86-64 Linux machine (Linux~6.17, 62\,GB RAM) because it relies on
+\texttt{perf\_event\_open} for hardware-counter measurements.
 
 \section{Workload Parameter Choices}
 \label{sec:eval-workload-params}

@@ -125,7 +125,9 @@ shown as a query-time floor rather than the operating-point latency.
         empty and the filter exercises only its ``no match''
         code path. Right half: smart-mix workload without
         truncation (Section~\ref{subsec:queries-combined}), so a
-        fraction of the queries actually contain stored keys.}
+        fraction of the queries actually contain stored keys.
+        Hardware: Apple~M4~Max, single core,
+        $10^6$ queries per cell (mean ns/op).}
     \label{tab:latency}
 \end{table}
 
@@ -197,6 +199,7 @@ measured BPK (same proxy point as the asterisked latency entries).
     \end{tabular}
     \caption{Build throughput (M\,keys/s) at the same operating point as
         Table~\ref{tab:bpk}, for point ($\mathcal{L}=1$),
-        short ($\mathcal{L}=16$), and long ($\mathcal{L}=1024$) queries.}
+        short ($\mathcal{L}=16$), and long ($\mathcal{L}=1024$) queries.
+        Hardware: Apple~M4~Max, single core.}
     \label{tab:throughput}
 \end{table}
