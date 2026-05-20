@@ -55,8 +55,8 @@ The key-weighted per-cluster EF \emph{lower-part} contribution is
     \frac{1}{\sum_c n_c} \sum_c n_c \cdot \log_2\!\Bigl(\frac{2^{M_c}}{n_c}\Bigr)
     \;\approx\; 2.87 \text{ bits per in-cluster key}
 \]
---- the rest $\approx 7$ bits per key are metadata overhead and keys in truncation fallback
-forms resulting $\approx 10$ bits per key.
+--- the remaining ${\approx}\,7$ bits per key come from metadata overhead
+and the truncation-fallback keys, giving ${\approx}\,10$ bits per key in total.
 
 Grafite cannot trigger its lossless fallback
 (Section~\ref{subsec:grafite-fallback}) at the requested $\varepsilon$
@@ -119,13 +119,13 @@ filters use the same EF coding primitive.
 
 \paragraph{Uniform synthetic.}
 Uniform is the case where Seg-ARE has no clusters to extract --- every
-key goes to the truncation fallback. The truncation hack
+key goes to the truncation fallback. The truncation scheme
 (Section~\ref{sec:truncation}) pays
 $\log_2(1/\varepsilon) + O(1)$ bits per key \emph{independently of
     $\mathcal{L}$}: large inter-key gaps make collisions rare,
 so the fixed-suffix length needed to hit a target $\varepsilon$ does
 not have to grow with the query length.
-Grafite has no such hack and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$,
+Grafite has no such mechanism and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$,
 which grows with $\mathcal{L}$ by exactly $\log_2 \mathcal{L}$ bits.
 Tables~\ref{tab:bpk-L1}--\ref{tab:bpk-L1024} (Uniform / gap-heavy column)
 show the consequence at $\varepsilon = 10^{-3}$: at

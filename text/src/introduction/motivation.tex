@@ -45,7 +45,7 @@ or stay at the bound and guarantee the FPR under any workload
 Many production LSM keys, however, have exploitable structure: they pack densely across the used range, spread across the universe, or concentrate in dense regions separated by large gaps~\citep{cao2020facebook}.
 None of the filters above uses this.
 
-This thesis takes apart, simplifies, and speeds up the Goswami-style
+This thesis decomposes, simplifies, and accelerates the Goswami-style
 \emph{Exact Range Emptiness} (ERE) backend.
 We implemented Goswami's internal Weak Prefix Search
 (WPS) index~\citep{belazzougui2010fast} in full --- the part Grafite

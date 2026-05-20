@@ -21,7 +21,7 @@ a fallback filter.
     \label{fig:segmentation}
 \end{figure}
 
-This chapter describes SegARE, our segmentation algorithm based on 1D DBSCAN.
+This chapter describes Seg-ARE, our segmentation algorithm based on 1D DBSCAN.
 
 
 \section{1D DBSCAN in $O(n)$}
@@ -50,7 +50,7 @@ On sorted one-dimensional data, density queries reduce to a sliding window, givi
 $O(n)$ implementation without any auxiliary index.
 
 
-\section{SegARE: Design and Algorithm}
+\section{Seg-ARE: Design and Algorithm}
 \label{sec:hybrid-scan}
 
 \paragraph{Border expansion increases bits per key.}
@@ -59,7 +59,7 @@ themselves dense --- into the nearest cluster.
 This widens the cluster's span without adding proportional density.
 The exact-mode ERE sub-filter encodes keys relative to that universe, so a wider span
 means more bits per key.
-SegARE drops border expansion: the dense core alone minimises span and keeps the
+Seg-ARE drops border expansion: the dense core alone minimises span and keeps the
 sub-filter cost low.
 
 \paragraph{Expressing $\delta$ through \texttt{minPts}.}
@@ -89,7 +89,7 @@ The choice balances three concerns:
     sub-ranges with fewer keys go entirely to the fallback, negating the benefit of
     segmentation.
 \end{itemize}
-512 sits at a practical sweet spot: small enough to catch real clusters, large enough to
+512 balances these concerns: small enough to catch real clusters, large enough to
 keep per-segment overhead acceptable.
 
 To sanity-check the scale: for $\mathcal{L} = 128$, $\varepsilon = 10^{-3}$ we get
@@ -98,11 +98,11 @@ $\delta \approx 3.3 \times 10^{7}$. Comparing this against the SOSD gap statisti
 so most keys fall into segments, while OSM's median gap of $4.5 \times 10^{7}$ sits
 right at the threshold --- segmentation captures only the denser sub-clusters.
 A uniform 64-bit distribution has average gap ${\sim}2^{44} \gg \delta$, so every key
-goes to the fallback and SegARE degrades to plain truncation.
+goes to the fallback and Seg-ARE degrades to plain truncation.
 
 \subsection{Algorithm}
 
-SegARE runs in three steps:
+Seg-ARE runs in three steps:
 
 \begin{enumerate}
     \item \textbf{Forward sweep:} slide a two-pointer window. Whenever the window holds

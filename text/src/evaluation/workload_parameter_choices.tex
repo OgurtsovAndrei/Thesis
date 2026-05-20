@@ -45,7 +45,7 @@ Two production cases push $n$ higher. Secondary-index and counter
 column families (CFs --- RocksDB's per-table partitioning, with
 independent in-memory write buffers (memtables) and SSTables) store all information in the
 key and use the value as a placeholder: in Facebook's social-graph
-workload (UDB), the \texttt{Assoc\_count} CF has $20$-byte bigint
+workload, the \texttt{Assoc\_count} CF has $20$-byte bigint
 keys with values
 under $8$~B, averaging $\sim 28$~B/entry, and similar patterns
 appear in other index/counter CFs~\citep{cao2020facebook}.

@@ -222,7 +222,7 @@ the changes fall into three groups:
     negative Bloom level while a non-empty query descends the
     full $\log_2 \mathcal{L}$ levels with branching at each step;
     on Books $(\mathcal{L}=1024)$ this drives Rosetta's latency
-    up by $+50\%$. SuRF descends its LOUDS trie until the child
+    up by $+50\%$. SuRF descends its level-order succinct trie until the child
     bitmap reads zero --- a shallow exit on empty queries and a
     full $\Theta(\text{trie height})$ traversal on non-empty
     queries; the OSM dataset (64-bit cell IDs, $\sim\!50$-bit
@@ -235,7 +235,7 @@ the changes fall into three groups:
 
     \item \textbf{Faster on non-empty queries.}
     SNARF on Books and the clustered distribution drops by $-5\%$
-    to $-10\%$: its GCS-compressed block scan returns on the
+    to $-10\%$: its Golomb-Coded-Set-compressed block scan returns on the
     first matching candidate, so a non-empty query aborts in
     the middle of a block instead of decoding it completely. The
     saving is bounded by the average block size, which is why the

@@ -60,7 +60,7 @@ the data distribution.
 
 \begin{enumerate}
   \item Sort input keys.
-  \item Build a PGM index~\citep{ferragina2020pgm} on float64-converted keys to obtain
+  \item Build a Piecewise Geometric Model (PGM) index~\citep{ferragina2020pgm} on float64-converted keys to obtain
     an approximate CDF.
   \item Fix monotonicity (PGM positions may be non-monotone due to float64 rounding)
     via running max.
@@ -95,8 +95,8 @@ practical advantage:
 \begin{itemize}
   \item When query distribution matches data: CDF-ARE uses fewer bits per key, but FPR
     is comparable or worse due to $L_\text{eff}$ amplification in dense regions.
-  \item When query distribution diverges from data: FPR degrades catastrophically
-    (40--58\% at $\sigma_\text{query} = 4 \times \sigma_\text{data}$).
+  \item When query distribution diverges from data: FPR rises to 40--58\%
+    at $\sigma_\text{query} = 4 \times \sigma_\text{data}$.
   \item The $O(n^2)$ build cost makes it impractical for large datasets.
 \end{itemize}
 

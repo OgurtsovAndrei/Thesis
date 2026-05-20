@@ -47,7 +47,7 @@ inside the block.
 The local check uses two weak prefix queries (Section~\ref{sec:wps})
 as an $O(1)$ index into the bucket's sorted suffix list; the stored
 suffixes themselves witness (non-)emptiness via a final comparison.
-\colorbox{orange}{TODO: btw i do not like forward refs, maybe I need to chenge order of sections?}
+\colorbox{orange}{TODO: btw i do not like forward refs, maybe I need to change order of sections?}
 
 \subsection{Local Search in Buckets}
 \label{subsec:ere-local-search}
@@ -260,7 +260,7 @@ The original ARE construction~\citep{goswami2015approximate} uses a \emph{locali
 hash: consecutive input keys map to consecutive hashed values, so dense
 input regions stay dense in the hashed universe.
 On heavily clustered benchmarks the heaviest bucket reaches ${\sim}6 \times 10^4$~keys.
-At the typical Facebook UDB range ($\mathcal{L} = 16$), median bucket
+At the typical Facebook User-DB (UDB) range ($\mathcal{L} = 16$), median bucket
 sizes stay in the low thousands; near production P90 ($\mathcal{L} = 256$)
 they grow into the tens of thousands
 (Table~\ref{tab:eval-bucket-fill}, Chapter~\ref{chap:evaluation}).
@@ -297,7 +297,7 @@ In real workloads observed buckets are typically two orders of
 magnitude smaller than this hard limit; the worst case is bounded
 but rare.
 
-By the way, distributions with dense ranges can be handled by the hybrid filter of
+Distributions with dense ranges are handled by the hybrid filter of
 Chapter~\ref{chap:hybrid}: each cluster is isolated into its own exact
 sub-filter, turning local density into a compression advantage.
 

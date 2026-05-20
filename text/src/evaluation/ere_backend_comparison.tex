@@ -1,5 +1,5 @@
 We compare the two-vector and one-vector ERE backends as the exact layer
-of two ARE wrappers (SODA and Greedy+Merge) across six distributions.
+of two ARE wrappers (SODA and Seg-ARE) across six distributions.
 The analytic prediction from
 Section~\ref{subsec:ere-one-vector} is $\Delta = M/n$~BPK, where $M$ is
 the number of non-empty blocks; the maximum is $B/n = 1$~BPK and the
@@ -13,7 +13,7 @@ end-to-end.
     \small
     \begin{tabular}{@{}lrrrrrr@{}}
         \toprule
-        & \multicolumn{3}{c}{SODA} & \multicolumn{3}{c}{Greedy+Merge} \\
+        & \multicolumn{3}{c}{SODA} & \multicolumn{3}{c}{Seg-ARE} \\
         \cmidrule(lr){2-4} \cmidrule(lr){5-7}
         Dataset
         & two-vec BPK & one-vec BPK & $\Delta$
@@ -32,9 +32,9 @@ end-to-end.
         backend (Section~\ref{subsec:ere-one-vector}). Workload: $n = 2^{20}$
         (or all available keys, whichever is smaller), $K = 34$ — equivalent to
         $\mathcal{L} = 128$, $\varepsilon = 0.01$ via $K = \lceil \log_2(n\mathcal{L}/\varepsilon) \rceil$
-        for SODA; Greedy+Merge takes $K$ directly. SODA stays in the
+        for SODA; Seg-ARE takes $K$ directly. SODA stays in the
         $14$--$16$~BPK headline window (Table~\ref{tab:industry-bpk}) on every
-        distribution; Greedy+Merge ranges from $4.0$~BPK (\texttt{sosd\_books},
+        distribution; Seg-ARE ranges from $4.0$~BPK (\texttt{sosd\_books},
         single-cluster collapse) to $26.4$~BPK (\texttt{sosd\_osm}, many small
         clusters with per-cluster bookkeeping overhead).}
     \label{tab:ere-backend-cross-distribution}
@@ -49,7 +49,7 @@ SODA ($\Delta \le 0.020$~BPK on \texttt{sosd\_fb}, \texttt{sosd\_wiki},
 SODA hash collisions drop the unique fingerprint count slightly below the power-of-two threshold;
 this halves the ERE block count $B$ to $2^{19}$, shifting the load factor to $\lambda \approx 2$;
 the reported ARE BPK is logical, so it perfectly matches the analytic $M/n$ prediction without physical succinct-index overheads).
-Greedy+Merge isolates dense regions and
+Seg-ARE isolates dense regions and
 builds a separate ERE per cluster; even within a cluster the keys
 retain sub-structure, so $M/B$ stays well below $1$. Its absolute BPK
 is dominated by the wrapper rather than ERE, so even small $M/n$
@@ -59,7 +59,7 @@ values translate into a noticeable relative improvement (e.g.\
 \paragraph{Query latency.}
 Table~\ref{tab:ere-backend-query-latency} reports average ARE query
 latency on the same workload. Both wrappers gain uniformly across all
-distributions: SODA $1.21$--$2.95\times$, Greedy+Merge $1.28$--$3.00\times$.
+distributions: SODA $1.21$--$2.95\times$, Seg-ARE $1.28$--$3.00\times$.
 The $\geq 2\times$ wins on \texttt{uniform} and \texttt{sosd\_osm} come
 from cache-friendly access at small suffix width ($w = K - \log_2 n = 14$):
 the contiguous $D$ vector keeps both \textsc{Select} calls hitting the
@@ -75,7 +75,7 @@ between $D_1$ and $D_2$ and pays an extra cache miss per query.
     \small
     \begin{tabular}{@{}lrrrrrr@{}}
         \toprule
-        & \multicolumn{3}{c}{SODA} & \multicolumn{3}{c}{Greedy+Merge} \\
+        & \multicolumn{3}{c}{SODA} & \multicolumn{3}{c}{Seg-ARE} \\
         \cmidrule(lr){2-4} \cmidrule(lr){5-7}
         Dataset
         & two-vec ns & one-vec ns & speedup

@@ -16,7 +16,7 @@ full provided width.
 
 Competing implementations:
 \begin{itemize}
-    \item \textbf{SegARE}: our simplified 1D DBSCAN hybrid filter (Section~\ref{sec:hybrid-scan}).
+    \item \textbf{Seg-ARE}: our simplified 1D DBSCAN hybrid filter (Section~\ref{sec:hybrid-scan}).
     \item \textbf{Grafite}~\citep{grafite2024}: information-theoretically optimal
     range filter (SIGMOD~2024).
     \item \textbf{SNARF}~\citep{vaidya2022snarf}: learned CDF-based range filter.
@@ -72,7 +72,7 @@ comparison between the two workloads.
         \toprule
         Filter     & BPK ($\mathcal{L}{=}65536$) & FPR                      & Distribution dependence  \\
         \midrule
-        Scan-ARE   & ${\sim}5$                   & $< 10^{-8}$              & Best on clustered data   \\
+        Seg-ARE    & ${\sim}5$                   & $< 10^{-8}$              & Best on clustered data   \\
         Grafite    & ${\sim}10$                  & ${\sim}10^{-2}$          & Distribution-independent \\
         SNARF      & ${\sim}28$                  & ${\sim}10^{-3}$          & Learned, data-dependent  \\
         SODA       & ${\sim}5$                   & $\approx 1$ (degenerate) & Distribution-independent \\
@@ -80,7 +80,7 @@ comparison between the two workloads.
         Bloom      & ${\sim}30$                  & ${\sim}10^{-4}$          & Distribution-independent \\
         \bottomrule
     \end{tabular}
-    \caption{Comparison at $n = 2^{24}$, $\mathcal{L} = 65536$ on SOSD Books. Scan-ARE
+    \caption{Comparison at $n = 2^{24}$, $\mathcal{L} = 65536$ on SOSD Books. Seg-ARE
     dominates the Pareto frontier by exploiting cluster density for exact-mode sub-filters.}
     \label{tab:comparison}
 \end{table}

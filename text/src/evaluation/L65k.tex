@@ -6,7 +6,7 @@ length $K = \lceil \log_2(n \cdot \mathcal{L} / \varepsilon) \rceil$ must grow b
 $\log_2(\mathcal{L}) = 16$ bits to maintain the same FPR. For SODA, this means 16 extra
 BPK. For Bloom, $\mathcal{L} = 65536$ point lookups per query is impractical.
 
-Scan-ARE sidesteps this on two levels:
+Seg-ARE sidesteps this on two levels:
 
 \paragraph{Exact clusters.} Each cluster stores its $[\min, \max]$ bounds. If a query
 range $[a, b]$ overlaps a cluster's bounds, at least one stored key is inside $[a, b]$
@@ -31,7 +31,7 @@ SODA-based filters must pay.
     \centering
     \includegraphics[width=0.9\textwidth]{fpr_bpk_books_L65536}
     \caption{FPR vs BPK --- SOSD Books (ISBN sequences, highly clustered),
-        $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE achieves FPR~$< 10^{-8}$ at
+        $n = 2^{24}$, $\mathcal{L} = 65536$. Seg-ARE achieves FPR~$< 10^{-8}$ at
         ${\sim}5$~BPK; all non-hybrid filters degrade to FPR~$\approx 1$.}
     \label{fig:books-l65536}
 \end{figure}
@@ -40,14 +40,14 @@ SODA-based filters must pay.
     \centering
     \includegraphics[width=0.9\textwidth]{fpr_bpk_wiki_L65536}
     \caption{FPR vs BPK --- SOSD Wiki (Wikipedia timestamps, moderately clustered),
-        $n = 2^{24}$, $\mathcal{L} = 65536$. Scan-ARE dominates; only Grafite remains
+        $n = 2^{24}$, $\mathcal{L} = 65536$. Seg-ARE dominates; only Grafite remains
         competitive at ${\sim}10$~BPK but with 2--3$\times$ more space.}
     \label{fig:wiki-l65536}
 \end{figure}
 
-On both datasets, Scan-ARE achieves FPR~$< 10^{-8}$ at ${\sim}5$~BPK, while Truncation,
+On both datasets, Seg-ARE achieves FPR~$< 10^{-8}$ at ${\sim}5$~BPK, while Truncation,
 SODA, and Bloom all degrade to FPR~$\approx 1$ at comparable budgets. SNARF plateaus at
 FPR~$\sim 10^{-3}$. Only Grafite remains competitive on Wiki (${\sim}10$~BPK for
-FPR~$10^{-2}$), but at 2--3$\times$ the space of Scan-ARE.
+FPR~$10^{-2}$), but at 2--3$\times$ the space of Seg-ARE.
 
 % TODO: add Facebook and OSM results when plots are regenerated
