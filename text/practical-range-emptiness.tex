@@ -60,12 +60,12 @@
         metadata footprint.
         For sparse inputs we replace the locality-preserving hash with bit truncation,
         removing the $\log_2 \mathcal{L}$ term from the per-key budget.
-        On top of this backend we add Seg-ARE, a single-pass density-based segmentation
-        that routes dense clusters to exact-mode sub-filters and sparse tails to the
-        truncation hash.
+        On top of this backend we add Segmented Approximate Range Emptiness Filter
+        (Seg-ARE), a single-pass density-based segmentation that routes dense
+        clusters to exact-mode sub-filters and sparse tails to the truncation hash.
 
-        On the SOSD benchmark at $\mathrm{FPR} \leq 10^{-3}$, the resulting filter
-        reaches $3.7$ bits per key on Wikipedia timestamps, $7.7$--$9.4$ on synthetic
+        On the Search on Sorted Data (SOSD) benchmark at False Positive Rate $\leq 10^{-3}$,
+        the resulting filter reaches $3.7$ bits per key on Wikipedia timestamps, $7.7$--$9.4$ on synthetic
         clustered keys, and matches the strongest baselines on uniform and Facebook
         user IDs, while preserving the worst-case Goswami guarantee on adversarial
         inputs.
