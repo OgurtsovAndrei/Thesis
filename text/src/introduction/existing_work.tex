@@ -9,7 +9,7 @@ bound (Section~\ref{sec:bounds}).
 \paragraph{Trie-based: SuRF.}
 The Succinct Range Filter~\citep{zhang2018surf} stores the set of keys
 as a Fast Succinct Trie --- a compact bitmap-based succinct trie
-encoding at about $10$ bits per node~\citep[\S4.1.2]{zhang2018surf}.
+encoding at about $10$ bits per node~\citep[\S3.1]{zhang2018surf}.
 A range query descends the trie to the boundary of the query interval.
 The cost of the query is set by the trie depth, which reflects the
 key length in the universe (e.g.\ $\leq 8$ levels for $64$-bit
@@ -72,7 +72,7 @@ redistributes the per-level budget using runtime query statistics
 gathered between LSM compactions~\citep[\S2.4]{luo2020rosetta}.
 The authors are explicit about the cost: ``due to the multiple
 probes required (for every prefix) Rosetta has a high probe
-cost''~\citep[\S1]{luo2020rosetta}. On a $50$M uint64-key benchmark
+cost''~\citep[\S2]{luo2020rosetta}. On a $50$M uint64-key benchmark
 at $22$ bits per key, Rosetta is up to $4\times$ faster end-to-end
 than SuRF and up to $40\times$ faster than default RocksDB on short
 and medium range queries~\citep[\S5, Fig.~5(A1), (D)]{luo2020rosetta};
@@ -178,12 +178,12 @@ The small gap reflects Memento's ${\sim}3.3n$-bit metadata overhead
 versus Grafite's $2n$~\citep[\S6]{eslami2024memento}.
 Range queries take $O(\log_2 \mathcal{L})$ CPU operations and
 $1$--$2$ random memory accesses, both holding against any
-workload~\citep[\S6, Table~2]{eslami2024memento}. This matches
+workload~\citep[\S6, Table~1]{eslami2024memento}. This matches
 Grafite on the cache-miss bound; in practice Memento is slightly
 slower than Grafite~\citep[\S7.1]{eslami2024memento}.
 
 The authors explicitly note that static range filters suffice for the immutable files of an
-LSM-Tree deployment~\citep[\S2]{eslami2024memento}; Memento targets
+LSM-Tree deployment~\citep[\S1]{eslami2024memento}; Memento targets
 workloads where the key set itself is mutable --- single-global-filter
 LSM-trees, B-Tree indexes, and systems that mix transactional and analytical workloads.
 Because our thesis stays within the static setting, Memento is

@@ -14,7 +14,9 @@ then add the key's within-block offset $x \bmod 2^K$.
 The result is in $[0, 2^K)$.
 
 $u: [0, U/2^K) \to [0, 2^K)$ is drawn from the multiply-add-shift family
-of~\citet{dietzfelbinger1996universal}, stored as two 64-bit coefficients $(a, b)$:
+of~\citet{dhkp1997closestpair} (a power-of-two-modulus variant of the
+pairwise-independent construction of~\citet{dietzfelbinger1996universal}),
+stored as two 64-bit coefficients $(a, b)$:
 \begin{equation}
     u(x) = \left\lfloor \frac{a \cdot x + b \bmod 2^{64}}{2^{64-K}} \right\rfloor.
     \label{eq:soda-u}
@@ -48,7 +50,7 @@ Properties of the hash:
 Grafite~\citep{grafite2024} uses a hash of the same locality-preserving form but draws
 its per-block shift from a different pairwise-independent family --- multiply-add-modulo
 over a Mersenne prime, requiring true modulo operations, whereas the multiply-add-shift
-family of~\citet{dietzfelbinger1996universal} used here only needs multiplications and shifts.
+family of~\citet{dhkp1997closestpair} used here only needs multiplications and shifts.
 The theoretical guarantees are identical;
 Section~\ref{sec:grafite-deep-dive} dissects Grafite's full construction and our
 implementation-level contributions to it.

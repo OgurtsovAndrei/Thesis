@@ -83,8 +83,8 @@ level (L1+), RocksDB stores SSTables as a non-overlapping
 \emph{sorted run}: each file carries $[\textit{smallest},
 \textit{largest}]$ key metadata in the MANIFEST (RocksDB's global level-metadata file), and a query does an
 $O(\log\#\textit{files})$ binary search on this metadata to identify
-only the SSTables whose key range overlaps the query, then probes
-their per-file filters~\citep{rocksdb-leveled}.
+only the SSTables whose key range overlaps the query~\citep{rocksdb-leveled},
+then probes their per-file filters~\citep{rocksdb-bloom}.
 
 \paragraph{Our choice of $n$.}
 We benchmark at three anchor scales:

@@ -53,7 +53,7 @@ suffixes themselves witness (non-)emptiness via a final comparison.
 
 The original paper~\citep{goswami2015approximate} suggests a Weak Prefix Search
 (WPS)~\citep{belazzougui2010fast} structure based on a Hollow Z-Fast Trie
-(ZFT)~\citep{belazzougui2009monotone} for $O(1)$ worst-case local queries.
+(ZFT)~\citep{belazzougui2010fast} for $O(1)$ worst-case local queries.
 We use binary search on bit-packed suffixes, with an adaptive fallback to linear scan for small buckets, instead.
 At the bucket sizes that occur in practice, binary search --- or even
 linear scan on the smallest buckets --- is faster than an $O(1)$ ZFT
