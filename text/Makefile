@@ -10,7 +10,7 @@ BENCH_ROOT = ../..
 # --- DIFF CONFIGURATION ---
 # Set the commit hash here to highlight changes relative to it.
 # You can use a hash (e.g., eecabc5) or relative (e.g., HEAD~1)
-BASE_COMMIT = a76ba0b0
+BASE_COMMIT = 440e1d2c
 DIFF_OUTPUT = diff_highlighted.pdf
 # ---------------------------
 
