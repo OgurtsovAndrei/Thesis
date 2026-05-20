@@ -1,4 +1,4 @@
-Each table below reports results at the operating point that achieves
+Each table below reports results at the configuration that achieves
 $\mathrm{FPR} \leq 10^{-3}$ with the fewest bits per key
 ($\varepsilon = 10^{-3}$, gap-heavy query workload,
 $n = \min(2^{28},\allowbreak\ |\text{dataset}|)$).
@@ -71,14 +71,14 @@ On structured distributions --- Wikipedia edit timestamps and the synthetic clus
 
 % ────────────────────────────────────────────────────────────────────
 
-\subsection{Query Latency at Operating Point}
+\subsection{Query Latency at the Chosen Configuration}
 \label{subsec:eval-latency}
 
-Query latency (ns/op) measured at the same operating point as the BPK table above
+Query latency (ns/op) measured at the same configuration as the BPK table above
 (minimum BPK that achieves FPR $\leq 10^{-3}$).
 An asterisk (*) marks cells where the filter did not reach the target FPR
 within the measured BPK range; the value is the latency at the lowest achieved FPR under the smart-mix workload,
-shown as a query-time floor rather than the operating-point latency.
+shown as a query-time floor rather than the latency at the chosen configuration.
 
 \begin{table}[H]
     \centering
@@ -117,7 +117,7 @@ shown as a query-time floor rather than the operating-point latency.
         Seg-ARE & 394          & \textbf{231}     & \textbf{169}     & \textbf{199}     & \textbf{195}     & \textbf{335}     & 421          & \textbf{236}     & \textbf{225}     & \textbf{229}     & \textbf{224}     & \textbf{215}     \\
         \bottomrule
     \end{tabular}
-    \caption{Query latency (ns/op) at the same operating point as
+    \caption{Query latency (ns/op) at the same configuration as
         Table~\ref{tab:bpk}, for point ($\mathcal{L}=1$),
         short ($\mathcal{L}=16$), and long ($\mathcal{L}=1024$) queries.
         Left half: smart-mix workload with truncation
@@ -133,8 +133,8 @@ shown as a query-time floor rather than the operating-point latency.
 
 \paragraph{Empty-only vs combined queries.}
 To check that the ordering between filters survives a realistic
-mix of empty and non-empty queries, we re-ran the same operating
-points with the combined workload of
+mix of empty and non-empty queries, we re-ran the same
+configurations with the combined workload of
 Section~\ref{subsec:queries-combined} (no truncation), at
 $n = 2^{24}$ on the four SOSD datasets and $L \in \{1, 16, 1024\}$.
 The ordering between filters is preserved: at $\mathcal{L} = 1$
@@ -158,7 +158,7 @@ not paid here.
 \subsection{Build Throughput at Operating Point}
 \label{subsec:eval-throughput}
 
-Build throughput (M\,keys/s) measured at the same operating point as the BPK table above.
+Build throughput (M\,keys/s) measured at the same configuration as the BPK table above.
 An asterisk (*) marks cells where the filter did not reach the target FPR
 within the measured BPK range; the value is the throughput at the highest
 measured BPK (same proxy point as the asterisked latency entries).
@@ -197,7 +197,7 @@ measured BPK (same proxy point as the asterisked latency entries).
         Seg-ARE & 41.3          & 23.4             & \textbf{57.1}    & 25.1             & \textbf{73.0}    & \textbf{44.1}    \\
         \bottomrule
     \end{tabular}
-    \caption{Build throughput (M\,keys/s) at the same operating point as
+    \caption{Build throughput (M\,keys/s) at the same configuration as
         Table~\ref{tab:bpk}, for point ($\mathcal{L}=1$),
         short ($\mathcal{L}=16$), and long ($\mathcal{L}=1024$) queries.
         Hardware: Apple~M4~Max, single core.}

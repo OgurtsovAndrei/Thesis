@@ -444,18 +444,35 @@ that we apply in every measurement of Chapter~\ref{chap:evaluation}.
 \paragraph{The SUX \texttt{selectZero} pathology on clustered inputs.}
 Grafite's predecessor query routes through the \texttt{select\_zero}
 primitive of the SUX succinct-data-structures library
-by~\citet{vigna2008broadword}. The original
-inventory-and-subtree traversal degrades to an $O(N)$ linear scan on
-bit vectors with long zero runs separated by dense regions --- exactly
-the shape produced by clustered key distributions. On uniform data the
-primitive costs ${\sim}30$~ns per query; on SOSD-Wikipedia, where keys
-form tight near-sequential clusters, the same primitive blows up to
-${\sim}88\,\mu$s per query --- a three-orders-of-magnitude regression
-purely from input geometry.
+by~\citet{vigna2008broadword}. SUX answers \texttt{select\_zero}$(i)$
+in two stages: a precomputed \emph{inventory} array stores the
+position of every fixed-stride zero, giving a coarse jump to the
+neighbourhood of the answer; from there the original implementation
+scans the bit vector forward one 64-bit word at a time, subtracting
+the popcount of each word from the remaining rank until the word
+containing the $i$-th zero is found. The forward scan is bounded by
+the gap between two consecutive inventory entries: $O(1)$ when zeros
+are spread evenly, but it degrades to a linear walk over many
+all-ones words when one inventory bucket happens to span a long run
+of ones --- exactly the shape produced by clustered key
+distributions, where the Elias--Fano upper bit vector alternates
+between dense regions and large all-ones gaps. On uniform data the
+primitive costs ${\sim}30$~ns per query; on SOSD-Wikipedia, where
+keys form tight near-sequential clusters, the same primitive blows
+up to ${\sim}88\,\mu$s per query --- a three-orders-of-magnitude
+regression purely from input geometry.
 
-Our fix replaces the offending inventory-bound traversal with a
-balanced descent through the SUX subtree structure. We patched the
-relevant code locally in our CGo wrapper.
+Our fix adds a second-level \emph{spatial inventory}: an auxiliary
+array, built at construction time, that stores the cumulative zero
+count at every $1024$-bit boundary of the bit vector. Inside
+\texttt{select\_zero}, after the coarse inventory jump, we binary
+search this array for the $1024$-bit block whose cumulative count
+straddles the target rank, jump directly to that block, and only
+then run the original word-by-word scan --- which is now bounded by
+a single $1024$-bit window regardless of how the zeros are
+distributed globally. The query cost becomes $O(\log B + 1024/64)$
+with $B$ the number of spatial blocks, replacing the unbounded
+forward walk. We patched the SUX sources locally in our CGo wrapper.
 
 \subsection{Space Analysis}
 
