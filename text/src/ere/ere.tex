@@ -178,7 +178,8 @@ The single bitvector~$D$ is equivalent to Elias-Fano
 coding~\citep{elias1974efficient,fano1971number}: $D$ is exactly the unary-encoded
 high-bits bitvector, and the packed suffix array~$A_{ds}$ plays the role of the
 low-bits array.
-We derived this layout by first rejecting WPS: Section~\ref{sec:wps} shows that adaptive linear or binary
+We arrived at this layout by replacing WPS with adaptive search:
+Section~\ref{sec:wps} shows that adaptive linear or binary
 search over packed suffixes is 8--160$\times$ faster (Table~\ref{tab:wps-vs-binsearch}),
 making the two-vector $(D_1, D_2)$ layout --- which exists to support the WPS access
 pattern --- redundant.
@@ -312,8 +313,9 @@ $k = 2^{12}$, ${\sim}60$~ns at $k = 2^{17}$) --- logarithmic growth
 compresses the worst case to tens of nanoseconds.
 
 The default adaptive dispatch (linear for $k \leq 128$, binary above) gives
-the best of both branches: near-optimal in the common case and graceful
-degradation on adversarial distributions.
+the best of both branches: near-optimal in the common case (${\sim}3$~ns at
+$k \approx 12$) and bounded at tens of nanoseconds even on the largest
+buckets (${\sim}40$~ns at $k = 2^{12}$, ${\sim}60$~ns at $k = 2^{17}$).
 
 For uniform 64-bit keys with non-empty queries, the total ERE query takes
 ${\sim}33$--$36$~ns on Apple~M4~Max, stable across $n \in [2^{20},\, 2^{28}]$.

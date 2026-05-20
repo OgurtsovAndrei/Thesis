@@ -138,19 +138,13 @@ Cassandra's default \texttt{bloom\_filter\_fp\_chance} is $0.01$ for
 all compaction strategies except Leveled Compaction Strategy (LCS)~\citep{cassandra-bloom}.
 
 \paragraph{Query range length $\mathcal{L}$.}
-We sweep $\mathcal{L} \in \{1, 16, 128, 1024, 4096, 16384, 65536\}$.
-The lower half is production-aligned:
-in Facebook's UDB workload, more than $60\%$ of iterator operations
-read exactly one key, the P90 is below $100$ keys, and scans above
-$10{,}000$ are very rare~\citep{cao2020facebook}; the Yahoo! Cloud Serving
-Benchmark (YCSB) Workload~E caps short-range scans at $100$. Range filter
+We sweep $\mathcal{L} \in \{1, 16, 128, 1024\}$. This range is
+production-aligned: in Facebook's UDB workload, more than $60\%$ of
+iterator operations read exactly one key, the P90 is below $100$ keys,
+and scans above $10{,}000$ are very rare~\citep{cao2020facebook}; the
+Yahoo! Cloud Serving Benchmark (YCSB) Workload~E caps short-range scans
+at $100$. Range filter
 papers~\citep{vaidya2022snarf,luo2020rosetta,grafite2024,eslami2024memento}
-report headline FPR in this same window: SNARF at
-$\mathcal{L} = 256$, Rosetta at $\mathcal{L} = 64$, Grafite and
-Memento sweeping $\mathcal{L} \in \{1, 32, 1024\}$. The upper half
-($\mathcal{L} \geq 4096$) extends past production P99 and any reported
-literature sweep. Such large $\mathcal{L}$ values are usually excluded
-from filter benchmarks because hashing-based filters cannot maintain
-low FPR there; we include them because our construction can.
-
-\colorbox{orange}{TODO: really?}
+report headline FPR in this same window: SNARF at $\mathcal{L} = 256$,
+Rosetta at $\mathcal{L} = 64$, Grafite and Memento sweeping
+$\mathcal{L} \in \{1, 32, 1024\}$.

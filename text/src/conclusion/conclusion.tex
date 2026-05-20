@@ -69,7 +69,7 @@ Section~\ref{sec:hybrid-ef}:
 Seg-ARE is therefore not a universal improvement over Grafite.
 It is a distribution-aware option that activates when the data has the
 cluster-and-gap geometry common in many real LSM key sets
-(Wiki-like clustered timestamps, Facebook-UDB-like packed ID ranges) and stays harmless on the rest.
+(Wiki-like clustered timestamps) and matches Grafite on the rest.
 
 \section{Limitations}
 \label{sec:conclusion-limits}
@@ -92,8 +92,8 @@ per-cluster EF savings.
 \textbf{Static setting.} The construction takes a fixed key set;
 segments are not maintained under inserts or deletes. Dynamic key
 sets, where the cluster structure itself evolves, require the
-keepsake-box machinery of Memento~\citep{eslami2024memento} or an
-equivalent online segmentation scheme.
+keepsake-box scheme of Memento~\citep{eslami2024memento} or an
+equivalent online segmentation mechanism.
 
 \section{Future Work}
 \label{sec:conclusion-future}
