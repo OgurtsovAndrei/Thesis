@@ -6,7 +6,7 @@ An experimental approach: use the empirical CDF of the data as the locality-pres
 hash $h$, redistributing the FPR budget from sparse regions to dense regions.
 
 \textbf{Status:} theoretical exploration. Benchmarks did not show practical improvement
-over the SODA hash or hybrid segmentation.
+over the SODA hash or Seg-ARE.
 
 \subsection{Motivation}
 
@@ -100,5 +100,5 @@ practical advantage:
   \item The $O(n^2)$ build cost makes it impractical for large datasets.
 \end{itemize}
 
-Hybrid segmentation (Chapter~\ref{chap:hybrid}) achieves a similar goal --- exploiting
+Seg-ARE (Chapter~\ref{chap:hybrid}) achieves a similar goal --- exploiting
 clustering --- more effectively via segmentation and exact mode, without the CDF overhead.

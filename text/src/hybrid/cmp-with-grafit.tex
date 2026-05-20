@@ -122,7 +122,7 @@ Uniform is the case where Seg-ARE has no clusters to extract --- every
 key goes to the truncation fallback. The truncation hack
 (Section~\ref{sec:truncation}) pays
 $\log_2(1/\varepsilon) + O(1)$ bits per key \emph{independently of
-    $\mathcal{L}$}: large inter-key gaps make phantom collisions rare,
+    $\mathcal{L}$}: large inter-key gaps make collisions rare,
 so the fixed-suffix length needed to hit a target $\varepsilon$ does
 not have to grow with the query length.
 Grafite has no such hack and follows the Goswami line $\log_2(\mathcal{L}/\varepsilon) + O(1)$,

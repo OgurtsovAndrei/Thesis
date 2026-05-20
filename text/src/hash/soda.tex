@@ -31,9 +31,9 @@ of~\citet{dietzfelbinger1996universal}, stored as two 64-bit coefficients $(a, b
 
 Properties of the hash:
 \begin{itemize}
-    \item \textbf{Pairwise-independent:} $\Pr_{h \sim \mathcal{H}}[h(x_1) = h(x_2)] \leq 2^{-K}$
-    for every pair $x_1 \neq x_2 \in U$, where $\mathcal{H}$ is the multiply-add-shift family
-    (Equation~\eqref{eq:soda-u}).
+    \item \textbf{Pairwise-independent:} for every $h$ drawn from the multiply-add-shift family
+    $\mathcal{H}$ (Equation~\eqref{eq:soda-u}) and every pair $x_1 \neq x_2 \in U$,
+    $\Pr[h(x_1) = h(x_2)] \leq 2^{-K}$.
     This holds for sequential, clustered, or adversarial data.
     \item \textbf{Locality-preserving:} the hash applies a per-block rotation, so
     consecutive keys within the same block map to consecutive positions in $[0, 2^K)$.
@@ -47,9 +47,9 @@ Properties of the hash:
 \paragraph{Comparison with Grafite.}
 Grafite~\citep{grafite2024} uses a hash of the same locality-preserving form but draws
 its per-block shift from a different pairwise-independent family --- multiply-add-modulo
-over a Mersenne prime, requiring true modulo operations, where the multiply-add-shift
-family of~\citet{dietzfelbinger1996universal} used here replaces them with a multiplication
-and a right shift. The theoretical guarantees are identical;
+over a Mersenne prime, requiring true modulo operations, whereas the multiply-add-shift
+family of~\citet{dietzfelbinger1996universal} used here only needs multiplications and shifts.
+The theoretical guarantees are identical;
 Section~\ref{sec:grafite-deep-dive} dissects Grafite's full construction and our
 implementation-level contributions to it.
 
