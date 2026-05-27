@@ -19,7 +19,7 @@
 \input{figures/pipeline.tex}
 
 % --- Color palette: matches benchmark plots
-\definecolor{thScanARE}{HTML}{D946EF}    % magenta — Scan-ARE (DB-scan filter)
+\definecolor{thScanARE}{HTML}{D946EF}    % magenta — Segmented-ARE
 \definecolor{thRosetta}{HTML}{15803D}    % dark green (Tailwind green-700) — Rosetta
 \definecolor{thSNARF}{HTML}{1E3A8A}      % deep blue — SNARF
 \definecolor{thSuRF}{HTML}{DC2626}       % red — SuRF (was near-black, indistinguishable from SNARF)
@@ -54,11 +54,12 @@
 %  \begin{itemize}
 %    \item \textbf{Layer 1} $-$ succinct backend (one-vector ERE; WPS $\to$ binary search)
 %    \item \textbf{Layer 2} $-$ hash design (truncation + adaptive)
-%    \item \textbf{Layer 3} $-$ Scan-ARE (1D-DBSCAN over sorted keys)
+%    \item \textbf{Layer 3} $-$ Segmented-ARE (1D-DBSCAN over sorted keys)
 %  \end{itemize}
 %\end{frame}
 
 % Core slides — all in core/
+\input{core/01-teaser}
 \input{core/02-lsm}
 \input{core/03-filters}
 \input{core/04-problem}

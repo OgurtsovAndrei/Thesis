@@ -159,7 +159,7 @@
 <text class="label" x="908" y="100">Rosetta</text>
 <line x1="886" y1="132" x2="902" y2="132" stroke="#d946ef" stroke-width="2.5"/>
 <circle cx="894.0" cy="132.0" r="3" fill="#d946ef"/>
-<text class="label" x="908" y="136">DB-scan Range Filter</text>
+<text class="label" x="908" y="136">Segmented-ARE</text>
 <text x="480" y="578" text-anchor="middle">Bits per Key (BPK)</text>
 <text transform="translate(16,295) rotate(-90)" text-anchor="middle">False Positive Rate (FPR)</text>
 <line x1="90.0" y1="610.0" x2="870.0" y2="610.0" stroke="#ccc" stroke-width="1"/>

@@ -4,14 +4,24 @@
 
 ## Slide 0 — Title + Talk Arc (0:40)
 
-**Example text (~35s):**
+**Example text (~25s):**
 > "The topic of my thesis is Range Emptiness Filters.
-> A range filter answers one question: does the range [a, b] intersect the set of keys?
-> Today I will show why LSM trees need filters and how to build them well."
+> A range filter is a compact structure that tells whether a given range intersects the stored set.
+> The approximate version allows false positives but no false negatives — which makes it much smaller in memory."
 
 ---
 
-## Slide 1 — LSM-tree (Log-Structured Merge-Tree) (0:50)
+## Slide 1 — Teaser: Three Headline Results (0:30)
+
+**Example text (~30s):**
+> Today I will show you how we:
+> — reduced metadata bits in the exact range emptiness backend from Goswami;
+> — sped up queries by replacing Weak Prefix Search with adaptive search;
+> — built the Segmented-ARE filter, which goes below the Goswami bound on real-world data.
+
+---
+
+## Slide 2 — LSM-tree (Log-Structured Merge-Tree) (0:50)
 
 **Example text (~50s):**
 > Range emptiness filters are used in LSM-trees.
@@ -169,7 +179,7 @@
 > SNARF, SuRF and Rosetta are other solutions to the same ARE problem.
 > The structures are built on Facebook user IDs from the SOSD (Search on Sorted Data) dataset.
 > The n = 2²⁴ — the same scale at which SuRF shows its best results.
-> DB-scan Range Filter (purple line) reaches zero FPR at 11 bits per key.
+> Segmented-ARE (purple line) reaches zero FPR at 11 bits per key.
 > - SNARF saturates at 10⁻3 — no matter how much memory you give it, it cannot go lower.
 > - SuRF uses 19 BPK.
 > - Rosetta just struggles.
@@ -196,5 +206,5 @@
 > Three main results.
 > We reduced metadata usage by 24% — through single-vector Elias-Fano ERE.
 > We reduced query latency by 13–30× — by replacing WPS with adaptive binary/linear search.
-> We achieved almost 0 FPR at 11 bits per key on Facebook user IDs — using DB-scan Range Filter.
+> We achieved almost 0 FPR at 11 bits per key on Facebook user IDs — using Segmented-ARE.
 > Future work: dynamic updates, Partial Elias-Fano encoding, RocksDB integration. Thank you.

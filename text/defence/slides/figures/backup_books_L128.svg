@@ -304,7 +304,7 @@
 <text class="label" x="908" y="118">SODA</text>
 <line x1="886" y1="132" x2="902" y2="132" stroke="#d946ef" stroke-width="2.5"/>
 <circle cx="894.0" cy="132.0" r="3" fill="#d946ef"/>
-<text class="label" x="908" y="136">Scan-ARE</text>
+<text class="label" x="908" y="136">Segmented-ARE</text>
 <line x1="886" y1="150" x2="902" y2="150" stroke="#ea580c" stroke-width="2.5"/>
 <circle cx="894.0" cy="150.0" r="3" fill="#ea580c"/>
 <text class="label" x="908" y="154">Greedy+Merge</text>

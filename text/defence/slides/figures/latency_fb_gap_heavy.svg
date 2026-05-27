@@ -63,7 +63,7 @@
 <text class="label" x="908" y="118">Rosetta</text>
 <line x1="886" y1="150" x2="902" y2="150" stroke="#d946ef" stroke-width="2.5"/>
 <circle cx="894.0" cy="150.0" r="3" fill="#d946ef"/>
-<text class="label" x="908" y="154">DB-scan Filter</text>
+<text class="label" x="908" y="154">Segmented-ARE</text>
 <text x="480" y="578" text-anchor="middle">Range Length (L)</text>
 <text transform="translate(16,295) rotate(-90)" text-anchor="middle">Query Time (ns/op)</text>
 </svg>
