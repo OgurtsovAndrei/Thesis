@@ -1,0 +1,23 @@
+\begin{frame}{Backup --- Hardware Counters: One-Vector vs Two-Vector ERE}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Dataset       & $\Delta$ instrs & $\Delta$ L1-loads & $\Delta$ L1-misses \\
+    \midrule
+    uniform       & $-76\%$ & $-81\%$ & $-56\%$ \\
+    clustered     & $-34\%$ & $-35\%$ & $-20\%$ \\
+    sosd\_fb      & $-39\%$ & $-39\%$ & $-21\%$ \\
+    sosd\_wiki    & $-39\%$ & $-38\%$ & $-14\%$ \\
+    sosd\_osm     & $-76\%$ & $-81\%$ & $-56\%$ \\
+    sosd\_books   & $-12\%$ & $-13\%$ & $+4\%$ \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.8em}
+  {\footnotesize
+    Per-query reduction when switching from two-vector to one-vector ERE backend inside SODA.\\
+    Measured with \texttt{perf\_event\_open} (user-space) on x86-64 Linux, pinned to a single core.\\
+    $n = 2^{20}$, $K = 34$, range length $128$, $100\,000$ queries ($10\,000$ warmup).
+  }
+\end{frame}

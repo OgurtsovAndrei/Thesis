@@ -32,6 +32,21 @@
 \setbeamercolor{frametitle}{bg=black!5, fg=black}
 \setbeamerfont{frametitle}{family=\sffamily, series=\bfseries, size=\Large}
 
+% --- "Our contribution" badge in top-right corner of contribution slides
+\definecolor{thBadge}{HTML}{374151}  % dark slate grey
+\newcommand{\ourbadge}{%
+  \begin{tikzpicture}[overlay, remember picture]
+    \node[anchor=north east,
+          xshift=-1.2em, yshift=-1.2em,
+          fill=black!6, draw=none,
+          rounded corners=2pt, inner sep=4pt,
+          font=\normalsize\sffamily\bfseries,
+          text=thBadge]
+      at (current page.north east)
+      {\underline{Our contribution}};
+  \end{tikzpicture}%
+}
+
 % --- Title block
 \title{Practical Range Emptiness Filters}
 \subtitle{Succinct Backend and a Data-Aware Filter}
@@ -81,5 +96,7 @@
 
 % Backup slides — Q&A
 \input{backup/B12-query-latency}
+\input{backup/B13-ere-pmu}
+\input{backup/B14-ere-latency}
 
 \end{document}

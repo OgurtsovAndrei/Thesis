@@ -1,0 +1,23 @@
+\begin{frame}{Backup --- SODA Query Latency: One-Vector vs Two-Vector ERE}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Dataset       & two-vec ns & one-vec ns & speedup \\
+    \midrule
+    uniform       & $324.1$ & $90.6$  & $3.58\times$ \\
+    clustered     & $381.8$ & $287.5$ & $1.33\times$ \\
+    sosd\_fb      & $445.6$ & $309.5$ & $1.44\times$ \\
+    sosd\_wiki    & $424.7$ & $327.3$ & $1.30\times$ \\
+    sosd\_osm     & $334.9$ & $93.4$  & $3.59\times$ \\
+    sosd\_books   & $323.7$ & $308.4$ & $1.05\times$ \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.8em}
+  {\footnotesize
+    Average ARE query latency inside SODA, two-vector vs one-vector ERE backend.\\
+    $n = 2^{20}$, $K = 34$, range length $128$, raw $64$-bit keys. x86-64 Linux, single core.\\
+    At $n = 2^{24}$ absolute latencies grow $5$--$10\times$ once filter outgrows L3.
+  }
+\end{frame}

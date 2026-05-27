@@ -70,28 +70,13 @@
 
 ---
 
-## Slide 5 — Exact Range Emptiness as Elias-Fano (1:00)
+## Slide 5 — Exact Range Emptiness as Elias-Fano (0:30)
 
-**Example text (~55s):**
-> To keep things simple, we will only consider an example on this slide.
-> Here we have eight 8-bit keys.
-> We split each key into a 3-bit prefix (log 8) and a 5-bit suffix — the prefix determines the bucket,
-> the suffix is stored in it. All suffixes live in a packed array A.
->
-[//]: # (> This is the Elias-Fano encoding of the sorted key set.)
-> For navigation we need to know where each bucket starts.
->
-> To answer a range query :
-> The intersection of the range with S reduces to checking at most two boundary buckets.
-> We navigate to them using Select(D, i) in O(1), then run adaptive binary/linear search
-> on packed suffixes inside each bucket.
-> Goswami uses Weak Prefix Search instead.
->
-> Goswami instead stored two vectors:
-> - D₁ — which buckets are non-empty,
-> - D₂ — sizes of non-empty buckets in unary.
-    > Navigation used both D₁ and D₂ together.
-    > I replaced them with one succinct vector which encodes bucket lengths in unary, including empty buckets.
+**Example text (~25s):**
+> Quick anchor with Example: ERE splits each key into a prefix and a suffix.
+> Suffixes pack into buckets; prefixes drive the metadata that navigates to the right bucket.
+> Goswami stores that metadata as two separate vectors and uses Weak Prefix Search for the in-bucket lookup.
+> We replaced Weak Prefix Search with adaptive search — that let us collapse the two vectors into one.
 
 
 ---
@@ -100,9 +85,6 @@
 
 **Example text (~60s):**
 > How do these two improvements work on the ERE backend?
->
-> First: Goswami stored two-level metadata D₁+D₂.
-> I replaced them with a single contiguous vector D — saving 24% of metadata.
 >
 > For search in the bucket, Goswami proposed Weak Prefix Search — which works in O(1) in theory.
 > But how O(1) translates to nanoseconds depends on two factors:
@@ -117,8 +99,11 @@
 > At these bucket sizes Adaptive binary/linear search outperforms WPS by 13–30×,
 > with no auxiliary index required.
 >
+> Also, Goswami stored two vectors with metadata D₁+D₂.
+> I replaced them with a single contiguous vector D — saving 24% of metadata.
 > The same principle was used in D vector replacement - one contiguous vector
 > means more sequential reads — less pointer chasing between two separate structures.
+> Hardware performance counters confirm this: 14 to 56% fewer L1 cache misses across real SOSD distributions.
 
 ---
 
