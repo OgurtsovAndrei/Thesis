@@ -1,8 +1,8 @@
-\begin{frame}{Two Regimes: Dense Clusters and Sparse Tails}
+\begin{frame}{Two Modes: Dense Clusters and Sparse Tails}
     \ourbadge
     \begin{columns}[T,onlytextwidth]
         \column{0.48\textwidth}
-        \textbf{Dense cluster} ($U' = k_{\max} - k_{\min} < \frac{n \mathcal{L}}{\varepsilon}$)
+        \textbf{Dense cluster}
         \smallskip
         \begin{itemize}\setlength{\itemsep}{0.35em}
             \item ARE (Goswami): $\;n\log_2(\mathcal{L}/\varepsilon)\;$ bits
@@ -12,9 +12,7 @@
         \end{itemize}
         \medskip
         \begin{center}
-            \fbox{$\;U' \le n\mathcal{L}/\varepsilon
-                    \;\Longrightarrow\; \text{exact mode,}\ \mathrm{FPR} = 0\;$}\\[0.3em]
-            {\footnotesize (FPR --- false-positive rate)}
+            \fbox{Narrow enough cluster $\Longrightarrow$ exact mode, $\mathrm{FPR} = 0$}
         \end{center}
 
         \column{0.48\textwidth}
@@ -24,8 +22,9 @@
             \includegraphics[width=0.92\linewidth, keepaspectratio]{../../figures/phantom_comparison_slide}
         \end{center}
         \begin{itemize}\setlength{\itemsep}{0.2em}
-            \item LP hash:\quad $\log_2(\mathcal{L}/\varepsilon)$ BPK
+            \item Regular hash:\quad $\log_2(\mathcal{L}/\varepsilon)$ BPK
             \item Truncation:\quad $\log_2(1/\varepsilon)$ BPK
         \end{itemize}
+        $\log_2(\text{Range Length})$ bits improvement
     \end{columns}
 \end{frame}

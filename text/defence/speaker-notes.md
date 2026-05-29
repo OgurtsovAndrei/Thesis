@@ -13,9 +13,11 @@
 
 ## Slide 1 — Teaser: Three Headline Results (0:30)
 
+[//]: # (todo: data sizes are limited, we choose structure which performs best on real-world data)
+
 **Example text (~30s):**
 > Today I will show you how we:
-> — reduced metadata bits in the exact range emptiness backend from Goswami;
+> — reduced metadata size in the exact range emptiness backend from Goswami;
 > — sped up queries by replacing Weak Prefix Search with adaptive search;
 > — built the Segmented-ARE filter, which goes below the Goswami bound on real-world data.
 
@@ -37,11 +39,11 @@
 
 ---
 
-## Slide 2 — Reducing Disk I/O with Filters (1:15)
+## Slide 3 — Reducing Disk I/O with Filters (1:15)
 
 **Example text (~45s):**
 > To avoid reading every SSTable from disk during a lookup, each file's metadata contains a filter.
-> It answers with a one-sided error of at most ε: no false negatives, false positives are allowed.
+> It answers with a one-sided error: no false negatives, false positives are allowed.
 > That is enough — if the filter says "no", the database skips the SSTable without any disk I/O.
 > One of the widely used structures is the Bloom filter, which answers point queries.
 >
@@ -49,7 +51,7 @@
 
 ---
 
-## Slide 3 — Problem and Goswami Baseline (1:30)
+## Slide 4 — Problem and Goswami Baseline (1:30)
 
 **Example text (~75s):**
 > Range filter is the structure for range queries. Instead of answering "does the set contain the key?"
@@ -61,6 +63,7 @@
 >
 > Goswami proved an information-theoretic lower bound for any S  bits per key —
 > and constructed a data structure that reaches this lower limit up to a constant.
+> 
 > As for the computational complexity, this data structure answers intersection queries in constant time.
 > Their construction:
 > - a locality-preserving hash that compresses the universe, and
@@ -72,11 +75,12 @@
 
 ## Slide 5 — Exact Range Emptiness as Elias-Fano (0:30)
 
+
 **Example text (~25s):**
-> Quick anchor with Example: ERE splits each key into a prefix and a suffix.
+> ERE splits each key into a prefix and a suffix.
 > Suffixes pack into buckets; prefixes drive the metadata that navigates to the right bucket.
 > Goswami stores that metadata as two separate vectors and uses Weak Prefix Search for the in-bucket lookup.
-> We replaced Weak Prefix Search with adaptive search — that let us collapse the two vectors into one.
+> We replaced Weak Prefix Search with adaptive lin/bin search — that also let us collapse the two metadata vectors into one.
 
 
 ---
@@ -86,24 +90,26 @@
 **Example text (~60s):**
 > How do these two improvements work on the ERE backend?
 >
-> For search in the bucket, Goswami proposed Weak Prefix Search — which works in O(1) in theory.
-> But how O(1) translates to nanoseconds depends on two factors:
+> For search in the bucket, Goswami proposed Weak Prefix Search — which works in "constant time" in theory.
+> But how "constant time" translates to nanoseconds depends on two factors:
 > (1) working set size — whether the structure fits in CPU caches;
 > (2) memory access pattern — sequential or random.
 >
-> The practical dataset sizes are limited by 2²⁴ or 2²⁸ keys.
-> Thus, buckets sizes are also limited by thousands of keys.
->
 > Look at the table: Facebook median [k=27] — WPS fits in L1, still 307 ns. 
 > Larger buckets escape L1 — 514–556 ns. 
+> 
+> The practical dataset sizes are limited by 2²⁴ or 2²⁸ keys.
+> Thus, buckets sizes are also limited by thousands of keys.
+> 
 > At these bucket sizes Adaptive binary/linear search outperforms WPS by 13–30×,
 > with no auxiliary index required.
 >
 > Also, Goswami stored two vectors with metadata D₁+D₂.
 > I replaced them with a single contiguous vector D — saving 24% of metadata.
-> The same principle was used in D vector replacement - one contiguous vector
-> means more sequential reads — less pointer chasing between two separate structures.
-> Hardware performance counters confirm this: 14 to 56% fewer L1 cache misses across real SOSD distributions.
+> Contiguous vector also means more sequential reads — 
+> less pointer chasing between two separate structures.
+> Hardware performance counters confirm this:
+> 14 to 56% fewer L1 cache misses across real SOSD distributions.
 
 ---
 
@@ -148,11 +154,11 @@
 **Example text (~40s):**
 > One question remains: how do we find the partition?
 > We apply the DBSCAN clustering algorithm.
-> On sorted one Dimential keys, DBSCAN runs in linear time.
+> On sorted one-dimensional keys, DBSCAN runs in linear time.
 > The division threshold is derived from the filter parameters.
 >
-> Each dense cluster becomes an ERE filter.
-> Sparse points that DBSCAN marks as noise go to the truncation fallback.
+> On Each dense cluster we will build Exact filter.
+> While, sparse gaps that DBSCAN marks as noise go to the truncation fallback.
 
 ---
 
@@ -163,15 +169,14 @@
 > The graph shows the FPR vs BPK trade-off.
 > SNARF, SuRF and Rosetta are other solutions to the same ARE problem.
 > The structures are built on Facebook user IDs from the SOSD (Search on Sorted Data) dataset.
-> The n = 2²⁴ — the same scale at which SuRF shows its best results.
 > Segmented-ARE (purple line) reaches zero FPR at 11 bits per key.
 > - SNARF saturates at 10⁻3 — no matter how much memory you give it, it cannot go lower.
 > - SuRF uses 19 BPK.
 > - Rosetta just struggles.
 > 
-> At the same time, благодаря всем CPU оптимизациям которые мы сделали, мы не только достигаем рекордный FPR но 
-> we also have much lower query latency.
-> 
+> At the same time, thanks to all the CPU optimizations we made, we not only reach the record FPR
+> but also have much lower query latency.
+
 ---
 
 ## Slide 11 — Limitations: Uniform, ℒ=1, n=2²⁴ (0:30)
