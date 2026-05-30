@@ -1,7 +1,7 @@
 \begin{frame}{Limitations — Uniform, $\mathcal{L} = 1$, $n = 2^{24}$}
   \ourbadge
   \begin{columns}[T,onlytextwidth]
-    \column{0.55\textwidth}
+    \column{0.6\textwidth}
     \centering
     \includegraphics[width=\linewidth, keepaspectratio]{figures/limitations_uniform_L1}
 
@@ -10,9 +10,9 @@
     \begin{itemize}
       \item No clusters $\Rightarrow$ segmentation gives no advantage.
       \item No range $\Rightarrow$ truncation gives no advantage.
-      \item \textbf{\textcolor{thScanARE}{Segmented-ARE}} pays segmentation overhead with nothing to segment.
     \end{itemize}
     \vspace{0.4em}
-    \emph{Honest reading:} on uniform + point queries, the industry baseline wins. Our gain lives where real data lives.
+    \emph{Honest reading:} on uniform + point queries, the industry baseline wins.
+    \\ We gain a lot on clustered data.
   \end{columns}
 \end{frame}

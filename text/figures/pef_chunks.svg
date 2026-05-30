@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 820" font-family="system-ui, -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 540" font-family="system-ui, -apple-system, sans-serif">
   <defs>
     <marker id="arr-axis" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
       <path d="M0,0 L7,3 L0,6" fill="#334155" stroke="none"/>
@@ -8,7 +8,7 @@
     </marker>
   </defs>
 
-  <rect width="1240" height="820" fill="white"/>
+  <rect width="1240" height="540" fill="white"/>
 
   <!-- ════════════════════════════════════════════════════════════════
        TOP PANEL: universe line, 3 superblocks, points, DP chunks
@@ -132,277 +132,71 @@
   <line x1="870" y1="200" x2="1022" y2="288" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr-guide)"/>
 
   <!-- ════════════════════════════════════════════════════════════════
-       DETAIL PANEL A: Elias-Fano chunk
+       OVERVIEW PANEL A & C: Elias-Fano chunk
        ════════════════════════════════════════════════════════════════ -->
   <g>
-    <!-- Panel frame -->
-    <rect x="20" y="295" width="393" height="510" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" rx="6"/>
-
-    <!-- Header bar -->
+    <rect x="20" y="295" width="393" height="220" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" rx="6"/>
     <rect x="20" y="295" width="393" height="32" fill="#1e40af" rx="6"/>
     <rect x="20" y="320" width="393" height="7" fill="#1e40af"/>
     <text x="216" y="316" text-anchor="middle" font-size="13" fill="white" font-weight="700">Chunks A &amp; C · Elias-Fano</text>
 
-    <!-- Cost breakdown (covers both A sparse and C borderline-dense) -->
-    <text x="34" y="349" font-size="10.5" fill="#1e40af" font-weight="600">A (sparse):  n=6, lastRel=199, ℓ=5  →  44 bits  ⟪vs bitmap 200⟫</text>
-    <text x="34" y="365" font-size="10.5" fill="#1e40af" font-weight="600">C (mid):     n=4, lastRel=18,  ℓ=2  →  18 bits  ⟪vs bitmap 19, EF wins by 1⟫</text>
+    <text x="34" y="354" font-size="11.5" fill="#1e40af" font-weight="600">Default codec — sparse to mid-dense chunks.</text>
 
-    <!-- chunk struct -->
-    <text x="34" y="395" font-size="11" fill="#334155" font-weight="600">chunk struct  (16 B)</text>
-    <rect x="34" y="402" width="170" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-    <text x="119" y="418" text-anchor="middle" font-size="10" fill="#334155">last=12999 │ nKind=pack(6,EF)</text>
-    <rect x="208" y="402" width="170" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-    <text x="293" y="418" text-anchor="middle" font-size="10" fill="#334155">metaIdx → efMeta[k]</text>
+    <text x="34" y="380" font-size="11" fill="#334155" font-weight="600">Stores per chunk:</text>
+    <text x="44" y="398" font-size="10.5" fill="#475569">• low bits — ℓ = ⌊log₂(U/n)⌋ packed bits per key</text>
+    <text x="44" y="414" font-size="10.5" fill="#475569">• high bits — unary buckets (1 header per bucket,</text>
+    <text x="56" y="429" font-size="10.5" fill="#475569">0 per key) appended to shared rsdic</text>
 
-    <!-- efMeta -->
-    <text x="34" y="445" font-size="11" fill="#334155" font-weight="600">efMeta[k]  (24 B)</text>
-    <rect x="34" y="452" width="115" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-    <text x="91" y="468" text-anchor="middle" font-size="10" fill="#334155">lowOff</text>
-    <rect x="153" y="452" width="115" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-    <text x="210" y="468" text-anchor="middle" font-size="10" fill="#334155">globalOff (rs)</text>
-    <rect x="272" y="452" width="115" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-    <text x="329" y="468" text-anchor="middle" font-size="10" fill="#334155">onesBefore</text>
+    <text x="34" y="453" font-size="11" fill="#334155" font-weight="600">Cost:</text>
+    <text x="44" y="470" font-size="10.5" fill="#475569">payload  ≈ (ℓ + 2) bits/key  (wins when 1/d &gt; ~4)</text>
+    <text x="44" y="485" font-size="10.5" fill="#475569">metadata = 16 B chunk + 24 B efMeta = 40 B/chunk</text>
 
-    <!-- Low bits stream -->
-    <text x="34" y="498" font-size="11" fill="#334155" font-weight="600">Low bits  (5 bits × 6 keys → 30 bits in p.lowBits)</text>
-    <g font-size="9.5" font-family="ui-monospace, monospace" fill="#1e40af">
-      <rect x="34" y="506" width="58" height="22" fill="#dbeafe" stroke="#1e40af" stroke-width="1"/>
-      <text x="63" y="521" text-anchor="middle">00000</text>
-      <rect x="92" y="506" width="58" height="22" fill="#dbeafe" stroke="#1e40af" stroke-width="1"/>
-      <text x="121" y="521" text-anchor="middle">01010</text>
-      <rect x="150" y="506" width="58" height="22" fill="#dbeafe" stroke="#1e40af" stroke-width="1"/>
-      <text x="179" y="521" text-anchor="middle">10000</text>
-      <rect x="208" y="506" width="58" height="22" fill="#dbeafe" stroke="#1e40af" stroke-width="1"/>
-      <text x="237" y="521" text-anchor="middle">10011</text>
-      <rect x="266" y="506" width="58" height="22" fill="#dbeafe" stroke="#1e40af" stroke-width="1"/>
-      <text x="295" y="521" text-anchor="middle">11011</text>
-      <rect x="324" y="506" width="58" height="22" fill="#dbeafe" stroke="#1e40af" stroke-width="1"/>
-      <text x="353" y="521" text-anchor="middle">00111</text>
-    </g>
-    <text x="34" y="544" font-size="9" fill="#64748b" font-style="italic">key_rel &amp; 0x1F  (rel ∈ {0, 42, 80, 115, 155, 199})</text>
-
-    <!-- High bits unary -->
-    <text x="34" y="572" font-size="11" fill="#334155" font-weight="600">High bits  (unary, written into shared rsdic)</text>
-
-    <!-- Show 14 bits as alternating cells with bucket annotation -->
-    <g font-family="ui-monospace, monospace" font-size="10">
-      <!-- bucket 0 -->
-      <rect x="34" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="45" y="597" text-anchor="middle" fill="white">1</text>
-      <rect x="56" y="582" width="22" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-      <text x="67" y="597" text-anchor="middle" fill="#1e40af">0</text>
-      <!-- bucket 1 -->
-      <rect x="80" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="91" y="597" text-anchor="middle" fill="white">1</text>
-      <rect x="102" y="582" width="22" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-      <text x="113" y="597" text-anchor="middle" fill="#1e40af">0</text>
-      <!-- bucket 2 -->
-      <rect x="126" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="137" y="597" text-anchor="middle" fill="white">1</text>
-      <rect x="148" y="582" width="22" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-      <text x="159" y="597" text-anchor="middle" fill="#1e40af">0</text>
-      <!-- bucket 3 -->
-      <rect x="172" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="183" y="597" text-anchor="middle" fill="white">1</text>
-      <rect x="194" y="582" width="22" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-      <text x="205" y="597" text-anchor="middle" fill="#1e40af">0</text>
-      <!-- bucket 4 -->
-      <rect x="218" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="229" y="597" text-anchor="middle" fill="white">1</text>
-      <rect x="240" y="582" width="22" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-      <text x="251" y="597" text-anchor="middle" fill="#1e40af">0</text>
-      <!-- bucket 5 (empty) -->
-      <rect x="264" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="275" y="597" text-anchor="middle" fill="white">1</text>
-      <!-- bucket 6 -->
-      <rect x="286" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="297" y="597" text-anchor="middle" fill="white">1</text>
-      <rect x="308" y="582" width="22" height="22" fill="white" stroke="#1e40af" stroke-width="1"/>
-      <text x="319" y="597" text-anchor="middle" fill="#1e40af">0</text>
-      <!-- sentinel -->
-      <rect x="332" y="582" width="22" height="22" fill="#1e40af"/>
-      <text x="343" y="597" text-anchor="middle" fill="white">1</text>
-    </g>
-
-    <!-- Bucket labels under the unary stream -->
-    <g font-size="8.5" fill="#64748b">
-      <text x="56" y="618" text-anchor="middle">b0</text>
-      <text x="102" y="618" text-anchor="middle">b1</text>
-      <text x="148" y="618" text-anchor="middle">b2</text>
-      <text x="194" y="618" text-anchor="middle">b3</text>
-      <text x="240" y="618" text-anchor="middle">b4</text>
-      <text x="275" y="618" text-anchor="middle">b5∅</text>
-      <text x="308" y="618" text-anchor="middle">b6</text>
-      <text x="343" y="618" text-anchor="middle">$</text>
-    </g>
-
-    <text x="34" y="640" font-size="9" fill="#64748b" font-style="italic">1 = bucket header,  0 = key in current bucket,  $ = sentinel</text>
-
-    <!-- Legend -->
-    <text x="34" y="668" font-size="10.5" fill="#475569" font-weight="600">Triggered when:</text>
-    <text x="34" y="684" font-size="10" fill="#475569">EF cost (44) &lt; bitmap cost (200), and</text>
-    <text x="34" y="698" font-size="10" fill="#475569">no all-ones case  (sparse, non-contiguous)</text>
-
-    <text x="34" y="724" font-size="10.5" fill="#1e40af" font-weight="600">Query: efIntersects()</text>
-    <text x="34" y="740" font-size="9.5" fill="#475569">Select1(b) on rs → bucket range → linear/binary</text>
-    <text x="34" y="754" font-size="9.5" fill="#475569">scan low-bits (≤128 keys → linear, else binary)</text>
-
-    <text x="34" y="782" font-size="11" fill="#1e40af" font-weight="700">≈ 5.5 B payload + 40 B metadata</text>
+    <text x="34" y="506" font-size="10.5" fill="#1e40af" font-weight="700">Figure: A → 44 b · C → 18 b (beats bitmap by 1)</text>
   </g>
 
   <!-- ════════════════════════════════════════════════════════════════
-       DETAIL PANEL B: Bitmap chunk
+       OVERVIEW PANEL B: Bitmap chunk
        ════════════════════════════════════════════════════════════════ -->
   <g>
-    <rect x="423" y="295" width="393" height="510" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" rx="6"/>
-
+    <rect x="423" y="295" width="393" height="220" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" rx="6"/>
     <rect x="423" y="295" width="393" height="32" fill="#b45309" rx="6"/>
     <rect x="423" y="320" width="393" height="7" fill="#b45309"/>
     <text x="619" y="316" text-anchor="middle" font-size="13" fill="white" font-weight="700">Chunk B · Bitmap</text>
 
-    <text x="437" y="350" font-size="11" fill="#b45309" font-weight="600">n=8, lastRel=14  (universe 15 slots)</text>
-    <text x="437" y="367" font-size="11" fill="#475569">EF cost=25 bits  vs  bitmap cost=15 bits  → bitmap wins</text>
+    <text x="437" y="354" font-size="11.5" fill="#b45309" font-weight="600">Dense clusters where bitmap beats EF.</text>
 
-    <!-- chunk struct -->
-    <text x="437" y="395" font-size="11" fill="#334155" font-weight="600">chunk struct  (16 B)</text>
-    <rect x="437" y="402" width="170" height="22" fill="white" stroke="#b45309" stroke-width="1"/>
-    <text x="522" y="418" text-anchor="middle" font-size="10" fill="#334155">last=13114 │ nKind=pack(8,BM)</text>
-    <rect x="611" y="402" width="170" height="22" fill="white" stroke="#b45309" stroke-width="1"/>
-    <text x="696" y="418" text-anchor="middle" font-size="10" fill="#334155">metaIdx → bmMeta[k]</text>
+    <text x="437" y="380" font-size="11" fill="#334155" font-weight="600">Stores per chunk:</text>
+    <text x="447" y="398" font-size="10.5" fill="#475569">• flat bit-vector — (lastRel + 1) bits</text>
+    <text x="459" y="413" font-size="10.5" fill="#475569">1 = key present, 0 = absent</text>
+    <text x="447" y="429" font-size="10.5" fill="#475569">• appended to shared rsdic (no low-bits buffer)</text>
 
-    <!-- bmMeta -->
-    <text x="437" y="445" font-size="11" fill="#334155" font-weight="600">bmMeta[k]  (8 B)</text>
-    <rect x="437" y="452" width="180" height="22" fill="white" stroke="#b45309" stroke-width="1"/>
-    <text x="527" y="468" text-anchor="middle" font-size="10" fill="#334155">globalOff (offset in p.rs)</text>
+    <text x="437" y="453" font-size="11" fill="#334155" font-weight="600">Cost:</text>
+    <text x="447" y="470" font-size="10.5" fill="#475569">payload  = 1/d bits/key  (wins when d ≳ 1/4)</text>
+    <text x="447" y="485" font-size="10.5" fill="#475569">metadata = 16 B chunk + 8 B bmMeta = 24 B/chunk</text>
 
-    <!-- Dense bitmap visual -->
-    <text x="437" y="498" font-size="11" fill="#334155" font-weight="600">Dense bit-vector  (15 bits in shared rsdic)</text>
-
-    <!-- 15 cells. Positions filled: 0, 2, 3, 4, 6, 8, 9, 14 -->
-    <g font-family="ui-monospace, monospace" font-size="11">
-      <!-- pos 0: 1 -->
-      <rect x="437" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="449" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 1: 0 -->
-      <rect x="461" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="473" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 2: 1 -->
-      <rect x="485" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="497" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 3: 1 -->
-      <rect x="509" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="521" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 4: 1 -->
-      <rect x="533" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="545" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 5: 0 -->
-      <rect x="557" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="569" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 6: 1 -->
-      <rect x="581" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="593" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 7: 0 -->
-      <rect x="605" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="617" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 8: 1 -->
-      <rect x="629" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="641" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 9: 1 -->
-      <rect x="653" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="665" y="528" text-anchor="middle" fill="white">1</text>
-      <!-- pos 10: 0 -->
-      <rect x="677" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="689" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 11: 0 -->
-      <rect x="701" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="713" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 12: 0 -->
-      <rect x="725" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="737" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 13: 0 -->
-      <rect x="749" y="510" width="24" height="26" fill="white" stroke="#b45309" stroke-width="1"/>
-      <text x="761" y="528" text-anchor="middle" fill="#b45309">0</text>
-      <!-- pos 14: 1 -->
-      <rect x="773" y="510" width="24" height="26" fill="#b45309"/>
-      <text x="785" y="528" text-anchor="middle" fill="white">1</text>
-    </g>
-
-    <!-- Position labels (every other) -->
-    <g font-size="8.5" fill="#64748b" font-family="ui-monospace, monospace">
-      <text x="449" y="551" text-anchor="middle">0</text>
-      <text x="497" y="551" text-anchor="middle">2</text>
-      <text x="545" y="551" text-anchor="middle">4</text>
-      <text x="593" y="551" text-anchor="middle">6</text>
-      <text x="641" y="551" text-anchor="middle">8</text>
-      <text x="689" y="551" text-anchor="middle">10</text>
-      <text x="737" y="551" text-anchor="middle">12</text>
-      <text x="785" y="551" text-anchor="middle">14</text>
-    </g>
-
-    <text x="437" y="572" font-size="9" fill="#64748b" font-style="italic">1 = key present at that relative position,  0 = absent</text>
-
-    <!-- Note on shared rsdic -->
-    <text x="437" y="598" font-size="10.5" fill="#334155" font-weight="600">Stored alongside Chunk A's high bits in p.rs:</text>
-    <g font-family="ui-monospace, monospace" font-size="10" fill="#334155">
-      <text x="437" y="616">┌── EF high-bits (Chunk A) ──┬── BM bits (Chunk B) ──┐</text>
-      <text x="437" y="630">│         14 bits            │      15 bits          │</text>
-      <text x="437" y="644">└────────────────────────────┴───────────────────────┘</text>
-    </g>
-
-    <text x="437" y="672" font-size="10.5" fill="#475569" font-weight="600">Triggered when:</text>
-    <text x="437" y="688" font-size="10" fill="#475569">bitmap cost (lastRel+1) &lt; EF cost</text>
-    <text x="437" y="702" font-size="10" fill="#475569">⇒ dense cluster, small universe-per-chunk</text>
-
-    <text x="437" y="724" font-size="10.5" fill="#b45309" font-weight="600">Query: bitmapIntersects()</text>
-    <text x="437" y="740" font-size="9.5" fill="#475569">Rank1(globalOff + bRel + 1) − Rank1(globalOff + aRel)</text>
-    <text x="437" y="754" font-size="9.5" fill="#475569">⇒ O(1) on rsdic</text>
-
-    <text x="437" y="782" font-size="11" fill="#b45309" font-weight="700">≈ 2 B payload + 24 B metadata</text>
+    <text x="437" y="506" font-size="10.5" fill="#b45309" font-weight="700">Figure: 8 keys / 15 slots → 15 bits</text>
   </g>
 
   <!-- ════════════════════════════════════════════════════════════════
-       DETAIL PANEL C: All-ones chunk
+       OVERVIEW PANEL D: All-ones chunk
        ════════════════════════════════════════════════════════════════ -->
   <g>
-    <rect x="826" y="295" width="393" height="510" fill="#dcfce7" stroke="#15803d" stroke-width="1.5" rx="6"/>
-
+    <rect x="826" y="295" width="393" height="220" fill="#dcfce7" stroke="#15803d" stroke-width="1.5" rx="6"/>
     <rect x="826" y="295" width="393" height="32" fill="#15803d" rx="6"/>
     <rect x="826" y="320" width="393" height="7" fill="#15803d"/>
     <text x="1022" y="316" text-anchor="middle" font-size="13" fill="white" font-weight="700">Chunk D · All-ones</text>
 
-    <text x="840" y="350" font-size="11" fill="#15803d" font-weight="600">n=10, lastRel=9  ⇒  lastRel == n−1</text>
-    <text x="840" y="367" font-size="11" fill="#475569">keys are consecutive: 13400, 13401, …, 13409</text>
+    <text x="840" y="354" font-size="11.5" fill="#15803d" font-weight="600">Contiguous run — degenerate case.</text>
 
-    <!-- chunk struct -->
-    <text x="840" y="395" font-size="11" fill="#334155" font-weight="600">chunk struct  (16 B)</text>
-    <rect x="840" y="402" width="170" height="22" fill="white" stroke="#15803d" stroke-width="1"/>
-    <text x="925" y="418" text-anchor="middle" font-size="10" fill="#334155">last=13409 │ nKind=pack(10,AO)</text>
-    <rect x="1014" y="402" width="170" height="22" fill="white" stroke="#15803d" stroke-width="1"/>
-    <text x="1099" y="418" text-anchor="middle" font-size="10" fill="#334155" font-style="italic">metaIdx unused</text>
+    <text x="840" y="380" font-size="11" fill="#334155" font-weight="600">Stores per chunk:</text>
+    <text x="850" y="398" font-size="10.5" fill="#475569">• nothing — neither metadata nor payload</text>
+    <text x="850" y="414" font-size="10.5" fill="#475569">• keys reconstructed from (base, last, n)</text>
+    <text x="850" y="429" font-size="10.5" fill="#475569">  via  key[i] = base + i</text>
 
-    <!-- NO metadata, NO payload -->
-    <text x="840" y="460" font-size="11" fill="#334155" font-weight="600">Per-codec metadata:</text>
-    <rect x="840" y="468" width="345" height="34" fill="white" stroke="#15803d" stroke-width="1" stroke-dasharray="4,3"/>
-    <text x="1012" y="490" text-anchor="middle" font-size="12" fill="#15803d" font-style="italic">— none —</text>
+    <text x="840" y="453" font-size="11" fill="#334155" font-weight="600">Cost:</text>
+    <text x="850" y="470" font-size="10.5" fill="#475569">payload  = 0 bits/key  (trigger: lastRel == n − 1)</text>
+    <text x="850" y="485" font-size="10.5" fill="#475569">metadata = 16 B chunk only = 16 B/chunk</text>
 
-    <text x="840" y="528" font-size="11" fill="#334155" font-weight="600">Payload (rsdic / lowBits):</text>
-    <rect x="840" y="536" width="345" height="34" fill="white" stroke="#15803d" stroke-width="1" stroke-dasharray="4,3"/>
-    <text x="1012" y="558" text-anchor="middle" font-size="12" fill="#15803d" font-style="italic">— none —</text>
-
-    <!-- Big "0 bits" -->
-    <g>
-      <rect x="900" y="590" width="225" height="60" fill="#15803d" rx="8"/>
-      <text x="1013" y="617" text-anchor="middle" font-size="14" fill="white" font-weight="600">payload</text>
-      <text x="1013" y="640" text-anchor="middle" font-size="22" fill="white" font-weight="800">= 0 bits</text>
-    </g>
-
-    <text x="840" y="676" font-size="10.5" fill="#475569" font-weight="600">Reconstructed from (base, last, n):</text>
-    <text x="840" y="692" font-size="10" fill="#475569">key[i] = base + i,  i ∈ [0, n)</text>
-
-    <text x="840" y="724" font-size="10.5" fill="#15803d" font-weight="600">Query: chunkIntersects()</text>
-    <text x="840" y="740" font-size="9.5" fill="#475569">case kindAllOnes: return true</text>
-    <text x="840" y="754" font-size="9.5" fill="#475569">(every position is a key)</text>
-
-    <text x="840" y="782" font-size="11" fill="#15803d" font-weight="700">16 B total · ZERO bits payload</text>
+    <text x="840" y="506" font-size="10.5" fill="#15803d" font-weight="700">Figure: 10 consecutive keys → 0 bits payload</text>
   </g>
 </svg>
