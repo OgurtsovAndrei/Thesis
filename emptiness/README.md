@@ -106,11 +106,9 @@ See [benchmarks and plots](approx/are_hybrid_scan/README.md#large-range-performa
 
 ### Advanced topics
 
-The following packages require familiarity with the [SODA 2015 paper](https://arxiv.org/abs/1407.2907)
-and the references therein (succinct bit vectors, Elias-Fano coding, monotone minimal perfect hashing,
-hollow tries, Z-fast tries):
-
-| Package                                                   | Description                                                 |
-|-----------------------------------------------------------|-------------------------------------------------------------|
-| [`lerloc`](../locators/lerloc/)                           | LERLOC — Range Locator via Weak Prefix Search (MMPH + Hollow Z-Fast Trie). |
-| [`ere_theoretical`](exact/ere_theoretical/)                     | Theoretical ERE baseline using LERLOC for $O(1)$ worst-case queries. |
+The WPS locators (`lerloc`, `rloc`), tries (Z-fast / hollow), MMPH variants, and the
+theoretical ERE baselines (`ere_global`, `ere_theoretical`) live in the separate
+[`thesis-experiments`](https://github.com/OgurtsovAndrei/thesis-experiments) repository.
+They require familiarity with the [SODA 2015 paper](https://arxiv.org/abs/1407.2907) and
+the references therein (succinct bit vectors, Elias-Fano coding, monotone minimal perfect
+hashing, hollow tries, Z-fast tries).
